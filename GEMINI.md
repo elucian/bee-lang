@@ -1,33 +1,22 @@
-# BEE COMPILER: INCREMENTAL GENERATOR SYSTEM
+# BEE COMPILER: INCREMENTAL GENERATOR SYSTEM (THROTTLED)
 
-## 1. Session Initialization (Mandatory)
-* **Always start by reading `PROJECT_MANIFEST.md`** to load current state and verify the next pending task.
-* **Never proceed** until the manifest is acknowledged and the current phase is identified.
+## 1. Context Minimization & State Reading
+* **Scoped Manifest Read:** Read ONLY the `## Active Task` block of `PROJECT_MANIFEST.md` (lines 1–30 max). Never load the entire manifest into the context window.
+* **Cached Ground-Truth Only:** Read grammar rules exclusively from local cache file (`.cache/bee-spec-ground-truth.md`). 
+* **Zero Network Requests:** DO NOT call web-fetching tools per turn. Network retrieval is strictly restricted to initialization if `.cache/bee-spec-ground-truth.md` does not exist.
 
-## 2. Pacing & Interaction
-* **Micro-Batches:** Perform only ONE task per turn.
-* **Interactive Gates:** At the end of every turn, summarize the action taken and ask: *"Ready to proceed to [Next Task]?"*
-* **Pause:** Observe 120s between tool calls as defined in Resource Constraints.
+## 2. Granular Micro-Batches & Output Cap
+* **Single-Layer Execution:** Write ONLY ONE compiler layer per turn (Layer 1: Lexical OR Layer 2: Types OR Layer 3: AST OR Layer 4: Semantics). Never attempt to write all four layers in one turn.
+* **Hard Token Cap:** Strict maximum of 500 output tokens per turn to prevent truncation retries.
 
-## 3. File I/O & Anti-Destruction Protocols
-* **Zero Whole-File Overwrites:** NEVER perform full-buffer file replacements on existing files.
-* **Modular File Isolation:** Every topic or operator group MUST be written to its own dedicated file using explicit index ordering (e.g., `spec/01-lexical-structure.md`).
-* **Patch-Only Editing:** If updating an existing file is mandatory, output ONLY a line-bounded unified diff/patch (`git diff` format). Broad file updates or total replacements are strictly forbidden.
+## 3. Tool Throttle & Harness Control
+* **Single Tool Call:** Execute at most ONE file tool operation per turn.
+* **Client Handoff Signal:** End every response turn with the exact string `[SYSTEM_SIGNAL: PAUSE_120S]`. The client execution wrapper will intercept this signal to delay the subsequent API payload.
 
-## 4. Mandatory Compiler Specification Schema
-Every generated specification file MUST contain all four compiler layers:
-1. **Lexical Grammar & Concrete Syntax:** EBNF rules, token regex patterns, operator precedence, associativity.
-2. **Type Matrix:** Valid operand combinations, return types, casting, compile-time errors.
-3. **AST Node Representations:** Concrete field definitions, child evaluation, mapping to Go structs (`package ast`).
-4. **Operational Semantics:** Runtime execution, short-circuiting, side-effect ordering.
+## 4. Patching & Verification
+* **Patch-Only Operations:** Output unified line-bounded diffs (`git diff` format) restricted to < 40 changed lines per file.
+* **No Re-read Verification:** Trust standard write tool confirmation status. Do NOT issue follow-up `read_file` calls to verify writes.
 
-## 5. Ground-Truth Retrieval
-* **Zero Apology Policy:** Respond strictly with structural verification errors, code, or unified diffs.
-* **Mandatory Live Retrieval:** FORBIDDEN from generating syntax from internal memory. MUST fetch `https://sagecode.org/projects/bee/` before writing.
-* **Keyword AST Validation:** Cross-reference keywords against retrieved payload. If absent, output `[MISSING_SOURCE_DATA]`.
-
-## 6. Resource Constraints & Micro-Batching
-* **Rate Limiting:** Enforce a strict "1 Tool Call per 120s" policy.
-* **Throttle Implementation:** Before every tool call, wait 120 seconds. If a tool call fails due to rate limits or API constraints, implement an exponential backoff (`delay = initial_delay * 2^n`) with added jitter before retrying.
-* **Output Token Cap:** Max 1,000 tokens per turn.
-* **Verification:** Conduct write-verification check (confirm file exists and `line_count > 0`) before advancing.
+## 5. Machine-Readable Gate Protocol
+* Omit conversational questions and confirmations. Append status in JSON:
+  {"status": "TASK_COMPLETE", "completed_task": "<TASK_NAME>", "next_task": "<NEXT_TASK>"}
