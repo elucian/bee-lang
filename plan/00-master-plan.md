@@ -19,9 +19,10 @@ To develop a complete, compiler-grade EBNF specification for the Bee language an
 - Implement tests to verify syntax compliance.
 
 ## Tasks
-1. [ ] Define standard block termination rules (e.g., verify `cycle` termination: `repeat` vs `done`).
-2. [ ] Formalize `match` vs `if-else` usage patterns in `spec/06-control-flow.md`.
-3. [ ] Generate `spec/01-lexical-structure.md` (Lexical Grammar).
-4. [ ] Generate `spec/02-syntax-statements.md` (Statements & Expressions).
-5. [ ] Generate `spec/03-rules-functions.md` (Rules & Lambdas).
-6. [ ] Generate `spec/04-concurrency-types.md` (Concurrency & Types).
+1. [x] Index project and ingest documentation.
+2. [x] Establish solution/issue tracking.
+3. [x] Refactor and reset Memory Model Specification (`spec/00-memory-model.md`).
+4. [ ] Incrementally expand Memory Model Specification sections (zap, error handling).
+5. [ ] Formalize Lexical Grammar (`spec/01-lexical-structure.md`).
+6. [ ] Formalize Statement Grammar (`spec/02-statements.md`).
+7. [ ] Map AST Nodes and implement Lexer/Parser in `internal/`.
