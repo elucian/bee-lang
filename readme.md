@@ -16,9 +16,10 @@ The reference compiler is being implemented in **Go**.
 - `internal/`: Core compiler components.
 - `spec/`: Formal language specifications.
 - `doc/`: Human-readable user documentation and design principles.
-- `plan/`: Strategic roadmap and development milestones.
+- `spec/`: Formal language specifications.
 - `solution/`: Reference implementation patterns and solutions.
-- `todo/`: Current task tracker and issue backlog.
+- `issues/`: Current task tracker and issue backlog.
+- `MANIFEST.md`: The source of truth for the active task and project status.
 - `tests/`: Integration test cases (`.bee` files).
 - `scripts/`: Utility scripts for development and testing.
 
