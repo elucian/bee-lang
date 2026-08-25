@@ -27,6 +27,7 @@ Every generated specification file MUST contain all four compiler layers:
 * **Keyword AST Validation:** Cross-reference keywords against retrieved payload. If absent, output `[MISSING_SOURCE_DATA]`.
 
 ## 6. Resource Constraints & Micro-Batching
-* **Rate Limiting:** Enforce 1 Request Per Minute (RPM) with 120-second pause between sequential tool executions.
+* **Rate Limiting:** Enforce a strict "1 Tool Call per 120s" policy.
+* **Throttle Implementation:** Before every tool call, wait 120 seconds. If a tool call fails due to rate limits or API constraints, implement an exponential backoff (`delay = initial_delay * 2^n`) with added jitter before retrying.
 * **Output Token Cap:** Max 1,000 tokens per turn.
 * **Verification:** Conduct write-verification check (confirm file exists and `line_count > 0`) before advancing.
