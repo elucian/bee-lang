@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Features
 
 Bee is a general purpose language made for engineering and high performance computing. Bee is an imperative programming language that implement a new, rule based programming paradigm. This page describe main features and basic design principles. 
@@ -37,7 +31,25 @@ Bee is designed to be learn as first programming language for Sage-Code develope
 
 The result of these choices is demonstrate below. You can observe different comment notations enable different color. Syntax colorizer is able to identify also the keywords and highlight every statement.
 
-``` \-- Demo: Fibonacci Sequence \-- declare Fibonacci rule rule fib(n ∈ N) => (y ∈ N): if (n = 1) ∨ (n = 0) do let y := 1; -- first value else let y := fib(n-1) + fib(n-2); done; return; rule main: \-- call fib rule using argument 5 new r := fib(n: 5); \-- print the result to console print r; return; -- end of module ``` 
+```bee
+-- Demo: Fibonacci Sequence
+-- declare Fibonacci rule
+rule fib(n ∈ N) => (y ∈ N):
+  if (n = 1) ∨ (n = 0) do
+    let y := 1; -- first value
+  else
+    let y := fib(n-1) + fib(n-2);
+  done;
+  return;
+
+rule main:
+  -- call fib rule using argument 5
+  new r := fib(n: 5);
+  -- print the result to console
+  print r;
+  return;
+-- end of module
+```
 
 ## Efficient
 
@@ -120,18 +132,14 @@ We have try to create a consistent Unicode language. We have done our best to se
   10. Bee use starting and ending keywords to define blocks of code, not curly brackets. This eliminate the nested bracket nightmares and improve visual aspect of the code. We can use brackets for data literals: ordinals, sets, hash tables and objects.
 
 
-## Purpose
+## Advanced Features (Inferred)
+* **Hybrid Memory Model:** RC-default with manual `zap` for performance Hot Zones.
+* **Region-Based Execution:** Rule-scoped stack/heap isolation for thread safety.
+* **Coroutines/Parallelism:** `begin`/`wait` model with thread-safe, message-passing reduction for list/collection mutation.
+* **Strict 1-Based Indexing:** All arrays and matrices follow 1-based indexing conventions.
 
 In the era of artificial intelligence, code is written by machines and read by humans. Bee is optimized for the audit—where logic must be precise, visual, and mathematically irrefutable. We sacrifice the ease of input to gain the clarity of verification.
 
 We embrace AI as the Writer, but Humans as the Architect. Bee is designed for the audit. Because our syntax is explicit and our logic is Spartan, the AI can generate the work, but the human retains absolute, easy-to-read authority over the logic.
 
-* * *
-
 **Read next:** [Bee Syntax](/projects/bee/syntax/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰
