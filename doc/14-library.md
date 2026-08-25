@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Standard Library
 
 Bee is a compiled language. That means you must include whatever you use in your code. We will design a small standard library to be included with any program, that will give a small footprint to any Bee executable. 
@@ -87,7 +81,22 @@ Modules for _date_ and _time_ will contain all required rules.
 
 Bee has pre-define Error objects with codes in range (1..200):
 
-``` \-- global type type Error: {code ∈ Z, message ∈ S} <: Object; ``` ``` \-- exception objects $zero_division := {100,"division by zero"} ∈ Error; $null_reference := {101,"null reference usage"} ∈ Error; $value_overflow := {102,"value overflow"} ∈ Error; $out_of_range := {103,"value out of range"} ∈ Error; $type_mismatch := {104,"data type mismatch"} ∈ Error; $user_error := {200,"user defined error"} ∈ Error; ... \-- Standard error $standard_error := {1,"standard error"} ∈ Error; $unexpected_error:= {2,"unexpected error"} ∈ Error; ``` 
+``` 
+-- global type 
+type Error: {code ∈ Z, message ∈ S} <: Object; 
+
+-- exception objects 
+set $zero_division := {100,"division by zero"} ∈ Error; 
+set $null_reference := {101,"null reference usage"} ∈ Error; 
+set $value_overflow := {102,"value overflow"} ∈ Error; 
+set $out_of_range := {103,"value out of range"} ∈ Error; 
+set $type_mismatch := {104,"data type mismatch"} ∈ Error; 
+set $user_error := {200,"user defined error"} ∈ Error; 
+
+-- Standard error 
+set $standard_error := {1,"standard error"} ∈ Error; 
+set $unexpected_error := {2,"unexpected error"} ∈ Error; 
+```
 
 ## Mathematic Rules
 
@@ -101,14 +110,13 @@ Math library will implement extra rules that are not available until you import 
 | pow  | power            |
 | sqr  | square root      |
 | fac  | factorial        |
-| mod  | module rule y := |x | |
+| mod  | module           |
 
 
 ### System Library
 
 Interaction with operating system require load from library.
 
-``` +------------------------- \bee | |-- system | |-- io.bee | |-- db ... \-------------------------+ ``` 
 
 ### File IO
 
@@ -118,7 +126,14 @@ To read and print into files and save to disk, we must use system.io library. Th
 
 Next is a fragment from system.io library that define rules open and close.
 
-``` rule .open(name ∈ S, mode ∈ A) => (file ∈ File); rule .close(file ∈ File); rule .list(folder ∈ Folder) ∈ (S); rule .exist(name ∈ S) ∈ B; rule ,delete(name ∈ S); rule ,rename(name, new_name ∈ S); ... ``` 
+``` 
+rule .open(name ∈ S, mode ∈ A) => (file ∈ File); 
+  rule .close(file ∈ File); 
+  rule .list(folder ∈ Folder) ∈ (S); 
+  rule .exist(name ∈ S) ∈ B; 
+  rule .delete(name ∈ S); 
+  rule .rename(name, new_name ∈ S); ... 
+``` 
 
 **remember:** public rules start with dot: "."
 
@@ -155,14 +170,9 @@ Two data types must be available: File, Folder
 
 #### Making files/folders
 
-``` new file_name := File.open('name','w'); new folder_name := Folder.open('name'); ``` 
+``` 
+new file_name := File.open('name','w'); new folder_name := Folder.open('name'); 
+``` 
 
-* * *
 
 **Go back to:** [Bee Index](/projects/bee/index/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

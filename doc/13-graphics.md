@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Graphics Specification
 
 Bee provides native graphic support, focusing on dynamic 2D drawing within Cartesian spaces. 
@@ -23,7 +17,9 @@ Bee supports radians (π) and decimal degree notation.
 
 **Minutes and Seconds:** Bee uses Unicode symbols prime (′) for minutes and double prime (″) for seconds of arc.
 
-``` new α ∈ G := 180°; new β ∈ G := 0°0′0″; ``` 
+``` 
+new α ∈ G := 180°; new β ∈ G := 0°0′0″; 
+``` 
 
 ## Graphic Types
 
@@ -63,9 +59,3 @@ Graphic elements are composite data types.
 
 
 **Read next:** [System Library](/projects/bee/library/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰
