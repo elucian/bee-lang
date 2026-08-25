@@ -11,5 +11,11 @@ assignment ::= "let" identifier (":=" | "+=" | "-=") expression ;
 ```
 
 ## 3. Operational Semantics
-- Statements are evaluated in the order they appear.
-- Declarations must precede usage within the same lexical scope.
+
+## 4. Expressions
+```ebnf
+expression ::= primary | binary_op | conditional ;
+primary ::= identifier | constant | "(" expression ")" | call ;
+binary_op ::= expression operator expression ;
+conditional ::= expression "if" condition ("else" expression)? ;
+```
