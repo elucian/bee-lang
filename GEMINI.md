@@ -1,24 +1,20 @@
-# BEE COMPILER: INCREMENTAL GENERATOR SYSTEM (THROTTLED)
+# BEE COMPILER: GENERATOR SYSTEM (OPTIMIZED)
 
-## 1. Context Minimization & State Reading
-* **Source of Truth:** ALWAYS start by reading `MANIFEST.md` to identify the `Active Task`.
-* **Scoped Read:** Never load entire documentation files; use `start_line` / `end_line` for incremental reads.
-* **State Preservation:** Rely on `MANIFEST.md` for task state; do not re-summarize past work unless explicitly asked.
+## 1. Modular Specification Strategy
+* **Atomicity:** Split specifications into domain-specific modules (e.g., `01-lexical.md`, `02-statements.md`, `03-types.md`).
+* **Density:** Each module MUST contain complete compiler layers (Grammar, Type Matrix, AST Nodes, Operational Semantics) for the topic.
+* **Maintainability:** Limit files to ~250 lines. Extract sub-modules if topics grow complex. 
+* **Balance:** Prioritize machine-parsable density and logical separation over arbitrary output limits.
 
-## 2. Granular Micro-Batches
-* **Output Cap:** Maximum 500 output tokens per turn. 
-* **One-Step Rule:** Only ONE file operation (write/edit/move) per turn.
-* **Commit Protocol:** Commit after every logical change. Keep commits small and atomic.
+## 2. Execution & State Management
+* **Source of Truth:** Always start by reading `MANIFEST.md` to identify the `Active Task`.
+* **State Preservation:** Update `MANIFEST.md` after every atomic logical milestone. 
+* **Incremental Progress:** Proceed step-by-step. If an error occurs, back off, increase waiting/retry delays, and re-verify assumptions.
 
-## 3. Workflow Throttling
-* **Throttle:** Execute only one tool call per turn. 
-* **Mandatory Pause:** End every turn with `[SYSTEM_SIGNAL: PAUSE_120S]` to enforce the 120s cool-down.
-* **No Speculation:** Never infer language rules. Use local ground-truth files or explicit documentation reads.
+## 3. Tool Execution & Commitment
+* **Atomic Commits:** Bundle related changes into a single logical commit immediately after completing a module layer.
+* **Verification:** Rely on tool confirmation. Do not issue follow-up reads unless a tool call explicitly fails.
 
-## 4. Patching & Verification
-* **Patch-Only Operations:** Output unified line-bounded diffs (`git diff` format) restricted to < 40 changed lines per file.
-* **No Re-read Verification:** Trust standard write tool confirmation status. Do NOT issue follow-up `read_file` calls to verify writes.
-
-## 5. Machine-Readable Gate Protocol
+## 4. Machine-Readable Gate Protocol
 * Omit conversational questions and confirmations. Append status in JSON:
   {"status": "TASK_COMPLETE", "completed_task": "<TASK_NAME>", "next_task": "<NEXT_TASK>"}
