@@ -10,6 +10,6 @@
 2. [x] Establish solution/issue tracking.
 3. [x] Refactor and reset Memory Model Specification (`spec/00-memory-model.md`).
 4. [x] Incrementally expand Memory Model Specification sections (zap, error handling).
-5. [ ] Formalize Lexical Grammar (`spec/01-lexical-structure.md`).
+5. [x] Formalize Lexical Grammar (`spec/01-lexical-structure.md`).
 6. [ ] Formalize Statement Grammar (`spec/02-statements.md`).
 7. [ ] Map AST Nodes and implement Lexer/Parser in `internal/`.
