@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Data Processing
 
 An important aspect in Computer Science is data processing. Bee has basic features to create collections, analize and combine data. We analyze several use-cases here but yet more features will be created over time.
@@ -565,9 +559,3 @@ This was the Bee draft design for basic concepts. Thank you for reading it all. 
 * * *
 
 **Read next:** [Concurrency](/projects/bee/concurrency/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

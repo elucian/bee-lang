@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Control Flow
 
 Control flow statements are used to modify the linear program workflow. In Bee each control statement start with a different keyword, and ends with one of: _done_ or _cycle_. Control flow statements are unnamed blocks of code.
@@ -342,9 +336,3 @@ By using _"retry"_ you can repeat a trial several times until other ending condi
 * * *
 
 **Read next:** [Rules](/projects/bee/rules/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

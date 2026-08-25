@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Functions
 
 Bee is a functional programming language. Bee enable functional programming using lambda expressions. These are arithmetic expressions that can make a computation and return a result. 
@@ -67,9 +61,3 @@ Lambda expressions become call-back functions when used as arguments for specifi
 **Note:** A lambda function can't call a rule. Just a rule can call a lambda function. This prevent a lambda function to modify states and it remain pure.
 
 **Read next:** [Objects](/projects/bee/objects/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

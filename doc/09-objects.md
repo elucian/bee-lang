@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Objects
 
 Bee implements object oriented programming using custom defined data types and special rules called constructors. Bee enable al 4 object oriented principles: Encapsulation, Inheritance, Abstraction and Polymorphic.
@@ -162,9 +156,3 @@ A linked List could be created using this kind of Object. In principle a Linked 
 The access of element in list with index is possible [n] but the access is slow. This is because how the algorithm must loop in the list n times to find the element in sequential fashion. [1] and [$] is fast but further away element is in the list slower the access become using this method.
 
 **Read next:** [Collections](/projects/bee/collections/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

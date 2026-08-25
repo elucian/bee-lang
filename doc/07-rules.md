@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Rules
 
 Bee is rule oriented language. This makes Bee different and simpler than classic languages. Rules are subprograms. We design rules to split a large problem into smaller, more manageable problems. The main rule is the final orchestrator that coordinate execution of all rules in a program. We define rules statically in the code and we apply rules to resolve diverse use cases. 
@@ -180,9 +174,3 @@ In next example we define rule foo() that has two public states: .count and .ste
 
 
 **Read next:** [Objects](/projects/bee/objects/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Syntax
 
 Bee syntax is inspired from Ada, Ruby, Fortran and Julia. We have created an imperative rule based programming language, not a curly bracket language. Bee is designed to be a compiler, syntax is tailored for faster efficient compilation.
@@ -365,9 +359,3 @@ Next we create unrecoverable error. In this case the program crash and exit. The
 ``` panic -1; -- end program immediately panic 2; -- end program and error code = 2 ``` 
 
 **Read next:** [Operators](/projects/bee/structure/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

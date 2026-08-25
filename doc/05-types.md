@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Types
 
 Data types represent a _domains of values_. In other words, data type represent constraints that can be used to validate a particular value. Data _"type"_ is an attribute of any data value.
@@ -532,9 +526,3 @@ Rational numbers are similar to complex numbers. The calculation of rational num
 ``` \-- execute conversion rule main: new a := 0.25; -- real new b := 1\4; -- rational \-- explicit conversion R :> Q expect a ≠ b; -- not equal, type mismatch expect a ≈ b; -- values match, approximation expect a ≡ b; -- implicit conversion, match \-- explicit conversion R :> Q new c := a :> Q; expect c = b; -- type & value match expect c ≡ b; -- type & value match \-- implicit conversion Q :> R new r := c ∈ R; expect c = 0.25; return ``` 
 
 **Read next:** [Control](/projects/bee/control/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

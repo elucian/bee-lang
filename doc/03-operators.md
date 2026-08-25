@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Syntax
 
 Bee is not a curly bracket language. Its syntax is inspired from Ada, Ruby, Fortran and Julia. We have created an imperative programming language with original front-end.
@@ -236,9 +230,3 @@ Bitwise operators are processing numbers not Boolean values.
 * * *
 
 **Read next:** [Structure](/projects/bee/structure/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

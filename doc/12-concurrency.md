@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Concurrence
 
 In Bee we have special statements to start a process asynchronously and run in parallel in separate threads. We can synchronieze the processes after execution.
@@ -85,9 +79,3 @@ Diagram
 Info: This example is complex so we have chosen to keep it on GitHub with the Bee project. If you want to visualize it you need Notepad++ and color syntax highlighter. Go back to index page and follow the instructions at the bottom of the page.
 
 **Read more:** [Graphics](/projects/bee/graphics/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

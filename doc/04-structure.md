@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Code Structure
 
 Bee has a modular architecture. A source file represents a module. A project can have many modules and can contain other files like configuration files, images and data files. Let's focus first on Bee modules. Each module has extension *.bee and has a distinct role depending on its declaration and location. 
@@ -252,9 +246,3 @@ Let's use the module previously defined in asynchronous mode. For this we use ke
 * * *
 
 **Read next:** [Data Types](/projects/bee/types/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰

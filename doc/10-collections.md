@@ -1,9 +1,3 @@
-##### Lab Topics
-
-* * *
-
-
-
 # Bee Collections
 
 Collections are data structures that group a limited number of values together. You can have access to individual values using different methods, depending on the collection type. 
@@ -303,9 +297,3 @@ Next example demonstrate working with strings. We use "+" operator to make sever
 * * *
 
 **Read next:** [Data Processing](/projects/bee/processing/)
-
-* * *
-
-© 2026 Sage-Code Laboratory
-
-☰
