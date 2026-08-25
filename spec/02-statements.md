@@ -13,9 +13,9 @@ assignment ::= "let" identifier (":=" | "+=" | "-=") expression ;
 ## 3. Operational Semantics
 
 ## 4. Expressions
+## 5. Control Flow
 ```ebnf
-expression ::= primary | binary_op | conditional ;
-primary ::= identifier | constant | "(" expression ")" | call ;
-binary_op ::= expression operator expression ;
-conditional ::= expression "if" condition ("else" expression)? ;
+control_flow ::= "if" condition "do" block ("else" block)? "done" 
+               | "cycle" label? "do" block "repeat" label?
+               | "for" "∀" identifier "∈" range "do" block "repeat" ;
 ```
