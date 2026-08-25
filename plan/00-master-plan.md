@@ -1,22 +1,22 @@
 # Bee Specification Creation Plan
 
 ## Objective
-To develop a complete, compiler-grade EBNF specification for the Bee language and map it to Go AST implementations.
+To develop a complete, compiler-grade EBNF specification for the Bee language and map it to LLVM IR implementations.
 
 ## Phased Approach
 
-### Phase 1: Formal Grammar Definition (BNF/EBNF)
-- Create individual spec files in `bee/spec/` for each language construct.
-- Define EBNF rules for lexical structure, operators, control flow, and rules.
-- Resolve ambiguities (e.g., `cycle` termination, `match` semantics).
+### Phase 1: Formal Grammar Definition (EBNF & Lexical)
+- Create individual spec files in `spec/` for each language construct.
+- Define EBNF rules for lexical structure, statements, rules, and types.
 
-### Phase 2: Structural Mapping
-- Map EBNF productions to Go structs in `bee/internal/ast/` (or equivalent).
-- Define Type Matrix and Operational Semantics for each AST node.
+### Phase 2: Compiler Implementation
+- Implement Lexer/Parser in `internal/`.
+- Lower Bee AST to LLVM IR.
+- Implement Region-Based Memory Management.
 
 ### Phase 3: Validation & Verification
-- Cross-reference retrieved documentation with generated EBNF.
-- Implement tests to verify syntax compliance.
+- Verify spec against `doc/` ground truth.
+- Validate compiler output using `test/` cases.
 
 ## Tasks
 1. [x] Index project and ingest documentation.
