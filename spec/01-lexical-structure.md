@@ -1,34 +1,52 @@
-# Bee Specification: Lexical Structure (01-lexical-structure.md)
+# Bee Lexical Specification (01-lexical-structure.md)
 
-## 1. Character Encoding
-- Bee source files: **Strict UTF-8**.
+## 1. Character Encoding & Sets
+- Encoding: **Strict UTF-8** (RFC 3629).
+- Identifier Base: 
+  - Latin: `A-Z`, `a-z`
+  - Greek: `λ-ω`, `Σ-Ω`
+  - Cyrillic: `Б-Я`
+- Digits: `0-9`
+- Whitespace: Space (U+0020), Tab (U+0009). Physical line breaks act as whitespace except within literals.
 
-## 2. Tokenization Rules (Maximal Munch)
-- **Longest Match:** The Lexer always consumes the longest valid token sequence.
-- **Ambiguity Resolution:**
-  - `..` (Range) takes precedence over `.` (Member Access).
-  - `!!` (Excluded Range) takes precedence over `!` (Range negation/limit).
-  - `!.` (Range, first limit missing) takes precedence over `!` (Range negation).
-  - `.!` (Range, last limit missing) takes precedence over `.` (Member Access).
+## 2. Lexical Tokenization (Maximal Munch)
+The lexer always consumes the longest valid token sequence. Ambiguity resolution:
+- Range Operators (`..`, `.!`, `!.`, `!!`) take precedence over member access (`.`).
+- Assignment operators (`:=`, `::`) take precedence over single-character operators.
 
-## 3. Token Grammar
+## 3. Operator & Delimiter Map
+| Class | Symbols |
+| :--- | :--- |
+| **Range** | `..`, `.!`, `!.`, `!!` |
+| **Logic** | `¬`, `∧`, `∨`, `⊕`, `↓`, `↑` |
+| **Arithmetic**| `+`, `-`, `*`, `/`, `×`, `÷`, `%`, `√`, `^` |
+| **Relation** | `=`, `≠`, `≡`, `!≡`, `≈`, `>`, `<`, `≥`, `≤`, `∈`, `!∈` |
+| **Assignment**| `:`, `:=`, `::`, `+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=` |
+| **Collection**| `∩`, `∪`, `⊂`, `⊃`, `Δ`, `«`, `»` |
+| **Delimiter**| `(`, `)`, `[`, `]`, `{`, `}`, `,`, `;` |
+
+## 4. Formal EBNF Grammar
 ```ebnf
-identifier ::= [a-zA-Zλ-ωБ-Я][a-zA-Z0-9_]* ;
-integer    ::= [0-9]+ ;
-real       ::= [0-9]+ "." [0-9]+ ;
-range_op   ::= ".." | ".!" | "!." | "!!" ;
+(* Tokens *)
+identifier  ::= [a-zA-Zλ-ωБ-Я][a-zA-Z0-9_]* ;
+integer     ::= [0-9]+ ;
+real        ::= [0-9]+ "." [0-9]+ ;
+range_op    ::= ".." | ".!" | "!." | "!!" ;
+string_lit  ::= "'" [^']* "'" | '"' [^"]* '"' | "`" [^`]* "`" ;
+markup_tag  ::= "<" identifier ">" .* "</" identifier ">" ;
+
+(* Disambiguation *)
+member_acc  ::= "." ; 
 ```
 
-## 4. Operator Map
-| Symbol | Range Behavior | Note |
-|--------|----------------|------|
-| ..     | [min..max]     | Full inclusion |
-| .!     | [min..max)     | Exclude upper |
-| !.     | (min..max]     | Exclude lower |
-| !!     | (min..max)     | Exclude both |
+## 5. Escape Sequences
+- `\n`: New line
+- `\t`: Tab
+- `\"`: Double quote
+- `\'`: Single quote
+- `\\`: Backslash
 
-## 5. Lexical Semantics
-- **Ranges:** "!" in context of range operators designates missing limits.
-- **Indentation:** Mandatory 2-space indentation; physical line breaks are ignored unless within string literals.
-- **Public Members:** Start with dot `.` prefix.
-- **Identifiers:** Restricted set of Unicode (Greek/Cyrillic) defined in docs.
+## 6. Indentation & Scoping
+- **Indentation:** Mandatory 2-space indentation.
+- **Blocks:** Explicitly terminated by `done`, `repeat`, or `return`.
+- **Physical Structure:** Newlines are ignored unless inside string or markup literals.
