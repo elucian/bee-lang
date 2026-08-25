@@ -11,3 +11,20 @@ comment_block ::= "+-" .* "-+" ;
 integer ::= [0-9]+ ;
 real ::= [0-9]+ "." [0-9]+ ;
 ```
+
+## 3. Operator Set
+The following operators are strictly reserved. Non-defined Unicode symbols are invalid.
+
+| Category | Operators |
+|----------|-----------|
+| Range | "!", "..", ".!", "!.", "!!" |
+| Logic | "¬", "∧", "∨", "⊕", "↓", "↑" |
+| Arithmetic | "+", "-", "*", "/", "×", "÷", "%", "√", "^" |
+| Relation | "=", "≠", "≡", "!≡", "≈", ">", "<", "≥", "≤", "∈", "!∈" |
+| Assignment | ":", ":=", "::", "+=", "-=", "*=", "/=", "%=", "^=", "√=" |
+| Collection | "∩", "∪", "⊂", "⊃", "Δ", "«", "»" |
+
+## 4. Operational Semantics
+- **Ranges:** "!" is reserved for range negation.
+- **Precedence:** Highest to lowest: Unary {¬, -}, Multiplicative {*, /, ×, ÷, %, √}, Additive {+, -}, Relational {=, ≠, ≡, ∈, <, >}, Logical {∧, ∨}.
+- **Indentation:** Mandatory 2-space indentation; physical line breaks are ignored unless within string literals.
