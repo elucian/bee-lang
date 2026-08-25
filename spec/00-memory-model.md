@@ -24,6 +24,6 @@ zap_statement ::= "zap" identifier ";"
 
 ### Operational Semantics
 - **Operation:** Decrements the reference count to zero (if RC-managed) or triggers immediate deallocation (if MMM-allocated).
-- **Compiler Guarantee:** Subsequent access to a `zap`ped identifier in the same scope MUST trigger a compile-time diagnostic or runtime `Panic`.
+- **Parallel Error Handling:** Spawned threads (coroutines/threads) do not trigger immediate program termination upon failure. Errors are captured in the worker's `$trial` object. The `wait` synchronization barrier in the parent thread aggregates these errors and raises the exception, identifying the specific thread and line of failure.
 - **Auditability:** Usage in Hot Zones must be documented via comments to maintain code auditability.
 - **Scope:** Restricted to the allocation scope or pass-by-reference context.
