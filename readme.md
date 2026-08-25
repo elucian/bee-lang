@@ -15,7 +15,10 @@ The reference compiler is being implemented in **Go**.
 - `cmd/bee/`: Main entry point for the Bee compiler CLI.
 - `internal/`: Core compiler components.
 - `spec/`: Formal language specifications.
-- `manual/`: User documentation.
+- `doc/`: Human-readable user documentation and design principles.
+- `plan/`: Strategic roadmap and development milestones.
+- `solution/`: Reference implementation patterns and solutions.
+- `todo/`: Current task tracker and issue backlog.
 - `tests/`: Integration test cases (`.bee` files).
 - `scripts/`: Utility scripts for development and testing.
 

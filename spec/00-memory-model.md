@@ -13,12 +13,17 @@ Bee utilizes a three-tier memory management architecture:
 ## Memory Management Directive: `zap`
 The `zap` keyword explicitly relinquishes control of an object reference.
 
+### Usage Policy
+- **Hot Zone Priority:** `zap` MUST be used in performance-critical paths (e.g., hot loops) and multi-threaded contexts where RC overhead is prohibited.
+- **Automated Fallback:** Outside of designated Hot Zones, the compiler will default to Reference Counting (RC) to ensure auditability and safety.
+
 ### Grammar
 ```ebnf
 zap_statement ::= "zap" identifier ";"
 ```
 
 ### Operational Semantics
-- **Operation:** Decrements the reference count of the target identifier to zero (if RC-managed) or triggers immediate deallocation (if MMM-allocated).
-- **Compiler Guarantee:** Any subsequent access to a `zap`ped identifier in the same scope MUST trigger a compile-time diagnostic or run-time `Panic` error.
-- **Scope:** The `zap` keyword is restricted to the scope where the identifier was allocated or passed by reference.
+- **Operation:** Decrements the reference count to zero (if RC-managed) or triggers immediate deallocation (if MMM-allocated).
+- **Compiler Guarantee:** Subsequent access to a `zap`ped identifier in the same scope MUST trigger a compile-time diagnostic or runtime `Panic`.
+- **Auditability:** Usage in Hot Zones must be documented via comments to maintain code auditability.
+- **Scope:** Restricted to the allocation scope or pass-by-reference context.
