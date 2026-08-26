@@ -141,7 +141,7 @@ A collection is an Object that has references to other objects. The Objects can 
 
 #### Example:
 
-``` type Person: {name ∈ S, age ∈ N} <: Object; rule main: \-- array of 10 persons new catalog ∈ [Person](10); \-- initialize value using literals new catalog[1] := {name:"Cleopatra", age:15}; new catalog[2] := {name:"Martin", age:17}; \-- using one element with dot operators print catalog[1].name; -- will print Cleopatra print catalog[2].name; -- will print Martin \-- member type can be check using _type()_ built in print type(Person.name); -- will print U print type(Person.age); -- will print W \-- print size of structure print size(Person); return; ``` 
+``` type Person: {name ∈ S, age ∈ N} <: Object; rule main: \-- array of 10 persons new catalog ∈ [Person](10); \-- initialize value using literals new catalog[1] := {name:"Cleopatra", age:15}; new catalog[2] := {name:"Martin", age:17}; \-- using one element with dot operators print catalog[1].name; -- will print Cleopatra print catalog[2].name; -- will print Martin \-- member type can be check using .type() method \-- print Person.name.type(); -- will print S \-- print Person.age.type(); -- will print N \-- print size of structure print size(Person); return; ``` 
 
 ### Recursive Structures
 

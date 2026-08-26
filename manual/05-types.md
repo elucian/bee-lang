@@ -8,7 +8,7 @@ Data types represent a _domains of values_. In other words, data type represent 
 
   * Bee has predefined data types. You can also create new data types based on predefined types using a type declaration. You can create sub-types or composite types having new constraints and rules that can improve data validation further.
 
-  * A data type can be manipulated using rules and operators. You can have a variable of type: _Type_. To detect a data type of any variable you can use the introspection function kind() that will be defined later. 
+  * A data type can be manipulated using rules and operators. You can have a variable of type: _Type_. To detect a data type of any entity or variable you can use the introspection method variable.type(). 
 
 
 
