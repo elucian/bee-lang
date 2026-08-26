@@ -1,4 +1,4 @@
--- asynch call demo
+-- Asynchronous rule call demo
 rule worker() => (v ∈ Z):
   let v := 1;
 return;
@@ -6,4 +6,5 @@ return;
 rule main:
   begin worker();
   print "running";
+  wait; -- Synchronize worker thread execution
 return;

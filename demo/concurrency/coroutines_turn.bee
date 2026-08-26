@@ -1,8 +1,6 @@
 -- Two coroutines taking turns demo
 rule odds(n ∈ N) => (v ∈ N):
-  cycle:
-    new i ∈ N;
-  for i ∈ (1..n) do
+  for i ∈ (1..n) do:
     let v := i * 2 - 1;
     yield;
   repeat;
@@ -10,9 +8,7 @@ rule odds(n ∈ N) => (v ∈ N):
 return;
 
 rule evens(n ∈ N) => (v ∈ N):
-  cycle:
-    new i ∈ N;
-  for i ∈ (1..n) do
+  for i ∈ (1..n) do:
     let v := i * 2;
     yield;
   repeat;
@@ -20,15 +16,15 @@ rule evens(n ∈ N) => (v ∈ N):
 return;
 
 rule main:
+  new a := 1 ∈ N;
+  new b := 1 ∈ N;
   begin odds(3);
   begin evens(3);
-  cycle:
-    new a ∈ N;
-    new b ∈ N;
-  do
+  while a > 0 do:
     yield a << odds;
     yield b << evens;
     write a + "/" + b + " ";
-  repeat if a > 0;
+  repeat;
   print;
+  wait;
 return;

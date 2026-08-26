@@ -12,7 +12,7 @@ rule main:
     begin test(i); 
   repeat;
   wait; -- Synchronize thread barrier
-  return;
+return;
 ```
 
 ## 2. Map-Reduce Pattern
@@ -35,8 +35,8 @@ rule test(n ∈ N) => (result ∈ N):
     for ∀ i ∈ (1..n) do
       let result := i;
       yield; -- Suspend for main thread
-    repeat;
-  return;
+  repeat;
+return;
 ```
 
 ## 4. Producer-Consumer

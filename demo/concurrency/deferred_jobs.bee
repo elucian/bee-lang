@@ -4,10 +4,10 @@ rule scaled(x ∈ Z) => (r ∈ Z):
 return;
 
 rule main:
-  new got ∈ (Z);
-  begin got <+ scaled(1);
-  begin got <+ scaled(2);
-  begin got <+ scaled(3);
+  new got ∈ List(Z);
+  begin scaled(1) +> got;
+  begin scaled(2) +> got;
+  begin scaled(3) +> got;
   wait;
   print got;
 return;
