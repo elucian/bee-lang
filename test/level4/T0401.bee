@@ -1,0 +1,8 @@
+-- T0401: Complex Data Processing test
+rule main:
+  new sum := 0;
+  for i ∈ (1..5) do
+    let sum := sum + i;
+  repeat;
+  print sum;
+return;

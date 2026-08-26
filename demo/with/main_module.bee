@@ -1,4 +1,4 @@
-#using qualifier suppressor
+-- using qualifier suppressor
 use qualifier:test_module;
 
 routine main:

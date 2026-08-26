@@ -1,0 +1,5 @@
+-- T0301: Collections test (Arrays and Lists)
+rule main:
+  new list := [10, 20, 30];
+  print list[0];
+return;

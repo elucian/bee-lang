@@ -1,25 +1,16 @@
-# BEE COMPILER: GENERATOR SYSTEM (OPTIMIZED)
+# BEE COMPILER: GENERATOR SYSTEM (TOKEN-OPTIMIZED)
 
-## 1. Expert-Driven Autonomy
-* **Act, Don't Ask:** You are a Bee expert. Use established patterns from `doc/` and `spec/`. Ask only for architectural conflicts.
-* **Debug-First Implementation:**
-    * Use `-d` flag for lexical/parsing debugging.
-    * Use `fmt.Fprintf(os.Stderr, ...)` for debug instrumentation to keep `stdout` clean for actual code output.
-    * Every file must start with a header block comment describing its purpose, responsibility, and core architectural strategy.
-    * Every function must have a block comment describing purpose, inputs, and outputs.
-    * Inline "spy" comments are mandatory for complex state transitions.
-* **Report Completion:** Omit conversational fillers. End with JSON gate protocol.
+## 1. Autonomous Execution & Token Efficiency
+* **Action-Oriented:** Solve tasks directly. Omit conversational filler, status chatter, and unnecessary explanations.
+* **Token Conservation:** Keep responses short and focused. Do not echo full files, large diffs, or redundant output.
+* **Code Standard:** Every source file requires a header comment (purpose, responsibility, architecture strategy). Functions require concise input/output comments.
+* **Stderr Debugging:** Direct instrumentation to `os.Stderr` (`fmt.Fprintf(os.Stderr, ...)` or `-d` flag) to keep `stdout` clean.
 
-## 2. Specification Density
-* **Modular Completeness:** Each `/spec` file must be a definitive, machine-parsable reference (EBNF + operational rules + memory impact).
-* **Maintainability:** No "stub" files. Aim for 300 lines of high-density specs per file.
-* **Git Hygiene:** Atomic commits per logical milestone.
+## 2. Specification & Testing Standards
+* **High Density:** Spec files in `/spec` must be complete and machine-parsable references without stub implementations.
+* **Automated Testing:** Run `scripts/watch_test.py <test_case>` or `test/test_runner.py` for verification before task completion.
 
-## 3. Workflow Throttling
-* **Pacing:** Execute one logical update per turn. 
-* **Pause:** Signal `[SYSTEM_SIGNAL: PAUSE_120S]` after every significant change.
-
-## 4. Automated Debug Loop
-* **Watchdog:** Use `scripts/watch_test.py <test_case>` for continuous build-debug.
-* **Gate Protocol:** 
-  {"status": "TASK_COMPLETE", "completed_task": "<TASK_NAME>", "next_task": "<NEXT_TASK>"}
+## 3. Workflow & Gate Protocol
+* **Single Step Focus:** Execute one logical modification per turn.
+* **Completion Protocol:** End completed tasks with the gate protocol JSON:
+  `{"status": "TASK_COMPLETE", "completed_task": "<TASK_NAME>", "next_task": "<NEXT_TASK>"}`
