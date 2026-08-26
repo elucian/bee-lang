@@ -1,0 +1,17 @@
+# Missing Features from /demo
+This file tracks undocumented features found in the `/demo` folder that are not yet formalized in `spec/` or `doc/`.
+
+## 1. Contracts (`require` / `ensure`)
+- **Location:** `demo/contracts/*.bee`
+- **Feature:** Preconditions and postconditions using keywords like `require` and potentially `ensure`.
+- **Status:** Not formalized.
+
+## 2. Module Definition (`#define`)
+- **Location:** `demo/with/test_module.bee`
+- **Feature:** `#define module_name` syntax for module identification.
+- **Status:** Not formalized.
+
+## 3. Alter Statement
+- **Location:** `demo/with/test_module.bee`
+- **Feature:** `alter` keyword for variable mutation (documented as `let` in most places).
+- **Status:** Conflict/Duplication with `let`.
