@@ -18,5 +18,6 @@
 10. [x] Formalize Objects (`spec/06-objects.md`).
 11. [x] Formalize Collections (`spec/10-collections.md`).
 12. [x] Formalize Graphics/Library Specs.
-13. [ ] Map AST Nodes.
+13. [x] Map AST Nodes.
 14. [ ] Implement Lexer/Parser in `internal/`.
+15. [x] Configure Self-Contained Test Pipeline in `test/`.
