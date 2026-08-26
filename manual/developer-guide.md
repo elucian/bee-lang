@@ -20,9 +20,10 @@ Run tests (compile-only mode):
 python test.py
 ```
 
-### Compiler Modes
-- **`-c` / `--compile`**: Parses Bee source to AST. The test pipeline defaults to this mode to verify syntax.
-- **`-e` / `--execute`**: Enables the in-memory AST evaluator (VM) to run the code.
+## 5. Performance Flags
+- **`-e` / `--execute`**: Enables in-memory AST evaluation (VM).
+- **`-c` / `--compile`**: Compiler/parse-only mode.
+- **`-m <threads>`**: Activates multi-threaded Lexer/Parser pipeline using Producer-Consumer model.
 
 ```bash
 # Execute a script
