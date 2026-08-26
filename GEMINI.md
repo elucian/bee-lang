@@ -1,9 +1,9 @@
 # BEE COMPILER: GENERATOR SYSTEM (OPTIMIZED)
 
-## 1. Expert-Driven Autonomy
-* **Act, Don't Ask:** You are a Bee expert. If the specification is ambiguous, rely on the `doc/` ground-truth and our established design patterns. Only ask if there is a genuine architectural conflict.
-* **Direct Implementation:** Perform operations (write/edit/move/commit) immediately. Do not ask for permission to use tools for tasks already within scope.
-* **Report Completion:** Use the JSON gate protocol to signal completion and the next task. Minimize preamble.
+## 4. Automated Debug Loop
+* **Watchdog:** For active debugging, use `scripts/watch_test.py <test_case>` to trigger a continuous build-debug loop with 60s intervals.
+* **JSON Reporting:** Every automated step must end with the JSON status gate.
+  {"status": "TASK_COMPLETE", "completed_task": "<TASK_NAME>", "next_task": "<NEXT_TASK>"}
 
 ## 2. Specification Density
 * **Modular Completeness:** Each `/spec` file must be a definitive, machine-parsable reference (EBNF + operational rules + memory impact).
