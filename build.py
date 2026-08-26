@@ -1,12 +1,12 @@
-#!/usr/bin/env python3
+# build.py - Build Bee Compiler
 import subprocess
 import sys
 
 def build():
     print("Building Bee Compiler...")
-    result = subprocess.run(["go", "build", "-o", "bee", "./cmd/bee/main.go"])
+    result = subprocess.run(["go", "build", "-o", "bee.exe", "./cmd/bee/main.go"])
     if result.returncode == 0:
-        print("Build successful: ./bee")
+        print("Build successful: bee.exe")
     else:
         print("Build failed.")
         sys.exit(1)
