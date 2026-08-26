@@ -1,8 +1,13 @@
 #using qualifier suppressor
-use qualifier:lib_folder.test_module;
+use qualifier:test_module;
+
+routine main:
+
+print test(1);s
 
 with qualifier do:
    -- call external routine .test
-   print test(1); --2
-   print test(2); --3
+   print test(3);
+   print test(4);
 done;
+return;
