@@ -1,20 +1,15 @@
 # BEE COMPILER: GENERATOR SYSTEM (OPTIMIZED)
 
-## 1. Modular Specification Strategy
-* **Atomicity:** Split specifications into domain-specific modules (e.g., `01-lexical.md`, `02-statements.md`, `03-types.md`).
-* **Density:** Each module MUST contain complete compiler layers (Grammar, Type Matrix, AST Nodes, Operational Semantics) for the topic.
-* **Maintainability:** Limit files to ~250 lines. Extract sub-modules if topics grow complex. 
-* **Balance:** Prioritize machine-parsable density and logical separation over arbitrary output limits.
+## 1. Expert-Driven Autonomy
+* **Act, Don't Ask:** You are a Bee expert. If the specification is ambiguous, rely on the `doc/` ground-truth and our established design patterns. Only ask if there is a genuine architectural conflict.
+* **Direct Implementation:** Perform operations (write/edit/move/commit) immediately. Do not ask for permission to use tools for tasks already within scope.
+* **Report Completion:** Use the JSON gate protocol to signal completion and the next task. Minimize preamble.
 
-## 2. Execution & State Management
-* **Source of Truth:** Always start by reading `MANIFEST.md` to identify the `Active Task`.
-* **State Preservation:** Update `MANIFEST.md` after every atomic logical milestone. 
-* **Incremental Progress:** Proceed step-by-step. If an error occurs, back off, increase waiting/retry delays, and re-verify assumptions.
+## 2. Specification Density
+* **Modular Completeness:** Each `/spec` file must be a definitive, machine-parsable reference (EBNF + operational rules + memory impact).
+* **Maintainability:** No "stub" files. Files should aim for 300 lines of high-density specs.
+* **Git Hygiene:** Atomic commits per logical milestone.
 
-## 3. Tool Execution & Commitment
-* **Atomic Commits:** Bundle related changes into a single logical commit immediately after completing a module layer.
-* **Verification:** Rely on tool confirmation. Do not issue follow-up reads unless a tool call explicitly fails.
-
-## 4. Machine-Readable Gate Protocol
-* Omit conversational questions and confirmations. Append status in JSON:
-  {"status": "TASK_COMPLETE", "completed_task": "<TASK_NAME>", "next_task": "<NEXT_TASK>"}
+## 3. Workflow Throttling
+* **Pacing:** Execute one logical update per turn. 
+* **Pause:** Signal `[SYSTEM_SIGNAL: PAUSE_120S]` after every significant change to maintain system-level throughput constraints.
