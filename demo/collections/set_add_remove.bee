@@ -6,3 +6,4 @@ rule main:
   print s;
   print 3 ∈ s;
 return;
+

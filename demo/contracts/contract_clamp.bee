@@ -1,7 +1,7 @@
 -- Both, naming results and parameters demo
 rule clamp(v, lo, hi ∈ Z) => (r ∈ Z):
-  require lo ≤ hi;
-  ensure lo ≤ r ≤ hi;
+  expect lo ≤ hi;
+  expect lo ≤ r ≤ hi;
   let r := v;
   if v < lo do
     let r := lo;
@@ -13,3 +13,4 @@ return;
 rule main:
   print (clamp(-5,0,10), clamp(5,0,10), clamp(99,0,10));
 return;
+

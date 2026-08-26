@@ -1,6 +1,6 @@
 -- A promise about what changed demo
 rule bump(n ∈ @Z):
-  ensure n = old n + 1;
+  expect n = old n + 1;
   let n += 1;
 return;
 
@@ -9,3 +9,4 @@ rule main:
   apply bump(@counter);
   print counter;
 return;
+

@@ -5,3 +5,4 @@ rule main:
   print;
   print "then one";
 return;
+

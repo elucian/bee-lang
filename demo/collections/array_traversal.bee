@@ -5,14 +5,15 @@ use $pro_lib.console:(*);
 new a ∈ [Z](10);
 
 rule main:
-  -- array initialization
-  -- Fix: 1-based indexing correction (0..9)
+                                        -- array initialization
+                                        -- Fix: 1-based indexing correction (0..9)
   for i ∈ (0..9) do
-     let a[i] := i;
+    let a[i] := i;
   repeat;
 
-  -- array traversal and print
+                                        -- array traversal and print
   for i ∈ (0..9) do
-     print " a[#(i)] = #(a[i])";
+    print " a[#(i)] = #(a[i])";
   repeat;
 return;
+

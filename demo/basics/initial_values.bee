@@ -3,3 +3,4 @@ rule main:
   new a: 1, b: 2 ∈ Z;
   print (a, b);
 return;
+

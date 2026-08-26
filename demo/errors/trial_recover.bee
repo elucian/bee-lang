@@ -12,3 +12,4 @@ rule main:
     resume;
   done;
 return;
+

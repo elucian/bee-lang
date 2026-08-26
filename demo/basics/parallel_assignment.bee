@@ -4,3 +4,4 @@ rule main:
   let a, b := b, a;
   print (a, b);
 return;
+

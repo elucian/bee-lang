@@ -7,3 +7,4 @@ rule main:
     print "a digit";
   done;
 return;
+

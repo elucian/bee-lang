@@ -147,7 +147,7 @@ cycle_stmt        ::= "cycle" [ label ] ":" block "repeat" [ label ]
 with_stmt         ::= "with" expression "do" ":" block "done" ;
 
 (* Error Handling *)
-trial_stmt        ::= "trial" [ label ] ":" block [ "case" condition "do" ":" block ]* [ "miss" ":" block ] [ "final" ":" block ] "done" [ label ] ;
+	trial_stmt        ::= "trial" [ label ] ":" block [ ( "try" | "case" condition ) "do" ":" block | "try:" block | "final" block ]* "done" [ label ] ;
 
 (* Transfers *)
 transfer_stmt     ::= "return" [ expression ]
@@ -165,6 +165,7 @@ transfer_stmt     ::= "return" [ expression ]
 1. **Mandatory 2-Space Indentation:** All statements inside a block body MUST be indented by exactly 2 spaces relative to the block header statement (`rule`, `if`, `cycle`, `while`, `for`, `with`, `trial`).
 2. **Block Terminator Alignment:** Block terminators (`done`, `repeat`, `return`) MUST align horizontally with the indentation level of their corresponding block header (0 relative indentation).
 3. **Nested Blocks:** Each nested level adds +2 spaces of indentation.
+4. **Trial Block Alignment:** For `trial` blocks, `trial:` opens the block. Section headers (`try:`, `miss:`, `final`) align with the inner indentation level (e.g., +2 spaces relative to `trial`), and statements inside each section add another +2 spaces of indentation. The closing `done;` aligns with the opening `trial:`.
 
 ```bee
 rule main:

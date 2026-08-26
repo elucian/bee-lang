@@ -11,3 +11,4 @@ rule main:
   wait;
   print got;
 return;
+

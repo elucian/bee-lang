@@ -1,7 +1,7 @@
 -- Exact money, with a promise it went up demo
 rule deposit(balance ∈ @Q, amount ∈ Q):
-  require amount > 0;
-  ensure balance > old balance;
+  expect amount > 0;
+  expect balance > old balance;
   let balance += amount;
 return;
 
@@ -10,3 +10,4 @@ rule main:
   apply deposit(@balance, 1\4);
   print balance;
 return;
+

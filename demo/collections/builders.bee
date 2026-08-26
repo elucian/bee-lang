@@ -4,3 +4,4 @@ rule main:
   print { x² | x ∈ (1..4) };
   print [ x | x ∈ (1..9:2) ];
 return;
+

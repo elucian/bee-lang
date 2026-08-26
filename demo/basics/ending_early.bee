@@ -4,3 +4,4 @@ rule main:
   over;
   print "never";
 return;
+

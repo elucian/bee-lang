@@ -3,11 +3,12 @@ use qualifier:test_module;
 
 routine main:
 
-print test(1);s
+  print test(1);s
 
-with qualifier do:
-   -- call external routine .test
-   print test(3);
-   print test(4);
-done;
+  with qualifier do:
+                                        -- call external routine .test
+    print test(3);
+    print test(4);
+  done;
 return;
+

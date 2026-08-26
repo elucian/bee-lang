@@ -8,3 +8,4 @@ rule main:
   let l >> 1;
   print l;
 return;
+

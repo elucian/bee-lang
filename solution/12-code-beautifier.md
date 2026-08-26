@@ -34,6 +34,9 @@ Formatted Source (.bee) ◄── Code Printer Engine ◄── AST Transformer 
 - Space after colons `:` in type declarations and function parameters (`x: 0 ∈ Z`).
 - Compact range operator representation (`1..10`, `1.!10`).
 
+### 2.4 Trial & Error Block Alignment
+- **Trial Headers & Sections:** `trial:` opens the block. Section keywords (`try:`, `miss:`, `final`) align with the trial block's inner indentation level, and statements within each section are indented by an additional +2 spaces. The closing `done;` aligns with the opening `trial:`.
+
 ---
 
 ## 3. Automatic Deterministic Syntax Auto-Fixes

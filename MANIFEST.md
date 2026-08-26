@@ -1,8 +1,8 @@
 # BEE COMPILER MANIFEST
 
 ## Current Status
-- **Current Phase:** Phase 2 – Lexer & Tokenizer Enhancement (`internal/lexer` & `internal/token`)
-- **Active Task:** Task 2.1: Expand `internal/token/token.go` with all spec tokens (`::`, `.!`, `!.`, `!!`, `+>`, `<<`, `λ`, `∈`, `∩`, `∪`, `\`, `≈`, `≠`, etc.).
+- **Current Phase:** Phase 3 – Recursive Descent Parser & AST Expansion (`internal/parser`)
+- **Active Task:** Task 3.1: Implement EBNF AST nodes and recursive descent parsing rules.
 - **Last Updated:** 2026-08-26
 
 ## Formal Specification Baseline (`/spec`)
@@ -31,9 +31,9 @@
    - [x] Task 1.2: Implement EOL comment alignment and block keyword/colon normalization.
    - [x] Task 1.3: Implement AST auto-fix for implicit multiplication (`2(a+b)` $\rightarrow$ `2 * (a + b)`).
    - [x] Task 1.4: Integrate `-b` / `--beautify` CLI flag in `cmd/bee/main.go`.
-2. [/] **Phase 2: Lexer & Tokenizer Enhancement (`internal/lexer` & `internal/token`)**
-   - [ ] Task 2.1: Expand `internal/token/token.go` with all spec tokens (`::`, `.!`, `!.`, `!!`, `+>`, `<<`, `λ`, `∈`, `∩`, `∪`, `\`, `≈`, `≠`, etc.).
-   - [ ] Task 2.2: Update `internal/lexer/lexer.go` with Maximal Munch disambiguation rules for `.`, `..`, `.!`, `!.`, `!!`, `:`, `:=`, `::`, `--`, `+-`.
-   - [ ] Task 2.3: Add support for string interpolation `#(expr)`, raw backtick strings `` `...` ``, and embedded markup DSL blocks (`<sql>`, `<html>`).
+- [x] **Phase 2: Lexer & Tokenizer Enhancement (`internal/lexer` & `internal/token`)**
+   - [x] Task 2.1: Expand `internal/token/token.go` with all spec tokens (`::`, `.!`, `!.`, `!!`, `+>`, `<<`, `λ`, `∈`, `∩`, `∪`, `\`, `≈`, `≠`, etc.).
+   - [x] Task 2.2: Update `internal/lexer/lexer.go` with Maximal Munch disambiguation rules for `.`, `..`, `.!`, `!.`, `!!`, `:`, `:=`, `::`, `--`, `+-`.
+   - [x] Task 2.3: Add support for string interpolation `#(expr)`, raw backtick strings `` `...` ``, and embedded markup DSL blocks (`<sql>`, `<html>`).
 3. [ ] **Phase 3: Recursive Descent Parser & AST Expansion (`internal/parser`)**
 4. [ ] **Phase 4: AST Evaluator & Execution Engine (`internal/evaluator`)**

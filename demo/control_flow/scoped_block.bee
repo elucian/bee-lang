@@ -2,7 +2,8 @@
 rule main:
   start:
     new hidden := 1;
-  do
-    print hidden;
-  done;
-return;
+    do
+      print hidden;
+    done;
+  return;
+

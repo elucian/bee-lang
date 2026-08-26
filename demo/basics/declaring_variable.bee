@@ -4,3 +4,4 @@ rule main:
   let a := 42;
   print a;
 return;
+

@@ -6,3 +6,4 @@ rule main:
   new a, b, c := zeros();
   print (a, b, c);
 return;
+

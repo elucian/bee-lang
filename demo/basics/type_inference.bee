@@ -6,3 +6,4 @@ rule main:
   new f := True;
   print (kind(a), kind(r), kind(s), kind(f));
 return;
+

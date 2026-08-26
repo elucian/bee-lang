@@ -11,10 +11,11 @@ rule main:
     begin sum(lo, lo + 24) +> parts;
   repeat;
   wait;
-  
+
   new total := 0 ∈ Z;
   for ∀ p ∈ parts do:
     let total += p;
   repeat;
   print total;
 return;
+

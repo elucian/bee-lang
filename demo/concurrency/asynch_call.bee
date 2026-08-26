@@ -6,5 +6,6 @@ return;
 rule main:
   begin worker();
   print "running";
-  wait; -- Synchronize worker thread execution
+  wait;                                 -- Synchronize worker thread execution
 return;
+

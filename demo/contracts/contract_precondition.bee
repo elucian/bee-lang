@@ -1,9 +1,10 @@
 -- A precondition demo
 rule half(n ∈ Z) => (r ∈ Z):
-  require n % 2 = 0;
+  expect n % 2 = 0;
   let r := n / 2;
 return;
 
 rule main:
   print half(8);
 return;
+

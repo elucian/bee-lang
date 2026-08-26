@@ -4,3 +4,4 @@ rule main:
   expect n > 0;
   print "held";
 return;
+

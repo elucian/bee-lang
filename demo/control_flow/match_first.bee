@@ -5,7 +5,8 @@ rule main:
     print "one";
   when 2, 3 do
     print "two or three";
-  other
+  other:
     print "other";
   done;
 return;
+

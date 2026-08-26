@@ -2,9 +2,10 @@
 rule main:
   new n := 0;
   cycle:
-  while n < 3 do
-    write n;
-    let n += 1;
-  repeat;
-  print;
-return;
+    while n < 3 do
+      write n;
+      let n += 1;
+    repeat;
+    print;
+  return;
+

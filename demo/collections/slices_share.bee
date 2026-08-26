@@ -5,3 +5,4 @@ rule main:
   let w[*] := 0;
   print a;
 return;
+

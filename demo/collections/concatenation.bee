@@ -5,3 +5,4 @@ rule main:
   new m := (3,);
   print l + m;
 return;
+

@@ -2,3 +2,4 @@
 rule main:
   print { (x:x²) | x ∈ (1..4) };
 return;
+

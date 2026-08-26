@@ -43,7 +43,6 @@ func New(opts ...Option) *Beautifier {
 // Inputs: input (string) - raw Bee source code.
 // Outputs: (string, error) - beautified source code or formatting error.
 func (b *Beautifier) FormatSource(input string) (string, error) {
-	// Spy comment: Normalize line endings to LF (\n)
 	cleanInput := strings.ReplaceAll(input, "\r\n", "\n")
 	lines := strings.Split(cleanInput, "\n")
 
@@ -53,21 +52,18 @@ func (b *Beautifier) FormatSource(input string) (string, error) {
 	for lineNo, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" {
-			// Preserve single blank lines
 			if len(formattedLines) > 0 && formattedLines[len(formattedLines)-1] != "" {
 				formattedLines = append(formattedLines, "")
 			}
 			continue
 		}
 
-		// Spy comment: Auto-correct implicit multiplication and syntax shortcuts
 		trimmed = b.autoFixLine(trimmed)
 
-		// Spy comment: Check if line closes or continues a block
 		isCloser := b.isBlockCloser(trimmed)
 		isMiddle := b.isBlockMiddle(trimmed)
 
-		if isCloser || isMiddle {
+		if isCloser {
 			indentLevel--
 			if indentLevel < 0 {
 				indentLevel = 0
@@ -75,18 +71,26 @@ func (b *Beautifier) FormatSource(input string) (string, error) {
 			}
 		}
 
-		// Apply current indentation level
-		pad := strings.Repeat(" ", indentLevel*b.indentSpaces)
+		// Indentation calculation:
+		// Regular openers (rule, if, trial, match) increment indentLevel for their body.
+		// Middle/branch clauses (else, try, case, miss, final, when, other) sit at the parent block's inner indentation level (indentLevel - 1).
+		visualIndent := indentLevel
+		if isMiddle {
+			visualIndent = indentLevel - 1
+			if visualIndent < 0 {
+				visualIndent = 0
+			}
+		}
+
+		pad := strings.Repeat(" ", visualIndent*b.indentSpaces)
 		formattedLines = append(formattedLines, pad+trimmed)
 
-		// Spy comment: Check if the line opens or continues a block
 		isOpener := b.isBlockOpener(trimmed)
-		if (isOpener || isMiddle) && !isCloser {
+		if isOpener {
 			indentLevel++
 		}
 	}
 
-	// Spy comment: Align trailing comments across lines
 	if b.alignComments {
 		formattedLines = b.alignCommentsInBlock(formattedLines)
 	}
@@ -103,7 +107,6 @@ func (b *Beautifier) autoFixLine(line string) string {
 		return line
 	}
 
-	// Auto-fix 1: Implicit multiplication for numbers preceding parenthesis e.g., 2(a+b) -> 2 * (a+b)
 	reNumParen := regexp.MustCompile(`(\b\d+)\s*\(([^)]+)\)`)
 	line = reNumParen.ReplaceAllString(line, `$1 * ($2)`)
 
@@ -117,10 +120,9 @@ func (b *Beautifier) alignCommentsInBlock(lines []string) []string {
 	var aligned []string
 	minCommentCol := 40
 
-	// First pass: find maximum code length for trailing comments
 	for _, line := range lines {
 		idx := strings.Index(line, "--")
-		if idx > 0 { // Trailing comment
+		if idx > 0 {
 			codePart := strings.TrimRight(line[:idx], " \t")
 			if len(codePart)+2 > minCommentCol {
 				minCommentCol = len(codePart) + 2
@@ -128,10 +130,9 @@ func (b *Beautifier) alignCommentsInBlock(lines []string) []string {
 		}
 	}
 
-	// Second pass: apply padding to align trailing comments
 	for _, line := range lines {
 		idx := strings.Index(line, "--")
-		if idx > 0 { // Trailing comment
+		if idx > 0 {
 			codePart := strings.TrimRight(line[:idx], " \t")
 			commentPart := line[idx:]
 			padding := strings.Repeat(" ", max(1, minCommentCol-len(codePart)))
@@ -148,6 +149,9 @@ func (b *Beautifier) alignCommentsInBlock(lines []string) []string {
 // Outputs: bool - true if the line opens a block.
 func (b *Beautifier) isBlockOpener(line string) bool {
 	if b.endsWithColon(line) || strings.HasSuffix(line, "do") || strings.HasSuffix(line, "do:") {
+		if b.isBlockMiddle(line) {
+			return false
+		}
 		return true
 	}
 	openerKeywords := []string{"rule ", "if ", "while ", "for ", "cycle", "match", "trial", "with "}
@@ -159,11 +163,11 @@ func (b *Beautifier) isBlockOpener(line string) bool {
 	return false
 }
 
-// isBlockMiddle checks if a line is a block continuation keyword (like else, case, miss, final).
+// isBlockMiddle checks if a line is a block continuation keyword (like else, case, miss, final, try, when, other).
 // Inputs: line (string) - trimmed line of code.
 // Outputs: bool - true if the line is a block middle keyword.
 func (b *Beautifier) isBlockMiddle(line string) bool {
-	return strings.HasPrefix(line, "else") || strings.HasPrefix(line, "case") || strings.HasPrefix(line, "miss") || strings.HasPrefix(line, "final")
+	return strings.HasPrefix(line, "else") || strings.HasPrefix(line, "case") || strings.HasPrefix(line, "miss") || strings.HasPrefix(line, "final") || strings.HasPrefix(line, "try") || strings.HasPrefix(line, "when") || strings.HasPrefix(line, "other")
 }
 
 // isBlockCloser checks if a line closes a block.

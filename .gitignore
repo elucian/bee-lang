@@ -26,3 +26,6 @@ vendor/
 
 # Project specific
 web/
+
+# Test results
+test/output/

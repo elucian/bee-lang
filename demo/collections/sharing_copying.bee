@@ -6,3 +6,4 @@ rule main:
   let a[1] := 9;
   print (shared[1], copied[1]);
 return;
+

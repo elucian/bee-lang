@@ -7,3 +7,4 @@ rule main:
   scrap m[1];
   print m;
 return;
+

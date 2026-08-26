@@ -9,3 +9,4 @@ rule main:
     print "always";
   done;
 return;
+

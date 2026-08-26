@@ -4,3 +4,4 @@ rule main:
   print {1,2,3} inter {2,3};
   print {1,2} subset {1,2,3};
 return;
+

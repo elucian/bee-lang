@@ -4,3 +4,4 @@ rule main:
   print l;
   print (l.head, l.tail);
 return;
+

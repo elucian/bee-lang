@@ -76,3 +76,47 @@ return;`
 		t.Errorf("Comment alignment failed. Result:\n%s", result)
 	}
 }
+
+func TestTrialBlockFormatting(t *testing.T) {
+	input := `-- pass, fail and abort demo
+rule main:
+  trial:
+  try:
+    print "a";
+    pass;
+    print "skipped";
+  try:
+    fail 500, "noted";
+  try:
+    print "code is " + $error.code;
+  final
+    print "done";
+  done;
+return;`
+
+	expected := `-- pass, fail and abort demo
+rule main:
+  trial:
+  try:
+    print "a";
+    pass;
+    print "skipped";
+  try:
+    fail 500, "noted";
+  try:
+    print "code is " + $error.code;
+  final
+    print "done";
+  done;
+return;`
+
+	b := New()
+	result, err := b.FormatSource(input)
+	if err != nil {
+		t.Fatalf("FormatSource failed: %v", err)
+	}
+
+	if strings.TrimSpace(result) != strings.TrimSpace(expected) {
+		t.Errorf("Trial block indentation mismatch.\nExpected:\n%s\nGot:\n%s", expected, result)
+	}
+}

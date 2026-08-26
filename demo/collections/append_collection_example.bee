@@ -1,8 +1,9 @@
--- A rule that adds an item to a collection and uses `old` 
+-- A rule that adds an item to a collection and uses `old`
 -- to verify the size increased by exactly one.
 
 rule append_item(items ∈ @[Z], new_val ∈ Z):
-ensure length(items) = length(old items) + 1;
-ensure items[length(items)-1] = new_val;
+  ensure length(items) = length(old items) + 1;
+  ensure items[length(items)-1] = new_val;
   let append(items, new_val);
 return;
+

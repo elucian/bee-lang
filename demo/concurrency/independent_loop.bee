@@ -6,3 +6,4 @@ rule main:
   repeat;
   print squares;
 return;
+
