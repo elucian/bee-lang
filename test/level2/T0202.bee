@@ -1,4 +1,6 @@
--- T0202: Hello World with String and Print
+-- T0202: Hello World with String variable
 rule main:
-  print "Hello World";
-  return;
+  new s ∈ S;
+  let s := "Hello World";
+  print s;
+return;
