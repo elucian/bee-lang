@@ -56,6 +56,9 @@ member_acc  ::= "." ;
 ```
 
 ## 6. Indentation & Scoping
-- **Indentation:** Mandatory 2-space indentation relative to the containing block declaration. Deviation from this rule triggers a `SyntaxError: IndentationMismatch`.
-- **Blocks:** Explicitly terminated by `done`, `repeat`, or `return`. The terminator must align with the corresponding block header.
+- **Indentation:** Mandatory 2-space indentation relative to the containing block declaration. Deviation (e.g., mismatched spaces, unindented body statements) triggers a `SyntaxError: IndentationMismatch`.
+- **Block Closure:** Explicitly terminated by `done`, `repeat`, or `return`. 
+- **Alignment Rule:**
+  - Body statements must be indented by exactly 2 spaces.
+  - The termination statement (`return`, `done`, `repeat`) must have 0 indentation relative to its corresponding block header (the `rule` or `if`/`cycle` declaration).
 - **Physical Structure:** Newlines are ignored unless inside string or markup literals.
