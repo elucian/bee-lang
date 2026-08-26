@@ -1,10 +1,10 @@
-# Bee Specification: Types & Collections (05-types-collections.md)
+# Bee Types & Collections Specification (05-types-collections.md)
 
 ## 1. Type Declarations
 ```ebnf
 type_decl     ::= "type" identifier ":" type_descriptor ("<:" super_type)? ";" ;
 type_desc     ::= primitive_type | collection_type | custom_type ;
-primitive     ::= "B" | "A" | "U" | "Q" | "N" | "Z" | "R" ;
+primitive     ::= "B" | "A" | "U" | "Q" | "N" | "Z" | "R" | "S" ;
 ```
 
 ## 2. Collection Grammar
@@ -17,7 +17,8 @@ key_val_pair  ::= expression ":" expression ;
 ```
 
 ## 3. Operational Semantics
-- **Membership:** `∈` checks element membership in collections.
+- **Membership:** `∈` checks element membership.
 - **Allocation:** `[]` defines a mutable reference wrapper (box).
 - **Indexing:** 1-based indexing for arrays/matrices. `$` anchors the last index.
 - **Memory Safety:** Collections are reference-based. RC manages mutable instances; GC manages immutable string segments.
+- **Conversion:** `collection :> collection` triggers explicit re-allocation and deep copy.
