@@ -2,7 +2,7 @@
 
 ## Current Status
 - **Current Phase:** Spec Implementation
-- **Active Task:** Formalize Objects
+- **Active Task:** Formalize Types & Collections
 - **Last Updated:** 2026-08-25
 
 ## TODO Plan
@@ -14,7 +14,8 @@
 6. [x] Formalize Statement Grammar (`spec/02-statements.md`).
 7. [x] Formalize Rules (`spec/03-rules.md`).
 8. [x] Formalize Functions (`spec/04-functions.md`).
-9. [x] Formalize Types & Collections (`spec/05-types-collections.md`).
+9. [x] Formalize Types (`spec/05-types.md`).
 10. [x] Formalize Objects (`spec/06-objects.md`).
-11. [ ] Map AST Nodes.
-12. [ ] Implement Lexer/Parser in `internal/`.
+11. [x] Formalize Collections (`spec/10-collections.md`).
+12. [ ] Map AST Nodes.
+13. [ ] Implement Lexer/Parser in `internal/`.
