@@ -1,5 +1,5 @@
 # Language Specification Issues
 
-- **Ambiguous Block Terminations:** While `done` is documented as the standard terminator, some `cycle` structures mention `repeat` or `cycle` as terminators. The spec needs to explicitly define which terminator is required for which construct.
-- **`match` keyword vs `if-else` ladder:** The distinction between when to use a `match` statement versus a `ladder` is not clearly defined in terms of performance or design intent.
-- **Missing Grammar Definition:** The current documentation describes features through examples but lacks a formal BNF/EBNF grammar definition, leading to potential implementation divergence.
+- [x] **Ambiguous Block Terminations:** Resolved in `spec/02-statements.md`. Block terminators are strictly defined: `done` for `if`/`with`/`match`/`trial`, `repeat` for `cycle`/`while`/`for`, and `return` for `rule`/routines.
+- [x] **`match` keyword vs `if-else` ladder:** Formalized in `spec/02-statements.md`. `if-else` is used for binary/boolean branches; `match` supports `first`, `every`, and `total` matching modes.
+- [x] **Formal Grammar Definition:** EBNF grammar fully defined in `spec/01-lexical-structure.md` and `spec/02-statements.md`.
