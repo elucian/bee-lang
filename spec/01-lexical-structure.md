@@ -31,8 +31,12 @@ The lexer always consumes the longest valid token sequence. Ambiguity resolution
 identifier  ::= [a-zA-Zλ-ωБ-Я][a-zA-Z0-9_]* ;
 integer     ::= [0-9]+ ;
 real        ::= [0-9]+ "." [0-9]+ ;
+unicode_lit ::= "U+" [0-9A-Fa-f]{4} | "U-" [0-9A-Fa-f]{8} ;
 range_op    ::= ".." | ".!" | "!." | "!!" ;
-string_lit  ::= "'" [^']* "'" | '"' [^"]* '"' | "`" [^`]* "`" ;
+string_lit  ::= "'" (char_esc | [^'\\])* "'" 
+              | '"' (char_esc | [^"\\])* '"' 
+              | "`" (char_esc | [^`\\])* "`" ;
+char_esc    ::= "\\" ("n" | "t" | '"' | "'" | "\\") ;
 markup_tag  ::= "<" identifier ">" .* "</" identifier ">" ;
 
 (* Disambiguation *)
