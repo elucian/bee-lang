@@ -1,6 +1,7 @@
 # build.py - Build Bee Compiler
 import subprocess
 import sys
+import os
 
 def build():
     print("Building Bee Compiler...")

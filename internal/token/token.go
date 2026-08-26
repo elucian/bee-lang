@@ -2,10 +2,12 @@ package token
 
 type Type string
 
+type Pos int
+
 type Token struct {
 	Type    Type
 	Literal string
-	Pos     int
+	Pos     Pos
 }
 
 const (
@@ -13,6 +15,7 @@ const (
 	EOF       = "EOF"
 	IDENT     = "IDENT"
 	INT       = "INT"
+	STRING    = "STRING"
 	ASSIGN    = ":="
 	EQ        = "="
 	SEMICOLON = ";"

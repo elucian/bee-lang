@@ -16,7 +16,6 @@ def run_tests():
     results = {"version": "0.1.0", "tests": []}
     
     for root, dirs, files in os.walk(test_dir):
-        # Skip the output directory
         if "output" in root:
             continue
             
@@ -25,8 +24,8 @@ def run_tests():
                 test_path = os.path.join(root, file)
                 print(f"Testing {test_path}...")
                 
-                # Execute the compiler from bin
-                result = subprocess.run(["./bin/bee.exe", test_path], capture_output=True, text=True)
+                # Execute the compiler in compile-only mode (-c)
+                result = subprocess.run(["./bin/bee.exe", "-c", test_path], capture_output=True, text=True)
                 
                 status = "PASSED" if result.returncode == 0 else "FAILED"
                 if result.returncode != 0:

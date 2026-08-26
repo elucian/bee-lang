@@ -2,21 +2,30 @@ package main
 
 import (
 	"bee/internal/lexer"
+	"bee/internal/token"
+	"flag"
 	"fmt"
 	"os"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: bee <file.bee>")
+	version := flag.Bool("version", false, "print version")
+	v := flag.Bool("v", false, "print version")
+	debug := flag.Bool("d", false, "debug lexer")
+	flag.Parse()
+
+	if *version || *v {
+		fmt.Println("Bee Compiler v0.1.0")
 		return
 	}
 
-	// Basic lexing test
-	input, _ := os.ReadFile(os.Args[1])
+	input, _ := os.ReadFile(flag.Arg(0))
 	l := lexer.New(string(input))
 
-	for tok := l.NextToken(); tok.Type != "EOF"; tok = l.NextToken() {
-		fmt.Printf("%+v\n", tok)
+	if *debug {
+		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
+			fmt.Printf("%+v\n", tok)
+		}
+		return
 	}
 }

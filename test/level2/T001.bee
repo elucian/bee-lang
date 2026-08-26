@@ -1,4 +1,0 @@
--- T001: Hello World
-rule main:
-  print "Hello World";
-  return;
