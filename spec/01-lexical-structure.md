@@ -9,10 +9,17 @@
 - Digits: `0-9`
 - Whitespace: Space (U+0020), Tab (U+0009). Physical line breaks act as whitespace except within literals.
 
-## 2. Lexical Tokenization (Maximal Munch)
-The lexer always consumes the longest valid token sequence. Ambiguity resolution:
-- Range Operators (`..`, `.!`, `!.`, `!!`) take precedence over member access (`.`).
-- Assignment operators (`:=`, `::`) take precedence over single-character operators.
+## 2. Identifier & Reserved Symbol Rules
+- **Type Identifiers:** Single uppercase Latin letter (e.g., `Z`, `N`, `R`).
+- **User-Defined Types:** Uppercase start, >1 letter (e.g., `MyType`).
+- **Variables:** Lowercase start (e.g., `myVar`, `x`, `count`).
+- **User-Defined Constants:** Uppercase start, >1 letter (e.g., `MaxBuffer`).
+- **Reserved Symbols (Strict):**
+    - `λ`: Lambda-definition operator.
+    - `π`: Mathematical constant (3.1415...).
+    - `α`, `β`: Angle constants (Degrees/Radians).
+    - `ε`: Tolerance constant (Used in approximate comparisons `≈`).
+- **Identifiers:** Cannot be single-letter uppercase (Reserved for Types) nor reserved symbols.
 
 ## 3. Operator & Delimiter Map
 | Class | Symbols |
