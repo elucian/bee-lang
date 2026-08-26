@@ -1,0 +1,6 @@
+-- T002: Declaring a variable
+rule main:
+  new a ∈ Z;
+  let a := 42;
+  print a;
+  return;

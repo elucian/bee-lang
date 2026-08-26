@@ -1,3 +1,4 @@
--- T001: Simple assignment
-new a := 10;
-print a;
+-- T001: Hello World
+rule main:
+  print "Hello World";
+  return;
