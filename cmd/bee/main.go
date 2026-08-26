@@ -56,8 +56,6 @@ func main() {
 	// VM Evaluator / Compile-only check
 	if *execute {
 		eval := evaluator.New()
-		// Inject variables for T0202 manually until Parser handles assignments
-		eval.SetSymbol("s", "Hello World")
 		eval.Eval(program)
 	} else if *compile {
 		fmt.Println("Syntax OK: Program parsed successfully.")

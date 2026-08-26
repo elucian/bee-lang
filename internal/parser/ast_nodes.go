@@ -23,12 +23,13 @@ type Program struct {
 	Statements []Statement
 }
 
-type DeclarationStatement struct {
-	Token token.Token
+type PrintStatement struct {
+	Token       token.Token
+	Expressions []Expression
 }
 
-func (ds *DeclarationStatement) statementNode() {}
-func (ds *DeclarationStatement) Pos() token.Pos { return ds.Token.Pos }
+func (ps *PrintStatement) statementNode() {}
+func (ps *PrintStatement) Pos() token.Pos { return ps.Token.Pos }
 
 type AssignmentStatement struct {
 	Token  token.Token
@@ -47,13 +48,12 @@ type ExpectStatement struct {
 func (es *ExpectStatement) statementNode() {}
 func (es *ExpectStatement) Pos() token.Pos { return es.Token.Pos }
 
-type PrintStatement struct {
-	Token       token.Token
-	Expressions []Expression
+type DeclarationStatement struct {
+	Token token.Token
 }
 
-func (ps *PrintStatement) statementNode() {}
-func (ps *PrintStatement) Pos() token.Pos { return ps.Token.Pos }
+func (ds *DeclarationStatement) statementNode() {}
+func (ds *DeclarationStatement) Pos() token.Pos { return ds.Token.Pos }
 
 type Identifier struct {
 	Token token.Token
@@ -78,3 +78,12 @@ type IntegerLiteral struct {
 
 func (il *IntegerLiteral) expressionNode() {}
 func (il *IntegerLiteral) Pos() token.Pos  { return il.Token.Pos }
+
+type BinaryExpression struct {
+	Token token.Token
+	Left  Expression
+	Right Expression
+}
+
+func (be *BinaryExpression) expressionNode() {}
+func (be *BinaryExpression) Pos() token.Pos  { return be.Token.Pos }

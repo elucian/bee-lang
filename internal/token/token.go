@@ -18,7 +18,9 @@ const (
 	STRING    = "STRING"
 	ASSIGN    = ":="
 	EQ        = "="
-	COLON     = ":"
+	PLUS      = "+"
+	MINUS     = "-"
+	ASTERISK  = "*"
 	SEMICOLON = ";"
 	RULE      = "RULE"
 	PRINT     = "PRINT"
@@ -26,6 +28,7 @@ const (
 	NEW       = "NEW"
 	LET       = "LET"
 	EXPECT    = "EXPECT"
+	COLON     = ":"
 )
 
 var keywords = map[string]Type{

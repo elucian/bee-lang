@@ -46,7 +46,6 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 }
 
 func (p *Parser) parseDeclaration(tok token.Token) Statement {
-	// Simplified: "new id ∈ Type;"
 	p.l.NextToken() // ident
 	p.l.NextToken() // ∈
 	p.l.NextToken() // type
@@ -80,11 +79,20 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 
 func (p *Parser) parseExpression() Expression {
 	tok := p.l.NextToken()
+	var left Expression
 	if tok.Type == token.STRING {
-		return &StringLiteral{Token: tok, Value: tok.Literal}
+		left = &StringLiteral{Token: tok, Value: tok.Literal}
+	} else if tok.Type == token.INT {
+		left = &IntegerLiteral{Token: tok, Value: tok.Literal}
+	} else {
+		left = &Identifier{Token: tok, Value: tok.Literal}
 	}
-	if tok.Type == token.INT {
-		return &IntegerLiteral{Token: tok, Value: tok.Literal}
+
+	// Simple binary expression check
+	peekTok := p.l.NextToken()
+	if peekTok.Type == token.PLUS || peekTok.Type == token.MINUS || peekTok.Type == token.ASTERISK {
+		right := p.parseExpression()
+		return &BinaryExpression{Token: peekTok, Left: left, Right: right}
 	}
-	return &Identifier{Token: tok, Value: tok.Literal}
+	return left
 }

@@ -1,8 +1,4 @@
-/*
-Package lexer provides the lexical analysis engine for the Bee language.
-Responsibility: Transforms source code into a token stream.
-Strategy: Uses a single-pass scanner with Maximal Munch disambiguation for operators.
-*/
+// internal/lexer/lexer.go
 package lexer
 
 import (
@@ -17,14 +13,12 @@ type Lexer struct {
 	debug        bool
 }
 
-// New initializes the Lexer with input and starts the read head.
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.readChar()
 	return l
 }
 
-// readChar reads the next character from input and advances the position.
 func (l *Lexer) readChar() {
 	if l.readPosition >= len(l.input) {
 		l.ch = 0
@@ -35,7 +29,6 @@ func (l *Lexer) readChar() {
 	l.readPosition++
 }
 
-// peekChar returns the next character without advancing the lexer.
 func (l *Lexer) PeekChar() rune {
 	if l.readPosition >= len(l.input) {
 		return 0
@@ -43,7 +36,6 @@ func (l *Lexer) PeekChar() rune {
 	return rune(l.input[l.readPosition])
 }
 
-// NextToken scans the input and returns the next valid token.
 func (l *Lexer) NextToken() token.Token {
 	l.skipWhitespace()
 
@@ -65,12 +57,16 @@ func (l *Lexer) NextToken() token.Token {
 		tok.Type = token.STRING
 		tok.Literal = l.readString()
 		return tok
+	case '+':
+		tok = newToken(token.PLUS, l.ch)
 	case '-':
 		if l.PeekChar() == '-' {
 			l.skipComment()
 			return l.NextToken()
 		}
-		tok = newToken(token.ILLEGAL, l.ch)
+		tok = newToken(token.MINUS, l.ch)
+	case '*':
+		tok = newToken(token.ASTERISK, l.ch)
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF

@@ -22,4 +22,4 @@ vendor/
 *.swo
 
 # Project specific
-doc/
+# doc/ (Now moved to manual/ref)
