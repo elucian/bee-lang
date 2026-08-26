@@ -11,8 +11,8 @@ result        ::= identifier "∈" type ;
 
 ## 2. Rule Execution
 ```ebnf
-rule_apply    ::= "apply" identifier "(" arguments? ")" ;
-rule_call     ::= identifier "(" arguments? ")" ;
+rule_apply    ::= "apply" identifier "(" arguments? ")" ";" ;
+rule_call     ::= identifier "(" arguments? ")" ";" ;
 ```
 
 ## 3. Operational Semantics
@@ -21,3 +21,4 @@ rule_call     ::= identifier "(" arguments? ")" ;
 - **Param Passing:** Primitive types by value; composite types by share (reference).
 - **Scope:** Rules have static constructor scope and dynamic object scope (`self`).
 - **Hoisting:** No hoisting; private rules must be defined before use. Forward declarations are required for mutual recursion.
+- **Multi-Result Restriction:** Rules with >1 result are strictly statements. Capture via deconstruction or list assignment is required; they are forbidden in expression trees.
