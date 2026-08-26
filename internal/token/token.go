@@ -18,6 +18,7 @@ const (
 	STRING    = "STRING"
 	ASSIGN    = ":="
 	EQ        = "="
+	COLON     = ":"
 	SEMICOLON = ";"
 	RULE      = "RULE"
 	PRINT     = "PRINT"

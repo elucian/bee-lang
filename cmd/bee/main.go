@@ -1,31 +1,28 @@
 package main
 
 import (
+	"bee/internal/evaluator"
 	"bee/internal/lexer"
-	"bee/internal/token"
+	"bee/internal/parser"
 	"flag"
 	"fmt"
 	"os"
 )
 
 func main() {
-	version := flag.Bool("version", false, "print version")
-	v := flag.Bool("v", false, "print version")
-	debug := flag.Bool("d", false, "debug lexer")
+	execute := flag.Bool("e", false, "execute code")
+	compile := flag.Bool("c", false, "compile only")
 	flag.Parse()
-
-	if *version || *v {
-		fmt.Println("Bee Compiler v0.1.0")
-		return
-	}
 
 	input, _ := os.ReadFile(flag.Arg(0))
 	l := lexer.New(string(input))
+	p := parser.New(l)
+	program := p.ParseProgram()
 
-	if *debug {
-		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
-			fmt.Printf("%+v\n", tok)
-		}
-		return
+	if *execute {
+		eval := evaluator.New()
+		eval.Eval(program)
+	} else if *compile {
+		fmt.Println("Syntax OK")
 	}
 }
