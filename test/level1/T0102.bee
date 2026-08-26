@@ -1,0 +1,5 @@
+-- T002: Simple Expressions
+rule main:
+  expect 42 * 2 = 84;
+  expect 40 + 2 = 42;
+return;
