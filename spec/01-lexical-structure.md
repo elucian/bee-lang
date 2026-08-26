@@ -47,13 +47,17 @@ string_lit  ::= "'" (char_esc | [^'\\])* "'"
 char_esc    ::= "\\" ("n" | "t" | '"' | "'" | "\\") ;
 ### Markup Literals
 Markup blocks are "opaque" literal regions. Upon encountering an opening tag, the lexer enters a `MARKUP_STATE`. It ignores all Bee syntax rules until it matches the corresponding closing tag.
+
 ```ebnf
-markup_block ::= "<" identifier ">" (markup_content | markup_nested)* "</" identifier ">" ;
+markup_block   ::= "<" tag_name (attribute)* ">" (markup_content | markup_nested)* "</" tag_name ">" ;
+tag_name       ::= identifier | "text" | "sql" | "html" | "xml" | "json" | "code" ;
+attribute      ::= identifier "=" '"' identifier '"' ;
 markup_content ::= [^<]* ;
-markup_nested ::= markup_block ;
+markup_nested  ::= markup_block ;
 ```
-- **Semantics:** The content between tags is captured as a `Rope` type (S) and assigned to the variable.
-- **Nesting:** Markup blocks support recursive nesting of tags.
+- **Semantics:** Content is captured as a `Rope` type (S).
+- **Syntax Highlighting:** Tags like `<code lang="c">` signal the IDE/Editor to switch lexing contexts, but the Bee compiler treats the entire region as a literal `Rope`.
+- **Nesting:** Markup blocks support recursive nesting.
 
 (* Disambiguation *)
 member_acc  ::= "." ; 
