@@ -1,0 +1,4 @@
+-- T0202: Hello World with String and Print
+rule main:
+  print "Hello World";
+  return;

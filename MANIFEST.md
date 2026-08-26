@@ -1,8 +1,8 @@
 llc# BEE COMPILER MANIFEST
 
 ## Current Status
-- **Current Phase:** Compiler Implementation
-- **Active Task:** Map AST Nodes
+- **Current Phase:** Compiler Foundations
+- **Active Task:** Implement Lexer tokens for TDD loop
 - **Last Updated:** 2026-08-25
 
 ## TODO Plan
@@ -19,5 +19,9 @@ llc# BEE COMPILER MANIFEST
 11. [x] Formalize Collections (`spec/10-collections.md`).
 12. [x] Formalize Graphics/Library Specs.
 13. [x] Map AST Nodes.
-14. [ ] Implement Lexer/Parser in `internal/`.
+14. [x] Configure Self-Contained Test Pipeline in `test/`.
+13. [ ] Implement Lexer Token Definitions for keywords (`new`, `let`, `expect`, `rule`, `return`).
+14. [ ] Implement Lexer logic for Operators (`:=`, `∈`, `=`).
+15. [ ] Pass `T0101` and `T0102`.
+16. [ ] Implement string/print support for `T0202`.
 15. [x] Configure Self-Contained Test Pipeline in `test/`.
