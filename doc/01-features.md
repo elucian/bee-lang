@@ -27,6 +27,7 @@ Bee is designed to be learn as first programming language for Sage-Code develope
   * Use comprehensive data literals for collections;
   * Enable comprehensive comments and code documentation;
   * Enable Greek and Cyrillic letters for identifiers;
+  * Enable multi-language markup tags (e.g., `<code lang="c">`) for editor-integrated syntax highlighting;
 
 
 The result of these choices is demonstrate below. You can observe different comment notations enable different color. Syntax colorizer is able to identify also the keywords and highlight every statement.
