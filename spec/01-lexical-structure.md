@@ -55,7 +55,7 @@ markup_nested  ::= markup_block ;
 member_acc  ::= "." ; 
 ```
 
-## 5. Indentation & Scoping
-- **Indentation:** Mandatory 2-space indentation.
-- **Blocks:** Explicitly terminated by `done`, `repeat`, or `return`.
+## 6. Indentation & Scoping
+- **Indentation:** Mandatory 2-space indentation relative to the containing block declaration. Deviation from this rule triggers a `SyntaxError: IndentationMismatch`.
+- **Blocks:** Explicitly terminated by `done`, `repeat`, or `return`. The terminator must align with the corresponding block header.
 - **Physical Structure:** Newlines are ignored unless inside string or markup literals.
