@@ -12,7 +12,7 @@
 4. [x] Incrementally expand Memory Model Specification sections.
 5. [x] Formalize Lexical Grammar (`spec/01-lexical-structure.md`).
 6. [x] Formalize Statement Grammar (`spec/02-statements.md`).
-7. [ ] Formalize Rules (`spec/03-rules.md`).
-8. [ ] Formalize Functions (`spec/04-functions.md`).
+7. [x] Formalize Rules (`spec/03-rules.md`).
+8. [x] Formalize Functions (`spec/04-functions.md`).
 9. [ ] Formalize Types & Collections (`spec/05-types-collections.md`).
 10. [ ] Map AST Nodes and implement Lexer/Parser.
