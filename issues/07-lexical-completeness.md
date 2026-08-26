@@ -1,9 +1,9 @@
 # Issue: Lexical Grammar Completeness
-- **Status:** Open
-- **Description:** `spec/01-lexical-structure.md` is currently a stub that lacks critical lexical definitions.
-- **Technical Debt:**
-    - **String Literals:** Missing definitions for `' '`, `" "`, and backquoted `` ` `` literals, including escape sequence rules.
-    - **Markup Tags:** Missing EBNF for `<text>`, `<sql>`, etc.
-    - **Unicode Identifiers:** Regex is currently too restrictive; needs to support the full range of Greek/Cyrillic identifiers described in `11-processing.md`.
-    - **Tokenization Rules:** Missing "Maximal Munch" definition to disambiguate operators like `.` vs `..` vs `.` (member).
-- **Plan:** Refine `spec/01-lexical-structure.md` with full EBNF and tokenization strategy.
+- **Status:** Resolved
+- **Description:** `spec/01-lexical-structure.md` contains comprehensive lexical definitions aligned with the language manual.
+- **Completed Improvements:**
+    - **String Literals:** Added EBNF and escape rules for single-quoted `' '`, double-quoted interpolated `" #(expr) "`, and raw backtick `` ` `` strings.
+    - **Markup Tags:** Complete EBNF for embedded DSL blocks (`<sql>`, `<html>`, `<code>`, `<text>`, etc.).
+    - **Unicode Identifiers:** Full character definitions for Greek (`α-ω`, `Α-Ω`), Cyrillic (`а-я`, `А-Я`), subscript indices (`x₀`, `x₁`), and superscript power expressions (`x²`).
+    - **Tokenization Rules:** Explicit "Maximal Munch" strategy disambiguating `.`, `..`, `.!`, `!.`, `!!`, `:`, `:=`, `::`, `--`, and `+-`.
+- **Spec Reference:** `spec/01-lexical-structure.md`

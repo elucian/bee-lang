@@ -1,19 +1,86 @@
-# Bee Memory Model Specification (00-memory-model.md)
+# Bee Specification: Memory Model Architecture (00-memory-model.md)
 
-## 1. Overview
-Bee employs a three-tier hybrid memory management architecture:
-- **Reference Counting (RC):** Default for mutable objects.
-- **Manual Management (MMM):** Explicit `new`/`zap` for Hot Zones.
-- **Garbage Collection (GC):** Compacts immutable strings.
+## 1. Executive Architectural Overview
 
-## 2. Boundary Management & Thread Safety
-- **Boundary Tracing:** Static analysis ensures RC-managed mutable structures pointing to GC-managed strings are correctly traced.
-- **Thread Safety:** Atomic RC ensures thread-safe sharing between `begin` spawned threads. Immutable strings (GC-managed) are intrinsically thread-safe.
-- **Parallel Error Handling:** Failures in worker threads are captured in `$trial`, surfaced upon `wait` synchronization.
+Bee utilizes a deterministic, three-tier hybrid memory management model engineered for zero-overhead performance in critical paths, safe parallel execution, and low latency:
 
-## 3. Zap Directive
-- **Usage Policy:** `zap` MUST be used in performance-critical paths (e.g., hot loops) where Reference Counting (RC) overhead is prohibited.
-- **Compiler Guarantee:** Subsequent access to a `zap`ped identifier triggers a compile-time diagnostic or runtime `Panic`.
+1. **Atomic Reference Counting (ARC):** Default management for mutable dynamic structures, object instances, and system resources. Provides immediate, deterministic resource cleanup upon last reference release.
+2. **Region-Based Arena Allocation & Manual Memory Control (MMM / `zap`):** Local arena allocations scoped to rule boundaries with zero-allocation-overhead performance. Explicit deallocation using `zap` bypasses ARC overhead in Hot Zones.
+3. **Compacting Generational Garbage Collection (GC):** Special-purpose garbage collector specifically dedicated to immutable strings, string slices, and rope buffers, guaranteeing efficient interning, zero fragmentation, and lock-free thread-safe sharing.
 
-## 4. Scope & Resolution
-- **Scope Enforcement:** Identifiers must be resolved against a scoped Symbol Table. Attempting to resolve an unbound identifier within a rule's region triggers a runtime `Panic`.
+---
+
+## 2. Memory Tier Invariants & Memory Layouts
+
+### 2.1 Tier 1: Atomic Reference Counting (ARC)
+- **Target Allocation Scope:** All mutable heap allocations including objects (`object`), dynamic collections (`array`, `map`, `list`, `set`), and system OS handles (files, channels, sockets).
+- **Header Layout:** Every ARC-allocated object contains a standardized 16-byte header:
+  ```
+  +-------------------+-------------------+-----------------------+
+  |  RefCount (64bit) |   TypeID (32bit)  | Flags / Metadata(32) |
+  +-------------------+-------------------+-----------------------+
+  |                   Payload Data (Variable Width)               |
+  +---------------------------------------------------------------+
+  ```
+- **Operational Semantics:**
+  - Upon assignment/copy: `AtomicInc(RefHeader.RefCount)`
+  - Upon scope exit/re-assignment: `if AtomicDec(RefHeader.RefCount) == 0 then DestructAndFree(Object)`
+  - Destructor execution is immediate and synchronous, releasing backing native resources (e.g. file descriptors) on the calling thread.
+
+### 2.2 Tier 2: Region-Based Arena Allocation & `zap` Directive
+- **Region Boundary:** Every `rule` or nested block execution frame allocates a light stack-bound Region Arena (2KB initial chunk).
+- **Transient Objects:** Short-lived local variables allocate directly from the active Region Arena offset without individual heap allocations (`ptr = arena.top; arena.top += size`).
+- **Region Cleanup:** Upon reaching block termination (`return`, `done`, `repeat`), the entire Region Arena offset is unwound in a single instruction (`arena.top = arena.base`), instantly reclaiming all region-allocated memory.
+- **Manual Deallocation (`zap`):**
+  - Syntax: `zap identifier;`
+  - In Hot Zones (performance-critical loops), `zap` explicitly invalidates the pointer and resets the target memory slot immediately.
+  - **Static Analysis Invariant:** The compiler performs lifetime tracking. Reading or writing an identifier post-`zap` within the same control flow graph triggers a compile-time error `E0401: AccessAfterZap`.
+  - **Runtime Safety Guard:** In non-optimized debug builds (`-d`), `zap` zero-fills the target pointer slot; subsequent dereference triggers a runtime `Panic: UseAfterZap`.
+
+### 2.3 Tier 3: Compacting Generational GC (Immutable Strings & Ropes)
+- **Target Allocation Scope:** Immutable string literals, dynamic string concatenations, and rope nodes.
+- **GC Roots:** Thread execution stacks, Region Arenas, and ARC object payload pointers pointing into the String Heap.
+- **Compaction Phase:** Generational GC operates independently on background threads. Because string payloads are strictly immutable, compaction uses two-space copying without requiring write barriers on reader threads.
+
+---
+
+## 3. Concurrency & Cross-Thread Memory Boundaries
+
+### 3.1 Thread Isolation & Ownership Transfer
+- **Spawned Threads (`begin`):** Spawned routine tasks operate within isolated Region Arenas.
+- **Immutable Sharing:** GC-managed immutable strings and ropes can be passed across thread boundaries without locks or reference copies.
+- **Mutable ARC Transfer:** Passing a mutable ARC object to a spawned thread increments its atomic reference count (`LOCK XADD`).
+- **Parallel Error Isolation:** Uncaught exceptions or panics within worker threads freeze the thread's local Region Arena and capture diagnostic context into the thread-local `$trial` handle, preventing corruption of parent state.
+
+---
+
+## 4. Formal EBNF Grammar
+
+```ebnf
+(* Memory Management Statements *)
+zap_statement     ::= "zap" identifier ";" ;
+new_statement     ::= "new" identifier [ ":" type_specifier ] [ ":=" expression ] ";" ;
+let_statement     ::= "let" identifier ":=" expression ";" ;
+
+(* Variable Mutability Modifiers *)
+variable_decl     ::= "new" identifier ( "∈" | "in" ) type_specifier ";" ;
+mutability_prefix ::= "let" | "alter" ;
+```
+
+---
+
+## 5. Diagnostics & Safety Protocols
+
+| Error Code | Violation Description | Mitigation / Diagnostic Action |
+| :--- | :--- | :--- |
+| `E0401` | Use of identifier after `zap` statement | Compile-time fatal error with source line location |
+| `E0402` | Pointer escape from Region Arena to outer scope | Compiler automatic promotion from Region to ARC Heap |
+| `E0403` | Unhandled cycle in ARC structure | Static lifetime analysis or runtime leak warning under `-d` flag |
+| `E0404` | Invalid cross-thread mutation of unshared reference | Compile-time data race restriction |
+
+---
+
+## 6. Issue & Solution Alignment Status
+
+- **Issues Addressed:** Fully resolves `issues/MEMORY_MODEL.md` by formalizing Region Arenas, `zap` static analysis guarantees, and error diagnostics.
+- **Solution Verification:** Aligned with `solution/01-memory-management.md` and `solution/03-region-based-memory.md`.
