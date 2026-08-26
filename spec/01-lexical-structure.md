@@ -1,4 +1,4 @@
-# Bee Lexical Specification (01-lexical-structure.md)
+# Bee Specification: Lexical Structure (01-lexical-structure.md)
 
 ## 1. Character Encoding & Sets
 - Encoding: **Strict UTF-8** (RFC 3629).
@@ -19,7 +19,7 @@
     - `π`: Mathematical constant (3.1415...).
     - `ε`: Tolerance constant (Used in approximate comparisons `≈`).
 - **Reserved Semantic Symbols:**
-    - `α`, `β`: Reserved for Angle-type variables (typically initialized with degrees).
+    - `α`, `β`: Reserved for Angle-type variables.
 - **Identifiers:** Cannot be single-letter uppercase (Reserved for Types) nor reserved symbols.
 
 ## 3. Operator & Delimiter Map
@@ -45,32 +45,17 @@ string_lit  ::= "'" (char_esc | [^'\\])* "'"
               | '"' (char_esc | [^"\\])* '"' 
               | "`" (char_esc | [^`\\])* "`" ;
 char_esc    ::= "\\" ("n" | "t" | '"' | "'" | "\\") ;
-### Markup Literals
-Markup blocks are "opaque" literal regions. Upon encountering an opening tag, the lexer enters a `MARKUP_STATE`. It ignores all Bee syntax rules until it matches the corresponding closing tag.
-
-```ebnf
 markup_block   ::= "<" tag_name (attribute)* ">" (markup_content | markup_nested)* "</" tag_name ">" ;
 tag_name       ::= identifier | "text" | "sql" | "html" | "xml" | "json" | "code" ;
 attribute      ::= identifier "=" '"' identifier '"' ;
 markup_content ::= [^<]* ;
 markup_nested  ::= markup_block ;
-```
-- **Semantics:** Content is captured as a `Rope` type (S).
-- **Syntax Highlighting:** Tags like `<code lang="c">` signal the IDE/Editor to switch lexing contexts, but the Bee compiler treats the entire region as a literal `Rope`.
-- **Nesting:** Markup blocks support recursive nesting.
 
 (* Disambiguation *)
 member_acc  ::= "." ; 
 ```
 
-## 5. Escape Sequences
-- `\n`: New line
-- `\t`: Tab
-- `\"`: Double quote
-- `\'`: Single quote
-- `\\`: Backslash
-
-## 6. Indentation & Scoping
+## 5. Indentation & Scoping
 - **Indentation:** Mandatory 2-space indentation.
 - **Blocks:** Explicitly terminated by `done`, `repeat`, or `return`.
 - **Physical Structure:** Newlines are ignored unless inside string or markup literals.
