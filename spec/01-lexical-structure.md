@@ -17,8 +17,9 @@
 - **Reserved Symbols (Strict):**
     - `λ`: Lambda-definition operator.
     - `π`: Mathematical constant (3.1415...).
-    - `α`, `β`: Angle constants (Degrees/Radians).
     - `ε`: Tolerance constant (Used in approximate comparisons `≈`).
+- **Reserved Semantic Symbols:**
+    - `α`, `β`: Reserved for Angle-type variables (typically initialized with degrees).
 - **Identifiers:** Cannot be single-letter uppercase (Reserved for Types) nor reserved symbols.
 
 ## 3. Operator & Delimiter Map
