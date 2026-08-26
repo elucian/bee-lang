@@ -44,9 +44,9 @@ Directives control the compilation process and are set in configuration files or
 ## Modules
 Bee applications consist of one `main` module and multiple secondary/library modules.
 
-- **Main Modules:** Entry point, contains the `rule main` entry rule. Not reusable.
-- **Secondary Modules:** Reusable logic located in `src/`.
-- **Library Modules:** Globally installed in `lib/`. Loaded once per module.
+- **Main Module:** The entry point for an application. MUST contain a `rule main`. Cannot be imported/loaded into other modules.
+- **Secondary Modules:** Located in `src/`. Contain reusable `rule` sets but **do not** contain `rule main`.
+- **Library Modules:** Located in `lib/`. Globally reusable, loaded once per module. **Do not** contain `rule main`.
 
 ### Main rule
 The `main` rule is the orchestration entry point.
@@ -72,13 +72,13 @@ Modules define their own scope (namespace).
 - Private members: no prefix.
 
 ```bee
-module demo_module:
-  set .pi: 3.14; -- Public constant
+-- demo module:
+set .pi: 3.14; -- Public constant
 
-  rule .bar(x, y ∈ N) => (r ∈ N):
-    new str := "test";
-    let r := x + y;
-    return;
+rule .bar(x, y ∈ N) => (r ∈ N):
+  new str := "test";
+  let r := x + y;
+return;
 ```
 
 ## Execution
