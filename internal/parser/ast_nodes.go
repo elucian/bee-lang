@@ -24,12 +24,21 @@ type Program struct {
 }
 
 type PrintStatement struct {
-	Token      token.Token
-	Expression Expression
+	Token       token.Token
+	Expressions []Expression
 }
 
 func (ps *PrintStatement) statementNode() {}
 func (ps *PrintStatement) Pos() token.Pos { return ps.Token.Pos }
+
+type AssignmentStatement struct {
+	Token  token.Token
+	Names  []*Identifier
+	Values []Expression
+}
+
+func (as *AssignmentStatement) statementNode() {}
+func (as *AssignmentStatement) Pos() token.Pos { return as.Token.Pos }
 
 type Identifier struct {
 	Token token.Token
@@ -46,3 +55,11 @@ type StringLiteral struct {
 
 func (sl *StringLiteral) expressionNode() {}
 func (sl *StringLiteral) Pos() token.Pos  { return sl.Token.Pos }
+
+type IntegerLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (il *IntegerLiteral) expressionNode() {}
+func (il *IntegerLiteral) Pos() token.Pos  { return il.Token.Pos }

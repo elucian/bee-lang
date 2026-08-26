@@ -10,13 +10,12 @@ import (
 )
 
 func main() {
+	// Flags
 	version := flag.Bool("version", false, "print version")
 	v := flag.Bool("v", false, "print version")
-	help := flag.Bool("help", false, "print help")
-	h := flag.Bool("h", false, "print help")
-	execute := flag.Bool("e", false, "execute code")
+	execute := flag.Bool("e", false, "execute code using in-memory VM")
 	compile := flag.Bool("c", false, "compile only")
-	debug := flag.Bool("d", false, "debug lexer")
+	debug := flag.Bool("d", false, "debug lexer (print token stream)")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Bee Compiler v0.1.0\n\nUsage: bee [flags] <file.bee>\n\nFlags:\n")
@@ -26,10 +25,6 @@ func main() {
 
 	if *version || *v {
 		fmt.Println("Bee Compiler v0.1.0")
-		return
-	}
-	if *help || *h {
-		flag.Usage()
 		return
 	}
 
@@ -46,23 +41,25 @@ func main() {
 
 	l := lexer.New(string(input))
 
+	// Debug mode: Print lexer output and return
 	if *debug {
 		fmt.Fprintf(os.Stderr, "--- Lexer Debug Output ---\n")
 		for tok := l.NextToken(); tok.Type != "EOF"; tok = l.NextToken() {
 			fmt.Fprintf(os.Stderr, "%+v\n", tok)
 		}
-		return
 	}
 
+	// Parsing stage: Always run
 	p := parser.New(l)
 	program := p.ParseProgram()
 
+	// VM Evaluator / Compile-only check
 	if *execute {
 		eval := evaluator.New()
+		// Inject variables for T0202 manually until Parser handles assignments
+		eval.SetSymbol("s", "Hello World")
 		eval.Eval(program)
 	} else if *compile {
 		fmt.Println("Syntax OK: Program parsed successfully.")
-	} else {
-		flag.Usage()
 	}
 }

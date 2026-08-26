@@ -36,7 +36,7 @@ func (l *Lexer) readChar() {
 }
 
 // peekChar returns the next character without advancing the lexer.
-func (l *Lexer) peekChar() rune {
+func (l *Lexer) PeekChar() rune {
 	if l.readPosition >= len(l.input) {
 		return 0
 	}
@@ -53,7 +53,7 @@ func (l *Lexer) NextToken() token.Token {
 	case '=':
 		tok = newToken(token.EQ, l.ch)
 	case ':':
-		if l.peekChar() == '=' {
+		if l.PeekChar() == '=' {
 			tok = token.Token{Type: token.ASSIGN, Literal: ":="}
 			l.readChar()
 		} else {
@@ -66,7 +66,7 @@ func (l *Lexer) NextToken() token.Token {
 		tok.Literal = l.readString()
 		return tok
 	case '-':
-		if l.peekChar() == '-' {
+		if l.PeekChar() == '-' {
 			l.skipComment()
 			return l.NextToken()
 		}
