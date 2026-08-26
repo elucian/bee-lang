@@ -1,8 +1,8 @@
 # BEE COMPILER MANIFEST
 
 ## Current Status
-- **Current Phase:** Spec Implementation
-- **Active Task:** Formalize Types & Collections
+- **Current Phase:** Compiler Implementation
+- **Active Task:** Map AST Nodes
 - **Last Updated:** 2026-08-25
 
 ## TODO Plan
@@ -17,5 +17,6 @@
 9. [x] Formalize Types (`spec/05-types.md`).
 10. [x] Formalize Objects (`spec/06-objects.md`).
 11. [x] Formalize Collections (`spec/10-collections.md`).
-12. [ ] Map AST Nodes.
-13. [ ] Implement Lexer/Parser in `internal/`.
+12. [x] Formalize Graphics/Library Specs.
+13. [ ] Map AST Nodes.
+14. [ ] Implement Lexer/Parser in `internal/`.
