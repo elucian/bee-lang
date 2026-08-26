@@ -21,7 +21,7 @@ go build -o bee ./cmd/bee
 - **Memory Model:** Adhere to the hybrid memory strategy. Use `zap` only in documented "Hot Zones."
 - **Testing:** Add new test cases in `test/levelX/`. Ensure all tests pass via `test/test_runner.py` before submitting.
 
-## 4. Architecture Overview
-- **Frontend:** Hand-written Lexer and recursive descent Parser.
-- **Backend:** LLVM IR generation via `llir/llvm`.
-- **Memory:** Region-based allocation bound to `rule` lifecycles.
+## 5. Execution Model
+- **Hybrid VM/Compiler:** Bee features an integrated in-memory AST evaluator (VM) for immediate execution and testing, alongside the LLVM-based machine-code compiler.
+- **Workflow:** Developers can run source files directly via the VM to verify logic before performing full native compilation.
+- **Memory Consistency:** Both the VM and the LLVM backend strictly enforce the region-based memory model and 1-based indexing rules.
