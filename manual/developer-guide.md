@@ -15,10 +15,11 @@ Build the compiler:
 python build.py
 ```
 
-Run tests:
+Install to PATH:
 ```bash
-python test.py
+.\setup_env.ps1
 ```
+*(Note: Run this once as Administrator to permanently add `bee` to your User PATH. Restart your terminal after execution.)*
 
 ### Compiler Modes
 - **`-d` / `--debug`**: Debug mode. Outputs the token stream to `stderr`.
