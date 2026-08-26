@@ -4,7 +4,8 @@ import sys
 
 def run_tests():
     print("Running Bee Compiler Tests...")
-    test_dir = "tests"
+    test_dir = "."
+    output_dir = "output"
     success = True
     
     # Simple runner: Find all .bee files in tests directory
