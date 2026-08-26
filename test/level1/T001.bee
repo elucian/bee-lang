@@ -1,5 +1,6 @@
 -- T001: Basic assignment and expectation
-new a ∈ Z;
-let a := 42;
-expect a = 42;
-return;
+rule main:
+  new a ∈ Z;
+  let a := 42;
+  expect a = 42;
+  return;
