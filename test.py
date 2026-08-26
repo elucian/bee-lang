@@ -4,6 +4,7 @@ import sys
 
 def test():
     print("Running Test Pipeline...")
+    # Calls the test runner located inside the test folder
     result = subprocess.run([sys.executable, "test/test_runner.py"])
     if result.returncode == 0:
         print("Tests passed.")
