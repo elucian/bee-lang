@@ -35,6 +35,7 @@ expression_list ::= expression ("," expression)* ;
 
 ## 4. Operational Semantics
 - **Statement Sequencing:** Statements are evaluated in order; `;` is mandatory.
+- **Rule Termination:** `return` is the mandatory terminal statement, aligned with the block indentation to signify the end of the execution unit.
 - **Scope:** Every block introduces a new lexical region.
 - **Indentation:** Mandatory 2-space rule; `IndentationMismatch` triggers a compile-time error.
 - **Transfer:** Transfer statements (`exit`, `redo`, `next`) interrupt the current block's control flow.
