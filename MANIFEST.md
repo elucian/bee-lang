@@ -15,4 +15,5 @@
 7. [x] Formalize Rules (`spec/03-rules.md`).
 8. [x] Formalize Functions (`spec/04-functions.md`).
 9. [ ] Formalize Types & Collections (`spec/05-types-collections.md`).
-10. [ ] Map AST Nodes and implement Lexer/Parser.
+9. [x] Map AST Nodes and implement Lexer/Parser.
+10. [ ] Phase 2: Compiler Foundations (Implement Lexer/Parser).
