@@ -1,8 +1,8 @@
 # BEE COMPILER MANIFEST
 
 ## Current Status
-- **Current Phase:** Specification Phase Complete / Architectural Baseline Finalized
-- **Active Task:** Compiler-Native Code Beautifier Engine (`-b` / `--beautify`)
+- **Current Phase:** Phase 2 – Lexer & Tokenizer Enhancement (`internal/lexer` & `internal/token`)
+- **Active Task:** Task 2.1: Expand `internal/token/token.go` with all spec tokens (`::`, `.!`, `!.`, `!!`, `+>`, `<<`, `λ`, `∈`, `∩`, `∪`, `\`, `≈`, `≠`, etc.).
 - **Last Updated:** 2026-08-26
 
 ## Formal Specification Baseline (`/spec`)
@@ -23,14 +23,17 @@
 ## Issues & Architectural Solutions
 - [x] `issues/08-code-beautifier.md`: Native compiler code beautifier (`-b` / `--beautify`).
 - [x] `solution/12-code-beautifier.md`: In-place formatting, 2-space block alignment, EOL comment alignment, implicit multiplication auto-fix (`2(a+b)` $\rightarrow$ `2 * (a + b)`).
+- [x] `solution/13-compiler-implementation-phase.md`: Compiler implementation phase tracking document.
 
-## Compiler & Toolchain Implementation Roadmap
-1. [x] Ingest documentation & harmonize `/manual` with `/spec`.
-2. [x] Complete formal specifications across all `/spec` modules (`00` through `14`).
-3. [x] Update all `/demo/concurrency` files to modern language conventions.
-4. [x] Level 1 - Level 5 test runner integration (`test/test_runner.py`).
-5. [ ] Native compiler beautifier implementation (`-b` / `--beautify` in `internal/beautifier`).
-6. [ ] Lexer implementation (`internal/lexer`) alignment with new tokens and Maximal Munch rules.
-7. [ ] Parser implementation (`internal/parser`) alignment with EBNF grammars.
-8. [ ] AST Evaluator enhancement (`internal/evaluator`).
-9. [ ] LLVM IR Native Lowering (`internal/compiler`).
+## Compiler Implementation Phase Roadmap
+1. [x] **Phase 1: Native Code Beautifier Engine (`internal/beautifier`)**
+   - [x] Task 1.1: Implement `internal/beautifier/beautifier.go` with 2-space block indentation enforcement.
+   - [x] Task 1.2: Implement EOL comment alignment and block keyword/colon normalization.
+   - [x] Task 1.3: Implement AST auto-fix for implicit multiplication (`2(a+b)` $\rightarrow$ `2 * (a + b)`).
+   - [x] Task 1.4: Integrate `-b` / `--beautify` CLI flag in `cmd/bee/main.go`.
+2. [/] **Phase 2: Lexer & Tokenizer Enhancement (`internal/lexer` & `internal/token`)**
+   - [ ] Task 2.1: Expand `internal/token/token.go` with all spec tokens (`::`, `.!`, `!.`, `!!`, `+>`, `<<`, `λ`, `∈`, `∩`, `∪`, `\`, `≈`, `≠`, etc.).
+   - [ ] Task 2.2: Update `internal/lexer/lexer.go` with Maximal Munch disambiguation rules for `.`, `..`, `.!`, `!.`, `!!`, `:`, `:=`, `::`, `--`, `+-`.
+   - [ ] Task 2.3: Add support for string interpolation `#(expr)`, raw backtick strings `` `...` ``, and embedded markup DSL blocks (`<sql>`, `<html>`).
+3. [ ] **Phase 3: Recursive Descent Parser & AST Expansion (`internal/parser`)**
+4. [ ] **Phase 4: AST Evaluator & Execution Engine (`internal/evaluator`)**
