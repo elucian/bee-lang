@@ -1,32 +1,49 @@
 import os
 import subprocess
 import sys
+import json
+import datetime
 
 def run_tests():
     print("Running Bee Compiler Tests...")
-    test_dir = "."
-    output_dir = "output"
-    success = True
+    test_dir = "test"
+    output_dir = "test/output"
     
-    # Simple runner: Find all .bee files in tests directory
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    success = True
+    results = {"version": "0.1.0", "tests": []}
+    
     for root, dirs, files in os.walk(test_dir):
+        # Skip the output directory
+        if "output" in root:
+            continue
+            
         for file in files:
             if file.endswith(".bee"):
-                path = os.path.join(root, file)
-                print(f"Testing {path}...")
+                test_path = os.path.join(root, file)
+                print(f"Testing {test_path}...")
                 
-                # Assume compiler exists at ./bee
-                # Replace with actual compiler invocation
-                result = subprocess.run(["./bee", path], capture_output=True, text=True)
+                # Execute the compiler
+                result = subprocess.run(["./bee.exe", test_path], capture_output=True, text=True)
                 
+                status = "PASSED" if result.returncode == 0 else "FAILED"
                 if result.returncode != 0:
-                    print(f"FAILED: {path}")
-                    print(result.stderr)
                     success = False
-                else:
-                    print(f"PASSED: {path}")
-
+                
+                results["tests"].append({
+                    "path": test_path,
+                    "status": status,
+                    "stderr": result.stderr
+                })
+    
+    report_file = os.path.join(output_dir, f"report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+    with open(report_file, 'w') as f:
+        json.dump(results, f, indent=4)
+        
     if not success:
+        print("Tests failed. Check report.")
         sys.exit(1)
     print("All tests passed.")
 
