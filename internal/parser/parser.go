@@ -32,36 +32,26 @@ func (p *Parser) ParseProgram() *Program {
 
 func (p *Parser) parseStatement(tok token.Token) Statement {
 	switch tok.Type {
-	case token.LET:
-		return p.parseAssignment(tok)
-	case token.PRINT:
-		return p.parsePrintStatement(tok)
 	case token.NEW:
 		return p.parseDeclaration(tok)
+	case token.LET:
+		return p.parseAssignment(tok)
+	case token.EXPECT:
+		return p.parseExpectStatement(tok)
+	case token.PRINT:
+		return p.parsePrintStatement(tok)
 	default:
 		return nil
 	}
 }
 
-func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
-	stmt := &PrintStatement{Token: tok}
-	for {
-		stmt.Expressions = append(stmt.Expressions, p.parseExpression())
-		if p.l.PeekChar() == ';' {
-			p.l.NextToken()
-			break
-		}
-		p.l.NextToken() // skip comma
-	}
-	return stmt
-}
-
 func (p *Parser) parseDeclaration(tok token.Token) Statement {
-	p.l.NextToken() // skip ident
-	p.l.NextToken() // skip ∈
-	p.l.NextToken() // skip type
-	p.l.NextToken() // skip ;
-	return nil      // Simplified for now
+	// Simplified: "new id ∈ Type;"
+	p.l.NextToken() // ident
+	p.l.NextToken() // ∈
+	p.l.NextToken() // type
+	p.l.NextToken() // ;
+	return &DeclarationStatement{Token: tok}
 }
 
 func (p *Parser) parseAssignment(tok token.Token) Statement {
@@ -70,6 +60,21 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 	stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent, Value: tokIdent.Literal})
 	p.l.NextToken() // Skip :=
 	stmt.Values = append(stmt.Values, p.parseExpression())
+	p.l.NextToken() // Skip ;
+	return stmt
+}
+
+func (p *Parser) parseExpectStatement(tok token.Token) Statement {
+	stmt := &ExpectStatement{Token: tok}
+	stmt.Condition = p.parseExpression()
+	p.l.NextToken() // Skip ;
+	return stmt
+}
+
+func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
+	stmt := &PrintStatement{Token: tok}
+	stmt.Expressions = append(stmt.Expressions, p.parseExpression())
+	p.l.NextToken() // Skip ;
 	return stmt
 }
 

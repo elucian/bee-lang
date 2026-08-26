@@ -23,13 +23,12 @@ type Program struct {
 	Statements []Statement
 }
 
-type PrintStatement struct {
-	Token       token.Token
-	Expressions []Expression
+type DeclarationStatement struct {
+	Token token.Token
 }
 
-func (ps *PrintStatement) statementNode() {}
-func (ps *PrintStatement) Pos() token.Pos { return ps.Token.Pos }
+func (ds *DeclarationStatement) statementNode() {}
+func (ds *DeclarationStatement) Pos() token.Pos { return ds.Token.Pos }
 
 type AssignmentStatement struct {
 	Token  token.Token
@@ -39,6 +38,22 @@ type AssignmentStatement struct {
 
 func (as *AssignmentStatement) statementNode() {}
 func (as *AssignmentStatement) Pos() token.Pos { return as.Token.Pos }
+
+type ExpectStatement struct {
+	Token     token.Token
+	Condition Expression
+}
+
+func (es *ExpectStatement) statementNode() {}
+func (es *ExpectStatement) Pos() token.Pos { return es.Token.Pos }
+
+type PrintStatement struct {
+	Token       token.Token
+	Expressions []Expression
+}
+
+func (ps *PrintStatement) statementNode() {}
+func (ps *PrintStatement) Pos() token.Pos { return ps.Token.Pos }
 
 type Identifier struct {
 	Token token.Token
