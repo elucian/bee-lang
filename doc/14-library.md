@@ -1,178 +1,43 @@
 # Bee Standard Library
 
-Bee is a compiled language. That means you must include whatever you use in your code. We will design a small standard library to be included with any program, that will give a small footprint to any Bee executable. 
+Bee is a compiled language; you must include only what you use. The standard library provides a minimal footprint for any executable.
 
-## Standard Library
+## 1. Introspection Rules
+Rules for runtime inspection.
 
-Standard library contains:
+| Rule | Purpose |
+| :--- | :--- |
+| `type` | Return type name |
+| `size` | Return type memory size |
 
-  * Type system
-  * Mathematics
-  * System library
+## 2. Core Collections
+Primitive and composite types are included automatically in the standard library.
 
+| Rule | Purpose |
+| :--- | :--- |
+| `length` | Collection length |
+| `capacity` | Collection capacity |
+| `min` / `max` | Limit definitions |
 
-## Data rules
+## 3. String & List Utilities
+| Rule | Purpose |
+| :--- | :--- |
+| `split` / `join` | String to list / List to string |
+| `find` / `replace` | String search & modification |
+| `trim` | Remove whitespace |
+| `left`/`right`/`center` | Alignment |
 
-**Introspection Rules**
+## 4. System I/O
+The `system.io` module manages file handles (`F`) and folder structures.
 
-| rule | Purpose   |
-|------|-----------|
-| type | type name |
-| size | type size |
+| Rule | Purpose |
+| :--- | :--- |
+| `open` / `close` | File I/O lifecycle |
+| `exist` | File/Folder existence check |
+| `list` | Directory listing |
+| `delete` | File/Folder deletion |
 
-
-## Bee Type System
-
-Primitive types and composite types are all included automatically in the standard library. So you do not have to import any of it to use them in your algorithms. This will make basic runtime quite large but we hope it worth it to avoid all these imports.
-
-### Composite Types
-
-| rule     | Purpose          |
-|----------|------------------|
-| length   | type length      |
-| capacity | type capacity    |
-| min      | type minim limit |
-| max      | type maxim limit |
-
-
-**List & strings Type**
-
-| rule    | Purpose                                 |
-|---------|-----------------------------------------|
-| split   | Split a string into a list / array      |
-| join    | Join a list into a string               |
-| find    | Search one sub-string in a string       |
-| replace | Replace one sub-string in a string      |
-| trim    | Remove blank spaces from string         |
-| right   | Align string to right by adding spaces  |
-| left    | Align string to left by adding spaces   |
-| center  | Align string to center by adding spaces |
-
-
-**Numeric Type**
-
-| rule   | Purpose                            |
-|--------|------------------------------------|
-| round  | Convert one real into an integer   |
-| floor  | Convert one real into an integer   |
-| parse  | Convert one string into one number |
-| random | Create random numbers              |
-
-
-### Date Time
-
-Modules for _date_ and _time_ will contain all required rules.
-
-**time**
-
-| rule | Purpose          |
-|------|------------------|
-| now  | get current time |
-
-
-**date**
-
-| rule | Purpose          |
-|------|------------------|
-| now  | get current date |
-
-
-### Error Type
-
-Bee has pre-define Error objects with codes in range (1..200):
-
-``` 
--- global type 
-type Error: {code ∈ Z, message ∈ S} <: Object; 
-
--- exception objects 
-set $zero_division := {100,"division by zero"} ∈ Error; 
-set $null_reference := {101,"null reference usage"} ∈ Error; 
-set $value_overflow := {102,"value overflow"} ∈ Error; 
-set $out_of_range := {103,"value out of range"} ∈ Error; 
-set $type_mismatch := {104,"data type mismatch"} ∈ Error; 
-set $user_error := {200,"user defined error"} ∈ Error; 
-
--- Standard error 
-set $standard_error := {1,"standard error"} ∈ Error; 
-set $unexpected_error := {2,"unexpected error"} ∈ Error; 
+```bee
+-- File I/O Usage
+new file := File.open('data.txt', 'w');
 ```
-
-## Mathematic Rules
-
-Math library will implement extra rules that are not available until you import "math" library. These are functions you rarely use and require extra memory space to be available in your program.
-
-| rule | Purpose          |
-|------|------------------|
-| sin  | sinus            |
-| cos  | cousin           |
-| tan  | tangent          |
-| pow  | power            |
-| sqr  | square root      |
-| fac  | factorial        |
-| mod  | module           |
-
-
-### System Library
-
-Interaction with operating system require load from library.
-
-
-### File IO
-
-To read and print into files and save to disk, we must use system.io library. This library define type "F" : file handler. It offer support for file input/output.
-
-**rules**
-
-Next is a fragment from system.io library that define rules open and close.
-
-``` 
-rule .open(name ∈ S, mode ∈ A) => (file ∈ File); 
-  rule .close(file ∈ File); 
-  rule .list(folder ∈ Folder) ∈ (S); 
-  rule .exist(name ∈ S) ∈ B; 
-  rule .delete(name ∈ S); 
-  rule .rename(name, new_name ∈ S); ... 
-``` 
-
-**remember:** public rules start with dot: "."
-
-**File IO**
-
-System IO rules
-
-| rule   | Purpose                                         |
-|--------|-------------------------------------------------|
-| open   | Open a file                                     |
-| close  | Close a file                                    |
-| exist  | Check if file or folder exist on disk           |
-| list   | Read a list of files and folders from directory |
-| tree   | Read tree of directory in memory                |
-| delete | Remove a file / directory                       |
-| rename | Make a new directory                            |
-
-
-Two data types must be available: File, Folder
-
-#### File rules
-
-  * clean -- erase all data in the file
-  * flush -- save file buffer to disk
-  * change -- modify file attributes
-
-
-#### Folder rules
-
-  * select -- select this folder as working folder
-  * purge -- remove all files from folder
-  * change -- modify folder attributes
-
-
-#### Making files/folders
-
-``` 
-new file_name := File.open('name','w'); new folder_name := Folder.open('name'); 
-``` 
-
-
-**Go back to:** [Bee Index](/projects/bee/index/)
