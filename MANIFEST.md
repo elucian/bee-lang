@@ -20,7 +20,7 @@ llc# BEE COMPILER MANIFEST
 12. [x] Formalize Graphics/Library Specs.
 13. [x] Map AST Nodes.
 14. [x] Configure Self-Contained Test Pipeline in `test/`.
-13. [ ] Implement Lexer Token Definitions for keywords (`new`, `let`, `expect`, `rule`, `return`).
+13. [x] Implement Lexer Token Definitions for keywords (`new`, `let`, `expect`, `rule`, `return`).
 14. [ ] Implement Lexer logic for Operators (`:=`, `∈`, `=`).
 15. [ ] Pass `T0101` and `T0102`.
 16. [ ] Implement string/print support for `T0202`.
