@@ -1,6 +1,8 @@
-# Bee Objects
-
-Bee implements object oriented programming using custom defined data types and special rules called constructors. Bee enable al 4 object oriented principles: Encapsulation, Inheritance, Abstraction and Polymorphic.
+## 1. Object Model
+- **Encapsulation:** Object constructors are high-order rules with static context; methods share the `self` context.
+- **Inheritance:** Types inherit via `<:`. Subtypes call supertype constructors using `super.`.
+- **Traits:** `+` operator adds encapsulated behavior (traits) to an object type.
+- **Memory Allocation:** Public members reside in the instance heap region.
 
 ### Root Object
 
