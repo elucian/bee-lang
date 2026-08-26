@@ -5,6 +5,7 @@
 * **Debug-First Implementation:**
     * Use `-d` flag for lexical/parsing debugging.
     * Use `fmt.Fprintf(os.Stderr, ...)` for debug instrumentation to keep `stdout` clean for actual code output.
+    * Every file must start with a header block comment describing its purpose, responsibility, and core architectural strategy.
     * Every function must have a block comment describing purpose, inputs, and outputs.
     * Inline "spy" comments are mandatory for complex state transitions.
 * **Report Completion:** Omit conversational fillers. End with JSON gate protocol.
