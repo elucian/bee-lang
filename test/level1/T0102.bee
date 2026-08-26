@@ -1,5 +1,8 @@
--- T002: Simple Expressions
+-- T0102: Declaring and mutating a variable
 rule main:
-  expect 42 * 2 = 84;
-  expect 40 + 2 = 42;
+  new a ∈ Z;
+  let a := 42;
+  expect a = 42;
+  let a := 100;
+  expect a = 100;
 return;
