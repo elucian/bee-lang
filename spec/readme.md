@@ -1,15 +1,17 @@
-# Bee Language Specification Index
+# Bee Compiler Specification Index (spec/readme.md)
 
-This repository contains the formal specification of the Bee programming language. The specification is structured into modular, numbered sections for human readability and machine-parsing efficiency.
+This directory contains the machine-parsable grammar and operational semantics.
 
-## Specification Index
-
-| ID | Topic | Description |
-|----|-------|-------------|
-| 00 | [Memory Model](00-memory-model.md) | Hybrid memory management (RC, MMM, GC) and the `zap` directive. |
-| 01 | [Lexical Structure](01-lexical-structure.md) | UTF-8 encoding, tokenization, and Unicode operator definitions. |
-| 02 | [Syntax Statements](02-syntax-statements.md) | Grammar for statements, blocks, and declarations. |
-| 03 | [Rules & Lambdas](03-rules-lambdas.md) | Rule definitions, parameter binding, and lambda expressions. |
-| 04 | [Concurrency & Types](04-concurrency-types.md) | Threading, coroutines, and primitive/composite types. |
-
-*Note: For the implementation, refer to the `bee/solution/` folder for architectural decisions.*
+## Module Map
+- `00-memory-model.md`: Region-based management, `zap` usage, thread-safety boundaries.
+- `01-lexical-structure.md`: Maximal Munch rules, Unicode ranges, operator tokenization, markup literals.
+- `02-statements.md`: Assignment, declaration, control flow (if/cycle/match), and transfer statements.
+- `03-rules.md`: Rule anatomy, signature declaration, and execution rules.
+- `04-functions.md`: Lambda (L) type, purity restrictions, and callback semantics.
+- `05-types.md`: Primitive definitions (B, A, U, Q, N, Z, R, S), promotion table.
+- `06-objects.md`: Constructor rules, traits, inheritance, encapsulation.
+- `10-collections.md`: Lists, Arrays, Matrices (row-major), Sets, Hash Maps.
+- `11-processing.md`: Slicing, spreading, string interpolation, markup literals.
+- `12-concurrency.md`: Multi-threading (`begin`/`wait`), Coroutines (`yield`).
+- `13-graphics.md`: Cartesian coordinate system, geometric primitives.
+- `14-library.md`: Standard API, Error objects, System I/O.
