@@ -1,0 +1,18 @@
+-- bubble sort demo
+rule main:
+  new a := [5, 4, 3, 2, 1];
+  new n := 5;
+  cycle:
+    new swapped: True ∈ B;
+  while swapped do
+    let swapped := False;
+    for i ∈ (0..n-2) do
+      if a[i] > a[i+1] do
+        let a[i], a[i+1] := a[i+1], a[i];
+        let swapped := True;
+      done;
+    repeat;
+    let n -= 1;
+  repeat;
+  print a;
+return;

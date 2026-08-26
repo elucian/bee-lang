@@ -1,0 +1,6 @@
+-- Lists demo
+rule main:
+  new l := (1,2,3);
+  print l;
+  print (l.head, l.tail);
+return;

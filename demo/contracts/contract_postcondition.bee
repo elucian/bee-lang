@@ -1,0 +1,9 @@
+-- A postcondition demo
+rule bump(n ∈ Z) => (r ∈ Z):
+  ensure r > n;
+  let r := n + 1;
+return;
+
+rule main:
+  print bump(1);
+return;

@@ -1,0 +1,12 @@
+-- Retrying demo
+rule main:
+  trial:
+    new tries: 0 ∈ Z;
+  try:
+    let tries += 1;
+    raise 400, "flaky" if tries < 3;
+    print "ok after " + tries;
+  case $error.code = 400 do
+    retry;
+  done;
+return;

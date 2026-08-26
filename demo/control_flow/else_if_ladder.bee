@@ -1,0 +1,11 @@
+-- An else-if ladder demo
+rule main:
+  new n := 0;
+  if n > 0 do
+    print "positive";
+  else if n < 0 do
+    print "negative";
+  else
+    print "zero";
+  done;
+return;

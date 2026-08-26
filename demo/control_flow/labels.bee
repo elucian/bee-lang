@@ -1,0 +1,12 @@
+-- Labels demo
+rule main:
+  cycle outer:
+    new i ∈ Z;
+  for i ∈ (1..3) do
+    for j ∈ (1..3) do
+      stop outer if i * j > 4;
+      write i * j;
+    repeat;
+  repeat;
+  print;
+return;

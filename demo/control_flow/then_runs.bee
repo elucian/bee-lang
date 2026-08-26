@@ -1,0 +1,10 @@
+-- then runs once at the end demo
+rule main:
+  new n := 0;
+  cycle:
+  while n < 3 do
+    let n += 1;
+  then
+    print "finished at " + n;
+  repeat;
+return;

@@ -1,0 +1,11 @@
+-- A trial that succeeds demo
+rule main:
+  trial:
+  try:
+    print "first";
+  try:
+    print "second";
+  final
+    print "always";
+  done;
+return;

@@ -1,0 +1,8 @@
+-- Type inference demo
+rule main:
+  new a := 10;
+  new r := 0.5;
+  new s := "text";
+  new f := True;
+  print (kind(a), kind(r), kind(s), kind(f));
+return;

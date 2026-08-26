@@ -1,0 +1,21 @@
+-- A coroutine demo
+rule ticker(n ∈ N) => (v ∈ N):
+  cycle:
+    new i ∈ N;
+  for i ∈ (1..n) do
+    let v := i;
+    yield;
+  repeat;
+  let v := 0;
+return;
+
+rule main:
+  begin ticker(4);
+  cycle:
+    new r ∈ N;
+  do
+    yield r << ticker;
+    write r;
+  repeat if r > 0;
+  print;
+return;

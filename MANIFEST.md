@@ -1,4 +1,4 @@
-# BEE COMPILER MANIFEST
+llc# BEE COMPILER MANIFEST
 
 ## Current Status
 - **Current Phase:** Compiler Implementation

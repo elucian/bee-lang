@@ -4,7 +4,9 @@ import sys
 
 def build():
     print("Building Bee Compiler...")
-    result = subprocess.run(["go", "build", "-o", "bee.exe", "./cmd/bee/main.go"])
+    if not os.path.exists("bin"):
+        os.makedirs("bin")
+    result = subprocess.run(["go", "build", "-o", "bin/bee.exe", "./cmd/bee/main.go"])
     if result.returncode == 0:
         print("Build successful: bee.exe")
     else:

@@ -1,0 +1,7 @@
+-- Concatenation demo
+rule main:
+  print [1,2] + [3];
+  new l := (1,2);
+  new m := (3,);
+  print l + m;
+return;

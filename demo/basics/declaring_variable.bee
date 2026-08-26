@@ -1,4 +1,4 @@
--- T002: Declaring a variable
+-- Declaring a variable demo
 rule main:
   new a ∈ Z;
   let a := 42;

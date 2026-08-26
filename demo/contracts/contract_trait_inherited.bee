@@ -1,0 +1,16 @@
+-- A trait's promise is inherited demo
+trait Sized:
+  rule size() => (s ∈ Z)
+  ensure s > 0;
+done;
+
+rule Box(n ∈ Z) => (self ∈ Box <: Sized):
+  new self.n := n;
+  rule .size() => (s ∈ Z):
+    let s := self.n;
+  return;
+return;
+
+rule main:
+  print Box(4).size();
+return;

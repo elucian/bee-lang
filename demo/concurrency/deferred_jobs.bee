@@ -1,0 +1,13 @@
+-- Deferred jobs demo
+rule scaled(x ∈ Z) => (r ∈ Z):
+  let r := x * 10;
+return;
+
+rule main:
+  new got ∈ (Z);
+  begin got <+ scaled(1);
+  begin got <+ scaled(2);
+  begin got <+ scaled(3);
+  wait;
+  print got;
+return;

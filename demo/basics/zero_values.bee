@@ -1,0 +1,8 @@
+-- Zero values demo
+rule zeros() => (z ∈ Z, r ∈ R, f ∈ B):
+  expect True;
+return;
+rule main:
+  new a, b, c := zeros();
+  print (a, b, c);
+return;

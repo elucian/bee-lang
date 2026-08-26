@@ -1,0 +1,14 @@
+-- Recovering and carrying on demo
+rule main:
+  trial:
+  try:
+    print "a";
+  try:
+    raise 300, "boom";
+  try:
+    print "c";
+  case $error.code = 300 do
+    print "handled " + $error.message;
+    resume;
+  done;
+return;

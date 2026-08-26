@@ -1,0 +1,11 @@
+-- A total match needs no default demo
+type Small: (0..3) <: Z;
+rule main:
+  new v: 2 ∈ Small;
+  match v:
+  when 0, 1 do
+    print "low";
+  when (2..3) do
+    print "high";
+  done;
+return;

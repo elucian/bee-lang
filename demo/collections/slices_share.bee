@@ -1,0 +1,7 @@
+-- Slices share storage demo
+rule main:
+  new a := [1,2,3,4,5];
+  new w := a[0..2];
+  let w[*] := 0;
+  print a;
+return;

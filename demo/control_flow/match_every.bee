@@ -1,0 +1,9 @@
+-- match, every hit demo
+rule main:
+  match all 4:
+  when 4 do
+    print "exactly four";
+  when (0..9) do
+    print "a digit";
+  done;
+return;

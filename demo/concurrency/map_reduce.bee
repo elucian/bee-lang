@@ -1,0 +1,23 @@
+-- Map and reduce demo
+rule sum(a, b ∈ Z) => (r ∈ Z):
+  cycle:
+    new i ∈ Z;
+  for i ∈ (a..b) do
+    let r += i;
+  repeat;
+return;
+
+rule main:
+  new parts ∈ (Z);
+  cycle:
+    new lo ∈ Z;
+  for lo ∈ (1..76:25) do
+    begin parts <+ sum(lo, lo + 24);
+  repeat;
+  wait;
+  new total ∈ Z;
+  for p ∈ parts do
+    let total += p;
+  repeat;
+  print total;
+return;

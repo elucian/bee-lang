@@ -1,0 +1,6 @@
+-- Parallel assignment demo
+rule main:
+  new a: 1, b: 2 ∈ Z;
+  let a, b := b, a;
+  print (a, b);
+return;

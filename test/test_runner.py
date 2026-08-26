@@ -25,8 +25,8 @@ def run_tests():
                 test_path = os.path.join(root, file)
                 print(f"Testing {test_path}...")
                 
-                # Execute the compiler
-                result = subprocess.run(["./bee.exe", test_path], capture_output=True, text=True)
+                # Execute the compiler from bin
+                result = subprocess.run(["./bin/bee.exe", test_path], capture_output=True, text=True)
                 
                 status = "PASSED" if result.returncode == 0 else "FAILED"
                 if result.returncode != 0:

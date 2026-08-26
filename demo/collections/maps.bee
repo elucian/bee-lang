@@ -1,0 +1,9 @@
+-- Maps demo
+rule main:
+  new m := {1:"a", 2:"b"};
+  let m[3] := "c";
+  print m;
+  print m[2];
+  scrap m[1];
+  print m;
+return;

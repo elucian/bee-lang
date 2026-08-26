@@ -1,0 +1,13 @@
+-- old works on a collection too demo
+rule grow(items ∈ [Z], by ∈ Z):
+  require by ≥ 0;
+  ensure items.length = old items.length + by;
+  let items ++ by;
+return;
+
+rule main:
+  new xs ∈ [Z](2);
+  print xs.length;
+  apply grow(xs, 3);
+  print xs.length;
+return;

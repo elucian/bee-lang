@@ -2,7 +2,7 @@
 package lexer
 
 import (
-	"bee/token"
+	"bee/internal/token"
 )
 
 type Lexer struct {
@@ -52,7 +52,9 @@ func (l *Lexer) NextToken() token.Token {
 			return tok
 		} else {
 			tok = newToken(token.ILLEGAL, l.ch)
+			l.readChar()
 		}
+		return tok
 	}
 
 	l.readChar()
@@ -61,4 +63,34 @@ func (l *Lexer) NextToken() token.Token {
 
 func newToken(tokenType token.Type, ch byte) token.Token {
 	return token.Token{Type: tokenType, Literal: string(ch)}
+}
+
+func (l *Lexer) skipWhitespace() {
+	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
+		l.readChar()
+	}
+}
+
+func (l *Lexer) readIdentifier() string {
+	position := l.position
+	for isLetter(l.ch) {
+		l.readChar()
+	}
+	return l.input[position:l.position]
+}
+
+func (l *Lexer) readNumber() string {
+	position := l.position
+	for isDigit(l.ch) {
+		l.readChar()
+	}
+	return l.input[position:l.position]
+}
+
+func isLetter(ch byte) bool {
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+}
+
+func isDigit(ch byte) bool {
+	return '0' <= ch && ch <= '9'
 }

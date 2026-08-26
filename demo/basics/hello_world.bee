@@ -1,4 +1,4 @@
--- T001: Hello World
+-- hello world demo
 rule main:
   print "Hello World";
 return;

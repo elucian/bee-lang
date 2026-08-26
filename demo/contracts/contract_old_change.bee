@@ -1,0 +1,11 @@
+-- A promise about what changed demo
+rule bump(n ∈ @Z):
+  ensure n = old n + 1;
+  let n += 1;
+return;
+
+rule main:
+  new counter: 10 ∈ Z;
+  apply bump(@counter);
+  print counter;
+return;

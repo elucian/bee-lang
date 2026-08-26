@@ -1,0 +1,9 @@
+-- asynch call demo
+rule worker() => (v ∈ Z):
+  let v := 1;
+return;
+
+rule main:
+  begin worker();
+  print "running";
+return;

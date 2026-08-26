@@ -1,15 +1,10 @@
-# Go specific
-# Binaries for programs and plugins
+# Binaries
+bin/
 *.exe
-*.exe~
-*.dll
-*.so
-*.dylib
+bee
 
-# Test binary, build with `go test -c`
+# Go specific
 *.test
-
-# Output of the go coverage tool, specifically when combined with LaTeX
 *.out
 *.log
 
@@ -27,4 +22,4 @@ vendor/
 *.swo
 
 # Project specific
-# doc/
+doc/
