@@ -1,0 +1,8 @@
+-- T0103: Variable assignment and expectation
+rule main:
+  new a ∈ Z;
+  let a := 10;
+  expect a = 10;
+  let a := 20;
+  expect a = 20;
+return;
