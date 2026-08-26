@@ -1,9 +1,8 @@
 # BEE COMPILER MANIFEST
 
 ## Current Status
-## Status
 - **Current Phase:** Spec Implementation
-- **Active Task:** Finalize Formal Grammar
+- **Active Task:** Formalize Rules (`spec/03-rules.md`)
 - **Last Updated:** 2026-08-25
 
 ## TODO Plan
@@ -13,6 +12,7 @@
 4. [x] Incrementally expand Memory Model Specification sections.
 5. [x] Formalize Lexical Grammar (`spec/01-lexical-structure.md`).
 6. [x] Formalize Statement Grammar (`spec/02-statements.md`).
-7. [ ] Formalize Rules & Functions (`spec/03-rules-functions.md`).
-8. [ ] Formalize Types & Collections (`spec/04-types-collections.md`).
-9. [ ] Map AST Nodes and implement Lexer/Parser.
+7. [ ] Formalize Rules (`spec/03-rules.md`).
+8. [ ] Formalize Functions (`spec/04-functions.md`).
+9. [ ] Formalize Types & Collections (`spec/05-types-collections.md`).
+10. [ ] Map AST Nodes and implement Lexer/Parser.
