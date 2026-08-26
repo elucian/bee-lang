@@ -15,19 +15,26 @@ Build the compiler:
 python build.py
 ```
 
-Run tests (compile-only mode):
+Run tests:
 ```bash
 python test.py
 ```
 
-## 5. Performance Flags
-- **`-e` / `--execute`**: Enables in-memory AST evaluation (VM).
-- **`-c` / `--compile`**: Compiler/parse-only mode.
-- **`-m <threads>`**: Activates multi-threaded Lexer/Parser pipeline using Producer-Consumer model.
+### Compiler Modes
+- **`-d` / `--debug`**: Debug mode. Outputs the token stream to `stderr`.
+- **`-e` / `--execute`**: Enables the in-memory AST evaluator (VM) to execute the code.
+- **`-c` / `--compile`**: Parse-only mode. Validates syntax and outputs "Syntax OK" if successful.
 
+### Usage Examples
 ```bash
-# Execute a script
-./bin/bee.exe -e test/level2/T0201.bee
+# Debugging lexer tokens
+./bin/bee.exe -d test/level2/T0202.bee
+
+# Execute logic in the VM
+./bin/bee.exe -e test/level2/T0202.bee
+
+# Syntax check only
+./bin/bee.exe -c test/level1/T0101.bee
 ```
 
 ## 5. Execution Model
