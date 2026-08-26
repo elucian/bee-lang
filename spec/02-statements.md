@@ -1,25 +1,22 @@
 # Bee Specification: Statements & Expressions (02-statements.md)
 
-## 1. Statement Grammar
-Statements are categorized by their imperative (action) or declarative (definition) nature.
-
+## 2.1 Statement Grammar
 ```ebnf
-statement ::= declaration | assignment | call | control_flow ;
-declaration ::= ("new" | "set") identifier (":=" expression | "∈" type) ;
-assignment ::= "let" identifier (":=" | "+=" | "-=") expression ;
+statement     ::= declaration | assignment | call | control_flow ;
+declaration   ::= ("new" | "set") identifier (":=" expression | "∈" type) ;
+assignment    ::= "let" identifier (":=" | "+=" | "-=" | "&=") expression ;
+control_flow  ::= if_stmt | cycle_stmt | trial_stmt | match_stmt ;
 ```
 
-## 2. Expression Grammar
+## 2.2 Control Flow EBNF
 ```ebnf
-expression ::= primary | binary_op | conditional ;
-primary ::= identifier | constant | "(" expression ")" | call ;
-binary_op ::= expression operator expression ;
-conditional ::= expression "if" condition ("else" expression)? ;
+if_stmt       ::= "if" condition "do" block ("else" block)? "done" ;
+cycle_stmt    ::= "cycle" label? "do" block "repeat" label? ;
+match_stmt    ::= "match" identifier ("all" | "one") "when" branch+ "other" block "done" ;
+trial_stmt    ::= "trial" label? block "case" case_block* "miss" block "final" block "done" label? ;
 ```
 
 ## 3. Operational Semantics
-- **Statement Sequencing:** Statements are evaluated in the order they appear. Semicolons (`;`) are mandatory statement terminators.
-- **Declarative Order:** All identifiers must be declared via `new` or `set` prior to their usage in `let` or expression contexts within the same scope.
-- **Scoping:** Every `do`, `cycle`, and `rule` block introduces a new local lexical scope. Identifier shadowing is permitted but triggers a compiler diagnostic.
-- **Memory Safety:** Local allocations (via `new`) are scoped to the rule/block region and are automatically reclaimed at the termination of the block.
-- **Indentation:** The parser strictly enforces 2-space indentation. Deviation results in a `SyntaxError: IndentationMismatch`.
+- **Statement Sequencing:** Statements are evaluated in order; `;` is mandatory.
+- **Scope:** Every block introduces a new lexical region.
+- **Indentation:** Mandatory 2-space rule; `IndentationMismatch` triggers a compile-time error.
