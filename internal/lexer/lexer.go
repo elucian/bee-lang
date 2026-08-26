@@ -1,4 +1,8 @@
-// internal/lexer/lexer.go
+/*
+Package lexer provides the lexical analysis engine for the Bee language.
+Responsibility: Transforms source code into a token stream.
+Strategy: Uses a single-pass scanner with Maximal Munch disambiguation for operators.
+*/
 package lexer
 
 import (
@@ -10,14 +14,17 @@ type Lexer struct {
 	position     int
 	readPosition int
 	ch           rune
+	debug        bool
 }
 
+// New initializes the Lexer with input and starts the read head.
 func New(input string) *Lexer {
 	l := &Lexer{input: input}
 	l.readChar()
 	return l
 }
 
+// readChar reads the next character from input and advances the position.
 func (l *Lexer) readChar() {
 	if l.readPosition >= len(l.input) {
 		l.ch = 0
@@ -28,6 +35,7 @@ func (l *Lexer) readChar() {
 	l.readPosition++
 }
 
+// peekChar returns the next character without advancing the lexer.
 func (l *Lexer) peekChar() rune {
 	if l.readPosition >= len(l.input) {
 		return 0
@@ -35,14 +43,22 @@ func (l *Lexer) peekChar() rune {
 	return rune(l.input[l.readPosition])
 }
 
+// NextToken scans the input and returns the next valid token.
 func (l *Lexer) NextToken() token.Token {
-	var tok token.Token
-
 	l.skipWhitespace()
+
+	var tok token.Token
 
 	switch l.ch {
 	case '=':
 		tok = newToken(token.EQ, l.ch)
+	case ':':
+		if l.peekChar() == '=' {
+			tok = token.Token{Type: token.ASSIGN, Literal: ":="}
+			l.readChar()
+		} else {
+			tok = newToken(token.COLON, l.ch)
+		}
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
 	case '"':
@@ -123,7 +139,7 @@ func (l *Lexer) readString() string {
 }
 
 func isLetter(ch rune) bool {
-	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_' || ch > 127
 }
 
 func isDigit(ch rune) bool {
