@@ -2,7 +2,7 @@
 
 ## Current Status
 - **Current Phase:** Specification Phase Complete / Architectural Baseline Finalized
-- **Active Task:** Final Architectural Review & Preparation for Compiler Implementation Phase
+- **Active Task:** Compiler-Native Code Beautifier Engine (`-b` / `--beautify`)
 - **Last Updated:** 2026-08-26
 
 ## Formal Specification Baseline (`/spec`)
@@ -20,12 +20,17 @@
 - [x] `spec/13-graphics.md`: Angular type `G` (`°`, `′`, `″`), 2D geometry primitives (`CRT`, `POL`, `VEC`, `CRC`, `SQR`, `PLG`), scene graph (`Canvas`, `Layer`, `Shape`, `Label`), drawing commands (`draw`, `wipe`, `show`/`hide`), and Diagnostics (`E1301`-`E1305`).
 - [x] `spec/14-library.md`: System standard library API (`$bee.sys`), tree-shaking static linkage, file handles (`F`), `$error` codes (`1..199` vs `200+`), and Diagnostics (`E1401`-`E1405`).
 
+## Issues & Architectural Solutions
+- [x] `issues/08-code-beautifier.md`: Native compiler code beautifier (`-b` / `--beautify`).
+- [x] `solution/12-code-beautifier.md`: In-place formatting, 2-space block alignment, EOL comment alignment, implicit multiplication auto-fix (`2(a+b)` $\rightarrow$ `2 * (a + b)`).
+
 ## Compiler & Toolchain Implementation Roadmap
 1. [x] Ingest documentation & harmonize `/manual` with `/spec`.
 2. [x] Complete formal specifications across all `/spec` modules (`00` through `14`).
 3. [x] Update all `/demo/concurrency` files to modern language conventions.
 4. [x] Level 1 - Level 5 test runner integration (`test/test_runner.py`).
-5. [ ] Lexer implementation (`internal/lexer`) alignment with new tokens and Maximal Munch rules.
-6. [ ] Parser implementation (`internal/parser`) alignment with EBNF grammars.
-7. [ ] AST Evaluator enhancement (`internal/evaluator`).
-8. [ ] LLVM IR Native Lowering (`internal/compiler`).
+5. [ ] Native compiler beautifier implementation (`-b` / `--beautify` in `internal/beautifier`).
+6. [ ] Lexer implementation (`internal/lexer`) alignment with new tokens and Maximal Munch rules.
+7. [ ] Parser implementation (`internal/parser`) alignment with EBNF grammars.
+8. [ ] AST Evaluator enhancement (`internal/evaluator`).
+9. [ ] LLVM IR Native Lowering (`internal/compiler`).
