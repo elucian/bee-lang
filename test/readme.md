@@ -61,9 +61,12 @@ This document outlines the test plan and tracking checklist for the Bee Programm
 
 ---
 
-## Running the Test Suite
-Execute all tests using the project test runner:
-```bash
-python test/test_runner.py
-```
-Results and diagnostic logs are automatically saved under `test/output`.
+## Test Folders & Architecture (`test/`)
+- **`test/level1/` through `test/level5/`**: Organized test vector suites spanning lexical structures, control flow, functions, collections, and concurrency.
+- **`test/bench/`**: Micro-benchmark suites for measuring performance and throughput.
+- **`test/output/`**: Spooled failure reports (`.fail`) generated for failing test runs.
+- **`test/status/`**: Execution status records saved as timestamped JSON files (`status_YYYYMMDD_HHMMSS.json`) detailing per-level pass/fail metrics.
+- **`test/level.py`**: Level-specific test runner supporting `--level <N>` execution.
+- **`test/bench.py`**: Performance benchmark execution and telemetry generation script.
+- **`test/dryrun.py`**: CLI flag verification script.
+- **`test.py`**: Root test orchestrator that executes all level suites and records level-by-level status telemetry.

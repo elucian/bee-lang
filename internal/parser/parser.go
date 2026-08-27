@@ -68,8 +68,17 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 	stmt := &AssignmentStatement{Token: tok}
 	tokIdent := p.l.NextToken()
 	stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent, Value: tokIdent.Literal})
+	for p.l.PeekChar() == ',' {
+		p.l.NextToken() // comma
+		tokIdent2 := p.l.NextToken()
+		stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent2, Value: tokIdent2.Literal})
+	}
 	p.l.NextToken() // Skip :=
 	stmt.Values = append(stmt.Values, p.parseExpression())
+	for p.l.PeekChar() == ',' {
+		p.l.NextToken() // comma
+		stmt.Values = append(stmt.Values, p.parseExpression())
+	}
 	p.l.NextToken() // Skip ;
 	return stmt
 }

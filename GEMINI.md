@@ -7,10 +7,10 @@
 * **Instrumentation:** Output debug traces strictly to `os.Stderr` (or under explicit debug flags). Keep `stdout` clear for generated code or AST output.
 * **File Header Standard:** Every Go file MUST begin with a concise comment declaring component scope, responsibilities, and runtime/AST boundary.
 
-## 2. Token-Optimized Execution
-* **Zero Preamble:** Omit conversational chatter, introductions, status updates, and closing summaries. Output actionable code or diffs directly.
-* **Targeted Emissions:** Emit ONLY modified functions, structs, or unified diffs. Never output full unchanged source files.
-* **Context Boundary:** Rely strictly on explicitly referenced `@file` targets. Do not crawl, auto-search, or index unreferenced workspace paths.
+## 2. Token-Optimized Execution & Anti-Loop Protocol
+- **Zero Preamble:** Omit conversational chatter, introductions, status updates, and closing summaries. Output actionable code or diffs directly.
+- **Targeted Emissions:** Emit ONLY modified functions, structs, or unified diffs. Never output full unchanged source files.
+- **Strict Anti-Loop Guard:** If a test or diagnostic failure repeats twice after a fix, **HALT IMMEDIATELY** and stop to prevent unproductive iteration loops.
 
 ## 3. Implementation Phase & Defect Triaging
 * **Implementation Mapping:** Deterministically map finalized `/spec` EBNF to recursive-descent parser routines and AST types.
@@ -30,7 +30,5 @@
   - If post-fix tests yield identical error signatures, or if a second failure occurs on the same component, **HALT IMMEDIATELY**.
 * **Git Operations:** **NEVER** run `git commit`, `git push`, or modify git history. All commits are performed manually by the developer.
 
-## 5. Execution Exit Gates
-End EVERY execution turn with EXACTLY ONE of the following JSON objects on the final line:
-
-**TASK COMPLETE**
+## Final message
+When you finish send this message: "Task Completed in <runtime>

@@ -10,7 +10,7 @@ def build():
     result = subprocess.run(["go", "build", "-o", "bin/bee.exe", "./cmd/bee/main.go"])
     if result.returncode == 0:
         print("Build successful: bin/bee.exe")
-        print("Run '.\\setup_env.ps1' to add 'bin' to your current session PATH.")
+        print("Run 'sh setup.sh' to add 'bin' to your current session PATH.")
     else:
         print("Build failed.")
         sys.exit(1)

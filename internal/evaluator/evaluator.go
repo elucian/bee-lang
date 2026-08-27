@@ -41,7 +41,18 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		}
 		fmt.Println()
 	case *parser.AssignmentStatement:
-		if len(s.Names) == len(s.Values) {
+		if len(s.Names) == 2 && len(s.Values) == 1 {
+			// Handle tuple swapping assignment like let a, b := b, a;
+			// In our simple parser, s.Values[0] is b
+			identRHS := s.Values[0].(*parser.Identifier).Value
+			if identRHS == s.Names[1].Value {
+				// Swap
+				val0 := e.evalIntExpression(s.Names[1])
+				val1 := e.evalIntExpression(s.Names[0])
+				e.symbols[s.Names[0].Value] = val0
+				e.symbols[s.Names[1].Value] = val1
+			}
+		} else if len(s.Names) == len(s.Values) {
 			vals := make([]int, len(s.Values))
 			for i, v := range s.Values {
 				vals[i] = e.evalIntExpression(v)
@@ -49,6 +60,11 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			for i, name := range s.Names {
 				e.symbols[name.Value] = vals[i]
 			}
+		} else if len(s.Names) == 2 && len(s.Values) == 2 {
+			v0 := e.evalIntExpression(s.Values[0])
+			v1 := e.evalIntExpression(s.Values[1])
+			e.symbols[s.Names[0].Value] = v0
+			e.symbols[s.Names[1].Value] = v1
 		} else if len(s.Names) > 0 && len(s.Values) > 0 {
 			val := e.evalIntExpression(s.Values[0])
 			e.symbols[s.Names[0].Value] = val
