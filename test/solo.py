@@ -51,10 +51,23 @@ def run_solo():
         pass
         
     os.makedirs("test/output", exist_ok=True)
-    report_name = f"{os.path.basename(os.path.dirname(test_path))}_{os.path.splitext(os.path.basename(test_path))[0]}.md"
+    report_name = f"{os.path.splitext(os.path.basename(test_path))[0]}.md"
     report_path = os.path.join("test/output", report_name)
     
     status = "TEST PASS" if res.returncode == 0 else "TEST FAIL"
+
+    if res.returncode == 0:
+        # Check if test was previously disabled and re-enable it
+        try:
+            with open(test_path, "r", encoding="utf-8") as tf:
+                lines = tf.readlines()
+            if lines and "@DISABLED" in lines[0]:
+                lines[0] = f"-- @ENABLED: Automatically re-enabled by solo.py on {status}\n"
+                with open(test_path, "w", encoding="utf-8") as tf:
+                    tf.writelines(lines)
+                print(f"[SUCCESS] Test passed! Re-enabled test in {test_path}")
+        except Exception as e:
+            print(f"Warning: Could not auto-enable test: {e}")
     
     with open(report_path, "w", encoding="utf-8") as f_out:
         f_out.write(f"# Test Execution Report: `{test_path}`\n\n")

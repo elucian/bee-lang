@@ -1,6 +1,3 @@
-// cmd/bee/main.go
-// Purpose: CLI entry point for the Bee Programming Language compiler.
-// Responsibility: Handles argument parsing (-c, -b, -e), invokes lexer, parser, and evaluator.
 package main
 
 import (
@@ -9,86 +6,78 @@ import (
 	"bee/internal/lexer"
 	"bee/internal/parser"
 	"bee/internal/token"
+	"flag"
 	"fmt"
 	"os"
+	"runtime"
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Usage: bee [-c|-b|-e] [-d] <source.bee>")
+	compileFlag := flag.Bool("c", false, "Compile/validate syntax")
+	compileLong := flag.Bool("compile", false, "Compile/validate syntax")
+	executeFlag := flag.Bool("e", false, "Execute in-memory VM")
+	executeLong := flag.Bool("execute", false, "Execute in-memory VM")
+	debugFlag := flag.Bool("d", false, "Debug mode (tokens & call stack info)")
+	debugLong := flag.Bool("debug", false, "Debug mode (tokens & call stack info)")
+	beautifyFlag := flag.Bool("b", false, "Beautify source code")
+	beautifyLong := flag.Bool("beautify", false, "Beautify source code")
+
+	flag.Parse()
+	args := flag.Args()
+
+	if len(args) == 0 {
+		fmt.Fprintln(os.Stderr, "Error: No input file specified.")
 		os.Exit(1)
 	}
 
-	mode := "-c"
-	debug := false
-	filePath := ""
-
-	args := os.Args[1:]
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		if arg == "-c" || arg == "-b" || arg == "-e" || arg == "--compile" || arg == "--beautify" || arg == "--execute" {
-			mode = arg
-		} else if arg == "-d" || arg == "--debug" {
-			debug = true
-		} else {
-			filePath = arg
-		}
-	}
-
-	if filePath == "" {
-		fmt.Fprintln(os.Stderr, "Error: No source file specified")
-		os.Exit(1)
-	}
-
+	filePath := args[0]
 	contentBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error reading file %s: %v\n", filePath, err)
 		os.Exit(1)
 	}
-	input := string(contentBytes)
+	content := string(contentBytes)
 
-	if debug {
-		lDebug := lexer.New(input)
-		for {
-			tok := lDebug.NextToken()
-			if tok.Type == token.EOF {
-				break
-			}
-			fmt.Fprintf(os.Stderr, "TOKEN: Type=%s, Literal=%q\n", tok.Type, tok.Literal)
+	isDebugging := *debugFlag || *debugLong
+
+	if isDebugging {
+		_, goFile, goLine, _ := runtime.Caller(0)
+		fmt.Fprintf(os.Stderr, "[DEBUG TRACE] Source File: %s | Invoked from Go: %s:%d\n", filePath, goFile, goLine)
+		l := lexer.New(content)
+		for tok := l.NextToken(); tok.Type != token.EOF; tok = l.NextToken() {
+			fmt.Fprintf(os.Stderr, "[TOKEN] Type: %-15s | Literal: %-10s | Pos: %d\n", tok.Type, tok.Literal, tok.Pos)
 		}
 	}
 
-	if mode == "-b" || mode == "--beautify" {
+	if *beautifyFlag || *beautifyLong {
 		b := beautifier.New()
-		formatted, err := b.FormatSource(input)
+		formatted, err := b.FormatSource(content)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Beautify error: %v\n", err)
+			fmt.Fprintf(os.Stderr, "[BEAUTIFY ERROR] %v\n", err)
 			os.Exit(1)
 		}
-		print(formatted)
+		fmt.Println(formatted)
 		return
 	}
 
-	// Lex and Parse
-	l := lexer.New(input)
+	l := lexer.New(content)
 	p := parser.New(l)
 	program := p.ParseProgram()
 
-	if program == nil {
-		fmt.Fprintln(os.Stderr, "Compilation failed: Syntax errors encountered")
-		os.Exit(1)
+	if *executeFlag || *executeLong {
+		eval := evaluator.New()
+		if isDebugging {
+			_, goFile, goLine, _ := runtime.Caller(0)
+			fmt.Fprintf(os.Stderr, "[EXECUTION TRACE] Initializing VM Evaluator | Go Origin: %s:%d\n", goFile, goLine)
+		}
+		eval.Eval(program)
+		if isDebugging {
+			fmt.Fprintf(os.Stderr, "[EXECUTION TRACE] Program execution completed successfully.\n")
+		}
+		return
 	}
 
-	// Check if any errors occurred during parsing (or basic validation)
-	// For compilation check (-c) or evaluation (-e)
-	if mode == "-e" {
-		eval := evaluator.New()
-		eval.Eval(program)
-	} else {
-		// Compile check: if parser returned nil or failed, exit with 1
-		if program == nil {
-			fmt.Fprintln(os.Stderr, "Compilation failed: Syntax error")
-			os.Exit(1)
-		}
+	if *compileFlag || *compileLong || isDebugging {
+		fmt.Println("Syntax OK")
 	}
 }

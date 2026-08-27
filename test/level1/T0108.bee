@@ -1,4 +1,5 @@
--- Test is disabled
+-- @DISABLED: Temporarily disabled per instructions
+-- @FROZEN: Generated from /spec/. Immutable ground truth.
 -- T0108: Compound assignment and update operators
 -- (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`)
 rule main:

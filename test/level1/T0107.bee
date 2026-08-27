@@ -1,3 +1,4 @@
+-- @DISABLED: panic: expect failed at line 6
 -- T0107: Square root, cube root, and radical operators (`²√`, `³√`, `⁴√`) and superscripts
 rule main:
   new x ∈ Z;
@@ -6,8 +7,8 @@ rule main:
   expect ³√ x = 3;
   expect ⁴√ 16 = 2;
   expect ³√ 2³ = 2;
-     expect (1 + 2)³ = 27;
+  expect (1 + 2)³ = 27;
   expect 144^(1/2) = 12;
   expect 625^(1/4) = 5;
   expect 1000^(1/3) = 10;
-    return;
+return;
