@@ -73,7 +73,7 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 		tokIdent2 := p.l.NextToken()
 		stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent2, Value: tokIdent2.Literal})
 	}
-	opTok := p.l.NextToken() // Skip := or ::
+	opTok := p.l.NextToken() // :=, ::, +=, -=, *=, /=, %=, ^=
 	stmt.Token = opTok
 	stmt.Values = append(stmt.Values, p.parseExpression())
 	for p.l.PeekChar() == ',' {

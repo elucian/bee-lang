@@ -28,7 +28,15 @@ def run_solo():
         sys.exit(1)
         
     print(f"=== Running test: {test_path} ===")
-    res = subprocess.run(["./bin/bee.exe", "-e", "-d", test_path], capture_output=True, text=True)
+    
+    # Run subprocess with explicit utf-8 encoding for Windows/Unix compatibility
+    res = subprocess.run(
+        ["./bin/bee.exe", "-e", "-d", test_path],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace"
+    )
     
     print("--- STDOUT ---")
     print(res.stdout)
@@ -37,13 +45,13 @@ def run_solo():
     
     code_lines = []
     try:
-        with open(test_path, "r") as tf:
+        with open(test_path, "r", encoding="utf-8") as tf:
             code_lines = tf.readlines()
     except Exception:
         pass
         
     os.makedirs("test/output", exist_ok=True)
-    report_name = os.path.basename(test_path) + ".md"
+    report_name = f"{os.path.basename(os.path.dirname(test_path))}_{os.path.splitext(os.path.basename(test_path))[0]}.md"
     report_path = os.path.join("test/output", report_name)
     
     status = "**TEST PASS**" if res.returncode == 0 else "**TEST FAIL**"

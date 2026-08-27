@@ -151,8 +151,13 @@ func (l *Lexer) NextToken() token.Token {
 			tok = token.Token{Type: token.CARET, Literal: sb.String(), Pos: token.Pos(l.line)}
 			// Do NOT return here immediately so l.readChar() at the end of switch advances properly!
 		}
-	case '±':
-		tok = token.Token{Type: token.PLUS_MINUS, Literal: "±", Pos: token.Pos(l.line)}
+	case '√':
+		if l.PeekChar() == '=' {
+			l.readChar()
+			tok = token.Token{Type: token.SQRT_ASSIGN, Literal: "√=", Pos: token.Pos(l.line)}
+		} else {
+			tok = token.Token{Type: token.SQRT, Literal: "√", Pos: token.Pos(l.line)}
+		}
 	case '×':
 		tok = token.Token{Type: token.MULT, Literal: "×", Pos: token.Pos(l.line)}
 	case '÷':
@@ -244,8 +249,20 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = token.Token{Type: token.SLASH, Literal: "/", Pos: token.Pos(l.line)}
 		}
+	case '%':
+		if l.PeekChar() == '=' {
+			l.readChar()
+			tok = token.Token{Type: token.MOD_ASSIGN, Literal: "%=", Pos: token.Pos(l.line)}
+		} else {
+			tok = token.Token{Type: token.PERCENT, Literal: "%", Pos: token.Pos(l.line)}
+		}
 	case '^':
-		tok = token.Token{Type: token.CARET, Literal: "^", Pos: token.Pos(l.line)}
+		if l.PeekChar() == '=' {
+			l.readChar()
+			tok = token.Token{Type: token.POW_ASSIGN, Literal: "^=", Pos: token.Pos(l.line)}
+		} else {
+			tok = token.Token{Type: token.CARET, Literal: "^", Pos: token.Pos(l.line)}
+		}
 	case '<':
 		if l.PeekChar() == '-' {
 			l.readChar()

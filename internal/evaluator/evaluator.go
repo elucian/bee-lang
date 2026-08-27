@@ -81,8 +81,41 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 	case *parser.AssignmentStatement:
 		for i, name := range s.Names {
 			if i < len(s.Values) {
-				val := e.evalIntExpression(s.Values[i])
-				e.symbols[name.Value] = val
+				rightVal := e.evalIntExpression(s.Values[i])
+				curVal := e.symbols[name.Value]
+				switch s.Token.Literal {
+				case "+=":
+					e.symbols[name.Value] = curVal + rightVal
+				case "-=":
+					e.symbols[name.Value] = curVal - rightVal
+				case "*=":
+					e.symbols[name.Value] = curVal * rightVal
+				case "/=":
+					if rightVal != 0 {
+						e.symbols[name.Value] = curVal / rightVal
+					}
+				case "%=":
+					if rightVal != 0 {
+						res := curVal % rightVal
+						if res < 0 {
+							if rightVal > 0 {
+								res += rightVal
+							} else {
+								res -= rightVal
+							}
+						}
+						e.symbols[name.Value] = res
+					}
+				case "^=":
+					res := 1
+					base := curVal
+					for k := 0; k < rightVal; k++ {
+						res *= base
+					}
+					e.symbols[name.Value] = res
+				default:
+					e.symbols[name.Value] = rightVal
+				}
 			}
 		}
 	case *parser.DeclarationStatement:

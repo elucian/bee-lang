@@ -57,7 +57,7 @@ def test():
                     print(f"Testing {path}...\n  -> FAILED")
                     output_dir = "test/output"
                     os.makedirs(output_dir, exist_ok=True)
-                    fail_output_path = os.path.join(output_dir, f"{lvl}_{f}.fail")
+                    fail_output_path = os.path.join(output_dir, f"{lvl}_{test_name}.md")
                     
                     # Read file lines to extract failing expectation if possible
                     code_lines = []
@@ -67,17 +67,18 @@ def test():
                     except Exception:
                         pass
                         
-                    with open(fail_output_path, "w") as f_out:
-                        f_out.write(f"Test File: {path}\n")
-                        f_out.write(f"--- STDOUT ---\n{res.stdout}\n")
-                        f_out.write(f"--- STDERR (Errors & Stack Trace) ---\n{res.stderr}\n")
-                        f_out.write("--- Source Code Outline ---\n")
+                    with open(fail_output_path, "w", encoding="utf-8") as f_out:
+                        f_out.write(f"# Test Execution Report: `{path}`\n\n")
+                        f_out.write(f"--- STDOUT ---\n```\n{res.stdout}\n```\n\n")
+                        f_out.write(f"--- STDERR (Errors & Stack Trace) ---\n```\n{res.stderr}\n```\n\n")
+                        f_out.write("--- Source Code Outline ---\n```bee\n")
                         for idx, line in enumerate(code_lines, 1):
                             clean_line = line.rstrip("\r\n")
                             if f"line {idx}" in res.stderr:
-                                f_out.write(f"{idx:4d}\t{clean_line} -- FAILED\n")
+                                f_out.write(f"{idx:4d}\t{clean_line} -- **FAILED**\n")
                             else:
                                 f_out.write(f"{idx:4d}\t{line}")
+                        f_out.write("```\n\n--- Conclusion ---\nStatus: **TEST FAIL**\n")
                     
         level_results[lvl] = {
             "passed": passed,
