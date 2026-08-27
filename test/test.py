@@ -75,10 +75,10 @@ def test():
                         for idx, line in enumerate(code_lines, 1):
                             clean_line = line.rstrip("\r\n")
                             if f"line {idx}" in res.stderr:
-                                f_out.write(f"{idx:4d}\t{clean_line} -- **FAILED**\n")
+                                f_out.write(f"{idx:4d}\t{clean_line} -- FAILED\n")
                             else:
                                 f_out.write(f"{idx:4d}\t{line}")
-                        f_out.write("```\n\n--- Conclusion ---\nStatus: **TEST FAIL**\n")
+                        f_out.write("```\n\n--- Conclusion ---\nStatus: TEST FAIL\n")
                     
         level_results[lvl] = {
             "passed": passed,
