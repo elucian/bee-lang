@@ -1,29 +1,16 @@
 # GEMINI.md - BEE COMPILER ARCHITECT & GENERATOR SYSTEM
 
-## 1. Engineering Invariants & Go Standards
-* **Ecosystem:** Pure Go standard library. Zero external dependencies.
-* **Allocation Strategy:** Low/zero heap allocation patterns. Pass by pointer exclusively when mutating state; otherwise use value semantics.
-* **Error Model:** Explicit `error` return values only. Never call `panic` or `recover` for lexical, parsing, or type-checking errors.
-* **Instrumentation:** Output debug traces strictly to `os.Stderr` (or under explicit debug flags). Keep `stdout` clear for generated code or AST output.
-* **File Header Standard:** Every Go file MUST begin with a concise comment declaring component scope, responsibilities, and runtime/AST boundary.
+## 1. Engineering Invariants
+* Pure Go standard library. Zero external dependencies.
+* Explicit `error` return values only. Never call `panic` or `recover` for compiler errors.
+* Output debug traces strictly to `os.Stderr`. Keep `stdout` clear for generated code.
 
-## 2. Token-Optimized Execution & Anti-Loop Protocol
-- **Zero Preamble:** Omit conversational chatter, introductions, status updates, and closing summaries. Output actionable code or diffs directly.
-- **Targeted Emissions:** Emit ONLY modified functions, structs, or unified diffs. Never output full unchanged source files.
-- **Strict Anti-Loop Guard:** If a test or diagnostic failure repeats twice after a fix, **HALT IMMEDIATELY** and stop to prevent unproductive iteration loops. Maximum 2 attempts per issue; if failure persists on the 3rd check, cut it off, halt, and explain the blocker to the user rather than looping endlessly.
-
-## 3. Implementation Phase & Defect Triaging
-* **Implementation Mapping:** Deterministically map finalized `/spec` EBNF to recursive-descent parser routines and AST types.
-* **Root-Cause Classification:** On test failures or parser mismatches, analyze whether the root cause lies in:
-  1. **Compiler Code:** Implementation logic, state mutation, or AST construction bugs.
-  2. **Specification Defect:** Contradictory EBNF, ambiguous precedence/grammar, or incomplete operator rules in `/spec`.
-  3. **Test Suite Defect:** Invalid test vectors, inaccurate expected AST outputs, or broken runner assertion logic.
-* **Integrity Guard:** **NEVER** modify Go code to force passing tests against a defective EBNF specification or invalid test expectation.
-
-## 4. Testing & Manual Verification Protocol
-* **Single-Pass Execution:** Never engage in automated test-fix loops. Make requested compiler changes in a single pass, then halt and ask the user to test or build.
-* **Manual Control:** The user handles test triggers and test file modifications (`test/` files). The agent handles compiler source modifications (`internal/` files) upon request.
-* **Git Operations:** **NEVER** run `git commit`, `git push`, or modify git history. All commits are performed manually by the developer.
+## 2. Execution & Workflow Rules
+- **Zero Preamble:** Omit conversational chatter. Output actionable code or diffs directly.
+- **Targeted Emissions:** Emit ONLY modified functions, structs, or unified diffs.
+- **Manual Verification:** Build via `python build.py` when requested. Run tests via `sh run.sh solo <test_case>`.
+- **Git Operations:** NEVER run `git commit` or `git push`.
+- **Strict Anti-Loop Rule:** Never attempt more than one edit pass per user prompt. If a test fails after one fix attempt, halt immediately and yield back to the user without attempting further retries or edits.
 
 ## Final message
 When you finish send this message: "Task Completed in <runtime>

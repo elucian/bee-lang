@@ -10,6 +10,7 @@ rule main:
   let b := 100;
   expect b = 100;
   expect a = 42;
-  let r2 := a != b;
+  let r2 := a ≠ b;
+  print r2;
   expect r2 = 1;
 return;

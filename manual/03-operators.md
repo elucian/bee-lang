@@ -118,6 +118,8 @@ Each modifier is created with pattern "x=" where x is a single symbol:
 | ^=     | Power modifier          |
 | √=     | Radical modifier        |
 | %=     | Modulo modifier         |
+| ¬=     | Different/Not equal     |
+| !=     | Different/Not equal     |
 
 *Note on `:=` (Modify Value / Allocate):*
 - With `new` (`new x := expr;`), `:=` allocates a new storage location.

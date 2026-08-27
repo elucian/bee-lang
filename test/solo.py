@@ -1,26 +1,14 @@
-# test/solo.py - Single test runner with single-attempt retry on failure
+# test/solo.py - Single test runner without build
 import os
 import sys
 import subprocess
 
-def run_test(test_path, attempt_label=""):
-    print(f"\n=== Running {test_path} {attempt_label} ===")
-    res = subprocess.run(["./bin/bee.exe", "-e", "-d", test_path], capture_output=True, text=True)
-    print("--- STDOUT ---")
-    print(res.stdout)
-    print("--- STDERR ---")
-    print(res.stderr)
-    return res.returncode, res.stdout, res.stderr
-
 def run_solo():
     if len(sys.argv) < 2:
         print("Usage: python test/solo.py <test_case_name_or_path>")
-        print("Example: python test/solo.py T0106")
         sys.exit(1)
         
     target = sys.argv[1]
-    
-    # Locate test file
     test_path = None
     if os.path.exists(target):
         test_path = target
@@ -39,57 +27,42 @@ def run_solo():
         print(f"Error: Test case '{target}' not found.")
         sys.exit(1)
         
-    print("=== Rebuilding compiler ===")
-    build_res = subprocess.run(["python", "build.py"])
-    if build_res.returncode != 0:
-        print("Build failed.")
-        sys.exit(1)
-        
-    code, stdout, stderr = run_test(test_path, "(Attempt 1)")
+    print(f"=== Running test: {test_path} ===")
+    res = subprocess.run(["./bin/bee.exe", "-e", "-d", test_path], capture_output=True, text=True)
     
-    if code == 0:
-        print(f"\n-> Test '{test_path}' PASSED successfully.")
-        sys.exit(0)
-    else:
-        print(f"\n-> Attempt 1 failed. Rebuilding compiler and trying once more...")
+    print("--- STDOUT ---")
+    print(res.stdout)
+    print("--- STDERR ---")
+    print(res.stderr)
+    
+    code_lines = []
+    try:
+        with open(test_path, "r") as tf:
+            code_lines = tf.readlines()
+    except Exception:
+        pass
         
-        build_res = subprocess.run(["python", "build.py"])
-        if build_res.returncode != 0:
-            print("Build failed.")
-            sys.exit(1)
-            
-        code2, stdout2, stderr2 = run_test(test_path, "(Attempt 2 - Final)")
+    os.makedirs("test/output", exist_ok=True)
+    report_name = os.path.basename(test_path) + ".md"
+    report_path = os.path.join("test/output", report_name)
+    
+    status = "**TEST PASS**" if res.returncode == 0 else "**TEST FAIL**"
+    
+    with open(report_path, "w", encoding="utf-8") as f_out:
+        f_out.write(f"# Test Execution Report: `{test_path}`\n\n")
+        f_out.write("## Standard Output (`STDOUT`)\n```\n" + res.stdout + "\n```\n\n")
+        f_out.write("## Standard Error & Trace (`STDERR`)\n```\n" + res.stderr + "\n```\n\n")
+        f_out.write("## Source Code Outline\n```bee\n")
+        for idx, line in enumerate(code_lines, 1):
+            clean_line = line.rstrip("\r\n")
+            if f"panic: expect failed at line {idx}" in res.stderr:
+                f_out.write(f"{idx:4d}\t{clean_line} -- **FAILED**\n")
+            else:
+                f_out.write(f"{idx:4d}\t{line}")
+        f_out.write("```\n\n## Conclusion\nStatus: " + status + "\n")
         
-        if code2 == 0:
-            print(f"\n-> Test '{test_path}' PASSED on Attempt 2.")
-            sys.exit(0)
-        else:
-            print(f"\n-> Test '{test_path}' FAILED twice. Stopping execution.")
-            
-            # Save fail report
-            os.makedirs("test/output", exist_ok=True)
-            fail_name = os.path.basename(test_path) + ".fail"
-            fail_path = os.path.join("test/output", fail_name)
-            
-            code_lines = []
-            try:
-                with open(test_path, "r") as tf:
-                    code_lines = tf.readlines()
-            except Exception:
-                pass
-                
-            with open(fail_path, "w") as f_out:
-                f_out.write(f"Test File: {test_path}\n")
-                f_out.write("--- STDOUT (Attempt 2) ---\n")
-                f_out.write(stdout2 + "\n")
-                f_out.write("--- STDERR (Attempt 2) ---\n")
-                f_out.write(stderr2 + "\n")
-                f_out.write("--- Source Code Outline ---\n")
-                for idx, line in enumerate(code_lines, 1):
-                    f_out.write(f"{idx:4d}\t{line}")
-                    
-            print(f"Failure report saved to {fail_path}")
-            sys.exit(2)
+    print(f"Report saved to {report_path}")
+    sys.exit(res.returncode)
 
 if __name__ == "__main__":
     run_solo()

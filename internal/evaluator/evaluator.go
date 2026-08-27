@@ -146,7 +146,7 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 		}
 		left := e.evalIntExpression(expr.Left)
 		right := e.evalIntExpression(expr.Right)
-		if expr.Token.Type == token.NOT_EQ || expr.Token.Literal == "!=" || expr.Token.Type == token.NEQ_UNICODE || expr.Token.Literal == "≠" {
+		if expr.Token.Type == token.NEQ_UNICODE || expr.Token.Literal == "≠" || strings.Contains(expr.Token.Literal, "≠") || strings.Contains(expr.Token.Literal, "â‰") {
 			if left != right {
 				return 1
 			}
