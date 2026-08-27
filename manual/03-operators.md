@@ -91,10 +91,11 @@ Double symbols is a group of two ASCII symbols considered as one. Some of these 
 | :>     | Data cast pipeline operator / Type conversion                  |
 | <<     | Shift values of collection to right by removing first elements |
 | >>     | Shift values of collection to left by removing first elements  |
-| ::     | Deep copy                                                      | Clone operator                    |
+| ::     | Deep copy / Clone operator                                     |
 | ++     | Extend an array with one or more elements                      |
 | -=     | Find and delete one element, from a collection                 |
-| +=     | Append an element in a set or a map but not in a list          | +>                                | Append element to beginning of a list |
+| +=     | Append an element in a set or a map but not in a list          | 
+| +>     | Append element to beginning of a list                          |
 | <+     | Append element to end of a list                                |
 | ==     | Relation operator for identical (the same)                     |
 | !=     | Relation operator not identical (not the same)                 |
@@ -109,7 +110,7 @@ Each modifier is created with pattern "x=" where x is a single symbol:
 
 | symbol | meaning                 |
 |--------|-------------------------|
-| :=     | Modify                  | (value | reference) |
+| :=     | Modify value            | 
 | +=     | Increment value         |
 | -=     | Decrement value         |
 | *=     | Multiplication modifier |
@@ -128,7 +129,7 @@ Relation operators are used to compare expressions.
 | ∈      | check if element belong to collection                         |
 | =      | equal { compare values or attributes}                         |
 | ≠      | different { compare values or attributes}                     |
-| ≡      | equivalent                                                    | { compare values / convert type } |
+| ≡      | equivalent  { compare values / convert type }                 |
 | ≈      | approximating equal numbers, used with ± like: (x ≈ 4 ± 0.25) |
 | >      | value is greater than: (2 > 1)                                |
 | <      | value is less than: (1 < 2)                                   |

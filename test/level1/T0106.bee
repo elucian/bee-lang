@@ -1,0 +1,10 @@
+-- test is disabled
+-- T0106: Test assignment, equality (=), and unicode inequality (≠) operators
+rule main:
+  new a ∈ Z; new b ∈ Z;
+  let a := 42;
+  let b := 42;
+  expect a = b;
+  let b := 100;
+  expect a ≠ b;
+return;
