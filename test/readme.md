@@ -1,20 +1,20 @@
 # Bee Comprehensive Test Plan (Levels 1 to 5)
 
-This document outlines the test plan and tracking checklist for the Bee Programming Language compiler test suite across Levels 1 through 5. Each test case corresponds to a test file under `test/levelX/TXXYY.bee`.
+This document outlines the test plan and tracking checklist for the Bee Programming Language compiler test suite across Levels 1 through 5. Each test case corresponds to a test file under `@test/levelX/TXXYY.bee`.
 
 ---
 
-## Level 1: Lexical Structure & Basic Declarations (`test/level1/`)
+## Level 1: Lexical Structure & Basic Declarations (`@test/level1/`)
 **Focus:** Character encoding, Maximal Munch disambiguation, variable declarations (`new`), assignments (`let`), basic arithmetic, expectations (`expect`), and code comments (including expression comments `(: ... :)`).
 
-- [x] **T0101**: Essential arithmetic and assignment (`test/level1/T0101.bee`)
-- [x] **T0102**: Relational operators group (`test/level1/T0102.bee`)
+- [x] **T0101**: Essential arithmetic and assignment (`@test/level1/T0101.bee`)
+- [x] **T0102**: Relational operators group (`@test/level1/T0102.bee`)
 - [x] **T0103**: Logical and bitwise operators group using Unicode symbols (`test/level1/T0103.bee`)
-- [x] **T0104**: Exponentiation operators group (`test/level1/T0104.bee`)
-- [x] **T0105**: Range operators and types test case (`test/level1/T0105.bee`)
-- [x] **T0106**: Relational comparison operators (`=`, `≠`) (`test/level1/T0106.bee`)
-- [x] **T0107**: Square root, cube root, and radical operators (`²√`, `³√`, `⁴√`) and superscripts (`test/level1/T0107.bee`)
-- [x] **T0108**: Compound assignment and update operators (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`) (`test/level1/T0108.bee`)
+- [x] **T0104**: Exponentiation operators group (`@test/level1/T0104.bee`)
+- [x] **T0105**: Range operators and types test case (`@test/level1/T0105.bee`)
+- [x] **T0106**: Relational comparison operators (`=`, `≠`) (`@test/level1/T0106.bee`)
+- [x] **T0107**: Square root, cube root, and radical operators (`²√`, `³√`, `⁴√`) and superscripts (`@test/level1/T0107.bee`)
+- [x] **T0108**: Compound assignment and update operators (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`) (`@test/level1/T0108.bee`)
 
 ---
 
@@ -34,9 +34,7 @@ This document outlines the test plan and tracking checklist for the Bee Programm
 
 - [x] **T0301**: Rule definition with single parameter and return result
 - [ ] **T0302**: Rule with multiple return results and named parameters
-- [ ] **T0303**: Rule precondition contracts (`require`)
-- [ ] **T0304**: Rule postcondition contracts (`ensure`)
-- [ ] **T0305**: Recursive rule execution (factorial / Fibonacci)
+- [ ] **T0303**: Recursive rule execution (factorial / Fibonacci)
 
 ---
 
@@ -67,7 +65,7 @@ This document outlines the test plan and tracking checklist for the Bee Programm
 - **`test/bench/`**: Micro-benchmark suites for measuring performance and throughput.
 - **`test/output/`**: Spooled failure reports (`.fail`) generated for failing test runs.
 - **`test/status/`**: Execution status records saved as timestamped JSON files (`status_YYYYMMDD_HHMMSS.json`) detailing per-level pass/fail metrics.
-- **`test/watch.py`**: Continuous developer watcher script that rebuilds the compiler and executes a specified test file in debug mode.
+- **`test/solo.py`**: Test in debug mode with verbose code echo and mark the failed line of code.
 - **`test/bench.py`**: Performance benchmark execution and telemetry generation script.
 - **`test/dryrun.py`**: CLI flag verification script.
 - **`test.py`**: Root test orchestrator that executes all level suites and records level-by-level status telemetry.

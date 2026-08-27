@@ -5,21 +5,25 @@ COMMAND="$1"
 TARGET="$2"
 
 if [ "$COMMAND" = "build" ]; then
-    python build.py
+    python3 build.py
 elif [ "$COMMAND" = "clean" ]; then
     echo "Cleaning test outputs and telemetry..."
-    python clean.py
+    python3 clean.py
 elif [ "$COMMAND" = "test" ]; then
     if [ -n "$TARGET" ]; then
         echo "Running test suite for $TARGET..."
-        python test/test.py "$TARGET"
+        python3 test/test.py "$TARGET"
     else
         echo "Running complete test pipeline..."
-        python test/test.py
+        python3 test/test.py
     fi
 elif [ "$COMMAND" = "solo" ]; then
-    python test/solo.py "$TARGET"
+    if [ -z "$TARGET" ]; then
+        echo "Error: Target required for solo. Example: sh run.sh solo T0104"
+        exit 1
+    fi
+    python3 test/solo.py "$TARGET"
 else
-    echo "Usage: sh run.sh [build|test [level1]|fix level1|fix T0104|clean]"
+    echo "Usage: sh run.sh [build | test [level1] | solo <target> | clean]"
     exit 1
 fi

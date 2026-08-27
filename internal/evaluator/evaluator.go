@@ -118,13 +118,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					e.symbols[name.Value] = res
 				} else if lit == "√=" {
 					res := 1
-					if rightVal == 2 {
-						res = int(math.Round(math.Sqrt(float64(curVal))))
-					} else if rightVal == 3 {
-						res = int(math.Round(math.Cbrt(float64(curVal))))
-					} else {
-						res = int(math.Round(math.Pow(float64(curVal), 1.0/float64(rightVal))))
-					}
+					res = int(math.Round(math.Pow(float64(curVal), 1.0/float64(rightVal))))
 					e.symbols[name.Value] = res
 				} else {
 					e.symbols[name.Value] = rightVal
@@ -323,26 +317,14 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 			}
 			for i := 0; i < rightVal; i++ {
 				res *= left
+				// Use floating point math for all roots
+				return int(math.Round(math.Pow(float64(right), 1.0/float64(deg))))
 			}
-			return res
 		case "√":
 			if left == 0 {
 				left = 2
 			}
-			res := 1
-			for i := 1; i <= right; i++ {
-				pow := 1
-				for j := 0; j < left; j++ {
-					pow *= i
-				}
-				if pow == right {
-					return i
-				}
-				if pow > right {
-					return i - 1
-				}
-			}
-			return res
+			return int(math.Round(math.Pow(float64(right), 1.0/float64(left))))
 		default:
 			if strings.HasSuffix(expr.Token.Literal, "√") {
 				orderStr := strings.TrimSuffix(expr.Token.Literal, "√")
@@ -350,21 +332,8 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 				if orderStr != "" {
 					deg = parseSuperscriptInt(orderStr)
 				}
-				left := deg
-				res := 1
-				for i := 1; i <= right; i++ {
-					pow := 1
-					for j := 0; j < left; j++ {
-						pow *= i
-					}
-					if pow == right {
-						return i
-					}
-					if pow > right {
-						return i - 1
-					}
-				}
-				return res
+				// Use floating point math for all roots
+				return int(math.Round(math.Pow(float64(right), 1.0/float64(deg))))
 			}
 		}
 	}

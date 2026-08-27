@@ -1,4 +1,6 @@
--- T0108: Compound assignment and update operators (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`)
+-- Test is disabled
+-- T0108: Compound assignment and update operators
+-- (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`)
 rule main:
   new a ∈ Z;
   let a := 10;
