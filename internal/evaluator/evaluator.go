@@ -153,11 +153,8 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 					deg = d
 				}
 			}
-			rv := e.evalIntExpression(expr.Right)
-			if rv == 0 {
-				rv = e.evalIntExpression(expr.Left)
-			}
-			res := math.Round(math.Pow(float64(rv), 1.0/float64(deg)))
+			val := e.evalIntExpression(expr.Right)
+			res := math.Round(math.Pow(float64(val), 1.0/float64(deg)))
 			return int(res)
 		}
 
