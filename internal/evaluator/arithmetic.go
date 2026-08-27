@@ -41,6 +41,21 @@ func parseSuperscriptInt(s string) int {
 	return val
 }
 
+func evalSqrt(literal string, rightVal int) int {
+	deg := 2
+	if literal != "" {
+		orderStr := strings.TrimSuffix(literal, "√")
+		if orderStr != "" {
+			parsed := parseSuperscriptInt(orderStr)
+			if parsed > 0 {
+				deg = parsed
+			}
+		}
+	}
+	res := math.Round(math.Pow(float64(rightVal), 1.0/float64(deg)))
+	return int(res)
+}
+
 func evalArithmetic(op string, left, right int, literal string) int {
 	switch op {
 	case "+":
@@ -94,27 +109,16 @@ func evalArithmetic(op string, left, right int, literal string) int {
 		}
 		return res
 	case "√":
-		deg := left
-		if deg == 0 {
-			deg = 2
+		if left != 0 {
+			return evalSqrt(literal, left)
 		}
-		return int(math.Round(math.Pow(float64(right), 1.0/float64(deg))))
+		return evalSqrt(literal, right)
 	default:
 		if literal != "" && (strings.HasSuffix(literal, "√") || strings.Contains(literal, "√")) {
-			deg := 2
-			if strings.HasPrefix(literal, "²") {
-				deg = 2
-			} else if strings.HasPrefix(literal, "³") {
-				deg = 3
-			} else if strings.HasPrefix(literal, "⁴") {
-				deg = 4
-			} else {
-				orderStr := strings.TrimSuffix(literal, "√")
-				if orderStr != "" {
-					deg = parseSuperscriptInt(orderStr)
-				}
+			if left != 0 {
+				return evalSqrt(literal, left)
 			}
-			return int(math.Round(math.Pow(float64(right), 1.0/float64(deg))))
+			return evalSqrt(literal, right)
 		}
 		return 0
 	}

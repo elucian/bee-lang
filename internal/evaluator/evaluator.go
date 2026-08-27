@@ -4,6 +4,7 @@ import (
 	"bee/internal/parser"
 	"bee/internal/token"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -12,6 +13,13 @@ import (
 type Evaluator struct {
 	symbols     map[string]int
 	arrayValues map[string][]int
+}
+
+func New() *Evaluator {
+	return &Evaluator{
+		symbols:     make(map[string]int),
+		arrayValues: make(map[string][]int),
+	}
 }
 
 func (e *Evaluator) DumpContext() {
@@ -134,6 +142,23 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 			leftVal := e.evalIntExpression(expr.Left)
 			rightVal := e.evalIntExpression(expr.Right)
 			return evalComparison(lit, leftVal, rightVal, expr.Token.Type, lit)
+		}
+
+		if strings.HasSuffix(lit, "√") || strings.Contains(lit, "√") || expr.Token.Type == token.SQRT || lit == "√" {
+			deg := 2
+			orderStr := strings.TrimSuffix(lit, "√")
+			if orderStr != "" {
+				d := parseSuperscriptInt(orderStr)
+				if d > 0 {
+					deg = d
+				}
+			}
+			rv := e.evalIntExpression(expr.Right)
+			if rv == 0 {
+				rv = e.evalIntExpression(expr.Left)
+			}
+			res := math.Round(math.Pow(float64(rv), 1.0/float64(deg)))
+			return int(res)
 		}
 
 		left := e.evalIntExpression(expr.Left)

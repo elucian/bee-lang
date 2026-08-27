@@ -6,6 +6,42 @@ import (
 	"bee/internal/token"
 )
 
+func parseSuperscriptIntStatic(s string) int {
+	val := 0
+	for _, r := range s {
+		digit := -1
+		switch r {
+		case '⁰':
+			digit = 0
+		case '¹':
+			digit = 1
+		case '²':
+			digit = 2
+		case '³':
+			digit = 3
+		case '⁴':
+			digit = 4
+		case '⁵':
+			digit = 5
+		case '⁶':
+			digit = 6
+		case '⁷':
+			digit = 7
+		case '⁸':
+			digit = 8
+		case '⁹':
+			digit = 9
+		}
+		if digit >= 0 {
+			val = val*10 + digit
+		}
+	}
+	if val == 0 {
+		return 2
+	}
+	return val
+}
+
 type Parser struct {
 	l *lexer.Lexer
 }
