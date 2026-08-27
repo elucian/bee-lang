@@ -46,11 +46,22 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 }
 
 func (p *Parser) parseDeclaration(tok token.Token) Statement {
-	p.l.NextToken() // ident
-	p.l.NextToken() // ∈
-	p.l.NextToken() // type
-	p.l.NextToken() // ;
-	return &DeclarationStatement{Token: tok}
+	ds := &DeclarationStatement{Token: tok}
+	identTok := p.l.NextToken() // ident
+	ds.Name = identTok.Literal
+	nextTok := p.l.NextToken() // ∈ or :=
+	if nextTok.Literal == ":=" {
+		ds.Value = p.parseExpression()
+	} else {
+		// e.g. new lista := [10, 20, 30];
+		// Let's check next token
+		t2 := p.l.NextToken()
+		if t2.Literal == ":=" {
+			ds.Value = p.parseExpression()
+		}
+	}
+	p.l.NextToken() // Skip ;
+	return ds
 }
 
 func (p *Parser) parseAssignment(tok token.Token) Statement {
@@ -73,6 +84,10 @@ func (p *Parser) parseExpectStatement(tok token.Token) Statement {
 func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	stmt := &PrintStatement{Token: tok}
 	stmt.Expressions = append(stmt.Expressions, p.parseExpression())
+	for p.l.PeekChar() == ',' {
+		p.l.NextToken() // consume comma
+		stmt.Expressions = append(stmt.Expressions, p.parseExpression())
+	}
 	p.l.NextToken() // Skip ;
 	return stmt
 }
@@ -84,13 +99,46 @@ func (p *Parser) parseExpression() Expression {
 		left = &StringLiteral{Token: tok, Value: tok.Literal}
 	} else if tok.Type == token.INT {
 		left = &IntegerLiteral{Token: tok, Value: tok.Literal}
+	} else if tok.Type == token.LBRACKET {
+		arrLit := &ArrayLiteral{Token: tok}
+		for {
+			elTok := p.l.NextToken()
+			if elTok.Type == token.RBRACKET || elTok.Type == token.EOF {
+				break
+			}
+			if elTok.Type == token.INT {
+				arrLit.Elements = append(arrLit.Elements, &IntegerLiteral{Token: elTok, Value: elTok.Literal})
+			} else if elTok.Type == token.IDENT {
+				arrLit.Elements = append(arrLit.Elements, &Identifier{Token: elTok, Value: elTok.Literal})
+			}
+			commaOrBracket := p.l.NextToken()
+			if commaOrBracket.Type == token.RBRACKET || commaOrBracket.Type == token.EOF {
+				break
+			}
+		}
+		left = arrLit
 	} else {
 		left = &Identifier{Token: tok, Value: tok.Literal}
+		// Check for index expression e.g. lista[1] or lista[x]
+		if p.l.PeekChar() == '[' {
+			p.l.NextToken() // consume '['
+			bracketTok := p.l.NextToken()
+			var idxExpr Expression
+			if bracketTok.Literal == "$" {
+				idxExpr = &Identifier{Token: bracketTok, Value: "$"}
+			} else if bracketTok.Type == token.IDENT {
+				idxExpr = &Identifier{Token: bracketTok, Value: bracketTok.Literal}
+			} else {
+				idxExpr = &IntegerLiteral{Token: bracketTok, Value: bracketTok.Literal}
+			}
+			p.l.NextToken() // consume ']'
+			left = &IndexExpression{Token: bracketTok, Left: left, Index: idxExpr}
+		}
 	}
 
 	// Simple binary expression check
 	peekTok := p.l.NextToken()
-	if peekTok.Type == token.PLUS || peekTok.Type == token.MINUS || peekTok.Type == token.ASTERISK {
+	if peekTok.Type == token.PLUS || peekTok.Type == token.MINUS || peekTok.Type == token.ASTERISK || peekTok.Type == token.EQ || peekTok.Literal == "=" || peekTok.Type == token.NEQ_UNICODE || peekTok.Type == token.NOT_EQ {
 		right := p.parseExpression()
 		return &BinaryExpression{Token: peekTok, Left: left, Right: right}
 	}

@@ -20,7 +20,7 @@ func TestLexer_Comprehensive(t *testing.T) {
 		new s := "val = #(a + b)";
 		new r := ` + "`raw string`" + `;
 		<sql>SELECT * FROM users</sql>
-		let val := 5 + |: nested |: comment :| comment :| 2;
+		let val := 5 + (: nested (: comment :) comment :) 2;
 	return;
 	`
 

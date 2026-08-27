@@ -1,0 +1,12 @@
+-- T0108: Block comments and expression comments
+rule main:
+
+    +------------------------------------------
+    This is a multi-line boxed block comment
+    +- nested block comment -+
+    ------------------------------------------+
+
+  new a ∈ Z;
+  let a := 10 + (: expression comment :) 5;
+  expect a = 15;
+return;

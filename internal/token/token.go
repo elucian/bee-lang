@@ -159,6 +159,7 @@ const (
 	RETRY  = "RETRY"
 
 	TRIAL = "TRIAL"
+	TRY   = "TRY"
 	CASE  = "CASE"
 	MISS  = "MISS"
 	FINAL = "FINAL"
@@ -224,6 +225,7 @@ var keywords = map[string]Type{
 	"retry":  RETRY,
 
 	"trial": TRIAL,
+	"try":   TRY,
 	"case":  CASE,
 	"miss":  MISS,
 	"final": FINAL,

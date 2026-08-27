@@ -1,8 +1,7 @@
+# test/test_runner.py
 import os
 import subprocess
 import sys
-import json
-import datetime
 
 def run_tests():
     print("Running Bee Compiler Tests...")
@@ -13,7 +12,8 @@ def run_tests():
         os.makedirs(output_dir)
         
     success = True
-    results = {"version": "0.1.0", "tests": []}
+    failed_count = 0
+    passed_count = 0
     
     for root, dirs, files in os.walk(test_dir):
         if "output" in root:
@@ -22,27 +22,31 @@ def run_tests():
         for file in files:
             if file.endswith(".bee"):
                 test_path = os.path.join(root, file)
-                print(f"Testing {test_path}...")
+                rel_path = os.path.relpath(test_path, test_dir)
                 
                 # Execute the compiler in compile-only mode (-c)
                 result = subprocess.run(["./bin/bee.exe", "-c", test_path], capture_output=True, text=True)
                 
-                status = "PASSED" if result.returncode == 0 else "FAILED"
                 if result.returncode != 0:
                     success = False
-                
-                results["tests"].append({
-                    "path": test_path,
-                    "status": status,
-                    "stderr": result.stderr
-                })
+                    failed_count += 1
+                    print(f"Testing {test_path}...\n  -> FAILED")
+                    
+                    # Spool out output only for failing tests
+                    test_name_safe = rel_path.replace(os.sep, "_")
+                    fail_output_path = os.path.join(output_dir, f"{test_name_safe}.fail")
+                    
+                    with open(fail_output_path, "w") as f_out:
+                        f_out.write(f"Test File: {test_path}\n")
+                        f_out.write(f"--- STDOUT ---\n{result.stdout}\n")
+                        f_out.write(f"--- STDERR (Errors) ---\n{result.stderr}\n")
+                    print(f"     Spooled failure report to {fail_output_path}")
+                else:
+                    passed_count += 1
+                    print(f"Testing {test_path}...\n  -> PASSED")
     
-    report_file = os.path.join(output_dir, f"report_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-    with open(report_file, 'w') as f:
-        json.dump(results, f, indent=4)
-        
+    print(f"\nTest run completed. Passed: {passed_count}, Failed: {failed_count}")
     if not success:
-        print("Tests failed. Check report.")
         sys.exit(1)
     print("All tests passed.")
 

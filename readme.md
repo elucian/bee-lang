@@ -23,5 +23,5 @@
 - [Graphics](manual/ref/13-graphics.md)
 - [Library](manual/ref/14-library.md)
 
-## Chapter 4: Learning Bee
-- [Didactic Examples](manual/ref/index.md)
+## Chapter 5: AST Evaluator & Execution Engine (Phase 4)
+- Implemented `internal/evaluator/evaluator.go` to evaluate AST programs, variables, binary operations, assertions (`expect`), and print statements.

@@ -1,4 +1,7 @@
--- T001: Hello World
+-- T0201: Basic variable declaration and print
 rule main:
-  print "Hello World";
+  new a ∈ Z;
+  let a := 10;
+  expect a = 10;
+  print a;
 return;

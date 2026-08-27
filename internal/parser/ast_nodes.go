@@ -50,6 +50,8 @@ func (es *ExpectStatement) Pos() token.Pos { return es.Token.Pos }
 
 type DeclarationStatement struct {
 	Token token.Token
+	Name  string
+	Value Expression
 }
 
 func (ds *DeclarationStatement) statementNode() {}
@@ -78,6 +80,23 @@ type IntegerLiteral struct {
 
 func (il *IntegerLiteral) expressionNode() {}
 func (il *IntegerLiteral) Pos() token.Pos  { return il.Token.Pos }
+
+type ArrayLiteral struct {
+	Token    token.Token
+	Elements []Expression
+}
+
+func (al *ArrayLiteral) expressionNode() {}
+func (al *ArrayLiteral) Pos() token.Pos  { return al.Token.Pos }
+
+type IndexExpression struct {
+	Token token.Token
+	Left  Expression
+	Index Expression
+}
+
+func (ie *IndexExpression) expressionNode() {}
+func (ie *IndexExpression) Pos() token.Pos  { return ie.Token.Pos }
 
 type BinaryExpression struct {
 	Token token.Token

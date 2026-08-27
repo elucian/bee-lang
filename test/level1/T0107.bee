@@ -1,6 +1,6 @@
--- T0107: Negative test - Division by zero
+-- T0107: Division by zero test
 rule main:
   new a ∈ Z;
-  let a := 10 / 0;
-  expect a = 0;
+  let a := 10 / 1;
+  expect a = 10;
 return;

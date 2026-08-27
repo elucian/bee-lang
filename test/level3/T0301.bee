@@ -1,5 +1,13 @@
 -- T0301: Collections test (Arrays and Lists)
 rule main:
-  new list := [10, 20, 30];
-  print list[0];
+  new lista := [10, 20, 30];
+  expect lista[1] = 10;
+  expect lista[$] = 30;
+  print lista;
+  print lista[1];
+  print lista[3];
+  print lista[1], lista[$];
+  new a := lista[1];
+  print a;
+  expect a = 10;
 return;

@@ -68,6 +68,11 @@ func (l *Lexer) NextToken() token.Token {
 	case ',':
 		tok = newToken(token.COMMA, l.ch)
 	case '(':
+		if l.PeekChar() == ':' {
+			l.readChar()
+			l.skipExprComment()
+			return l.NextToken()
+		}
 		tok = newToken(token.LPAREN, l.ch)
 	case ')':
 		tok = newToken(token.RPAREN, l.ch)
@@ -198,12 +203,7 @@ func (l *Lexer) NextToken() token.Token {
 			l.readChar()
 			tok = token.Token{Type: token.REDUCE_CHANNEL, Literal: "+>"}
 		} else if l.PeekChar() == '-' {
-			// Could be block comment header +-
-			l.readChar()
-			if l.PeekChar() == '+' {
-				// Wait, block comment header is +- ... -+
-				// Let's check: l.ch was '+', PeekChar was '-' (consumed). If next is ..., block comment.
-			}
+			l.readChar() // consume '-'
 			l.skipBlockComment()
 			return l.NextToken()
 		} else {
@@ -222,13 +222,6 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.MINUS, l.ch)
 		}
-	case '|':
-		if l.PeekChar() == ':' {
-			l.readChar()
-			l.skipExprComment()
-			return l.NextToken()
-		}
-		tok = newToken(token.ILLEGAL, l.ch)
 	case '/':
 		if l.PeekChar() == '=' {
 			l.readChar()
@@ -333,11 +326,11 @@ func (l *Lexer) skipExprComment() {
 	l.readChar() // consume ':'
 	depth := 1
 	for depth > 0 && l.ch != 0 {
-		if l.ch == '|' && l.PeekChar() == ':' {
+		if l.ch == '(' && l.PeekChar() == ':' {
 			l.readChar()
 			l.readChar()
 			depth++
-		} else if l.ch == ':' && l.PeekChar() == '|' {
+		} else if l.ch == ':' && l.PeekChar() == ')' {
 			l.readChar()
 			l.readChar()
 			depth--
@@ -348,15 +341,14 @@ func (l *Lexer) skipExprComment() {
 }
 
 func (l *Lexer) skipBlockComment() {
+	// l.ch is already '-' after '+'
 	l.readChar() // consume '-'
 	depth := 1
 	for depth > 0 && l.ch != 0 {
 		if l.ch == '+' && l.PeekChar() == '-' {
 			l.readChar()
 			l.readChar()
-			if l.ch == '+' && l.PeekChar() == '-' {
-				depth++
-			}
+			depth++
 		} else if l.ch == '-' && l.PeekChar() == '+' {
 			l.readChar()
 			l.readChar()
@@ -365,6 +357,7 @@ func (l *Lexer) skipBlockComment() {
 			l.readChar()
 		}
 	}
+	l.readChar() // consume past final '+'
 }
 
 func (l *Lexer) readIdentifier() string {
