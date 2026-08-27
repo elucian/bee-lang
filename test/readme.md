@@ -66,7 +66,7 @@ This document outlines the test plan and tracking checklist for the Bee Programm
 - **`test/bench/`**: Micro-benchmark suites for measuring performance and throughput.
 - **`test/output/`**: Spooled failure reports (`.fail`) generated for failing test runs.
 - **`test/status/`**: Execution status records saved as timestamped JSON files (`status_YYYYMMDD_HHMMSS.json`) detailing per-level pass/fail metrics.
-- **`test/level.py`**: Level-specific test runner supporting `--level <N>` execution.
+- **`test/watch.py`**: Continuous developer watcher script that rebuilds the compiler and executes a specified test file in debug mode.
 - **`test/bench.py`**: Performance benchmark execution and telemetry generation script.
 - **`test/dryrun.py`**: CLI flag verification script.
 - **`test.py`**: Root test orchestrator that executes all level suites and records level-by-level status telemetry.

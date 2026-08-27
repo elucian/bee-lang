@@ -1,8 +1,8 @@
--- T0102: Declaring and mutating a variable
+-- T0102: Relational operators group
 rule main:
-  new a ∈ Z;
-  let a := 42;
-  expect a = 42;
-  let a := 100;
-  expect a = 100;
+  new a ∈ Z; new b ∈ Z; new r1 ∈ Z; new r2 ∈ Z; new r3 ∈ Z;
+  let a := 5; let b := 10;
+  let r1 := a != b; expect r1 = 1;
+  let r2 := a < b; expect r2 = 1;
+  let r3 := b > a; expect r3 = 1;
 return;

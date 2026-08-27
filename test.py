@@ -39,21 +39,50 @@ def test():
             
         passed = 0
         failed = 0
+        failed_cases = []
+        passed_cases = []
         
         for f in sorted(os.listdir(lvl_dir)):
             if f.endswith(".bee"):
                 path = os.path.join(lvl_dir, f)
+                test_name = os.path.splitext(f)[0]
                 res = subprocess.run(["./bin/bee.exe", "-e", path], capture_output=True, text=True)
                 if res.returncode == 0:
                     passed += 1
+                    passed_cases.append(test_name)
                     print(f"Testing {path}...\n  -> PASSED")
                 else:
                     failed += 1
+                    failed_cases.append(test_name)
                     print(f"Testing {path}...\n  -> FAILED")
+                    output_dir = "test/output"
+                    os.makedirs(output_dir, exist_ok=True)
+                    fail_output_path = os.path.join(output_dir, f"{lvl}_{f}.fail")
+                    
+                    # Read file lines to extract failing expectation if possible
+                    code_lines = []
+                    try:
+                        with open(path, "r") as tf:
+                            code_lines = tf.readlines()
+                    except Exception:
+                        pass
+                        
+                    with open(fail_output_path, "w") as f_out:
+                        f_out.write(f"Test File: {path}\n")
+                        f_out.write(f"--- STDOUT ---\n{res.stdout}\n")
+                        f_out.write(f"--- STDERR (Errors & Stack Trace) ---\n{res.stderr}\n")
+                        f_out.write("--- Source Code Outline ---\n")
+                        for idx, line in enumerate(code_lines, 1):
+                            clean_line = line.rstrip("\r\n")
+                            if f"line {idx}" in res.stderr:
+                                f_out.write(f"{idx:4d}\t{clean_line} -- FAILED\n")
+                            else:
+                                f_out.write(f"{idx:4d}\t{line}")
                     
         level_results[lvl] = {
             "passed": passed,
-            "failed": failed
+            "failed": failed,
+            "cases": failed_cases
         }
         total_passed += passed
         total_failed += failed

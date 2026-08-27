@@ -2,10 +2,48 @@ package evaluator
 
 import (
 	"bee/internal/parser"
+	"bee/internal/token"
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
+
+func parseSuperscriptInt(s string) int {
+	val := 0
+	for _, r := range s {
+		digit := -1
+		switch r {
+		case '⁰':
+			digit = 0
+		case '¹':
+			digit = 1
+		case '²':
+			digit = 2
+		case '³':
+			digit = 3
+		case '⁴':
+			digit = 4
+		case '⁵':
+			digit = 5
+		case '⁶':
+			digit = 6
+		case '⁷':
+			digit = 7
+		case '⁸':
+			digit = 8
+		case '⁹':
+			digit = 9
+		}
+		if digit >= 0 {
+			val = val*10 + digit
+		}
+	}
+	if val == 0 {
+		return 2
+	}
+	return val
+}
 
 type Evaluator struct {
 	symbols     map[string]int
@@ -30,9 +68,9 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 	case *parser.ExpectStatement:
 		val := e.evalIntExpression(s.Condition)
 		if val == 0 {
-			panic(fmt.Sprintf("Assertion failed: expect statement failed (evaluated condition yielded 0)"))
+			panic(fmt.Sprintf("expect failed at line %d", int(s.Token.Pos)))
 		} else {
-			fmt.Fprintf(os.Stderr, "DEBUG: Expectation passed\n")
+			fmt.Fprintf(os.Stderr, "DEBUG: Expectation passed in line %d\n", int(s.Token.Pos))
 		}
 	case *parser.PrintStatement:
 		for _, expr := range s.Expressions {
@@ -41,17 +79,12 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		}
 		fmt.Println()
 	case *parser.AssignmentStatement:
-		if len(s.Names) == 2 && len(s.Values) == 1 {
-			// Handle tuple swapping assignment like let a, b := b, a;
-			// In our simple parser, s.Values[0] is b
-			identRHS := s.Values[0].(*parser.Identifier).Value
-			if identRHS == s.Names[1].Value {
-				// Swap
-				val0 := e.evalIntExpression(s.Names[1])
-				val1 := e.evalIntExpression(s.Names[0])
-				e.symbols[s.Names[0].Value] = val0
-				e.symbols[s.Names[1].Value] = val1
-			}
+		if (s.Token.Literal == "::" || s.Token.Type == token.CLONE_ASSIGN) && len(s.Names) == 1 && len(s.Values) == 1 {
+			val := e.evalIntExpression(s.Values[0])
+			e.symbols[s.Names[0].Value] = val
+		} else if len(s.Names) == 1 && len(s.Values) == 1 {
+			val := e.evalIntExpression(s.Values[0])
+			e.symbols[s.Names[0].Value] = val
 		} else if len(s.Names) == len(s.Values) {
 			vals := make([]int, len(s.Values))
 			for i, v := range s.Values {
@@ -120,6 +153,21 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 		}
 		return 0
 	case *parser.BinaryExpression:
+		if expr.Token.Literal == "=" || expr.Token.Literal == "==" {
+			left := e.evalIntExpression(expr.Left)
+			right := e.evalIntExpression(expr.Right)
+			if left == right {
+				return 1
+			}
+			return 0
+		} else if expr.Token.Literal == "≠" || expr.Token.Literal == "!=" {
+			left := e.evalIntExpression(expr.Left)
+			right := e.evalIntExpression(expr.Right)
+			if left != right {
+				return 1
+			}
+			return 0
+		}
 		left := e.evalIntExpression(expr.Left)
 		right := e.evalIntExpression(expr.Right)
 		switch expr.Token.Literal {
@@ -129,15 +177,51 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 			return left - right
 		case "*":
 			return left * right
-		case "=":
-			if left == right {
+		case "/":
+			if right != 0 {
+				return left / right
+			}
+			return 0
+		case "%":
+			if right != 0 {
+				res := left % right
+				if res < 0 {
+					if right > 0 {
+						res += right
+					} else {
+						res -= right
+					}
+				}
+				return res
+			}
+			return 0
+		case "and":
+			if left != 0 && right != 0 {
 				return 1
 			}
 			return 0
-		case "!=":
-			if left != right {
+		case "or":
+			if left != 0 || right != 0 {
 				return 1
 			}
+			return 0
+		case "xor":
+			if (left != 0) != (right != 0) {
+				return 1
+			}
+			return 0
+		case "¬":
+			if left == 0 && right == 0 { // unary not emulation
+				if right == 0 {
+					return 1
+				}
+				return 0
+			}
+			if right == 0 {
+				return 1
+			}
+			return 0
+		case "≠", "!=":
 			return 0
 		case "<":
 			if left < right {
@@ -159,6 +243,77 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 				return 1
 			}
 			return 0
+		case "^":
+			res := 1
+			rightVal := right
+			lit := expr.Token.Literal
+			if lit == "³" || lit == "3" {
+				rightVal = 3
+			} else if lit == "²" || lit == "2" {
+				rightVal = 2
+			} else if lit == "⁴" || lit == "4" {
+				rightVal = 4
+			} else if lit == "⁵" || lit == "5" {
+				rightVal = 5
+			} else if lit == "⁶" || lit == "6" {
+				rightVal = 6
+			} else if lit == "⁷" || lit == "7" {
+				rightVal = 7
+			} else if lit == "⁸" || lit == "8" {
+				rightVal = 8
+			} else if lit == "⁹" || lit == "9" {
+				rightVal = 9
+			} else {
+				rightVal = parseSuperscriptInt(lit)
+				if rightVal == 2 && lit != "²" {
+					rightVal = right
+				}
+			}
+			for i := 0; i < rightVal; i++ {
+				res *= left
+			}
+			return res
+		case "√":
+			if left == 0 {
+				left = 2
+			}
+			res := 1
+			for i := 1; i <= right; i++ {
+				pow := 1
+				for j := 0; j < left; j++ {
+					pow *= i
+				}
+				if pow == right {
+					return i
+				}
+				if pow > right {
+					return i - 1
+				}
+			}
+			return res
+		default:
+			if strings.HasSuffix(expr.Token.Literal, "√") {
+				orderStr := strings.TrimSuffix(expr.Token.Literal, "√")
+				deg := 2
+				if orderStr != "" {
+					deg = parseSuperscriptInt(orderStr)
+				}
+				left := deg
+				res := 1
+				for i := 1; i <= right; i++ {
+					pow := 1
+					for j := 0; j < left; j++ {
+						pow *= i
+					}
+					if pow == right {
+						return i
+					}
+					if pow > right {
+						return i - 1
+					}
+				}
+				return res
+			}
 		}
 	}
 	return 0

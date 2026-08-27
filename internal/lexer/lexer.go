@@ -16,10 +16,11 @@ type Lexer struct {
 	readPosition int
 	ch           rune
 	debug        bool
+	line         int
 }
 
 func New(input string) *Lexer {
-	l := &Lexer{input: input}
+	l := &Lexer{input: input, line: 1}
 	l.readChar()
 	// Check for UTF-8 BOM (E0101)
 	if l.ch == 0xFEFF {
@@ -29,6 +30,9 @@ func New(input string) *Lexer {
 }
 
 func (l *Lexer) readChar() {
+	if l.ch == '\n' {
+		l.line++
+	}
 	if l.readPosition >= len(l.input) {
 		l.ch = 0
 	} else {
@@ -64,226 +68,221 @@ func (l *Lexer) NextToken() token.Token {
 		tok.Literal = ""
 		tok.Type = token.EOF
 	case ';':
-		tok = newToken(token.SEMICOLON, l.ch)
+		tok = token.Token{Type: token.SEMICOLON, Literal: ";", Pos: token.Pos(l.line)}
 	case ',':
-		tok = newToken(token.COMMA, l.ch)
+		tok = token.Token{Type: token.COMMA, Literal: ",", Pos: token.Pos(l.line)}
 	case '(':
 		if l.PeekChar() == ':' {
 			l.readChar()
 			l.skipExprComment()
 			return l.NextToken()
 		}
-		tok = newToken(token.LPAREN, l.ch)
+		tok = token.Token{Type: token.LPAREN, Literal: "(", Pos: token.Pos(l.line)}
 	case ')':
-		tok = newToken(token.RPAREN, l.ch)
+		tok = token.Token{Type: token.RPAREN, Literal: ")", Pos: token.Pos(l.line)}
 	case '[':
-		tok = newToken(token.LBRACKET, l.ch)
+		tok = token.Token{Type: token.LBRACKET, Literal: "[", Pos: token.Pos(l.line)}
 	case ']':
-		tok = newToken(token.RBRACKET, l.ch)
+		tok = token.Token{Type: token.RBRACKET, Literal: "]", Pos: token.Pos(l.line)}
 	case '{':
-		tok = newToken(token.LBRACE, l.ch)
+		tok = token.Token{Type: token.LBRACE, Literal: "{", Pos: token.Pos(l.line)}
 	case '}':
-		tok = newToken(token.RBRACE, l.ch)
+		tok = token.Token{Type: token.RBRACE, Literal: "}", Pos: token.Pos(l.line)}
 	case '?':
-		tok = newToken(token.QUESTION, l.ch)
+		tok = token.Token{Type: token.QUESTION, Literal: "?", Pos: token.Pos(l.line)}
 	case '$':
-		tok = newToken(token.SIGIL_SYS, l.ch)
+		tok = token.Token{Type: token.SIGIL_SYS, Literal: "$", Pos: token.Pos(l.line)}
 	case '#':
-		tok = newToken(token.HASH, l.ch)
+		tok = token.Token{Type: token.HASH, Literal: "#", Pos: token.Pos(l.line)}
 	case '@':
-		tok = newToken(token.AT, l.ch)
+		tok = token.Token{Type: token.AT, Literal: "@", Pos: token.Pos(l.line)}
 	case '*':
 		if l.PeekChar() == '=' {
 			l.readChar()
-			tok = token.Token{Type: token.MUL_ASSIGN, Literal: "*="}
+			tok = token.Token{Type: token.MUL_ASSIGN, Literal: "*=", Pos: token.Pos(l.line)}
 		} else {
-			tok = newToken(token.ASTERISK, l.ch)
+			tok = token.Token{Type: token.ASTERISK, Literal: "*", Pos: token.Pos(l.line)}
 		}
 	case '_':
-		tok = newToken(token.UNDERSCORE, l.ch)
+		tok = token.Token{Type: token.UNDERSCORE, Literal: "_", Pos: token.Pos(l.line)}
 	case 'λ':
-		tok = newToken(token.LAMBDA, l.ch)
+		tok = token.Token{Type: token.LAMBDA, Literal: "λ", Pos: token.Pos(l.line)}
 	case '∈':
-		tok = newToken(token.IN, l.ch)
+		tok = token.Token{Type: token.IN, Literal: "∈", Pos: token.Pos(l.line)}
 	case '∩':
-		tok = newToken(token.SET_INTERSECT, l.ch)
+		tok = token.Token{Type: token.SET_INTERSECT, Literal: "∩", Pos: token.Pos(l.line)}
 	case '∪':
-		tok = newToken(token.SET_UNION, l.ch)
+		tok = token.Token{Type: token.SET_UNION, Literal: "∪", Pos: token.Pos(l.line)}
 	case '⊂':
-		tok = newToken(token.SUBSET, l.ch)
+		tok = token.Token{Type: token.SUBSET, Literal: "⊂", Pos: token.Pos(l.line)}
 	case '⊃':
-		tok = newToken(token.SUPERSET, l.ch)
+		tok = token.Token{Type: token.SUPERSET, Literal: "⊃", Pos: token.Pos(l.line)}
 	case 'Δ':
-		tok = newToken(token.SYM_DIFF, l.ch)
+		tok = token.Token{Type: token.SYM_DIFF, Literal: "Δ", Pos: token.Pos(l.line)}
 	case '∧':
-		tok = newToken(token.LOGICAL_AND, l.ch)
+		tok = token.Token{Type: token.LOGICAL_AND, Literal: "∧", Pos: token.Pos(l.line)}
 	case '∨':
-		tok = newToken(token.LOGICAL_OR, l.ch)
+		tok = token.Token{Type: token.LOGICAL_OR, Literal: "∨", Pos: token.Pos(l.line)}
 	case '¬':
-		tok = newToken(token.LOGICAL_NOT, l.ch)
+		tok = token.Token{Type: token.LOGICAL_NOT, Literal: "¬", Pos: token.Pos(l.line)}
 	case '⊕':
-		tok = newToken(token.XOR_PLUS, l.ch)
+		tok = token.Token{Type: token.XOR_PLUS, Literal: "⊕", Pos: token.Pos(l.line)}
 	case '⊖':
-		tok = newToken(token.XOR_MINUS, l.ch)
+		tok = token.Token{Type: token.XOR_MINUS, Literal: "⊖", Pos: token.Pos(l.line)}
 	case '∀':
-		tok = newToken(token.FORALL, l.ch)
+		tok = token.Token{Type: token.FORALL, Literal: "∀", Pos: token.Pos(l.line)}
 	case '∃':
-		tok = newToken(token.EXISTS, l.ch)
-	case '√':
-		if l.PeekChar() == '=' {
+		tok = token.Token{Type: token.EXISTS, Literal: "∃", Pos: token.Pos(l.line)}
+	case '⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹':
+		var sb strings.Builder
+		sb.WriteRune(l.ch)
+		for {
 			l.readChar()
-			tok = token.Token{Type: token.SQRT_ASSIGN, Literal: "√="}
+			if l.ch >= '⁰' && l.ch <= '⁹' {
+				sb.WriteRune(l.ch)
+			} else {
+				break
+			}
+		}
+		if l.ch == '√' {
+			sb.WriteRune('√')
+			tok = token.Token{Type: token.SQRT, Literal: sb.String(), Pos: token.Pos(l.line)}
 		} else {
-			tok = newToken(token.SQRT, l.ch)
+			tok = token.Token{Type: token.CARET, Literal: sb.String(), Pos: token.Pos(l.line)}
+			// Do NOT return here immediately so l.readChar() at the end of switch advances properly!
 		}
 	case '±':
-		tok = newToken(token.PLUS_MINUS, l.ch)
+		tok = token.Token{Type: token.PLUS_MINUS, Literal: "±", Pos: token.Pos(l.line)}
 	case '×':
-		tok = newToken(token.MULT, l.ch)
+		tok = token.Token{Type: token.MULT, Literal: "×", Pos: token.Pos(l.line)}
 	case '÷':
-		tok = newToken(token.DIV, l.ch)
+		tok = token.Token{Type: token.DIV, Literal: "÷", Pos: token.Pos(l.line)}
 	case '≈':
-		tok = newToken(token.APPROX_EQ, l.ch)
+		tok = token.Token{Type: token.APPROX_EQ, Literal: "≈", Pos: token.Pos(l.line)}
 	case '≡':
-		tok = newToken(token.EQUIV, l.ch)
+		tok = token.Token{Type: token.EQUIV, Literal: "≡", Pos: token.Pos(l.line)}
 	case '≠':
-		tok = newToken(token.NEQ_UNICODE, l.ch)
+		tok = token.Token{Type: token.NEQ_UNICODE, Literal: "≠", Pos: token.Pos(l.line)}
 	case '≤':
-		tok = newToken(token.LTE_UNICODE, l.ch)
+		tok = token.Token{Type: token.LTE_UNICODE, Literal: "≤", Pos: token.Pos(l.line)}
 	case '≥':
-		tok = newToken(token.GTE_UNICODE, l.ch)
+		tok = token.Token{Type: token.GTE_UNICODE, Literal: "≥", Pos: token.Pos(l.line)}
 	case '=':
 		if l.PeekChar() == '>' {
 			l.readChar()
-			tok = token.Token{Type: token.FAT_ARROW, Literal: "=>"}
+			tok = token.Token{Type: token.FAT_ARROW, Literal: "=>", Pos: token.Pos(l.line)}
 		} else {
-			tok = newToken(token.EQ, l.ch)
+			tok = token.Token{Type: token.EQ, Literal: "=", Pos: token.Pos(l.line)}
 		}
 	case ':':
 		if l.PeekChar() == '=' {
 			l.readChar()
-			tok = token.Token{Type: token.ASSIGN, Literal: ":="}
+			tok = token.Token{Type: token.ASSIGN, Literal: ":=", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == ':' {
 			l.readChar()
-			tok = token.Token{Type: token.CLONE_ASSIGN, Literal: "::"}
+			tok = token.Token{Type: token.CLONE_ASSIGN, Literal: "::", Pos: token.Pos(l.line)}
 		} else {
-			tok = newToken(token.COLON, l.ch)
+			tok = token.Token{Type: token.COLON, Literal: ":", Pos: token.Pos(l.line)}
 		}
 	case '.':
 		if l.PeekChar() == '.' {
 			l.readChar()
-			tok = token.Token{Type: token.RANGE_INCL, Literal: ".."}
+			tok = token.Token{Type: token.RANGE_INCL, Literal: "..", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '!' {
 			l.readChar()
-			tok = token.Token{Type: token.RANGE_LEFT_INC, Literal: ".!"}
+			tok = token.Token{Type: token.RANGE_LEFT_INC, Literal: ".!", Pos: token.Pos(l.line)}
 		} else {
-			tok = newToken(token.DOT, l.ch)
+			tok = token.Token{Type: token.DOT, Literal: ".", Pos: token.Pos(l.line)}
 		}
 	case '!':
 		if l.PeekChar() == '.' {
 			l.readChar()
-			tok = token.Token{Type: token.RANGE_RGHT_INC, Literal: "!."}
+			tok = token.Token{Type: token.RANGE_RGHT_INC, Literal: "!.", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '!' {
 			l.readChar()
-			tok = token.Token{Type: token.RANGE_EXCL, Literal: "!!"}
+			tok = token.Token{Type: token.RANGE_EXCL, Literal: "!!", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '=' {
 			l.readChar()
-			tok = token.Token{Type: token.NOT_EQ, Literal: "!="}
+			tok = token.Token{Type: token.NOT_EQ, Literal: "!=", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '∈' {
 			l.readChar()
-			tok = token.Token{Type: token.NOT_IN, Literal: "!∈"}
+			tok = token.Token{Type: token.NOT_IN, Literal: "!∈", Pos: token.Pos(l.line)}
 		} else {
-			tok = newToken(token.BANG, l.ch)
+			tok = token.Token{Type: token.BANG, Literal: "!", Pos: token.Pos(l.line)}
 		}
 	case '+':
 		if l.PeekChar() == '=' {
 			l.readChar()
-			tok = token.Token{Type: token.PLUS_ASSIGN, Literal: "+="}
+			tok = token.Token{Type: token.PLUS_ASSIGN, Literal: "+=", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '>' {
 			l.readChar()
-			tok = token.Token{Type: token.REDUCE_CHANNEL, Literal: "+>"}
+			tok = token.Token{Type: token.REDUCE_CHANNEL, Literal: "+>", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '-' {
 			l.readChar() // consume '-'
 			l.skipBlockComment()
 			return l.NextToken()
 		} else {
-			tok = newToken(token.PLUS, l.ch)
+			tok = token.Token{Type: token.PLUS, Literal: "+", Pos: token.Pos(l.line)}
 		}
 	case '-':
 		if l.PeekChar() == '=' {
 			l.readChar()
-			tok = token.Token{Type: token.MINUS_ASSIGN, Literal: "-="}
+			tok = token.Token{Type: token.MINUS_ASSIGN, Literal: "-=", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '-' {
 			l.skipSingleComment()
 			return l.NextToken()
 		} else if l.PeekChar() == '>' {
 			l.readChar()
-			tok = token.Token{Type: token.THIN_ARROW, Literal: "->"}
+			tok = token.Token{Type: token.THIN_ARROW, Literal: "->", Pos: token.Pos(l.line)}
 		} else {
-			tok = newToken(token.MINUS, l.ch)
+			tok = token.Token{Type: token.MINUS, Literal: "-", Pos: token.Pos(l.line)}
 		}
 	case '/':
 		if l.PeekChar() == '=' {
 			l.readChar()
-			tok = token.Token{Type: token.DIV_ASSIGN, Literal: "/="}
+			tok = token.Token{Type: token.DIV_ASSIGN, Literal: "/=", Pos: token.Pos(l.line)}
 		} else {
-			tok = newToken(token.SLASH, l.ch)
-		}
-	case '\\':
-		tok = newToken(token.BACKSLASH, l.ch)
-	case '%':
-		if l.PeekChar() == '=' {
-			l.readChar()
-			tok = token.Token{Type: token.MOD_ASSIGN, Literal: "%="}
-		} else {
-			tok = newToken(token.PERCENT, l.ch)
+			tok = token.Token{Type: token.SLASH, Literal: "/", Pos: token.Pos(l.line)}
 		}
 	case '^':
-		if l.PeekChar() == '=' {
-			l.readChar()
-			tok = token.Token{Type: token.POW_ASSIGN, Literal: "^="}
-		} else {
-			tok = newToken(token.CARET, l.ch)
-		}
+		tok = token.Token{Type: token.CARET, Literal: "^", Pos: token.Pos(l.line)}
 	case '<':
 		if l.PeekChar() == '-' {
 			l.readChar()
-			tok = token.Token{Type: token.PIPE_LEFT, Literal: "<<"}
-		} else if l.PeekChar() == '=' {
-			l.readChar()
-			tok = token.Token{Type: token.LTE, Literal: "<="}
+			tok = token.Token{Type: token.THIN_ARROW, Literal: "<-", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == ':' {
 			l.readChar()
-			tok = token.Token{Type: token.SUBTYPE, Literal: "<:"}
-		} else if isLetter(l.PeekChar()) {
-			// Check if markup block like <sql>, <html>, etc.
-			if markupTok, ok := l.tryReadMarkupBlock(); ok {
-				return markupTok
-			}
-			tok = newToken(token.LT, l.ch)
+			tok = token.Token{Type: token.SUBTYPE, Literal: "<:", Pos: token.Pos(l.line)}
+		} else if l.PeekChar() == '<' {
+			l.readChar()
+			tok = token.Token{Type: token.PIPE_LEFT, Literal: "<<", Pos: token.Pos(l.line)}
+		} else if l.PeekChar() == '=' {
+			l.readChar()
+			tok = token.Token{Type: token.LTE, Literal: "<=", Pos: token.Pos(l.line)}
 		} else {
-			tok = newToken(token.LT, l.ch)
+			tok = token.Token{Type: token.LT, Literal: "<", Pos: token.Pos(l.line)}
 		}
 	case '>':
 		if l.PeekChar() == '=' {
 			l.readChar()
-			tok = token.Token{Type: token.GTE, Literal: ">="}
+			tok = token.Token{Type: token.GTE, Literal: ">=", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '>' {
 			l.readChar()
-			tok = token.Token{Type: token.PIPE_RIGHT, Literal: ">>"}
+			tok = token.Token{Type: token.PIPE_RIGHT, Literal: ">>", Pos: token.Pos(l.line)}
 		} else {
-			tok = newToken(token.GT, l.ch)
+			tok = token.Token{Type: token.GT, Literal: ">", Pos: token.Pos(l.line)}
 		}
 	case '"':
 		tok.Type = token.STRING
 		tok.Literal = l.readString()
+		tok.Pos = token.Pos(l.line)
 		return tok
 	case '`':
 		tok.Type = token.RAW_STRING
 		tok.Literal = l.readRawString()
+		tok.Pos = token.Pos(l.line)
 		return tok
 	default:
-		// Check for block comment header `+-`
 		if l.ch == '+' && l.PeekChar() == '-' {
 			l.readChar()
 			l.skipBlockComment()
@@ -291,13 +290,15 @@ func (l *Lexer) NextToken() token.Token {
 		}
 
 		if isLetter(l.ch) {
-			tok.Literal = l.readIdentifier()
-			tok.Type = token.LookupIdent(tok.Literal)
+			lit := l.readIdentifier()
+			tok = token.Token{Type: token.LookupIdent(lit), Literal: lit, Pos: token.Pos(l.line)}
 			return tok
 		} else if isDigit(l.ch) {
-			return l.readNumberLiteral()
+			numTok := l.readNumberLiteral()
+			numTok.Pos = token.Pos(l.line)
+			return numTok
 		} else {
-			tok = newToken(token.ILLEGAL, l.ch)
+			tok = token.Token{Type: token.ILLEGAL, Literal: string(l.ch), Pos: token.Pos(l.line)}
 		}
 	}
 
@@ -305,8 +306,12 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
-func newToken(tokenType token.Type, ch rune) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch)}
+func newToken(tokenType token.Type, ch rune, line int) token.Token {
+	return token.Token{Type: tokenType, Literal: string(ch), Pos: token.Pos(line)}
+}
+
+func (l *Lexer) tok(tokenType token.Type, literal string) token.Token {
+	return token.Token{Type: tokenType, Literal: literal, Pos: token.Pos(l.line)}
 }
 
 func (l *Lexer) skipWhitespace() {
@@ -534,6 +539,7 @@ func isLetter(ch rune) bool {
 		('Α' <= ch && ch <= 'Ω') ||
 		('а' <= ch && ch <= 'я') ||
 		('А' <= ch && ch <= 'Я') ||
+		(ch >= '⁰' && ch <= '⁹') ||
 		ch > 127
 }
 

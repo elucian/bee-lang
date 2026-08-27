@@ -59,8 +59,12 @@ Bee utilizes a deterministic, three-tier hybrid memory management model engineer
 ```ebnf
 (* Memory Management Statements *)
 zap_statement     ::= "zap" identifier ";" ;
-new_statement     ::= "new" identifier [ ":" type_specifier ] [ ":=" expression ] ";" ;
-let_statement     ::= "let" identifier ":=" expression ";" ;
+new_statement     ::= "new" identifier [ ":" type_specifier ] [ ( ":=" | "::" ) expression ] ";" ;
+let_statement     ::= "let" identifier ( ":=" | "::" ) expression ";" ;
+
+### Assignment (`:=`) vs Clone Assignment (`::`)
+- **Reference/Value Assignment (`:=`)**: For boxed variables or objects, `:=` transfers or binds the underlying reference without duplicating heap payloads. For primitive native variables, it copies the value.
+- **Clone Assignment (`::`)**: For boxed variables or objects, `::` performs a deep copy/structural clone allocating an independent payload on the heap. For primitive native variables, `::` and `:=` are equivalent.
 
 (* Variable Mutability Modifiers *)
 variable_decl     ::= "new" identifier ( "∈" | "in" ) type_specifier ";" ;

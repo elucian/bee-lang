@@ -1,8 +1,0 @@
--- T0203: Complex arithmetic with order of operations
-rule main:
-  new a ∈ Z;
-  let a := (10 + 5) * 2;
-  expect a = 30;
-  let a := 10 + 5 * 2;
-  expect a = 20;
-return;

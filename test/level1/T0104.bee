@@ -1,0 +1,8 @@
+-- T0104: Exponentiation operators group
+rule main:
+  new base ∈ Z; new exp ∈ Z; new res ∈ Z;
+  let base := 2; let exp := 3;
+  let res := base ^ exp;
+  expect res = 8;
+  expect base ^ exp = 8;
+return;

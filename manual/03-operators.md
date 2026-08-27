@@ -59,6 +59,8 @@ Listed in the order of precedence top down.
 | -      | Change sign, replace "y = -x" with "y = -1*x"   |
 | /      | Rational number division                        |
 | ^      | Power symbol used with fractions or expressions |
+| ⁿ      | Superscript exponent notation e.g. `xⁿ` or `(expr)ⁿ` |
+| √      | Radical / Root: `ⁿ√x` represents the $n$-th root of $x$ (e.g., `²√9`, `³√27`) |
 | √      | Radical: x√n is equivalent to x^(1/n)           |
 | *      | Multiplication alternative                      |
 | \      | Rational number division                        |
@@ -150,6 +152,7 @@ Operator: "!" can be used in combination with other operators:
 | ⊂      | Logic   | Set is included in superset: "⊂"      |
 | ⊃      | Logic   | Set contain subset: "⊃"               |
 | Δ      | Set     | Set symmetric difference              |
+| Σ      | Number  | Sum of all members in a collection    |
 | +      | String  | Concatenation between two strings     |
 | +      | List    | Concatenation between two lists       |
 | +      | Array   | Concatenation between two arrays      |

@@ -1,8 +1,10 @@
--- T0103: Variable assignment and expectation
+-- T0103: Logical and bitwise operators group using Unicode symbols
 rule main:
-  new a ∈ Z;
-  let a := 10;
-  expect a = 10;
-  let a := 20;
-  expect a = 20;
+  new p ∈ Z; new q ∈ Z;
+  let p := 1; let q := 0;
+  expect p ∧ p;
+  expect p ∨ q;
+  expect p ⊕ q;
+  expect ¬q;
+  expect ¬(p ∧ q);
 return;

@@ -8,24 +8,36 @@ import (
 	"bee/internal/evaluator"
 	"bee/internal/lexer"
 	"bee/internal/parser"
+	"bee/internal/token"
 	"fmt"
 	"os"
 )
 
 func main() {
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "Usage: bee [-c|-b|-e] <source.bee>")
+		fmt.Fprintln(os.Stderr, "Usage: bee [-c|-b|-e] [-d] <source.bee>")
 		os.Exit(1)
 	}
 
 	mode := "-c"
+	debug := false
 	filePath := ""
 
-	if len(os.Args) >= 3 {
-		mode = os.Args[1]
-		filePath = os.Args[2]
-	} else {
-		filePath = os.Args[1]
+	args := os.Args[1:]
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if arg == "-c" || arg == "-b" || arg == "-e" || arg == "--compile" || arg == "--beautify" || arg == "--execute" {
+			mode = arg
+		} else if arg == "-d" || arg == "--debug" {
+			debug = true
+		} else {
+			filePath = arg
+		}
+	}
+
+	if filePath == "" {
+		fmt.Fprintln(os.Stderr, "Error: No source file specified")
+		os.Exit(1)
 	}
 
 	contentBytes, err := os.ReadFile(filePath)
@@ -34,6 +46,17 @@ func main() {
 		os.Exit(1)
 	}
 	input := string(contentBytes)
+
+	if debug {
+		lDebug := lexer.New(input)
+		for {
+			tok := lDebug.NextToken()
+			if tok.Type == token.EOF {
+				break
+			}
+			fmt.Fprintf(os.Stderr, "TOKEN: Type=%s, Literal=%q\n", tok.Type, tok.Literal)
+		}
+	}
 
 	if mode == "-b" || mode == "--beautify" {
 		b := beautifier.New()

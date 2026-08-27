@@ -1,5 +1,10 @@
--- T0101: Basic assignment and expectation
+-- test is frozen
+-- T0101: Essential arithmetic and assignment
 rule main:
-  new a ∈ Z;
-  let a := 42;
+  new a ∈ Z; new b ∈ Z; new c ∈ Z; new d ∈ Z; new e ∈ Z;
+  let a := 10 + 3; expect a = 13;
+  let b := 10 - 3; expect b = 7;
+  let c := 10 * 3; expect c = 30;
+  let d := 10 / 3; expect d = 3;
+  let e := 10 % 3; expect e = 1;
 return;

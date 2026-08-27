@@ -12,6 +12,7 @@ def verify_all_flags():
         {"args": ["--execute", "test/level1/T0101.bee"], "name": "execute_long"},
         {"args": ["-b", "test/level1/T0101.bee"], "name": "beautify_b"},
         {"args": ["--beautify", "test/level1/T0101.bee"], "name": "beautify_long"},
+        {"args": ["-e", "-d", "test/level1/T0101.bee"], "name": "execute_debug"},
     ]
     
     failed = 0

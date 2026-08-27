@@ -57,6 +57,12 @@ sh setup.sh
 - **Complete Test Pipeline:** `sh run.sh test` runs `test.py` (Dryrun verification $\rightarrow$ Benchmark Suite $\rightarrow$ All Level Test Suites with timestamped JSON status reporting in `test/status/`).
 - **Iterative Fix Loop:** `sh run.sh fix level1` attempts automated iterative test fixes for a target level up to a maximum of 10 iterations, rebuilding the compiler on failure and stopping for user input.
 
+### Test Watch Utility (`test/watch.py`)
+For continuous development and debugging, `test/watch.py` runs in a background watch loop that rebuilds the compiler and executes a target test file in debug mode (`-d`) periodically:
+```bash
+python test/watch.py level1/T0109.bee
+```
+
 ## Author Note (elucian)
 
 I preffer to use $run command directly in terminal instead of ./run.sh that is too much to type. So I have learned a little trick: To make run command permanent easy to access run this:

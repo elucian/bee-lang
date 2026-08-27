@@ -1,6 +1,11 @@
--- T0107: Division by zero test
+-- Test Frozen
+-- T0107: Square root, cube root, and radical operators (`²√`, `³√`, `⁴√`) and superscripts
 rule main:
-  new a ∈ Z;
-  let a := 10 / 1;
-  expect a = 10;
+  new x ∈ Z;
+  let x := 27;
+  expect ²√ 9 = 3;
+  expect ³√ x = 3;
+  expect ⁴√ 16 = 2;
+  expect ³√ 2³ = 2;
+  expect (1 + 2)³ = 27;
 return;

@@ -10,7 +10,7 @@
 ## 2. Token-Optimized Execution & Anti-Loop Protocol
 - **Zero Preamble:** Omit conversational chatter, introductions, status updates, and closing summaries. Output actionable code or diffs directly.
 - **Targeted Emissions:** Emit ONLY modified functions, structs, or unified diffs. Never output full unchanged source files.
-- **Strict Anti-Loop Guard:** If a test or diagnostic failure repeats twice after a fix, **HALT IMMEDIATELY** and stop to prevent unproductive iteration loops.
+- **Strict Anti-Loop Guard:** If a test or diagnostic failure repeats twice after a fix, **HALT IMMEDIATELY** and stop to prevent unproductive iteration loops. Maximum 2 attempts per issue; if failure persists on the 3rd check, cut it off, halt, and explain the blocker to the user rather than looping endlessly.
 
 ## 3. Implementation Phase & Defect Triaging
 * **Implementation Mapping:** Deterministically map finalized `/spec` EBNF to recursive-descent parser routines and AST types.
@@ -21,7 +21,7 @@
 * **Integrity Guard:** **NEVER** modify Go code to force passing tests against a defective EBNF specification or invalid test expectation.
 
 ## 4. Testing, Repair & Defect Signaling Protocol
-* **Test Verification:** Run `scripts/watch_test.py <test_case>` or `test/test_runner.py` to evaluate AST/parser state.
+* **Test Verification:** Run `python test/watch.py <test_case>` or `python test.py` to evaluate AST/parser state.
 * **Repair & Signal Logic:**
   - **If Code Bug:** Perform a single-pass batch fix addressing all reported errors across tests simultaneously.
   - **If Spec or Test Bug:** Do NOT edit code or attempt fixes. Halt execution and explicitly signal the defect target.

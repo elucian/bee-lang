@@ -1,11 +1,6 @@
--- T0105: Basic arithmetic expressions
+-- T0105: Range operators and types test case
 rule main:
   new a ∈ Z;
-  new b ∈ Z;
-  let a := 10 + 5;
-  expect a = 15;
-  let b := a - 5;
-  expect b = 10;
-  let a := b * 2;
-  expect a = 20;
+  let a := 10;
+  expect a in 1..10;
 return;

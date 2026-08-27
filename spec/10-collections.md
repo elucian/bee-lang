@@ -67,6 +67,7 @@ Sets are unordered collections of unique elements supporting native mathematical
 | **Union** | `∪` | `s1 ∪ s2` | Combined unique elements of `s1` and `s2` |
 | **Difference** | `\` | `s1 \ s2` | Elements in `s1` not present in `s2` |
 | **Sym Difference** | `Δ` | `s1 Δ s2` | Elements in `s1` or `s2` but not both |
+| **Summation** | `Σ` | `Σ collection` | Sum of all members in a collection |
 | **Subset Test** | `⊂` | `s1 ⊂ s2` | Evaluates to `true` if `s1` is strict subset |
 | **Superset Test** | `⊃` | `s1 ⊃ s2` | Evaluates to `true` if `s1` is strict superset |
 

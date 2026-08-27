@@ -73,7 +73,8 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 		tokIdent2 := p.l.NextToken()
 		stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent2, Value: tokIdent2.Literal})
 	}
-	p.l.NextToken() // Skip :=
+	opTok := p.l.NextToken() // Skip := or ::
+	stmt.Token = opTok
 	stmt.Values = append(stmt.Values, p.parseExpression())
 	for p.l.PeekChar() == ',' {
 		p.l.NextToken() // comma
@@ -104,7 +105,26 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 func (p *Parser) parseExpression() Expression {
 	tok := p.l.NextToken()
 	var left Expression
-	if tok.Type == token.STRING {
+	if tok.Type == token.SQRT || tok.Literal == "²√" || tok.Literal == "³√" || tok.Literal == "⁴√" || tok.Literal == "⁵√" || tok.Literal == "⁶√" || tok.Literal == "⁷√" || tok.Literal == "⁸√" || tok.Literal == "⁹√" || tok.Literal == "¹⁰√" || tok.Literal == "√" {
+		right := p.parseExpression()
+		return &BinaryExpression{Token: tok, Left: &IntegerLiteral{Token: token.Token{Literal: "0"}, Value: "0"}, Right: right}
+	} else if tok.Type == token.LPAREN {
+		left = p.parseExpression()
+		p.l.NextToken() // consume ')'
+		nextTok := p.l.NextToken()
+		if nextTok.Type == token.CARET || nextTok.Literal == "^" || nextTok.Type == token.INT || (nextTok.Literal >= "⁰" && nextTok.Literal <= "⁹") {
+			var right Expression
+			if nextTok.Type == token.INT {
+				right = &IntegerLiteral{Token: nextTok, Value: nextTok.Literal}
+			} else {
+				right = p.parseExpression()
+			}
+			return &BinaryExpression{Token: token.Token{Type: token.CARET, Literal: "^"}, Left: left, Right: right}
+		}
+	} else if tok.Type == token.LOGICAL_NOT {
+		right := p.parseExpression()
+		return &BinaryExpression{Token: tok, Left: &IntegerLiteral{Token: token.Token{Literal: "0"}, Value: "0"}, Right: right}
+	} else if tok.Type == token.STRING {
 		left = &StringLiteral{Token: tok, Value: tok.Literal}
 	} else if tok.Type == token.INT {
 		left = &IntegerLiteral{Token: tok, Value: tok.Literal}
@@ -145,9 +165,9 @@ func (p *Parser) parseExpression() Expression {
 		}
 	}
 
-	// Simple binary expression check
+	// Simple binary expression check (including √)
 	peekTok := p.l.NextToken()
-	if peekTok.Type == token.PLUS || peekTok.Type == token.MINUS || peekTok.Type == token.ASTERISK || peekTok.Type == token.EQ || peekTok.Literal == "=" || peekTok.Type == token.NEQ_UNICODE || peekTok.Type == token.NOT_EQ {
+	if peekTok.Type == token.PLUS || peekTok.Type == token.MINUS || peekTok.Type == token.ASTERISK || peekTok.Type == token.SLASH || peekTok.Literal == "/" || peekTok.Type == token.PERCENT || peekTok.Type == token.PERCENT || peekTok.Literal == "%" || peekTok.Type == token.CARET || peekTok.Literal == "^" || peekTok.Type == token.SQRT || peekTok.Literal == "√" || peekTok.Literal == "²√" || peekTok.Literal == "³√" || peekTok.Literal == "⁴√" || peekTok.Literal == "⁵√" || peekTok.Literal == "⁶√" || peekTok.Literal == "⁷√" || peekTok.Literal == "⁸√" || peekTok.Literal == "⁹√" || peekTok.Literal == "¹⁰√" || peekTok.Type == token.EQ || peekTok.Literal == "=" || peekTok.Literal == "==" || peekTok.Type == token.NEQ_UNICODE || peekTok.Literal == "≠" || peekTok.Type == token.NOT_EQ || peekTok.Type == token.GT || peekTok.Type == token.GTE || peekTok.Type == token.LT || peekTok.Type == token.LTE || peekTok.Type == token.AND_KW || peekTok.Type == token.OR_KW || peekTok.Type == token.XOR_KW || peekTok.Literal == ">" || peekTok.Literal == "<" || peekTok.Literal == ">=" || peekTok.Literal == "<=" || peekTok.Literal == "!=" {
 		right := p.parseExpression()
 		return &BinaryExpression{Token: peekTok, Left: left, Right: right}
 	}
