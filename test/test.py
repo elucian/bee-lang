@@ -102,16 +102,12 @@ def test():
     
     with open(status_file, "w") as sf:
         json.dump(report, sf, indent=2)
-    print(f"\nStatus report saved to {status_file}")
-
+        
     print(f"\nTest run finished. Total Passed: {total_passed}, Total Failed: {total_failed}")
-    if total_failed > 0:
-        print("Some tests failed.")
-        sys.exit(1)
-    else:
-        print("All executed tests passed successfully!")
+    print(f"Status report saved to {status_file}")
     
-    print("\nWaiting for user intervention. Please decide the next move.")
+    if total_failed > 0:
+        sys.exit(1)
 
 if __name__ == "__main__":
     test()

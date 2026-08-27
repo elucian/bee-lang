@@ -19,8 +19,14 @@ Bee divides statements into five distinct syntactic categories:
 - **Inferred Type Declaration:** `new identifier := expression;` (e.g. `new total := 0;`)
 - **Constant Declaration:** `const CONSTANT_NAME := expression;` (e.g. `const MaxBuffer := 1024;`)
 
-### 2.2 Mutation Semantics (`let` vs `alter`)
-- **Reassignment (`let`):** `let identifier := expression;` modifies an existing variable in the current scope.
+### 2.2 Mutation Semantics & Operator `:=` (`let` vs `new`)
+- **Operator `:=` Evaluation:**
+  - Used with `new` (`new x := expr;`), `:=` allocates a new storage location.
+  - Used with `let` (`let x := expr;`), `:=` performs an update action on the existing value of the variable.
+- **Value Modification Rules for `let ... :=`:**
+  - If the variable is native, it changes its value in place.
+  - If the variable is boxed, it changes its boxed value in place.
+  - If a reference is on the right side, the value is transferred via deep copy.
 - **In-Place Structural Mutation (`alter`):** `alter identifier := expression;` forces in-place mutation of fields, collections, or boxed variables without creating a new binding.
 - **Deep Clone Assignment (`::`):** `let target :: source;` performs a deep copy of nested collection/object structures, disconnecting ARC references.
 - **Compound Mutation Operators:**

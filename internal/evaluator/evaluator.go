@@ -79,25 +79,9 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		}
 		fmt.Println()
 	case *parser.AssignmentStatement:
-		if len(s.Names) == 1 && len(s.Values) == 1 {
-			val := e.evalIntExpression(s.Values[0])
-			e.symbols[s.Names[0].Value] = val
-		} else if len(s.Names) == len(s.Values) {
-			vals := make([]int, len(s.Values))
-			for i, v := range s.Values {
-				vals[i] = e.evalIntExpression(v)
-			}
-			for i, name := range s.Names {
-				e.symbols[name.Value] = vals[i]
-			}
-		} else if len(s.Names) == 2 && len(s.Values) == 2 {
-			v0 := e.evalIntExpression(s.Values[0])
-			v1 := e.evalIntExpression(s.Values[1])
-			e.symbols[s.Names[0].Value] = v0
-			e.symbols[s.Names[1].Value] = v1
-		} else if len(s.Names) > 0 && len(s.Values) > 0 {
-			val := e.evalIntExpression(s.Values[0])
-			for _, name := range s.Names {
+		for i, name := range s.Names {
+			if i < len(s.Values) {
+				val := e.evalIntExpression(s.Values[i])
 				e.symbols[name.Value] = val
 			}
 		}
@@ -152,46 +136,38 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 		}
 		return 0
 	case *parser.BinaryExpression:
-		leftVal := e.evalIntExpression(expr.Left)
-		rightVal := e.evalIntExpression(expr.Right)
 		if expr.Token.Literal == "=" || expr.Token.Type == token.EQ || expr.Token.Literal == "==" || expr.Token.Type == token.ASSIGN {
+			leftVal := e.evalIntExpression(expr.Left)
+			rightVal := e.evalIntExpression(expr.Right)
 			if leftVal == rightVal {
 				return 1
 			}
 			return 0
 		}
-		if expr.Token.Literal == "≠" || expr.Token.Type == token.NOT_EQ || expr.Token.Literal == "!=" || expr.Token.Literal == "≠" || expr.Token.Type == token.NEQ_UNICODE {
-			if leftVal != rightVal {
-				return 1
-			}
-			return 0
-		}
-		if expr.Token.Literal == "≤" || expr.Token.Type == token.LTE_UNICODE || expr.Token.Literal == "<=" {
-			if leftVal <= rightVal {
-				return 1
-			}
-			return 0
-		}
-		if expr.Token.Literal == "≥" || expr.Token.Type == token.GTE_UNICODE || expr.Token.Literal == ">=" {
-			if leftVal >= rightVal {
+		left := e.evalIntExpression(expr.Left)
+		right := e.evalIntExpression(expr.Right)
+		if expr.Token.Type == token.NOT_EQ || expr.Token.Literal == "!=" || expr.Token.Type == token.NEQ_UNICODE || expr.Token.Literal == "≠" {
+			if left != right {
 				return 1
 			}
 			return 0
 		}
 		if expr.Token.Literal == "<" || expr.Token.Type == token.LT {
+			leftVal := e.evalIntExpression(expr.Left)
+			rightVal := e.evalIntExpression(expr.Right)
 			if leftVal < rightVal {
 				return 1
 			}
 			return 0
 		}
 		if expr.Token.Literal == ">" || expr.Token.Type == token.GT {
+			leftVal := e.evalIntExpression(expr.Left)
+			rightVal := e.evalIntExpression(expr.Right)
 			if leftVal > rightVal {
 				return 1
 			}
 			return 0
 		}
-		left := leftVal
-		right := rightVal
 		switch expr.Token.Literal {
 		case "+":
 			return left + right
@@ -240,6 +216,11 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 				return 0
 			}
 			if right == 0 {
+				return 1
+			}
+			return 0
+		case "=", "==":
+			if left == right {
 				return 1
 			}
 			return 0

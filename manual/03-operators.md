@@ -119,6 +119,13 @@ Each modifier is created with pattern "x=" where x is a single symbol:
 | √=     | Radical modifier        |
 | %=     | Modulo modifier         |
 
+*Note on `:=` (Modify Value / Allocate):*
+- With `new` (`new x := expr;`), `:=` allocates a new storage location.
+- With `let` (`let x := expr;`), `:=` performs an update action on the existing value of the variable.
+- If the variable is native, it changes its value in place.
+- If the variable is boxed, it changes its boxed value in place.
+- If a reference is on the right side, the value is transferred via deep copy.
+
 
 ## Relation Operators
 

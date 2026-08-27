@@ -20,14 +20,9 @@
   3. **Test Suite Defect:** Invalid test vectors, inaccurate expected AST outputs, or broken runner assertion logic.
 * **Integrity Guard:** **NEVER** modify Go code to force passing tests against a defective EBNF specification or invalid test expectation.
 
-## 4. Testing, Repair & Defect Signaling Protocol
-* **Test Verification:** Run `python test/watch.py <test_case>` or `python test.py` to evaluate AST/parser state.
-* **Repair & Signal Logic:**
-  - **If Code Bug:** Perform a single-pass batch fix addressing all reported errors across tests simultaneously.
-  - **If Spec or Test Bug:** Do NOT edit code or attempt fixes. Halt execution and explicitly signal the defect target.
-* **Circuit Breaker (Loop Hard-Stop):**
-  - Execute post-fix verification.
-  - If post-fix tests yield identical error signatures, or if a second failure occurs on the same component, **HALT IMMEDIATELY**.
+## 4. Testing & Manual Verification Protocol
+* **Single-Pass Execution:** Never engage in automated test-fix loops. Make requested compiler changes in a single pass, then halt and ask the user to test or build.
+* **Manual Control:** The user handles test triggers and test file modifications (`test/` files). The agent handles compiler source modifications (`internal/` files) upon request.
 * **Git Operations:** **NEVER** run `git commit`, `git push`, or modify git history. All commits are performed manually by the developer.
 
 ## Final message

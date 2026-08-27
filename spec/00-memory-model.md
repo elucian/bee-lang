@@ -63,7 +63,13 @@ new_statement     ::= "new" identifier [ ":" type_specifier ] [ ( ":=" | "::" ) 
 let_statement     ::= "let" identifier ( ":=" | "::" ) expression ";" ;
 
 ### Assignment (`:=`) vs Clone Assignment (`::`)
-- **Reference/Value Assignment (`:=`)**: For boxed variables or objects, `:=` transfers or binds the underlying reference without duplicating heap payloads. For primitive native variables, it copies the value.
+- **Operator `:=` Evaluation:**
+  - With `new` (`new x := expr;`), `:=` allocates a new storage location.
+  - With `let` (`let x := expr;`), `:=` performs an update action on the existing value of the variable.
+- **Value Modification Rules (`let` with `:=`)**: 
+  - If the variable is native, it changes its value in place.
+  - If the variable is boxed, it changes its boxed value in place.
+  - If a reference is on the right side, the value is transferred via deep copy.
 - **Clone Assignment (`::`)**: For boxed variables or objects, `::` performs a deep copy/structural clone allocating an independent payload on the heap. For primitive native variables, `::` and `:=` are equivalent.
 
 (* Variable Mutability Modifiers *)
