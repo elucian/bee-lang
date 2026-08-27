@@ -4,6 +4,7 @@ import (
 	"bee/internal/parser"
 	"bee/internal/token"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -83,18 +84,20 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			if i < len(s.Values) {
 				rightVal := e.evalIntExpression(s.Values[i])
 				curVal := e.symbols[name.Value]
-				switch s.Token.Literal {
-				case "+=":
+				lit := s.Token.Literal
+				if lit == ":=" || lit == "=" {
+					e.symbols[name.Value] = rightVal
+				} else if lit == "+=" {
 					e.symbols[name.Value] = curVal + rightVal
-				case "-=":
+				} else if lit == "-=" {
 					e.symbols[name.Value] = curVal - rightVal
-				case "*=":
+				} else if lit == "*=" {
 					e.symbols[name.Value] = curVal * rightVal
-				case "/=":
+				} else if lit == "/=" {
 					if rightVal != 0 {
 						e.symbols[name.Value] = curVal / rightVal
 					}
-				case "%=":
+				} else if lit == "%=" {
 					if rightVal != 0 {
 						res := curVal % rightVal
 						if res < 0 {
@@ -106,14 +109,24 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 						}
 						e.symbols[name.Value] = res
 					}
-				case "^=":
+				} else if lit == "^=" {
 					res := 1
 					base := curVal
 					for k := 0; k < rightVal; k++ {
 						res *= base
 					}
 					e.symbols[name.Value] = res
-				default:
+				} else if lit == "√=" {
+					res := 1
+					if rightVal == 2 {
+						res = int(math.Round(math.Sqrt(float64(curVal))))
+					} else if rightVal == 3 {
+						res = int(math.Round(math.Cbrt(float64(curVal))))
+					} else {
+						res = int(math.Round(math.Pow(float64(curVal), 1.0/float64(rightVal))))
+					}
+					e.symbols[name.Value] = res
+				} else {
 					e.symbols[name.Value] = rightVal
 				}
 			}

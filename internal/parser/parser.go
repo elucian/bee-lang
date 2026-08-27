@@ -73,7 +73,13 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 		tokIdent2 := p.l.NextToken()
 		stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent2, Value: tokIdent2.Literal})
 	}
-	opTok := p.l.NextToken() // :=, ::, +=, -=, *=, /=, %=, ^=
+	opTok := p.l.NextToken() // :=, ::, +=, -=, *=, /=, %=, ^=, √=
+	if opTok.Literal == "√" {
+		if p.l.PeekChar() == '=' {
+			p.l.NextToken()
+			opTok = token.Token{Type: token.SQRT_ASSIGN, Literal: "√=", Pos: opTok.Pos}
+		}
+	}
 	stmt.Token = opTok
 	stmt.Values = append(stmt.Values, p.parseExpression())
 	for p.l.PeekChar() == ',' {

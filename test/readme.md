@@ -7,13 +7,14 @@ This document outlines the test plan and tracking checklist for the Bee Programm
 ## Level 1: Lexical Structure & Basic Declarations (`test/level1/`)
 **Focus:** Character encoding, Maximal Munch disambiguation, variable declarations (`new`), assignments (`let`), basic arithmetic, expectations (`expect`), and code comments (including expression comments `(: ... :)`).
 
-- [x] **T0101**: Basic variable assignment (`new a ∈ Z; let a := 42;`)
-- [x] **T0102**: Variable mutation and expectation check (`let a := 42; expect a = 42; let a := 100; expect a = 100;`)
-- [x] **T0103**: Arithmetic addition and multiplication expressions
-- [x] **T0104**: String literals and escape sequence handling
-- [x] **T0105**: Range operators (`..`, `.!`, `!.`, `!!`) and types (`Z`, `N`, `R`)
-- [x] **T0107**: Division error checking (`test/level1/T0107.bee`)
-- [x] **T0108**: Block comments (`+- ... -+`) and expression comments (`(: ... :)`) (`test/level1/T0108.bee`)
+- [x] **T0101**: Essential arithmetic and assignment (`test/level1/T0101.bee`)
+- [x] **T0102**: Relational operators group (`test/level1/T0102.bee`)
+- [x] **T0103**: Logical and bitwise operators group using Unicode symbols (`test/level1/T0103.bee`)
+- [x] **T0104**: Exponentiation operators group (`test/level1/T0104.bee`)
+- [x] **T0105**: Range operators and types test case (`test/level1/T0105.bee`)
+- [x] **T0106**: Relational comparison operators (`=`, `≠`) (`test/level1/T0106.bee`)
+- [x] **T0107**: Square root, cube root, and radical operators (`²√`, `³√`, `⁴√`) and superscripts (`test/level1/T0107.bee`)
+- [x] **T0108**: Compound assignment and update operators (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`) (`test/level1/T0108.bee`)
 
 ---
 

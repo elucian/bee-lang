@@ -54,7 +54,7 @@ def run_solo():
     report_name = f"{os.path.basename(os.path.dirname(test_path))}_{os.path.splitext(os.path.basename(test_path))[0]}.md"
     report_path = os.path.join("test/output", report_name)
     
-    status = "**TEST PASS**" if res.returncode == 0 else "**TEST FAIL**"
+    status = "TEST PASS" if res.returncode == 0 else "TEST FAIL"
     
     with open(report_path, "w", encoding="utf-8") as f_out:
         f_out.write(f"# Test Execution Report: `{test_path}`\n\n")
@@ -64,7 +64,7 @@ def run_solo():
         for idx, line in enumerate(code_lines, 1):
             clean_line = line.rstrip("\r\n")
             if f"panic: expect failed at line {idx}" in res.stderr:
-                f_out.write(f"{idx:4d}\t{clean_line} -- **FAILED**\n")
+                f_out.write(f"{idx:4d}\t{clean_line} -- FAILED\n")
             else:
                 f_out.write(f"{idx:4d}\t{line}")
         f_out.write("```\n\n## Conclusion\nStatus: " + status + "\n")
