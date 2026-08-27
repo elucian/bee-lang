@@ -317,9 +317,8 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 			}
 			for i := 0; i < rightVal; i++ {
 				res *= left
-				// Use floating point math for all roots
-				return int(math.Round(math.Pow(float64(right), 1.0/float64(deg))))
 			}
+			return res
 		case "√":
 			if left == 0 {
 				left = 2

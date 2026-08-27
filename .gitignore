@@ -3,8 +3,6 @@ bin/
 *.exe
 bee
 
-# Zed specific
-.agents
 
 # Go specific
 *.test
