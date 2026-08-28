@@ -122,8 +122,7 @@ const (
 	RULE  = "RULE"
 	NEW   = "NEW"
 	LET   = "LET"
-	ALTER = "ALTER"
-	CONST = "CONST"
+	SET   = "SET"
 	TYPE  = "TYPE"
 	ZAP   = "ZAP"
 	SELF  = "SELF"
@@ -188,8 +187,7 @@ var keywords = map[string]Type{
 	"rule":  RULE,
 	"new":   NEW,
 	"let":   LET,
-	"alter": ALTER,
-	"const": CONST,
+	"set":   SET,
 	"type":  TYPE,
 	"zap":   ZAP,
 	"self":  SELF,

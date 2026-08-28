@@ -12,7 +12,7 @@ Comments are inspired by Ada/PL/SQL:
 ```
 
 ## 2. Keywords
-Bee core reserves approximately 72 keywords (e.g., `rule`, `new`, `set`, `apply`, `done`, `repeat`). Reserved keywords cannot be used as identifiers.
+Bee core reserves the following primary keywords: `rule`, `new`, `let`, `set`, `apply`, `done`, `repeat`, etc. Reserved keywords cannot be used as identifiers.
 
 ## 3. Statements
 Statements are imperative or declarative. Multiple statements on a line require `;`.

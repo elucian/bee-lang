@@ -3,7 +3,7 @@
 ## 1. Character Encoding & Source Representation
 
 - **Encoding Standard:** All Bee source code files MUST be encoded in valid **UTF-8** (RFC 3629). Byte Order Marks (BOM) are disallowed and trigger a lexical error `E0101: UnexpectedBOM`.
-- **Source Units & Rune Handling:** Source streams consist of decoded UTF-8 sequences (runes). All lexing and parsing MUST treat source inputs strictly as decoded UTF-8 sequences via `[]rune` slices or `bufio.Reader.ReadRune()`. Never use raw byte indexing (`s[i]`) for tokenization.
+- **Source Units & Rune Handling:** Source streams consist of decoded UTF-8 sequences (runes). All lexing and parsing MUST treat source inputs strictly as decoded UTF-8 sequences using `[]rune` slices (e.g., `runes []rune`) or `bufio.Reader.ReadRune()`. Never use raw byte indexing (`s[i]`) for tokenization. Parsers and lexers must correctly handle Unicode operators consisting of 1 or 2 Unicode symbols, including superscripts and subscripts.
 - **Operator Syntax:** Bee operators can consist of single Unicode symbols (e.g., `≠`), standard ASCII symbols, mixed combinations of Unicode and ASCII characters, and Unicode superscript/subscript ranges.
 - **Lookahead Matching:** Implement lexing with rune lookahead (`peekRune()`) rather than fixed-size assumptions to correctly parse multi-character operators containing mixed scripts or modifiers.
 - **Token Definitions:** Store operators as `[]rune` slices in token lookup tables or transition tries to support arbitrary multi-rune Unicode operators.

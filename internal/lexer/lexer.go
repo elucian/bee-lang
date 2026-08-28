@@ -7,11 +7,10 @@ package lexer
 import (
 	"bee/internal/token"
 	"strings"
-	"unicode/utf8"
 )
 
 type Lexer struct {
-	input        string
+	runes        []rune
 	position     int
 	readPosition int
 	ch           rune
@@ -20,7 +19,7 @@ type Lexer struct {
 }
 
 func New(input string) *Lexer {
-	l := &Lexer{input: input, line: 1}
+	l := &Lexer{runes: []rune(input), line: 1}
 	l.readChar()
 	// Check for UTF-8 BOM (E0101)
 	if l.ch == 0xFEFF {
@@ -33,29 +32,27 @@ func (l *Lexer) readChar() {
 	if l.ch == '\n' {
 		l.line++
 	}
-	if l.readPosition >= len(l.input) {
+	if l.readPosition >= len(l.runes) {
 		l.ch = 0
 	} else {
-		r, size := utf8.DecodeRuneInString(l.input[l.readPosition:])
-		l.ch = r
+		l.ch = l.runes[l.readPosition]
 		l.position = l.readPosition
-		l.readPosition += size
+		l.readPosition++
 	}
 }
 
 func (l *Lexer) PeekChar() rune {
-	if l.readPosition >= len(l.input) {
+	if l.readPosition >= len(l.runes) {
 		return 0
 	}
-	r, _ := utf8.DecodeRuneInString(l.input[l.readPosition:])
-	return r
+	return l.runes[l.readPosition]
 }
 
 func (l *Lexer) PeekN(n int) string {
-	if l.readPosition+n > len(l.input) {
-		return l.input[l.readPosition:]
+	if l.readPosition+n > len(l.runes) {
+		return string(l.runes[l.readPosition:])
 	}
-	return l.input[l.readPosition : l.readPosition+n]
+	return string(l.runes[l.readPosition : l.readPosition+n])
 }
 
 func (l *Lexer) NextToken() token.Token {
@@ -398,7 +395,7 @@ func (l *Lexer) readIdentifier() string {
 	for isLetter(l.ch) || isDigit(l.ch) || l.ch == '_' || (l.ch >= '₀' && l.ch <= '₉') {
 		l.readChar()
 	}
-	return l.input[position:l.position]
+	return string(l.runes[position:l.position])
 }
 
 func (l *Lexer) readNumberLiteral() token.Token {
@@ -431,7 +428,7 @@ func (l *Lexer) readNumberLiteral() token.Token {
 		}
 	}
 
-	literal := l.input[position:l.position]
+	literal := string(l.runes[position:l.position])
 	if isReal {
 		return token.Token{Type: token.REAL, Literal: literal}
 	}
@@ -500,7 +497,7 @@ func (l *Lexer) readRawString() string {
 	for l.ch != '`' && l.ch != 0 {
 		l.readChar()
 	}
-	res := l.input[position:l.position]
+	res := string(l.runes[position:l.position])
 	l.readChar() // consume closing backtick
 	return res
 }
@@ -536,9 +533,10 @@ func (l *Lexer) tryReadMarkupBlock() (token.Token, bool) {
 
 	payloadStart := l.position
 	closeTag := "</" + tagName + ">"
+	inputStr := string(l.runes)
 
 	// Find closing tag
-	idx := strings.Index(l.input[l.position:], closeTag)
+	idx := strings.Index(inputStr[l.position:], closeTag)
 	if idx == -1 {
 		l.position = savedPos
 		l.readPosition = savedReadPos
@@ -546,7 +544,7 @@ func (l *Lexer) tryReadMarkupBlock() (token.Token, bool) {
 		return token.Token{}, false
 	}
 
-	payload := l.input[payloadStart : l.position+idx]
+	payload := inputStr[payloadStart : l.position+idx]
 	// Advance lexer past closing tag
 	consumedLen := (l.position + idx + len(closeTag)) - savedReadPos
 	for i := 0; i < consumedLen; i++ {

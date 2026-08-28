@@ -4,6 +4,8 @@ package parser
 import (
 	"bee/internal/lexer"
 	"bee/internal/token"
+	"fmt"
+	"os"
 )
 
 func parseSuperscriptIntStatic(s string) int {
@@ -103,48 +105,52 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 func (p *Parser) parseAssignment(tok token.Token) Statement {
 	stmt := &AssignmentStatement{Token: tok}
 	tokIdent := p.l.NextToken()
+	fmt.Fprintf(os.Stderr, "PARSER DEBUG: ident tok=%q\n", tokIdent.Literal)
 	stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent, Value: tokIdent.Literal})
+
+	// Check for more comma-separated variables
 	for p.l.PeekChar() == ',' {
 		p.l.NextToken() // comma
 		tokIdent2 := p.l.NextToken()
 		stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent2, Value: tokIdent2.Literal})
 	}
-	opTok := p.l.NextToken() // :=, ::, +=, -=, *=, /=, %=, ^=, √=
-	if opTok.Literal == "+" || opTok.Type == token.PLUS || opTok.Type == token.IDENT && opTok.Literal == "+" {
-		if p.l.PeekChar() == '=' {
-			p.l.NextToken()
-			opTok = token.Token{Type: token.PLUS_ASSIGN, Literal: "+=", Pos: opTok.Pos}
+
+	// Look ahead to check if next token is an assignment operator
+	opTok := p.l.NextToken()
+	fmt.Fprintf(os.Stderr, "PARSER DEBUG: opTok literal=%q, type=%v\n", opTok.Literal, opTok.Type)
+
+	// Look ahead to check if next token is an assignment operator
+	opTok := p.l.NextToken()
+	fmt.Fprintf(os.Stderr, "PARSER DEBUG: opTok literal=%q, type=%v\n", opTok.Literal, opTok.Type)
+
+	// Handle compound assignment operators explicitly by looking ahead
+	if p.l.PeekChar() == '=' {
+		p.l.NextToken()
+		opTok.Literal += "="
+		switch opTok.Literal {
+		case "+=":
+			opTok.Type = token.PLUS_ASSIGN
+		case "-=":
+			opTok.Type = token.MINUS_ASSIGN
+		case "*=":
+			opTok.Type = token.MUL_ASSIGN
+		case "/=":
+			opTok.Type = token.DIV_ASSIGN
+		case "%=":
+			opTok.Type = token.MOD_ASSIGN
+		case "^=":
+			opTok.Type = token.POW_ASSIGN
+		case "√=":
+			opTok.Type = token.SQRT_ASSIGN
 		}
-	} else if opTok.Literal == "-" || opTok.Type == token.MINUS {
-		if p.l.PeekChar() == '=' {
-			p.l.NextToken()
-			opTok = token.Token{Type: token.MINUS_ASSIGN, Literal: "-=", Pos: opTok.Pos}
-		}
-	} else if opTok.Literal == "*" || opTok.Type == token.ASTERISK {
-		if p.l.PeekChar() == '=' {
-			p.l.NextToken()
-			opTok = token.Token{Type: token.MUL_ASSIGN, Literal: "*=", Pos: opTok.Pos}
-		}
-	} else if opTok.Literal == "/" || opTok.Type == token.SLASH {
-		if p.l.PeekChar() == '=' {
-			p.l.NextToken()
-			opTok = token.Token{Type: token.DIV_ASSIGN, Literal: "/=", Pos: opTok.Pos}
-		}
-	} else if opTok.Literal == "%" || opTok.Type == token.PERCENT {
-		if p.l.PeekChar() == '=' {
-			p.l.NextToken()
-			opTok = token.Token{Type: token.MOD_ASSIGN, Literal: "%=", Pos: opTok.Pos}
-		}
-	} else if opTok.Literal == "^" || opTok.Type == token.CARET {
-		if p.l.PeekChar() == '=' {
-			p.l.NextToken()
-			opTok = token.Token{Type: token.POW_ASSIGN, Literal: "^=", Pos: opTok.Pos}
-		}
-	} else if opTok.Literal == "√" || opTok.Type == token.SQRT {
-		if p.l.PeekChar() == '=' {
-			p.l.NextToken()
-			opTok = token.Token{Type: token.SQRT_ASSIGN, Literal: "√=", Pos: opTok.Pos}
-		}
+	}
+	fmt.Fprintf(os.Stderr, "PARSER DEBUG: final stmt.Token literal=%q, type=%v\n", opTok.Literal, opTok.Type)
+	stmt.Token = opTok
+	stmt.Values = append(stmt.Values, p.parseExpression())
+	// If the lexer already parsed "+=", use it!
+	fmt.Fprintf(os.Stderr, "PARSER DEBUG: opTok literal=%q, type=%v\n", opTok.Literal, opTok.Type)
+	if opTok.Type == token.PLUS_ASSIGN || opTok.Literal == "+=" {
+		fmt.Fprintf(os.Stderr, "PARSER DEBUG: saw += token!\n")
 	}
 	stmt.Token = opTok
 	stmt.Values = append(stmt.Values, p.parseExpression())

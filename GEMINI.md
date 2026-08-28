@@ -20,15 +20,18 @@ When generating, modifying, or debugging Go code for the Bee programming languag
 * **AI Read-Only Enforcement:** Test files in `test/levelX/*.bee` marked `@FROZEN` are strictly immutable for AI agents. AI agents must NEVER modify `.bee` test inputs, assertions, or expected outputs to force a failing compiler build to pass. (Human users retain full permission to modify or author tests).
 * **Disable, Never Delete:** If a test fails persistently across fix attempts, AI agents must NEVER delete the file. Disable it by prepending `// @DISABLED: <reason>` on line 1 of the `.bee` file.
 
-## 4. Execution & Workflow Rules
-- **Zero Preamble:** Omit conversational chatter. Output actionable Go code, unified diffs, or terminal commands directly.
-- **Targeted Emissions:** Edits are restricted strictly to compiler packages inside `/internal/`. Emit ONLY modified functions, structs, or unified diffs.
-- **Verification Harness:**
-  - Full Test Suite: `python test.py`
-  - Single Test Execution: `python test/solo.py test/levelX/TXXYY.bee`
-  - Benchmarks / CLI Verification: `python test/bench.py` / `python test/dryrun.py`
-- **Git Operations:** NEVER run `git commit` or `git push`.
-- **Strict Anti-Loop Rule:** Never attempt more than one edit pass per user prompt. If a test fails after one fix attempt, halt immediately, write error analysis to `os.Stderr`, and yield back without modifying `.bee` files.
+## AI Agent Protocol & Anti-Loop Rules
+
+1.  **Strict Anti-Loop Protocol:** 
+    - Never attempt more than one edit pass per user prompt.
+    - If a test fails after one fix attempt, halt immediately, write error analysis to `os.Stderr`, and yield back without modifying `.bee` files.
+    - Never use loops in reasoning or tool execution that rely on "guessing" fixes. Analyze the implementation against the `/spec` first.
+    - Before applying an edit, explain the root cause identified by comparing the implementation against the relevant `/spec`.
+
+2.  **Implementation Invariants:**
+    - Always verify the parser and evaluator against the EBNF grammar in `spec/02-statements.md` for mutation operators.
+    - If an operator exists in the grammar but fails, check if the `parser.go` lookup logic or the `evaluator.go` switch statement handles all valid `assign_op` variants (`:=`, `::`, `+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`).
+    - Use absolute or relative paths starting from project root (`bee-lang/`) for all file operations.
 
 ## Final message
 When you finish send this message: "Task Completed in <runtime>"

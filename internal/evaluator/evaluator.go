@@ -64,20 +64,24 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				rightVal := e.evalIntExpression(s.Values[i])
 				curVal := e.symbols[name.Value]
 				lit := s.Token.Literal
+				tokType := s.Token.Type
+				fmt.Fprintf(os.Stderr, "SPY ASSIGN: name=%s, lit=%q, type=%v, curVal=%d, rightVal=%d\n", name.Value, lit, tokType, curVal, rightVal)
 				switch {
-				case lit == ":=" || lit == "=":
-					e.symbols[name.Value] = rightVal
-				case lit == "+=" || s.Token.Type == token.PLUS_ASSIGN || strings.HasSuffix(lit, "+=") || (lit == "+" && s.Token.Type == token.PLUS) || s.Token.Literal == "+=":
+				case lit == "+=" || tokType == token.PLUS_ASSIGN:
+					fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Applying +=, name=%s, cur=%d, right=%d\n", name.Value, curVal, rightVal)
 					e.symbols[name.Value] = curVal + rightVal
-				case lit == "-=" || s.Token.Type == token.MINUS_ASSIGN || strings.HasSuffix(lit, "-=") || (lit == "-" && s.Token.Type == token.MINUS) || s.Token.Literal == "-=":
+				case lit == ":=" || lit == "=":
+					fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Applying :=, name=%s, val=%d\n", name.Value, rightVal)
+					e.symbols[name.Value] = rightVal
+				case lit == "-=" || tokType == token.MINUS_ASSIGN:
 					e.symbols[name.Value] = curVal - rightVal
-				case lit == "*=" || s.Token.Type == token.MUL_ASSIGN || strings.HasSuffix(lit, "*=") || (lit == "*" && s.Token.Type == token.ASTERISK) || s.Token.Literal == "*=":
+				case lit == "*=" || tokType == token.MUL_ASSIGN:
 					e.symbols[name.Value] = curVal * rightVal
-				case lit == "/=" || s.Token.Type == token.DIV_ASSIGN || strings.HasSuffix(lit, "/=") || (lit == "/" && s.Token.Type == token.SLASH) || s.Token.Literal == "/=":
+				case lit == "/=" || tokType == token.DIV_ASSIGN:
 					if rightVal != 0 {
 						e.symbols[name.Value] = curVal / rightVal
 					}
-				case lit == "%=" || s.Token.Type == token.MOD_ASSIGN || strings.HasSuffix(lit, "%=") || (lit == "%" && s.Token.Type == token.PERCENT) || s.Token.Literal == "%=":
+				case lit == "%=" || tokType == token.MOD_ASSIGN:
 					if rightVal != 0 {
 						res := curVal % rightVal
 						if res < 0 {
@@ -89,24 +93,18 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 						}
 						e.symbols[name.Value] = res
 					}
-				case lit == "^=" || s.Token.Type == token.POW_ASSIGN || strings.HasSuffix(lit, "^=") || (lit == "^" && s.Token.Type == token.CARET) || s.Token.Literal == "^=":
+				case lit == "^=" || tokType == token.POW_ASSIGN:
 					res := 1
 					for j := 0; j < rightVal; j++ {
 						res *= curVal
 					}
 					e.symbols[name.Value] = res
-				case strings.HasSuffix(lit, "√=") || s.Token.Type == token.SQRT_ASSIGN:
+				case lit == "√=" || tokType == token.SQRT_ASSIGN:
 					deg := 2
-					orderStr := strings.TrimSuffix(strings.TrimSuffix(lit, "="), "√")
-					if orderStr != "" {
-						d := parseSuperscriptInt(orderStr)
-						if d > 0 {
-							deg = d
-						}
-					}
 					res := math.Round(math.Pow(float64(curVal), 1.0/float64(deg)))
 					e.symbols[name.Value] = int(res)
 				default:
+					fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: DEFAULT FALLBACK. Applying %q assignment, name=%s, val=%d\n", lit, name.Value, rightVal)
 					e.symbols[name.Value] = rightVal
 				}
 			}

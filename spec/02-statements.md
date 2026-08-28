@@ -14,23 +14,17 @@ Bee divides statements into five distinct syntactic categories:
 
 ## 2. Declarations, Mutations & Assignment Operators
 
-### 2.1 Variable Declaration (`new`)
-- **Explicit Type Declaration:** `new identifier ∈ Type;` (e.g. `new count ∈ Z;`)
-- **Inferred Type Declaration:** `new identifier := expression;` (e.g. `new total := 0;`)
-- **Constant Declaration:** `const CONSTANT_NAME := expression;` (e.g. `const MaxBuffer := 1024;`)
+### 2.1 Variable Declaration
+- **Mutable Variable (`new`):** `new identifier ∈ Type;` or `new identifier := expression;`.
+- **Immutable Variable (`set`):** `set identifier := expression;` creates a constant binding that cannot be mutated.
 
-### 2.2 Mutation Semantics & Operator `:=` (`let` vs `new`)
+### 2.2 Mutation Semantics (`let`)
 - **Operator `:=` Evaluation:**
-  - Used with `new` (`new x := expr;`), `:=` allocates a new storage location.
-  - Used with `let` (`let x := expr;`), `:=` performs an update action on the existing value of the variable.
-- **Value Modification Rules for `let ... :=`:**
-  - If the variable is native, it changes its value in place.
-  - If the variable is boxed, it changes its boxed value in place.
-  - If a reference is on the right side, the value is transferred via deep copy.
-- **In-Place Structural Mutation (`alter`):** `alter identifier := expression;` forces in-place mutation of fields, collections, or boxed variables without creating a new binding.
+  - Used with `let` (`let x := expr;`), `:=` updates the value of an existing mutable variable.
+  - Fails with `E0202` if the variable was not previously declared with `new`.
+- **Mutation Operators:**
+  - Compound operators (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`) apply to existing mutable variables declared with `new`.
 - **Deep Clone Assignment (`::`):** `let target :: source;` performs a deep copy of nested collection/object structures, disconnecting ARC references.
-- **Compound Mutation Operators:**
-  `+=` (add), `-=` (subtract), `*=` (multiply), `/=` (divide), `%=` (modulo), `^=` (power), `√=` (square root).
 
 ### 2.3 Memory Directives
 - **Explicit Deallocation:** `zap identifier;` invalidates the target identifier in Hot Zone performance paths.
@@ -133,9 +127,9 @@ statement         ::= decl_stmt | mutation_stmt | memory_stmt | io_stmt | contro
 
 decl_stmt         ::= "new" identifier ( "∈" | "in" ) type_specifier [ ":=" expression ]
                     | "new" identifier ":=" expression
-                    | "const" type_ident ":=" expression ;
+                    | "set" identifier ":=" expression ;
 
-mutation_stmt     ::= ( "let" | "alter" ) identifier assign_op expression ;
+mutation_stmt     ::= "let" identifier assign_op expression ;
 assign_op         ::= ":=" | "::" | "+=" | "-=" | "*=" | "/=" | "%=" | "^=" | "√=" ;
 memory_stmt       ::= "zap" identifier ;
 io_stmt           ::= "print" expression ( "," expression )*

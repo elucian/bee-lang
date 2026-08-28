@@ -24,7 +24,15 @@ elif [ "$COMMAND" = "solo" ]; then
         exit 1
     fi
     python test/solo.py "$TARGET"
+elif [ "$COMMAND" = "reset" ]; then
+    if [ -n "$TARGET" ]; then
+        echo "Resetting disabled tests for $TARGET..."
+        python test/reset.py "$TARGET"
+    else
+        echo "Resetting all disabled tests..."
+        python test/reset.py
+    fi
 else
-    echo "Usage: sh run.sh [build | test [level1] | solo <target> | clean]"
+    echo "Usage: sh run.sh [build | test [level1] | solo <target> | reset [level1] | clean]"
     exit 1
 fi

@@ -1,4 +1,5 @@
 -- @DISABLED: === VARIABLE CONTEXT ===
+// @ENABLED: Reset by user
 -- T0107: Square root, cube root, and radical operators (`²√`, `³√`, `⁴√`) and superscripts
 rule main:
   new x ∈ Z;
