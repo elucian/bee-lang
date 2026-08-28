@@ -1,4 +1,4 @@
--- @DISABLED: === VARIABLE CONTEXT ===
+-- @DESC:@DISABLED: === VARIABLE CONTEXT ===
 -- file: zero_values.bee
 -- Zero values demo
 rule zeros() => (z ∈ Z, r ∈ R, f ∈ B):

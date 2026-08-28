@@ -6,22 +6,21 @@ This level covers statement structures, control flow mechanisms, and modules as 
 
 ## Test Coverage
 
-| Test File | Status | Description | Spec Link |
-| :--- | :--- | :--- | :--- |
-| T0201.bee | PASS | Basic statement | Statements |
-| T0202.bee | PASS | String variable print | Statements |
-| T0204.bee | UNKNOWN | Complex arithmetic | Statements |
-| T0206.bee | UNKNOWN | TBD | Control Flow |
-| T0207.bee | UNKNOWN | TBD | Control Flow |
-| T0208.bee | UNKNOWN | TBD | Control Flow |
-| T0209.bee | UNKNOWN | TBD | Control Flow |
-| T0210.bee | UNKNOWN | TBD | Control Flow |
-| T0211.bee | UNKNOWN | TBD | Control Flow |
-| T0212.bee | UNKNOWN | TBD | Control Flow |
-| T0213.bee | UNKNOWN | TBD | Control Flow |
-| T0214.bee | UNKNOWN | TBD | Control Flow |
-| T0215.bee | UNKNOWN | TBD | Control Flow |
-| T0216.bee | UNKNOWN | TBD | Control Flow |
-| T0217.bee | PASS | If-else control flow | Control Flow |
-
-*(Note: Human users, please update this table as tests are added, modified, or validated.)*
+| CASE     | DESCRIPTION                      | STATUS     |
+| -------- | -------------------------------- | ---------- |
+| T0201    | T0201 Basic variable declarat... | PASS       |
+| T0202    | T0202 Hello World with String... | PASS       |
+| T0204    | T0204 Complex arithmetic with... | PASS       |
+| T0205    | T0106 Test Expectation and va... | PASS       |
+| T0206    | file: cycle_condition.bee        | PASS       |
+| T0207    | file: else_if_ladder.bee         | PASS       |
+| T0208    | file: if_else.bee                | PASS       |
+| T0209    | file: labels.bee                 | PASS       |
+| T0210    | file: match_every.bee            | PASS       |
+| T0211    | file: match_first.bee            | PASS       |
+| T0212    | file: match_total.bee            | PASS       |
+| T0213    | file: scoped_block.bee           | PASS       |
+| T0214    | file: stop_next.bee              | PASS       |
+| T0215    | file: then_runs.bee              | PASS       |
+| T0216    | file: while_demo.bee             | PASS       |
+| T0217    | @FROZEN: Generated from /spec... | PASS       |

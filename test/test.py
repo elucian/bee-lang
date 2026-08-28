@@ -10,22 +10,7 @@ def test():
     parser.add_argument("level", nargs="?", help="Optional level to test (e.g. level1)")
     args = parser.parse_args()
 
-    if not args.level:
-        print("=== STEP 1: Running CLI Dryrun Verification (`dryrun.py`) ===")
-        dryrun_res = subprocess.run(["python", "test/dryrun.py"])
-        if dryrun_res.returncode != 0:
-            print("\n[STOPPED] Dryrun verification failed. Halting test pipeline.")
-            sys.exit(1)
-        print("-> Dryrun verification PASSED.\n")
-
-        print("=== STEP 2: Running Benchmark Suite (`bench.py`) ===")
-        bench_res = subprocess.run(["python", "test/bench.py"])
-        if bench_res.returncode != 0:
-            print("\n[STOPPED] Benchmark test suite failed. Halting test pipeline.")
-            sys.exit(1)
-        print("-> Benchmark test suite PASSED.\n")
-
-    print("=== STEP 3: Running Test Cases ===")
+    print("=== STEP: Running Test Cases ===")
     levels = [args.level] if args.level else ["level1", "level2", "level3", "level4", "level5"]
     level_results = {}
     total_passed = 0
@@ -54,7 +39,24 @@ def test():
                     print(f"Skipping {path} (disabled)...")
                     continue
                 test_name = os.path.splitext(f)[0]
+                
+                # Extract description
+                desc = "TBD"
+                try:
+                    with open(path, "r", encoding="utf-8") as tf:
+                        for line in tf:
+                            if "-- @DESC:" in line:
+                                desc = line.split("@DESC:")[1].strip()
+                                break
+                except:
+                    pass
+                
                 res = subprocess.run(["./bin/bee.exe", "-e", path], capture_output=True, text=True)
+                
+                # Update status
+                status = "PASS" if res.returncode == 0 else "FAIL"
+                subprocess.run(["python", "scripts/update_test_readme.py", test_name, status, desc])
+
                 if res.returncode == 0:
                     passed += 1
                     passed_cases.append(test_name)

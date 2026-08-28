@@ -6,8 +6,6 @@ This level covers object-oriented features, file system interactions, and concur
 
 ## Test Coverage
 
-| Test File | Status | Description | Spec Link |
-| :--- | :--- | :--- | :--- |
-| T0501.bee | UNKNOWN | Basic I/O print | Concurrency/Objects |
-
-*(Note: Human users, please update this table as tests are added, modified, or validated.)*
+| CASE     | DESCRIPTION                      | STATUS     |
+| -------- | -------------------------------- | ---------- |
+| T0501    | T0501 File I/O operations test   | PASS       |

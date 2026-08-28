@@ -1,4 +1,4 @@
--- file: declaring_variable.bee
+-- @DESC:file: declaring_variable.bee
 -- Declaring a variable demo
 rule main:
   new a ∈ Z;

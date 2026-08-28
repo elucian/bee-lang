@@ -1,4 +1,4 @@
--- file: bubble_sort.bee
+-- @DESC:file: bubble_sort.bee
 -- bubble sort demo
 rule main:
   new a := [5, 4, 3, 2, 1];

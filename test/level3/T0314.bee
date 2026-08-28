@@ -1,4 +1,4 @@
--- file: set_algebra.bee
+-- @DESC:file: set_algebra.bee
 -- Set algebra demo
 rule main:
   print {1,2} ∪ {2,3};

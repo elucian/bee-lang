@@ -1,4 +1,4 @@
--- file: main_module.bee
+-- @DESC:file: main_module.bee
 -- using qualifier suppressor
 use qualifier:test_module;
 

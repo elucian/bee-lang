@@ -1,3 +1,4 @@
+-- @DESC:@DISABLED: === VARIABLE CONTEXT ===
 -- file: contract_precondition.bee
 -- A precondition demo
 rule half(n ∈ Z) => (r ∈ Z):

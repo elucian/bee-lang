@@ -1,4 +1,4 @@
--- file: walking_map.bee
+-- @DESC:file: walking_map.bee
 -- Walking a map demo
 rule main:
   new m := {1:"a", 2:"b"};

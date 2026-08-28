@@ -1,4 +1,4 @@
--- file: deferred_jobs.bee
+-- @DESC:file: deferred_jobs.bee
 -- Deferred jobs demo
 rule scaled(x ∈ Z) => (r ∈ Z):
   let r := x * 10;

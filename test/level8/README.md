@@ -4,13 +4,11 @@ This level contains experimental tests and edge cases.
 
 ## Test Coverage
 
-| Test File | Status | Description | Spec Link |
-| :--- | :--- | :--- | :--- |
-| T0801.bee | UNKNOWN | Asynchronous rule call demo | N/A |
-| T0802.bee | UNKNOWN | TBD | N/A |
-| T0803.bee | UNKNOWN | TBD | N/A |
-| T0804.bee | UNKNOWN | TBD | N/A |
-| T0805.bee | UNKNOWN | TBD | N/A |
-| T0806.bee | UNKNOWN | TBD | N/A |
-
-*(Note: Human users, please update this table as tests are added, modified, or validated.)*
+| CASE     | DESCRIPTION                      | STATUS     |
+| -------- | -------------------------------- | ---------- |
+| T0801    | UNKNOWN                          | Asynchronous rule call demo |
+| T0802    | UNKNOWN                          | TBD        |
+| T0803    | UNKNOWN                          | TBD        |
+| T0804    | UNKNOWN                          | TBD        |
+| T0805    | UNKNOWN                          | TBD        |
+| T0806    | UNKNOWN                          | TBD        |

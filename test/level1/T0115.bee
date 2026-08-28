@@ -1,4 +1,4 @@
--- T0115: Comprehensive print statement test suite (single arg, numbers, multiple args, string, empty lines)
+-- @DESC:T0115 Comprehensive print statement test suite (single arg, numbers, multiple args, string, empty lines)
 rule main:
   print "Hello, Bee!";
   print 42;

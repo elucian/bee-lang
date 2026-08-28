@@ -1,4 +1,4 @@
--- file: sized_array.bee
+-- @DESC:file: sized_array.bee
 -- A sized array demo
 rule main:
   new a ∈ [Z](5);

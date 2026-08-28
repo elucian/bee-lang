@@ -1,4 +1,4 @@
--- file: growing_shrinking_list.bee
+-- @DESC:file: growing_shrinking_list.bee
 -- Growing and shrinking a list demo
 rule main:
   new l := (2,3);

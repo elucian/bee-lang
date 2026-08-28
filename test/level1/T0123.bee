@@ -1,4 +1,4 @@
--- file: print_write.bee
+-- @DESC:file: print_write.bee
 -- print and write demo
 rule main:
   write "no";

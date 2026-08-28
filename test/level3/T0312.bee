@@ -1,4 +1,4 @@
--- file: sets_sorted.bee
+-- @DESC:file: sets_sorted.bee
 -- Sets are sorted and unique demo
 rule main:
   print {3,1,2,1};

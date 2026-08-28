@@ -1,4 +1,4 @@
--- T0204: Complex arithmetic with labeled output
+-- @DESC:T0204 Complex arithmetic with labeled output
 rule main:
   new a ∈ Z;
   let a := (10 + 5) * 2;

@@ -1,4 +1,4 @@
--- file: expect_demo.bee
+-- @DESC:file: expect_demo.bee
 -- expect demo
 rule main:
   new n := 4;

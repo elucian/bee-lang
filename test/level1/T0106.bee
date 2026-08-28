@@ -1,4 +1,4 @@
--- @DISABLED: DEBUG: Expectation passed in line 7
+-- @DESC:@DISABLED: DEBUG: Expectation passed in line 7
 // @ENABLED: Reset by user
 -- T0106: Test assignment, equality (=), and inequality (≠) operators
 rule main:

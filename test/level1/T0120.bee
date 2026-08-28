@@ -1,4 +1,4 @@
--- file: hello_world.bee
+-- @DESC:file: hello_world.bee
 -- hello world demo
 rule main:
   print "Hello World";

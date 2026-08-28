@@ -1,4 +1,4 @@
--- file: trial_pass_fail.bee
+-- @DESC:file: trial_pass_fail.bee
 -- pass, fail and abort demo
 rule main:
   trial:

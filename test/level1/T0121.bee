@@ -1,4 +1,4 @@
--- file: initial_values.bee
+-- @DESC:file: initial_values.bee
 -- Initial values demo
 rule main:
   new a: 1, b: 2 ∈ Z;

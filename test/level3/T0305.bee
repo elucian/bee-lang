@@ -1,4 +1,4 @@
--- file: builders.bee
+-- @DESC:file: builders.bee
 -- Builders demo
 rule main:
   print { x | x ∈ (1..6) ∧ (x % 2 = 0) };

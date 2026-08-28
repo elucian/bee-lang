@@ -1,4 +1,4 @@
--- file: trial_retry.bee
+-- @DESC:file: trial_retry.bee
 -- Retrying demo
 rule main:
   trial:

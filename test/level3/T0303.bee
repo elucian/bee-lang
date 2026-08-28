@@ -1,4 +1,4 @@
--- file: array_traversal.bee
+-- @DESC:file: array_traversal.bee
 -- array traversal demo
 use $pro_lib.console:(*);
 

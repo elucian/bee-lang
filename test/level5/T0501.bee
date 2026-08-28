@@ -1,4 +1,4 @@
--- T0501: File I/O operations test
+-- @DESC:T0501 File I/O operations test
 rule main:
   new filename := "test.txt";
   print filename;

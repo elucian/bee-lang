@@ -1,4 +1,4 @@
--- file: if_else.bee
+-- @DESC:file: if_else.bee
 -- if and else demo
 rule main:
   new n := 7;

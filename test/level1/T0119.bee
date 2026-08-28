@@ -1,4 +1,4 @@
--- file: ending_early.bee
+-- @DESC:file: ending_early.bee
 -- Ending early demo
 rule main:
   print "before";

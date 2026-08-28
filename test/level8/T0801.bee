@@ -1,4 +1,4 @@
--- file: asynch_call.bee
+-- @DESC:file: asynch_call.bee
 -- Asynchronous rule call demo
 rule worker() => (v ∈ Z):
   let v := 1;

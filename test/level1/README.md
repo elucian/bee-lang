@@ -6,31 +6,29 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 
 ## Test Coverage
 
-| Test File | Status | Description | Spec Link |
-| :--- | :--- | :--- | :--- |
-| T0101.bee | PASS | Basic declaration | Lexical |
-| T0102.bee | PASS | Integer assignment | Types |
-| T0103.bee | PASS | Logical/Bitwise operators | Lexical |
-| T0104.bee | PASS | Exponentiation | Lexical |
-| T0105.bee | PASS | Range operators | Lexical |
-| T0106.bee | PASS | Expectation/Variable resolution | Lexical |
-| T0107.bee | UNKNOWN | TBD | Lexical |
-| T0108.bee | UNKNOWN | TBD | Lexical |
-| T0115.bee | UNKNOWN | TBD | Lexical |
-| T0116.bee | UNKNOWN | TBD | Lexical |
-| T0117.bee | UNKNOWN | TBD | Lexical |
-| T0118.bee | UNKNOWN | TBD | Lexical |
-| T0119.bee | UNKNOWN | TBD | Lexical |
-| T0120.bee | UNKNOWN | TBD | Lexical |
-| T0121.bee | UNKNOWN | TBD | Lexical |
-| T0122.bee | UNKNOWN | TBD | Lexical |
-| T0123.bee | UNKNOWN | TBD | Lexical |
-| T0124.bee | UNKNOWN | TBD | Lexical |
-| T0125.bee | UNKNOWN | TBD | Lexical |
-| T0126.bee | UNKNOWN | TBD | Lexical |
-| T0127.bee | UNKNOWN | TBD | Lexical |
-| T0128.bee | PASS | Print statement | Lexical |
-| T0129.bee | PASS | Compound assignment modifiers | Lexical |
-| T0130.bee | PASS | Equality and Identity operators | Lexical |
-
-*(Note: Human users, please update this table as tests are added, modified, or validated.)*
+| CASE     | DESCRIPTION                      | STATUS     |
+| -------- | -------------------------------- | ---------- |
+| T0101    | test is frozen                   | PASS       |
+| T0102    | T0102 Relational operators group | PASS       |
+| T0103    | Logical/Bitwise operators        | PASS       |
+| T0104    | T0104 Exponentiation operator... | PASS       |
+| T0105    | T0105 Range operators and typ... | PASS       |
+| T0106    | PASS                             | Expectation/Variable resolu... |
+| T0107    | UNKNOWN                          | TBD        |
+| T0108    | UNKNOWN                          | TBD        |
+| T0115    | T0115 Comprehensive print sta... | PASS       |
+| T0116    | file: comments_demo.bee          | PASS       |
+| T0117    | file: constants.bee              | PASS       |
+| T0118    | file: declaring_variable.bee     | PASS       |
+| T0119    | file: ending_early.bee           | PASS       |
+| T0120    | file: hello_world.bee            | PASS       |
+| T0121    | file: initial_values.bee         | PASS       |
+| T0122    | file: parallel_assignment.bee    | PASS       |
+| T0123    | file: print_write.bee            | PASS       |
+| T0124    | UNKNOWN                          | TBD        |
+| T0125    | UNKNOWN                          | TBD        |
+| T0126    | file: type_inference.bee         | PASS       |
+| T0127    | UNKNOWN                          | TBD        |
+| T0128    | @FROZEN: Generated from /spec... | PASS       |
+| T0129    | @FROZEN: Generated from /spec... | PASS       |
+| T0130    | @FROZEN: Generated from /spec... | PASS       |

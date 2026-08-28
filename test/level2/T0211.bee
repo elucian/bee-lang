@@ -1,4 +1,4 @@
--- file: match_first.bee
+-- @DESC:file: match_first.bee
 -- match, first hit demo
 rule main:
   match 2:

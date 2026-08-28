@@ -1,4 +1,4 @@
--- file: comments_demo.bee
+-- @DESC:file: comments_demo.bee
 -- Comments demo --
 -- a whole-line comment
 -- another one

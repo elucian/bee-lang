@@ -1,4 +1,4 @@
--- file: concatenation.bee
+-- @DESC:file: concatenation.bee
 -- Concatenation demo
 rule main:
   print [1,2] + [3];

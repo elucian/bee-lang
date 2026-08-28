@@ -1,4 +1,4 @@
--- file: quantifiers.bee
+-- @DESC:file: quantifiers.bee
 -- Quantifiers demo
 rule main:
   print ∀ (i ∈ {2,4,6}) ∧ (i % 2 = 0);

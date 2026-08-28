@@ -1,4 +1,4 @@
--- file: match_every.bee
+-- @DESC:file: match_every.bee
 -- match, every hit demo
 rule main:
   match all 4:

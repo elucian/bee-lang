@@ -1,3 +1,4 @@
+-- @DESC:@DISABLED: PARSER DEBUG: ident tok="balance"
 -- file: contract_deposit.bee
 -- Exact money, with a promise it went up demo
 rule deposit(balance ∈ @Q, amount ∈ Q):

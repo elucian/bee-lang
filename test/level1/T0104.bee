@@ -1,4 +1,4 @@
--- T0104: Exponentiation operators group
+-- @DESC:T0104 Exponentiation operators group
 rule main:
   new base ∈ Z; new exp ∈ Z; new res ∈ Z;
   let base := 2; let exp := 3;

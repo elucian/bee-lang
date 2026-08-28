@@ -1,4 +1,4 @@
--- file: coroutine.bee
+-- @DESC:file: coroutine.bee
 -- A coroutine demo
 rule ticker(n ∈ N) => (v ∈ N):
   for i ∈ (1..n) do:

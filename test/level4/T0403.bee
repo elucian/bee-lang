@@ -1,3 +1,4 @@
+-- @DESC:@DISABLED: PARSER DEBUG: ident tok="r"
 -- file: contract_clamp.bee
 -- Both, naming results and parameters demo
 rule clamp(v, lo, hi ∈ Z) => (r ∈ Z):

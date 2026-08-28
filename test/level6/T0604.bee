@@ -1,4 +1,4 @@
--- file: trial_recover.bee
+-- @DESC:file: trial_recover.bee
 -- Recovering and carrying on demo
 rule main:
   trial:

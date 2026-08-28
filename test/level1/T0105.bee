@@ -1,4 +1,4 @@
--- T0105: Range operators and types test case
+-- @DESC:T0105 Range operators and types test case
 rule main:
   new a ∈ Z;
   let a := 10;

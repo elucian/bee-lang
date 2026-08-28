@@ -4,13 +4,11 @@ This level covers advanced system features and specialized compiler behavior.
 
 ## Test Coverage
 
-| Test File | Status | Description | Spec Link |
-| :--- | :--- | :--- | :--- |
-| T0601.bee | UNKNOWN | Expect statement demo | N/A |
-| T0602.bee | UNKNOWN | TBD | N/A |
-| T0603.bee | UNKNOWN | TBD | N/A |
-| T0604.bee | UNKNOWN | TBD | N/A |
-| T0605.bee | UNKNOWN | TBD | N/A |
-| T0606.bee | UNKNOWN | TBD | N/A |
-
-*(Note: Human users, please update this table as tests are added, modified, or validated.)*
+| CASE     | DESCRIPTION                      | STATUS     |
+| -------- | -------------------------------- | ---------- |
+| T0601    | UNKNOWN                          | Expect statement demo |
+| T0602    | UNKNOWN                          | TBD        |
+| T0603    | UNKNOWN                          | TBD        |
+| T0604    | UNKNOWN                          | TBD        |
+| T0605    | UNKNOWN                          | TBD        |
+| T0606    | UNKNOWN                          | TBD        |

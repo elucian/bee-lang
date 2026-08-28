@@ -1,4 +1,4 @@
--- file: append_collection_example.bee
+-- @DESC:file: append_collection_example.bee
 -- A rule that adds an item to a collection and uses `old`
 -- to verify the size increased by exactly one.
 

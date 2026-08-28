@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:@FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- T0128: Print statement functionality check
 rule main:
   new a ∈ Z;

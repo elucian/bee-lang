@@ -1,4 +1,4 @@
--- file: lists.bee
+-- @DESC:file: lists.bee
 -- Lists demo
 rule main:
   new l := (1,2,3);

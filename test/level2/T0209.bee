@@ -1,4 +1,4 @@
--- file: labels.bee
+-- @DESC:file: labels.bee
 -- Labels demo
 rule main:
   cycle outer:

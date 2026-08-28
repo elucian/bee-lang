@@ -1,4 +1,4 @@
--- T0201: Basic variable declaration and print
+-- @DESC:T0201 Basic variable declaration and print
 rule main:
   new a ∈ Z;
   let a := 10;

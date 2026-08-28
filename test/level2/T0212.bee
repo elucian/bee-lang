@@ -1,4 +1,4 @@
--- file: match_total.bee
+-- @DESC:file: match_total.bee
 -- A total match needs no default demo
 type Small: (0..3) <: Z;
 rule main:

@@ -1,4 +1,4 @@
--- file: parallel_assignment.bee
+-- @DESC:file: parallel_assignment.bee
 -- Parallel assignment demo
 rule main:
   new a: 1, b: 2 ∈ Z;

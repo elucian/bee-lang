@@ -1,4 +1,4 @@
--- file: maps.bee
+-- @DESC:file: maps.bee
 -- Maps demo
 rule main:
   new m := {1:"a", 2:"b"};

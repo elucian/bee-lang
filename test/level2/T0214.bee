@@ -1,4 +1,4 @@
--- file: stop_next.bee
+-- @DESC:file: stop_next.bee
 -- stop and next demo
 rule main:
   for i ∈ (1..10) do

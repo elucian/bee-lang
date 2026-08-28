@@ -1,4 +1,4 @@
--- T0102: Relational operators group
+-- @DESC:T0102 Relational operators group
 rule main:
   new a ∈ Z; new b ∈ Z; new r1 ∈ Z; new r2 ∈ Z; new r3 ∈ Z;
   let a := 5; let b := 10;

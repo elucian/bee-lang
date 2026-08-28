@@ -1,4 +1,4 @@
--- file: arrays.bee
+-- @DESC:file: arrays.bee
 -- Arrays demo
 rule main:
   new a := [1,2,3];

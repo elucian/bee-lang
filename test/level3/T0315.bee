@@ -1,4 +1,4 @@
--- file: set_algebra_ascii.bee
+-- @DESC:file: set_algebra_ascii.bee
 -- Set algebra in ASCII demo
 rule main:
   print {1,2} union {2,3};

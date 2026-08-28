@@ -1,4 +1,4 @@
--- @DISABLED: === VARIABLE CONTEXT ===
+-- @DESC:@DISABLED: === VARIABLE CONTEXT ===
 // @FROZEN: Generated from spec. Immutable ground truth for AI agents.
 -- T0108: Compound assignment and update operators
 -- (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`)

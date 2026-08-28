@@ -1,4 +1,4 @@
--- file: map_reduce.bee
+-- @DESC:file: map_reduce.bee
 -- Map and reduce demo
 rule sum(a, b ∈ Z) => (r ∈ Z):
   for i ∈ (a..b) do:

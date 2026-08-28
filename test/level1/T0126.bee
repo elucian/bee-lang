@@ -1,4 +1,4 @@
--- file: type_inference.bee
+-- @DESC:file: type_inference.bee
 -- Type inference demo
 rule main:
   new a := 10;

@@ -1,4 +1,4 @@
--- file: scoped_block.bee
+-- @DESC:file: scoped_block.bee
 -- A scoped block demo
 rule main:
   start:

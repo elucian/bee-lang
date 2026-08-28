@@ -6,15 +6,13 @@ This level covers data collections and processing pipelines as defined in:
 
 ## Test Coverage
 
-| Test File | Status | Description | Spec Link |
-| :--- | :--- | :--- | :--- |
-| T0401.bee | UNKNOWN | For cycle with range and sum | Processing |
-| T0402.bee | UNKNOWN | TBD | Collections |
-| T0403.bee | UNKNOWN | TBD | Collections |
-| T0404.bee | UNKNOWN | TBD | Collections |
-| T0405.bee | UNKNOWN | TBD | Collections |
-| T0406.bee | UNKNOWN | TBD | Collections |
-| T0407.bee | UNKNOWN | TBD | Collections |
-| T0408.bee | UNKNOWN | TBD | Collections |
-
-*(Note: Human users, please update this table as tests are added, modified, or validated.)*
+| CASE     | DESCRIPTION                      | STATUS     |
+| -------- | -------------------------------- | ---------- |
+| T0401    | T0401 Complex Data Processing... | PASS       |
+| T0402    | file: contract_argument_mutat... | PASS       |
+| T0403    | @DISABLED: PARSER DEBUG: iden... | FAIL       |
+| T0404    | @DISABLED: PARSER DEBUG: iden... | FAIL       |
+| T0405    | file: contract_old_change.bee    | PASS       |
+| T0406    | @DISABLED: PARSER DEBUG: iden... | FAIL       |
+| T0407    | @DISABLED: === VARIABLE CONTE... | FAIL       |
+| T0408    | @DISABLED: === VARIABLE CONTE... | FAIL       |

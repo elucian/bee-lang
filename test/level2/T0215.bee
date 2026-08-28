@@ -1,4 +1,4 @@
--- file: then_runs.bee
+-- @DESC:file: then_runs.bee
 -- then runs once at the end demo
 rule main:
   new n := 0;

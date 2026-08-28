@@ -1,4 +1,4 @@
--- file: sharing_copying.bee
+-- @DESC:file: sharing_copying.bee
 -- Sharing and copying demo
 rule main:
   new a := [1,2];

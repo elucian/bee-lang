@@ -1,3 +1,4 @@
+-- @DESC: Logical/Bitwise operators
 -- T0103: Logical and bitwise operators group using Unicode symbols
 rule main:
   new p ∈ Z; new q ∈ Z;

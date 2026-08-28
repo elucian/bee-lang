@@ -1,4 +1,4 @@
--- file: contract_old_change.bee
+-- @DESC:file: contract_old_change.bee
 -- A promise about what changed demo
 rule bump(n ∈ @Z):
   expect n = old n + 1;

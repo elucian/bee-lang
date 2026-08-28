@@ -1,4 +1,4 @@
--- file: trial_miss.bee
+-- @DESC:file: trial_miss.bee
 -- miss catches the rest demo
 rule main:
   trial:

@@ -1,4 +1,4 @@
--- file: trial_success.bee
+-- @DESC:file: trial_success.bee
 -- A trial that succeeds demo
 rule main:
   trial:

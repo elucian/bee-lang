@@ -1,4 +1,4 @@
--- T0202: Hello World with String variable
+-- @DESC:T0202 Hello World with String variable
 rule main:
   new s ∈ S;
   let s := "Hello World";

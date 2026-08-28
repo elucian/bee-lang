@@ -1,3 +1,4 @@
+-- @DESC:@DISABLED: PARSER DEBUG: ident tok="items"
 -- file: contract_old_collection.bee
 -- old works on a collection too demo
 rule grow(items ∈ [Z], by ∈ Z):

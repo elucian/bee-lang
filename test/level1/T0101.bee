@@ -1,4 +1,4 @@
--- test is frozen
+-- @DESC:test is frozen
 -- T0101: Essential arithmetic and assignment
 rule main:
   new a ∈ Z; new b ∈ Z; new c ∈ Z; new d ∈ Z; new e ∈ Z;

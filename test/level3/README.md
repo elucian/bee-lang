@@ -6,26 +6,24 @@ This level covers rules, contracts, and function definitions as defined in:
 
 ## Test Coverage
 
-| Test File | Status | Description | Spec Link |
-| :--- | :--- | :--- | :--- |
-| T0301.bee | UNKNOWN | Collection append rule with `old` | Rules |
-| T0302.bee | UNKNOWN | Array literals and indexing | Functions/Collections |
-| T0303.bee | UNKNOWN | TBD | Rules |
-| T0304.bee | UNKNOWN | TBD | Rules |
-| T0305.bee | UNKNOWN | TBD | Rules |
-| T0306.bee | UNKNOWN | TBD | Rules |
-| T0307.bee | UNKNOWN | TBD | Rules |
-| T0308.bee | UNKNOWN | TBD | Rules |
-| T0309.bee | UNKNOWN | TBD | Rules |
-| T0310.bee | UNKNOWN | TBD | Rules |
-| T0311.bee | UNKNOWN | TBD | Rules |
-| T0312.bee | UNKNOWN | TBD | Rules |
-| T0313.bee | UNKNOWN | TBD | Rules |
-| T0314.bee | UNKNOWN | TBD | Rules |
-| T0315.bee | UNKNOWN | TBD | Rules |
-| T0316.bee | UNKNOWN | TBD | Rules |
-| T0317.bee | UNKNOWN | TBD | Rules |
-| T0318.bee | UNKNOWN | TBD | Rules |
-| T0319.bee | UNKNOWN | TBD | Rules |
-
-*(Note: Human users, please update this table as tests are added, modified, or validated.)*
+| CASE     | DESCRIPTION                      | STATUS     |
+| -------- | -------------------------------- | ---------- |
+| T0301    | file: append_collection_examp... | PASS       |
+| T0302    | file: arrays.bee                 | PASS       |
+| T0303    | file: array_traversal.bee        | PASS       |
+| T0304    | file: bubble_sort.bee            | PASS       |
+| T0305    | file: builders.bee               | PASS       |
+| T0306    | file: concatenation.bee          | PASS       |
+| T0307    | file: growing_shrinking_list.bee | PASS       |
+| T0308    | file: lists.bee                  | PASS       |
+| T0309    | file: maps.bee                   | PASS       |
+| T0310    | file: map_builder.bee            | PASS       |
+| T0311    | file: quantifiers.bee            | PASS       |
+| T0312    | file: sets_sorted.bee            | PASS       |
+| T0313    | file: set_add_remove.bee         | PASS       |
+| T0314    | file: set_algebra.bee            | PASS       |
+| T0315    | file: set_algebra_ascii.bee      | PASS       |
+| T0316    | file: sharing_copying.bee        | PASS       |
+| T0317    | file: sized_array.bee            | PASS       |
+| T0318    | file: slices_share.bee           | PASS       |
+| T0319    | file: walking_map.bee            | PASS       |

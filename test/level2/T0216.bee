@@ -1,4 +1,4 @@
--- file: while_demo.bee
+-- @DESC:file: while_demo.bee
 -- while demo
 rule main:
   new n := 0;
