@@ -26,6 +26,4 @@ vendor/
 web/
 
 # Test results
-test/output/
 test/status/
-test/critical/

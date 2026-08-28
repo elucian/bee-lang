@@ -1,11 +1,13 @@
 import os
 import re
 import sys
+import shutil
 
 def reset_tests(level_target=""):
     test_dir = "test"
-    levels = [level_target] if level_target else [f"level{i}" for i in range(1, 6)]
+    levels = [level_target] if level_target else [f"level{i}" for i in range(1, 9)]
     
+    # 2. Reset disabled tests
     pattern = re.compile(r"^//\s*@DISABLED:\s*.*$|^--\s*@DISABLED:\s*.*$")
     
     count = 0
@@ -20,7 +22,7 @@ def reset_tests(level_target=""):
                     lines = file.readlines()
                 
                 if lines and pattern.match(lines[0].strip()):
-                    lines[0] = "// @ENABLED: Reset by user\n"
+                    lines[0] = "-- @ENABLED: Reset by user\n"
                     with open(f_path, "w", encoding="utf-8") as file:
                         file.writelines(lines)
                     print(f"Reset test: {f_path}")

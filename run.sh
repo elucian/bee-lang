@@ -11,6 +11,9 @@ elif [ "$COMMAND" = "clean" ] || [ "$COMMAND" = "clan" ]; then
     echo "Cleaning test outputs and telemetry..."
     python clean.py
 elif [ "$COMMAND" = "test" ]; then
+    # Clean test status before running tests
+    python clean.py
+    
     if [ -n "$TARGET" ]; then
         echo "Running test suite for $TARGET..."
         python test/test.py "$TARGET"

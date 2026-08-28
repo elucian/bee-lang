@@ -45,7 +45,12 @@ func parseSuperscriptIntStatic(s string) int {
 }
 
 type Parser struct {
-	l *lexer.Lexer
+	l      *lexer.Lexer
+	errors []string
+}
+
+func (p *Parser) Errors() []string {
+	return p.errors
 }
 
 func New(l *lexer.Lexer) *Parser {

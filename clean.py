@@ -2,15 +2,12 @@
 import os
 import shutil
 
-def clean():
-    for d in ["test/output", "test/status", "test/critical"]:
-        if os.path.exists(d):
-            shutil.rmtree(d)
-            os.makedirs(d)
-            print(f"Cleaned {d} directory successfully.")
-        else:
-            os.makedirs(d, exist_ok=True)
-            print(f"Created/verified {d} directory.")
+def clean_status():
+    status_dir = "test/status"
+    if os.path.exists(status_dir):
+        shutil.rmtree(status_dir)
+    os.makedirs(status_dir)
+    print(f"Cleaned {status_dir} directory.")
 
 if __name__ == "__main__":
-    clean()
+    clean_status()

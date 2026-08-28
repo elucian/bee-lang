@@ -14,20 +14,21 @@ def check_syntax(base_path):
     
     success = True
     
-    # Ensure output directories exist
-    output_dir = os.path.join("test", "output")
+    # Ensure status directory exists
     status_dir = os.path.join("test", "status")
-    os.makedirs(output_dir, exist_ok=True)
     os.makedirs(status_dir, exist_ok=True)
     
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = os.path.join(output_dir, f"report_{timestamp}.txt")
+    report_path = os.path.join(status_dir, f"report_{timestamp}.txt")
     status_path = os.path.join(status_dir, f"status_{timestamp}.txt")
     
     with open(report_path, "w") as report_file, open(status_path, "w") as status_file:
         report_file.write(f"Syntax Check Report - {datetime.now()}\n\n")
         
         for root, _, files in os.walk(base_path):
+            # Skip status directory
+            if "status" in root:
+                continue
             for file in files:
                 if file.endswith(".bee"):
                     file_path = os.path.join(root, file)
@@ -43,7 +44,7 @@ def check_syntax(base_path):
                             msg = f"Syntax Error in {file_path}:\n{result.stderr}\n"
                             print(msg)
                             report_file.write(msg)
-                            status_file.write(f"FAIL: {file_path}\n")
+                            status_file.write(f"FAIL: {file_path} -critical\n")
                             success = False
                         else:
                             msg = f"Passed: {file_path}\n"

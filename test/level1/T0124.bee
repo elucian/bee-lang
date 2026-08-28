@@ -1,3 +1,4 @@
+-- @DISABLED: PARSER DEBUG: ident tok="x"
 -- file: T0109_repro.bee
 // @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 rule main:

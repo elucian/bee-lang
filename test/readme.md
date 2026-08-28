@@ -29,7 +29,6 @@ Located in `test/` or `scripts/`:
 
 ## 3. Reporting Infrastructure
 
-- **`test/output/`**: Stores detailed syntax check reports (`report_YYYYMMDD_HHMMSS.txt`).
-- **`test/status/`**: Stores status summary logs (`status_YYYYMMDD_HHMMSS.txt`).
+- **`test/status/`**: Stores detailed syntax check reports and execution status summaries.
 
 ---

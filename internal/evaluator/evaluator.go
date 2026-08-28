@@ -70,6 +70,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Name %s exists? %v, curVal = %d\n", name.Value, ok, curVal)
 
 				// Assignment handles both initial assignment and mutation (compound op)
+				lit := s.Token.Literal
 				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Executing mutation, lit=%q\n", lit)
 				switch lit {
 				case "+=":
