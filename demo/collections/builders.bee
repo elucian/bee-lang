@@ -1,7 +1,0 @@
--- Builders demo
-rule main:
-  print { x | x ∈ (1..6) ∧ (x % 2 = 0) };
-  print { x² | x ∈ (1..4) };
-  print [ x | x ∈ (1..9:2) ];
-return;
-

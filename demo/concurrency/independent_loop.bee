@@ -1,9 +1,0 @@
--- An independent loop demo
-rule main:
-  new squares ∈ [Z](6);
-  for ∀ i ∈ (1..6) do:
-    let squares[i] := i * i;
-  repeat;
-  print squares;
-return;
-

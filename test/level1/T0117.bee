@@ -1,0 +1,7 @@
+-- file: constants.bee
+-- Constants demo
+set LIMIT: 10 ∈ Z;
+rule main:
+  print LIMIT;
+return;
+

@@ -1,0 +1,6 @@
+-- file: map_builder.bee
+-- Map builder demo
+rule main:
+  print { (x:x²) | x ∈ (1..4) };
+return;
+

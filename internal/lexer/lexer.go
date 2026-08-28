@@ -105,7 +105,7 @@ func (l *Lexer) NextToken() token.Token {
 	case 'λ':
 		tok = token.Token{Type: token.LAMBDA, Literal: "λ", Pos: token.Pos(l.line)}
 	case '∈':
-		tok = token.Token{Type: token.IN, Literal: "∈", Pos: token.Pos(l.line)}
+		tok = token.Token{Type: token.IN_OP, Literal: "∈", Pos: token.Pos(l.line)}
 	case '∩':
 		tok = token.Token{Type: token.SET_INTERSECT, Literal: "∩", Pos: token.Pos(l.line)}
 	case '∪':

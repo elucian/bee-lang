@@ -59,31 +59,34 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		}
 		fmt.Println()
 	case *parser.AssignmentStatement:
+		fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: AssignmentStatement start, token lit=%q, type=%v\n", s.Token.Literal, s.Token.Type)
 		for i, name := range s.Names {
+			fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Assigning to %s\n", name.Value)
 			if i < len(s.Values) {
 				rightVal := e.evalIntExpression(s.Values[i])
-				curVal := e.symbols[name.Value]
-				lit := s.Token.Literal
-				tokType := s.Token.Type
-				fmt.Fprintf(os.Stderr, "SPY ASSIGN: name=%s, lit=%q, type=%v, curVal=%d, rightVal=%d\n", name.Value, lit, tokType, curVal, rightVal)
-				switch {
-				case lit == "+=" || tokType == token.PLUS_ASSIGN:
-					fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Applying +=, name=%s, cur=%d, right=%d\n", name.Value, curVal, rightVal)
-					e.symbols[name.Value] = curVal + rightVal
-				case lit == ":=" || lit == "=":
-					fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Applying :=, name=%s, val=%d\n", name.Value, rightVal)
-					e.symbols[name.Value] = rightVal
-				case lit == "-=" || tokType == token.MINUS_ASSIGN:
-					e.symbols[name.Value] = curVal - rightVal
-				case lit == "*=" || tokType == token.MUL_ASSIGN:
-					e.symbols[name.Value] = curVal * rightVal
-				case lit == "/=" || tokType == token.DIV_ASSIGN:
+				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: RightVal = %d\n", rightVal)
+
+				curVal, ok := e.symbols[name.Value]
+				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Name %s exists? %v, curVal = %d\n", name.Value, ok, curVal)
+
+				// Assignment handles both initial assignment and mutation (compound op)
+				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Executing mutation, lit=%q\n", lit)
+				switch lit {
+				case "+=":
+					fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Apply += to %s (val %d)\n", name.Value, rightVal)
+					e.symbols[name.Value] += rightVal
+					fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Result %s = %d\n", name.Value, e.symbols[name.Value])
+				case "-=":
+					e.symbols[name.Value] -= rightVal
+				case "*=":
+					e.symbols[name.Value] *= rightVal
+				case "/=":
 					if rightVal != 0 {
-						e.symbols[name.Value] = curVal / rightVal
+						e.symbols[name.Value] /= rightVal
 					}
-				case lit == "%=" || tokType == token.MOD_ASSIGN:
+				case "%=":
 					if rightVal != 0 {
-						res := curVal % rightVal
+						res := e.symbols[name.Value] % rightVal
 						if res < 0 {
 							if rightVal > 0 {
 								res += rightVal
@@ -93,23 +96,17 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 						}
 						e.symbols[name.Value] = res
 					}
-				case lit == "^=" || tokType == token.POW_ASSIGN:
-					res := 1
-					for j := 0; j < rightVal; j++ {
-						res *= curVal
-					}
-					e.symbols[name.Value] = res
-				case lit == "√=" || tokType == token.SQRT_ASSIGN:
-					deg := 2
-					res := math.Round(math.Pow(float64(curVal), 1.0/float64(deg)))
-					e.symbols[name.Value] = int(res)
+				case ":=", "=":
+					e.symbols[name.Value] = rightVal
 				default:
-					fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: DEFAULT FALLBACK. Applying %q assignment, name=%s, val=%d\n", lit, name.Value, rightVal)
 					e.symbols[name.Value] = rightVal
 				}
+				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: After assign, %s = %d\n", name.Value, e.symbols[name.Value])
+				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Final value of %s = %d\n", name.Value, e.symbols[name.Value])
 			}
 		}
 	case *parser.DeclarationStatement:
+		fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Declaring %s\n", s.Name)
 		if s.Value != nil {
 			if arrLit, ok := s.Value.(*parser.ArrayLiteral); ok {
 				elems := make([]int, len(arrLit.Elements))
@@ -120,9 +117,11 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			} else {
 				val := e.evalIntExpression(s.Value)
 				e.symbols[s.Name] = val
+				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Declared %s = %d\n", s.Name, val)
 			}
 		} else {
 			e.symbols[s.Name] = 0
+			fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Declared %s = 0\n", s.Name)
 		}
 	}
 }

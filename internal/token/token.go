@@ -68,7 +68,7 @@ const (
 	TYPE_CAST = ":>"
 
 	// Logical & Set Algebra operators
-	IN            = "∈"
+	IN_OP         = "∈"
 	NOT_IN        = "!∈"
 	SET_INTERSECT = "∩"
 	SET_UNION     = "∪"
@@ -130,57 +130,60 @@ const (
 	APPLY = "APPLY"
 	WITH  = "WITH"
 
-	REQUIRE = "REQUIRE"
-	ENSURE  = "ENSURE"
-
-	IF    = "IF"
-	THEN  = "THEN"
-	ELSE  = "ELSE"
-	MATCH = "MATCH"
-	WHEN  = "WHEN"
-	DO    = "DO"
-	OTHER = "OTHER"
-	FIRST = "FIRST"
-	EVERY = "EVERY"
-	TOTAL = "TOTAL"
-
-	CYCLE  = "CYCLE"
-	REPEAT = "REPEAT"
-	WHILE  = "WHILE"
-	FOR    = "FOR"
-	IN_KW  = "IN"
-
-	RETURN = "RETURN"
-	STOP   = "STOP"
-	NEXT   = "NEXT"
-	YIELD  = "YIELD"
-	RAISE  = "RAISE"
-	RETRY  = "RETRY"
-
-	TRIAL = "TRIAL"
-	TRY   = "TRY"
-	CASE  = "CASE"
-	MISS  = "MISS"
-	FINAL = "FINAL"
-	DONE  = "DONE"
-
-	BEGIN = "BEGIN"
-	WAIT  = "WAIT"
-
-	USE   = "USE"
-	AS    = "AS"
-	ALIAS = "ALIAS"
-
-	PRINT  = "PRINT"
-	WRITE  = "WRITE"
-	EXPECT = "EXPECT"
-
-	FORALL_KW = "FORALL"
-	EXISTS_KW = "EXISTS"
-	AND_KW    = "AND"
-	OR_KW     = "OR"
-	NOT_KW    = "NOT"
-	XOR_KW    = "XOR"
+	BEGIN      = "BEGIN"
+	ALIAS      = "ALIAS"
+	AND        = "AND"
+	ABORT      = "ABORT"
+	OTHER      = "OTHER"
+	CASE       = "CASE"
+	CONTINUE   = "CONTINUE"
+	DONE       = "DONE"
+	DEFAULT    = "DEFAULT"
+	IF         = "IF"
+	IS         = "IS"
+	DO         = "DO"
+	ELSE       = "ELSE"
+	EXIT       = "EXIT"
+	FAIL       = "FAIL"
+	FINAL      = "FINAL"
+	MISS       = "MISS"
+	PANIC      = "PANIC"
+	LIKE       = "LIKE"
+	LOAD       = "LOAD"
+	NEXT       = "NEXT"
+	JOB        = "JOB"
+	MATCH      = "MATCH"
+	OVER       = "OVER"
+	PRINT      = "PRINT"
+	PASS       = "PASS"
+	VOID       = "VOID"
+	RETURN     = "RETURN"
+	RETRY      = "RETRY"
+	NONE       = "NONE"
+	SCRAP      = "SCRAP"
+	READ       = "READ"
+	TRIAL      = "TRIAL"
+	STOP       = "STOP"
+	YIELD      = "YIELD"
+	RAISE      = "RAISE"
+	XOR        = "XOR"
+	WRITE      = "WRITE"
+	WAIT       = "WAIT"
+	WHEN       = "WHEN"
+	OR         = "OR"
+	HIDE       = "HIDE"
+	CYCLE      = "CYCLE"
+	WHILE      = "WHILE"
+	FOR        = "FOR"
+	RESUME     = "RESUME"
+	PUT        = "PUT"
+	POP        = "POP"
+	NOT        = "NOT"
+	AS         = "AS"
+	IN_KEYWORD = "IN"
+	START      = "START"
+	TRY        = "TRY"
+	EXPECT     = "EXPECT"
 )
 
 var keywords = map[string]Type{
@@ -195,57 +198,60 @@ var keywords = map[string]Type{
 	"apply": APPLY,
 	"with":  WITH,
 
-	"require": REQUIRE,
-	"ensure":  ENSURE,
-
-	"if":    IF,
-	"then":  THEN,
-	"else":  ELSE,
-	"match": MATCH,
-	"when":  WHEN,
-	"do":    DO,
-	"other": OTHER,
-	"first": FIRST,
-	"every": EVERY,
-	"total": TOTAL,
-
-	"cycle":  CYCLE,
-	"repeat": REPEAT,
-	"while":  WHILE,
-	"for":    FOR,
-	"in":     IN_KW,
-
-	"return": RETURN,
-	"stop":   STOP,
-	"next":   NEXT,
-	"yield":  YIELD,
-	"raise":  RAISE,
-	"retry":  RETRY,
-
-	"trial": TRIAL,
-	"try":   TRY,
-	"case":  CASE,
-	"miss":  MISS,
-	"final": FINAL,
-	"done":  DONE,
-
-	"begin": BEGIN,
-	"wait":  WAIT,
-
-	"use":   USE,
-	"as":    AS,
-	"alias": ALIAS,
-
-	"print":  PRINT,
-	"write":  WRITE,
-	"expect": EXPECT,
-
-	"forall": FORALL_KW,
-	"exists": EXISTS_KW,
-	"and":    AND_KW,
-	"or":     OR_KW,
-	"not":    NOT_KW,
-	"xor":    XOR_KW,
+	"begin":    BEGIN,
+	"alias":    ALIAS,
+	"and":      AND,
+	"abort":    ABORT,
+	"other":    OTHER,
+	"case":     CASE,
+	"continue": CONTINUE,
+	"done":     DONE,
+	"default":  DEFAULT,
+	"if":       IF,
+	"is":       IS,
+	"do":       DO,
+	"else":     ELSE,
+	"exit":     EXIT,
+	"fail":     FAIL,
+	"final":    FINAL,
+	"miss":     MISS,
+	"panic":    PANIC,
+	"like":     LIKE,
+	"load":     LOAD,
+	"next":     NEXT,
+	"job":      JOB,
+	"match":    MATCH,
+	"over":     OVER,
+	"print":    PRINT,
+	"pass":     PASS,
+	"void":     VOID,
+	"return":   RETURN,
+	"retry":    RETRY,
+	"none":     NONE,
+	"scrap":    SCRAP,
+	"read":     READ,
+	"trial":    TRIAL,
+	"stop":     STOP,
+	"yield":    YIELD,
+	"xor":      XOR,
+	"write":    WRITE,
+	"wait":     WAIT,
+	"when":     WHEN,
+	"or":       OR,
+	"hide":     HIDE,
+	"cycle":    CYCLE,
+	"while":    WHILE,
+	"for":      FOR,
+	"resume":   RESUME,
+	"put":      PUT,
+	"pop":      POP,
+	"raise":    RAISE,
+	"not":      NOT,
+	"as":       AS,
+	"in":       IN_KEYWORD,
+	"start":    START,
+	"try":      TRY,
+	"expect":   EXPECT,
 }
 
 func LookupIdent(ident string) Type {

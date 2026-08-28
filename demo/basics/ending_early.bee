@@ -1,7 +1,0 @@
--- Ending early demo
-rule main:
-  print "before";
-  over;
-  print "never";
-return;
-

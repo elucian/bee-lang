@@ -1,6 +1,0 @@
--- Quantifiers demo
-rule main:
-  print ∀ (i ∈ {2,4,6}) ∧ (i % 2 = 0);
-  print ∃ (i ∈ {1,3,5}) ∧ (i = 3);
-return;
-

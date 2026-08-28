@@ -18,6 +18,14 @@ elif [ "$COMMAND" = "test" ]; then
         echo "Running complete test pipeline..."
         python test/test.py
     fi
+elif [ "$COMMAND" = "check" ]; then
+    if [ -n "$TARGET" ]; then
+        echo "Checking syntax for $TARGET..."
+        python scripts/check.py "test/$TARGET"
+    else
+        echo "Checking all tests syntax..."
+        python scripts/check.py "test"
+    fi
 elif [ "$COMMAND" = "solo" ]; then
     if [ -z "$TARGET" ]; then
         echo "Error: Target required for solo. Example: sh run.sh solo T0104"
@@ -33,6 +41,6 @@ elif [ "$COMMAND" = "reset" ]; then
         python test/reset.py
     fi
 else
-    echo "Usage: sh run.sh [build | test [level1] | solo <target> | reset [level1] | clean]"
+    echo "Usage: sh run.sh [build | test [level1] | check [level1] | solo <target> | reset [level1] | clean]"
     exit 1
 fi

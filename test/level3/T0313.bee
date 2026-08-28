@@ -1,0 +1,10 @@
+-- file: set_add_remove.bee
+-- Adding and removing demo
+rule main:
+  new s := {1,2};
+  let s += 3;
+  let s -= 1;
+  print s;
+  print 3 ∈ s;
+return;
+

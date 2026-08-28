@@ -1,0 +1,11 @@
+-- file: stop_next.bee
+-- stop and next demo
+rule main:
+  for i ∈ (1..10) do
+    next if i % 2 = 0;
+    stop if i > 7;
+    write i;
+  repeat;
+  print;
+return;
+

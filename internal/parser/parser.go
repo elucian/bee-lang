@@ -119,41 +119,27 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 	opTok := p.l.NextToken()
 	fmt.Fprintf(os.Stderr, "PARSER DEBUG: opTok literal=%q, type=%v\n", opTok.Literal, opTok.Type)
 
-	// Look ahead to check if next token is an assignment operator
-	opTok := p.l.NextToken()
-	fmt.Fprintf(os.Stderr, "PARSER DEBUG: opTok literal=%q, type=%v\n", opTok.Literal, opTok.Type)
-
-	// Handle compound assignment operators explicitly by looking ahead
-	if p.l.PeekChar() == '=' {
-		p.l.NextToken()
-		opTok.Literal += "="
-		switch opTok.Literal {
-		case "+=":
-			opTok.Type = token.PLUS_ASSIGN
-		case "-=":
-			opTok.Type = token.MINUS_ASSIGN
-		case "*=":
-			opTok.Type = token.MUL_ASSIGN
-		case "/=":
-			opTok.Type = token.DIV_ASSIGN
-		case "%=":
-			opTok.Type = token.MOD_ASSIGN
-		case "^=":
-			opTok.Type = token.POW_ASSIGN
-		case "√=":
-			opTok.Type = token.SQRT_ASSIGN
-		}
+	// Handle compound assignment operators explicitly
+	if opTok.Literal == "+=" || opTok.Type == token.PLUS_ASSIGN {
+		opTok.Type = token.PLUS_ASSIGN
+	} else if opTok.Literal == "-=" || opTok.Type == token.MINUS_ASSIGN {
+		opTok.Type = token.MINUS_ASSIGN
+	} else if opTok.Literal == "*=" || opTok.Type == token.MUL_ASSIGN {
+		opTok.Type = token.MUL_ASSIGN
+	} else if opTok.Literal == "/=" || opTok.Type == token.DIV_ASSIGN {
+		opTok.Type = token.DIV_ASSIGN
+	} else if opTok.Literal == "%=" || opTok.Type == token.MOD_ASSIGN {
+		opTok.Type = token.MOD_ASSIGN
+	} else if opTok.Literal == ":=" {
+		opTok.Type = token.ASSIGN
+	} else if opTok.Literal == "=" {
+		opTok.Type = token.EQ
 	}
+
 	fmt.Fprintf(os.Stderr, "PARSER DEBUG: final stmt.Token literal=%q, type=%v\n", opTok.Literal, opTok.Type)
 	stmt.Token = opTok
 	stmt.Values = append(stmt.Values, p.parseExpression())
-	// If the lexer already parsed "+=", use it!
-	fmt.Fprintf(os.Stderr, "PARSER DEBUG: opTok literal=%q, type=%v\n", opTok.Literal, opTok.Type)
-	if opTok.Type == token.PLUS_ASSIGN || opTok.Literal == "+=" {
-		fmt.Fprintf(os.Stderr, "PARSER DEBUG: saw += token!\n")
-	}
-	stmt.Token = opTok
-	stmt.Values = append(stmt.Values, p.parseExpression())
+
 	for p.l.PeekChar() == ',' {
 		p.l.NextToken() // comma
 		stmt.Values = append(stmt.Values, p.parseExpression())
@@ -258,7 +244,7 @@ func (p *Parser) parseExpression() Expression {
 
 	// Simple binary expression check (including √)
 	peekTok := p.l.NextToken()
-	if peekTok.Type == token.PLUS || peekTok.Type == token.MINUS || peekTok.Type == token.ASTERISK || peekTok.Type == token.SLASH || peekTok.Literal == "/" || peekTok.Type == token.PERCENT || peekTok.Type == token.PERCENT || peekTok.Literal == "%" || peekTok.Type == token.CARET || peekTok.Literal == "^" || peekTok.Type == token.SQRT || peekTok.Literal == "√" || peekTok.Literal == "²√" || peekTok.Literal == "³√" || peekTok.Literal == "⁴√" || peekTok.Literal == "⁵√" || peekTok.Literal == "⁶√" || peekTok.Literal == "⁷√" || peekTok.Literal == "⁸√" || peekTok.Literal == "⁹√" || peekTok.Literal == "¹⁰√" || peekTok.Type == token.EQ || peekTok.Literal == "=" || peekTok.Literal == "==" || peekTok.Type == token.NEQ_UNICODE || peekTok.Literal == "≠" || peekTok.Literal == "â‰ " || peekTok.Type == token.NOT_EQ || peekTok.Type == token.GT || peekTok.Type == token.GTE || peekTok.Type == token.LT || peekTok.Type == token.LTE || peekTok.Type == token.AND_KW || peekTok.Type == token.OR_KW || peekTok.Type == token.XOR_KW || peekTok.Literal == ">" || peekTok.Literal == "<" || peekTok.Literal == ">=" || peekTok.Literal == "<=" || peekTok.Literal == "!=" {
+	if peekTok.Type == token.PLUS || peekTok.Type == token.MINUS || peekTok.Type == token.ASTERISK || peekTok.Type == token.SLASH || peekTok.Literal == "/" || peekTok.Type == token.PERCENT || peekTok.Literal == "%" || peekTok.Type == token.CARET || peekTok.Literal == "^" || peekTok.Type == token.SQRT || peekTok.Literal == "√" || peekTok.Literal == "²√" || peekTok.Literal == "³√" || peekTok.Literal == "⁴√" || peekTok.Literal == "⁵√" || peekTok.Literal == "⁶√" || peekTok.Literal == "⁷√" || peekTok.Literal == "⁸√" || peekTok.Literal == "⁹√" || peekTok.Literal == "¹⁰√" || peekTok.Type == token.EQ || peekTok.Literal == "=" || peekTok.Literal == "==" || peekTok.Type == token.NEQ_UNICODE || peekTok.Literal == "≠" || peekTok.Literal == "â‰ " || peekTok.Type == token.NOT_EQ || peekTok.Type == token.GT || peekTok.Type == token.GTE || peekTok.Type == token.LT || peekTok.Type == token.LTE || peekTok.Type == token.AND || peekTok.Type == token.OR || peekTok.Type == token.XOR || peekTok.Literal == ">" || peekTok.Literal == "<" || peekTok.Literal == ">=" || peekTok.Literal == "<=" || peekTok.Literal == "!=" {
 		right := p.parseExpression()
 		return &BinaryExpression{Token: peekTok, Left: left, Right: right}
 	}

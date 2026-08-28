@@ -1,0 +1,12 @@
+-- file: cycle_condition.bee
+-- cycle with a condition demo
+rule main:
+  new n := 3;
+  cycle:
+    do
+      write n;
+      let n -= 1;
+    repeat if n > 0;
+    print;
+  return;
+

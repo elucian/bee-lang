@@ -1,0 +1,8 @@
+-- file: T0109_repro.bee
+// @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+rule main:
+  new x ∈ Z;
+  let x := 10;
+  let x += 5;
+  expect x = 15;
+return;

@@ -1,0 +1,13 @@
+-- file: match_first.bee
+-- match, first hit demo
+rule main:
+  match 2:
+  when 1 do
+    print "one";
+  when 2, 3 do
+    print "two or three";
+  other:
+    print "other";
+  done;
+return;
+

@@ -1,7 +1,0 @@
--- Comments demo --
--- a whole-line comment
--- another one
-rule main:
-  print 1;                              -- trailing comment
-return;
-

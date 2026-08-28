@@ -1,0 +1,14 @@
+-- file: contract_deposit.bee
+-- Exact money, with a promise it went up demo
+rule deposit(balance ∈ @Q, amount ∈ Q):
+  expect amount > 0;
+  expect balance > old balance;
+  let balance += amount;
+return;
+
+rule main:
+  new balance: 10 ∈ Q;
+  apply deposit(@balance, 1\4);
+  print balance;
+return;
+

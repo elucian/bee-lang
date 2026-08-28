@@ -1,0 +1,8 @@
+-- file: set_algebra_ascii.bee
+-- Set algebra in ASCII demo
+rule main:
+  print {1,2} union {2,3};
+  print {1,2,3} inter {2,3};
+  print {1,2} subset {1,2,3};
+return;
+

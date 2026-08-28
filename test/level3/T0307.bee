@@ -1,0 +1,12 @@
+-- file: growing_shrinking_list.bee
+-- Growing and shrinking a list demo
+rule main:
+  new l := (2,3);
+  let l <+ 4;
+  let l +> 1;
+  print l;
+  let l << 1;
+  let l >> 1;
+  print l;
+return;
+

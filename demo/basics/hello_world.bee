@@ -1,5 +1,0 @@
--- hello world demo
-rule main:
-  print "Hello World";
-return;
-

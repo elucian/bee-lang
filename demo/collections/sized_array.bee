@@ -1,7 +1,0 @@
--- A sized array demo
-rule main:
-  new a ∈ [Z](5);
-  let a[*] := 7;
-  print a;
-return;
-

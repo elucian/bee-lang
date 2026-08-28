@@ -1,0 +1,22 @@
+-- file: map_reduce.bee
+-- Map and reduce demo
+rule sum(a, b ∈ Z) => (r ∈ Z):
+  for i ∈ (a..b) do:
+    let r += i;
+  repeat;
+return;
+
+rule main:
+  new parts ∈ List(Z);
+  for lo ∈ (1..76:25) do:
+    begin sum(lo, lo + 24) +> parts;
+  repeat;
+  wait;
+
+  new total := 0 ∈ Z;
+  for ∀ p ∈ parts do:
+    let total += p;
+  repeat;
+  print total;
+return;
+

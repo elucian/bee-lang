@@ -1,0 +1,5 @@
+## 4. Architectural Constraints
+- **Go Standards:** Idiomatic Go only. Prohibit `panic` in compiler error flows; propagate explicit `error` returns.
+- **Array Semantics:** Enforce zero-based indexing across all compiler passes.
+- **LLVM IR Generation:** Ensure every basic block terminates explicitly (`CreateBr`, `CreateRet`, `CreateCondBr`). Validate operands against `llvm.Type` before emission.
+- **Diagnostics:** Route debug logs strictly to `os.Stderr`. Reserve `stdout` exclusively for clean build outputs or raw IR.

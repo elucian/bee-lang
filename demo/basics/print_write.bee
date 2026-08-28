@@ -1,8 +1,0 @@
--- print and write demo
-rule main:
-  write "no";
-  write " newline";
-  print;
-  print "then one";
-return;
-

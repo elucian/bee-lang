@@ -1,0 +1,11 @@
+-- file: contract_postcondition.bee
+-- A postcondition demo
+rule bump(n ∈ Z) => (r ∈ Z):
+  expect r > n;
+  let r := n + 1;
+return;
+
+rule main:
+  print bump(1);
+return;
+

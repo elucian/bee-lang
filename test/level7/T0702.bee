@@ -1,0 +1,6 @@
+-- file: test_module.bee
+-- define test_module
+rule .test(x:0) => (r: 0):
+  let r := x + 1;
+return;
+

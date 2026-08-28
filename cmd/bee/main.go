@@ -77,7 +77,21 @@ func main() {
 		return
 	}
 
-	if *compileFlag || *compileLong || isDebugging {
+	// TODO: Compile to LLVM IR (Not implemented yet).
+	// Redirecting to syntax check.
+	if *compileFlag || *compileLong {
+		fmt.Fprintf(os.Stderr, "Warning: Compilation to LLVM IR is not implemented yet. Running syntax check.\n")
+		if len(p.Errors()) > 0 {
+			for _, msg := range p.Errors() {
+				fmt.Fprintf(os.Stderr, "Syntax Error: %s\n", msg)
+			}
+			os.Exit(1)
+		}
+		fmt.Println("Syntax OK")
+		return
+	}
+
+	if isDebugging {
 		fmt.Println("Syntax OK")
 	}
 }

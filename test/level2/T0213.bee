@@ -1,0 +1,10 @@
+-- file: scoped_block.bee
+-- A scoped block demo
+rule main:
+  start:
+    new hidden := 1;
+    do
+      print hidden;
+    done;
+  return;
+

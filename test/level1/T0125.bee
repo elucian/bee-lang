@@ -1,0 +1,16 @@
+-- file: T0116_mutation.bee
+// @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+rule main:
+  new x ∈ Z;
+  let x := 10;
+  let x += 5;
+  expect x = 15;
+  let x -= 2;
+  expect x = 13;
+  let x *= 2;
+  expect x = 26;
+  let x /= 2;
+  expect x = 13;
+  let x %= 3;
+  expect x = 1;
+return;
