@@ -146,10 +146,21 @@ func (l *Lexer) NextToken() token.Token {
 		}
 		if l.ch == '√' {
 			sb.WriteRune('√')
-			tok = token.Token{Type: token.SQRT, Literal: sb.String(), Pos: token.Pos(l.line)}
+			if l.PeekChar() == '=' {
+				l.readChar()
+				sb.WriteRune('=')
+				tok = token.Token{Type: token.SQRT_ASSIGN, Literal: sb.String(), Pos: token.Pos(l.line)}
+			} else {
+				tok = token.Token{Type: token.SQRT, Literal: sb.String(), Pos: token.Pos(l.line)}
+			}
 		} else {
-			tok = token.Token{Type: token.CARET, Literal: sb.String(), Pos: token.Pos(l.line)}
-			// Do NOT return here immediately so l.readChar() at the end of switch advances properly!
+			if l.ch == '=' {
+				sb.WriteRune('=')
+				tok = token.Token{Type: token.POW_ASSIGN, Literal: sb.String(), Pos: token.Pos(l.line)}
+			} else {
+				tok = token.Token{Type: token.CARET, Literal: sb.String(), Pos: token.Pos(l.line)}
+				// Do NOT return here immediately so l.readChar() at the end of switch advances properly!
+			}
 		}
 	case '√':
 		if l.PeekChar() == '=' {

@@ -64,23 +64,48 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				rightVal := e.evalIntExpression(s.Values[i])
 				curVal := e.symbols[name.Value]
 				lit := s.Token.Literal
-				switch lit {
-				case ":=", "=":
+				switch {
+				case lit == ":=" || lit == "=":
 					e.symbols[name.Value] = rightVal
-				case "+=":
-					e.symbols[name.Value] = evalArithmetic("+", curVal, rightVal, "")
-				case "-=":
-					e.symbols[name.Value] = evalArithmetic("-", curVal, rightVal, "")
-				case "*=":
-					e.symbols[name.Value] = evalArithmetic("*", curVal, rightVal, "")
-				case "/=":
-					e.symbols[name.Value] = evalArithmetic("/", curVal, rightVal, "")
-				case "%=":
-					e.symbols[name.Value] = evalArithmetic("%", curVal, rightVal, "")
-				case "^=":
-					e.symbols[name.Value] = evalArithmetic("^", curVal, rightVal, "")
-				case "√=":
-					e.symbols[name.Value] = evalArithmetic("√", curVal, rightVal, "")
+				case lit == "+=" || s.Token.Type == token.PLUS_ASSIGN || strings.HasSuffix(lit, "+=") || (lit == "+" && s.Token.Type == token.PLUS) || s.Token.Literal == "+=":
+					e.symbols[name.Value] = curVal + rightVal
+				case lit == "-=" || s.Token.Type == token.MINUS_ASSIGN || strings.HasSuffix(lit, "-=") || (lit == "-" && s.Token.Type == token.MINUS) || s.Token.Literal == "-=":
+					e.symbols[name.Value] = curVal - rightVal
+				case lit == "*=" || s.Token.Type == token.MUL_ASSIGN || strings.HasSuffix(lit, "*=") || (lit == "*" && s.Token.Type == token.ASTERISK) || s.Token.Literal == "*=":
+					e.symbols[name.Value] = curVal * rightVal
+				case lit == "/=" || s.Token.Type == token.DIV_ASSIGN || strings.HasSuffix(lit, "/=") || (lit == "/" && s.Token.Type == token.SLASH) || s.Token.Literal == "/=":
+					if rightVal != 0 {
+						e.symbols[name.Value] = curVal / rightVal
+					}
+				case lit == "%=" || s.Token.Type == token.MOD_ASSIGN || strings.HasSuffix(lit, "%=") || (lit == "%" && s.Token.Type == token.PERCENT) || s.Token.Literal == "%=":
+					if rightVal != 0 {
+						res := curVal % rightVal
+						if res < 0 {
+							if rightVal > 0 {
+								res += rightVal
+							} else {
+								res -= rightVal
+							}
+						}
+						e.symbols[name.Value] = res
+					}
+				case lit == "^=" || s.Token.Type == token.POW_ASSIGN || strings.HasSuffix(lit, "^=") || (lit == "^" && s.Token.Type == token.CARET) || s.Token.Literal == "^=":
+					res := 1
+					for j := 0; j < rightVal; j++ {
+						res *= curVal
+					}
+					e.symbols[name.Value] = res
+				case strings.HasSuffix(lit, "√=") || s.Token.Type == token.SQRT_ASSIGN:
+					deg := 2
+					orderStr := strings.TrimSuffix(strings.TrimSuffix(lit, "="), "√")
+					if orderStr != "" {
+						d := parseSuperscriptInt(orderStr)
+						if d > 0 {
+							deg = d
+						}
+					}
+					res := math.Round(math.Pow(float64(curVal), 1.0/float64(deg)))
+					e.symbols[name.Value] = int(res)
 				default:
 					e.symbols[name.Value] = rightVal
 				}
@@ -170,6 +195,12 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 			return int(res)
 		}
 
+		if lit == "^" || (lit >= "⁰" && lit <= "⁹") || strings.Contains(lit, "¹") || strings.Contains(lit, "²") || strings.Contains(lit, "³") || strings.Contains(lit, "⁴") || strings.Contains(lit, "⁵") || strings.Contains(lit, "⁶") || strings.Contains(lit, "⁷") || strings.Contains(lit, "⁸") || strings.Contains(lit, "⁹") {
+			left := e.evalIntExpression(expr.Left)
+			right := e.evalIntExpression(expr.Right)
+			return evalArithmetic("^", left, right, lit)
+		}
+
 		left := e.evalIntExpression(expr.Left)
 		right := e.evalIntExpression(expr.Right)
 
@@ -178,11 +209,14 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 			return evalArithmetic(lit, left, right, lit)
 		case "and", "or", "xor", "¬":
 			return evalLogical(lit, left, right)
-		case "<", ">", "<=", ">=":
+		case "<", ">", "<=", ">=", "≠":
 			return evalComparison(lit, left, right, expr.Token.Type, lit)
 		default:
 			if strings.HasSuffix(lit, "√") || strings.Contains(lit, "√") {
 				return evalArithmetic("√", left, right, lit)
+			}
+			if lit == "≠" || strings.Contains(lit, "≠") {
+				return evalComparison(lit, left, right, expr.Token.Type, lit)
 			}
 			return evalArithmetic(lit, left, right, lit)
 		}

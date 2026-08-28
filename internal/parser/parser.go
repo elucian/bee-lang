@@ -110,7 +110,37 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 		stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent2, Value: tokIdent2.Literal})
 	}
 	opTok := p.l.NextToken() // :=, ::, +=, -=, *=, /=, %=, ^=, √=
-	if opTok.Literal == "√" {
+	if opTok.Literal == "+" || opTok.Type == token.PLUS || opTok.Type == token.IDENT && opTok.Literal == "+" {
+		if p.l.PeekChar() == '=' {
+			p.l.NextToken()
+			opTok = token.Token{Type: token.PLUS_ASSIGN, Literal: "+=", Pos: opTok.Pos}
+		}
+	} else if opTok.Literal == "-" || opTok.Type == token.MINUS {
+		if p.l.PeekChar() == '=' {
+			p.l.NextToken()
+			opTok = token.Token{Type: token.MINUS_ASSIGN, Literal: "-=", Pos: opTok.Pos}
+		}
+	} else if opTok.Literal == "*" || opTok.Type == token.ASTERISK {
+		if p.l.PeekChar() == '=' {
+			p.l.NextToken()
+			opTok = token.Token{Type: token.MUL_ASSIGN, Literal: "*=", Pos: opTok.Pos}
+		}
+	} else if opTok.Literal == "/" || opTok.Type == token.SLASH {
+		if p.l.PeekChar() == '=' {
+			p.l.NextToken()
+			opTok = token.Token{Type: token.DIV_ASSIGN, Literal: "/=", Pos: opTok.Pos}
+		}
+	} else if opTok.Literal == "%" || opTok.Type == token.PERCENT {
+		if p.l.PeekChar() == '=' {
+			p.l.NextToken()
+			opTok = token.Token{Type: token.MOD_ASSIGN, Literal: "%=", Pos: opTok.Pos}
+		}
+	} else if opTok.Literal == "^" || opTok.Type == token.CARET {
+		if p.l.PeekChar() == '=' {
+			p.l.NextToken()
+			opTok = token.Token{Type: token.POW_ASSIGN, Literal: "^=", Pos: opTok.Pos}
+		}
+	} else if opTok.Literal == "√" || opTok.Type == token.SQRT {
 		if p.l.PeekChar() == '=' {
 			p.l.NextToken()
 			opTok = token.Token{Type: token.SQRT_ASSIGN, Literal: "√=", Pos: opTok.Pos}
