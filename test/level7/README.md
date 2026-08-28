@@ -6,5 +6,5 @@ This level covers system integration and library interactions.
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
-| T0701    | UNKNOWN                          | Module usage and qualifier ... |
-| T0702    | UNKNOWN                          | TBD        |
+| T0701    | file: main_module.bee            | PASS       |
+| T0702    | file: test_module.bee            | PASS       |

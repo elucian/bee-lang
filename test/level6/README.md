@@ -6,9 +6,9 @@ This level covers advanced system features and specialized compiler behavior.
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
-| T0601    | UNKNOWN                          | Expect statement demo |
-| T0602    | UNKNOWN                          | TBD        |
-| T0603    | UNKNOWN                          | TBD        |
-| T0604    | UNKNOWN                          | TBD        |
-| T0605    | UNKNOWN                          | TBD        |
-| T0606    | UNKNOWN                          | TBD        |
+| T0601    | file: expect_demo.bee            | PASS       |
+| T0602    | file: trial_miss.bee             | PASS       |
+| T0603    | file: trial_pass_fail.bee        | PASS       |
+| T0604    | file: trial_recover.bee          | PASS       |
+| T0605    | file: trial_retry.bee            | PASS       |
+| T0606    | file: trial_success.bee          | PASS       |

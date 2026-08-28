@@ -62,10 +62,12 @@ func main() {
 
 	l := lexer.New(content)
 	p := parser.New(l)
+	p.SetDebug(isDebugging)
 	program := p.ParseProgram()
 
 	if *executeFlag || *executeLong {
 		eval := evaluator.New()
+		eval.SetDebug(isDebugging)
 		if isDebugging {
 			_, goFile, goLine, _ := runtime.Caller(0)
 			fmt.Fprintf(os.Stderr, "[EXECUTION TRACE] Initializing VM Evaluator | Go Origin: %s:%d\n", goFile, goLine)

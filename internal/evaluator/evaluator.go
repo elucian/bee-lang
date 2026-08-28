@@ -13,6 +13,17 @@ import (
 type Evaluator struct {
 	symbols     map[string]int
 	arrayValues map[string][]int
+	debug       bool
+}
+
+func (e *Evaluator) SetDebug(debug bool) {
+	e.debug = debug
+}
+
+func (e *Evaluator) debugLog(format string, a ...interface{}) {
+	if e.debug {
+		fmt.Fprintf(os.Stderr, format, a...)
+	}
 }
 
 func New() *Evaluator {
@@ -52,7 +63,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			e.DumpContext()
 			panic(fmt.Sprintf("expect failed at line %d", int(s.Token.Pos)))
 		} else {
-			fmt.Fprintf(os.Stderr, "DEBUG: Expectation passed in line %d\n", int(s.Token.Pos))
+			e.debugLog("DEBUG: Expectation passed in line %d\n", int(s.Token.Pos))
 		}
 	case *parser.PrintStatement:
 		separator := " "
@@ -70,24 +81,24 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		}
 		fmt.Println()
 	case *parser.AssignmentStatement:
-		fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: AssignmentStatement start, token lit=%q, type=%v\n", s.Token.Literal, s.Token.Type)
+		e.debugLog("EVALUATOR DEBUG: AssignmentStatement start, token lit=%q, type=%v\n", s.Token.Literal, s.Token.Type)
 		for i, name := range s.Names {
-			fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Assigning to %s\n", name.Value)
+			e.debugLog("EVALUATOR DEBUG: Assigning to %s\n", name.Value)
 			if i < len(s.Values) {
 				rightVal := e.evalIntExpression(s.Values[i])
-				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: RightVal = %d\n", rightVal)
+				e.debugLog("EVALUATOR DEBUG: RightVal = %d\n", rightVal)
 
 				curVal, ok := e.symbols[name.Value]
-				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Name %s exists? %v, curVal = %d\n", name.Value, ok, curVal)
+				e.debugLog("EVALUATOR DEBUG: Name %s exists? %v, curVal = %d\n", name.Value, ok, curVal)
 
 				// Assignment handles both initial assignment and mutation (compound op)
 				lit := s.Token.Literal
-				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Executing mutation, lit=%q\n", lit)
+				e.debugLog("EVALUATOR DEBUG: Executing mutation, lit=%q\n", lit)
 				switch lit {
 				case "+=":
-					fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Apply += to %s (val %d)\n", name.Value, rightVal)
+					e.debugLog("EVALUATOR DEBUG: Apply += to %s (val %d)\n", name.Value, rightVal)
 					e.symbols[name.Value] += rightVal
-					fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Result %s = %d\n", name.Value, e.symbols[name.Value])
+					e.debugLog("EVALUATOR DEBUG: Result %s = %d\n", name.Value, e.symbols[name.Value])
 				case "-=":
 					e.symbols[name.Value] -= rightVal
 				case "*=":
@@ -113,12 +124,12 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				default:
 					e.symbols[name.Value] = rightVal
 				}
-				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: After assign, %s = %d\n", name.Value, e.symbols[name.Value])
-				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Final value of %s = %d\n", name.Value, e.symbols[name.Value])
+				e.debugLog("EVALUATOR DEBUG: After assign, %s = %d\n", name.Value, e.symbols[name.Value])
+				e.debugLog("EVALUATOR DEBUG: Final value of %s = %d\n", name.Value, e.symbols[name.Value])
 			}
 		}
 	case *parser.DeclarationStatement:
-		fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Declaring %s\n", s.Name)
+		e.debugLog("EVALUATOR DEBUG: Declaring %s\n", s.Name)
 		if s.Value != nil {
 			if arrLit, ok := s.Value.(*parser.ArrayLiteral); ok {
 				elems := make([]int, len(arrLit.Elements))
@@ -129,11 +140,11 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			} else {
 				val := e.evalIntExpression(s.Value)
 				e.symbols[s.Name] = val
-				fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Declared %s = %d\n", s.Name, val)
+				e.debugLog("EVALUATOR DEBUG: Declared %s = %d\n", s.Name, val)
 			}
 		} else {
 			e.symbols[s.Name] = 0
-			fmt.Fprintf(os.Stderr, "EVALUATOR DEBUG: Declared %s = 0\n", s.Name)
+			e.debugLog("EVALUATOR DEBUG: Declared %s = 0\n", s.Name)
 		}
 	}
 }

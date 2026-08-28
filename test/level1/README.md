@@ -9,8 +9,8 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
 | T0101    | test is frozen                   | PASS       |
-| T0102    | T0102 Relational operators group | PASS       |
-| T0103    | Logical/Bitwise operators        | PASS       |
+| T0102    | T0102 Relational operators group | FAIL       |
+| T0103    | Logical/Bitwise operators        | FAIL       |
 | T0104    | T0104 Exponentiation operator... | PASS       |
 | T0105    | T0105 Range operators and typ... | PASS       |
 | T0106    | PASS                             | Expectation/Variable resolu... |
