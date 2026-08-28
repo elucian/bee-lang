@@ -43,7 +43,10 @@ elif [ "$COMMAND" = "reset" ]; then
         echo "Resetting all disabled tests..."
         python test/reset.py
     fi
+elif [ "$COMMAND" = "smoke" ]; then
+    echo "Running intelligent self-health check..."
+    go run test/health/health.go
 else
-    echo "Usage: sh run.sh [build | test [level1] | check [level1] | solo <target> | reset [level1] | clean]"
+    echo "Usage: sh run.sh [build | test [level1] | check [level1] | solo <target> | reset [level1] | clean | smoke]"
     exit 1
 fi

@@ -23,7 +23,7 @@ Located in `test/` or `scripts/`:
 - **`test/test.py`**: Root test orchestrator for full suite execution.
 - **`test/bench.py`**: Performance benchmark runner.
 - **`test/solo.py`**: Debug mode test runner (verbose code echo and error location).
-- **`test/dryrun.py`**: Verify compiler CLI flag behavior.
+- **`test/health/health.go`**: Intelligent compiler self-health check and smoke test.
 
 ---
 

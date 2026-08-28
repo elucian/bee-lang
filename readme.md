@@ -43,6 +43,7 @@ sh setup.sh
 - **Master Workflow (`run.sh`)**:
   - Build compiler: `sh run.sh build`
   - Run test pipeline: `sh run.sh test`
+  - Run self-health check: `sh run.sh smoke`
   - Iterative fix loop: `sh run.sh fix level1` (up to 10 iterations)
 
 ---
