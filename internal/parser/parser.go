@@ -96,6 +96,8 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 		return p.parseAssertStatement(tok)
 	case token.EXPECT:
 		return p.parseExpectStatement(tok)
+	case token.IF:
+		return p.parseIfStatement(tok)
 	}
 	return nil
 }
@@ -163,6 +165,76 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 	}
 	p.l.NextToken() // Skip ;
 	return stmt
+}
+
+func (p *Parser) parseIfStatement(tok token.Token) Statement {
+	ifStmt := &IfStatement{Token: tok}
+	ifStmt.Condition = p.parseExpression()
+
+	// Condition must be followed by "do"
+	if p.l.PeekToken().Type == token.DO || p.l.PeekToken().Literal == "do" {
+		p.l.NextToken() // Consume "do"
+	}
+
+	// Parse consequence block
+	consequence := &BlockStatement{Token: tok}
+	for {
+		pTok := p.l.PeekToken()
+		if pTok.Type == token.EOF || pTok.Type == token.ELSE || pTok.Literal == "else" || pTok.Type == token.DONE || pTok.Literal == "done" {
+			break
+		}
+		nextTok := p.l.NextToken()
+		if nextTok.Type == token.EOF {
+			break
+		}
+		stmt := p.parseStatement(nextTok)
+		if stmt != nil {
+			consequence.Statements = append(consequence.Statements, stmt)
+		}
+	}
+	ifStmt.Consequence = consequence
+
+	// Check for "else"
+	pTok := p.l.PeekToken()
+	if pTok.Type == token.ELSE || pTok.Literal == "else" {
+		elseTok := p.l.NextToken() // Consume "else"
+
+		// Check for "else if"
+		if p.l.PeekToken().Type == token.IF || p.l.PeekToken().Literal == "if" {
+			elseIfTok := p.l.NextToken()
+			elseIfStmt := p.parseIfStatement(elseIfTok)
+			alternative := &BlockStatement{Token: elseIfTok, Statements: []Statement{elseIfStmt}}
+			ifStmt.Alternative = alternative
+			return ifStmt
+		}
+
+		alternative := &BlockStatement{Token: elseTok}
+		for {
+			pNext := p.l.PeekToken()
+			if pNext.Type == token.EOF || pNext.Type == token.DONE || pNext.Literal == "done" {
+				break
+			}
+			nextTok := p.l.NextToken()
+			if nextTok.Type == token.EOF {
+				break
+			}
+			stmt := p.parseStatement(nextTok)
+			if stmt != nil {
+				alternative.Statements = append(alternative.Statements, stmt)
+			}
+		}
+		ifStmt.Alternative = alternative
+	}
+
+	// Consume "done"
+	if p.l.PeekToken().Type == token.DONE || p.l.PeekToken().Literal == "done" {
+		p.l.NextToken()
+	}
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken()
+	}
+
+	return ifStmt
 }
 
 func (p *Parser) parseAssertStatement(tok token.Token) Statement {

@@ -57,6 +57,21 @@ func (e *Evaluator) Eval(program *parser.Program) {
 
 func (e *Evaluator) evalStatement(node parser.Statement) {
 	switch s := node.(type) {
+	case *parser.BlockStatement:
+		for _, stmt := range s.Statements {
+			e.evalStatement(stmt)
+		}
+	case *parser.IfStatement:
+		condVal := e.evalIntExpression(s.Condition)
+		if condVal != 0 {
+			if s.Consequence != nil {
+				e.evalStatement(s.Consequence)
+			}
+		} else {
+			if s.Alternative != nil {
+				e.evalStatement(s.Alternative)
+			}
+		}
 	case *parser.AssertStatement:
 		val := e.evalIntExpression(s.Condition)
 		if val == 0 {
@@ -178,6 +193,12 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 		return val
 	case *parser.Identifier:
 		if expr.Value == "$" {
+			return 0
+		}
+		if expr.Value == "True" || expr.Value == "true" {
+			return 1
+		}
+		if expr.Value == "False" || expr.Value == "false" {
 			return 0
 		}
 		if val, ok := e.symbols[expr.Value]; ok {

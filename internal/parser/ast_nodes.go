@@ -23,6 +23,24 @@ type Program struct {
 	Statements []Statement
 }
 
+type BlockStatement struct {
+	Token      token.Token
+	Statements []Statement
+}
+
+func (bs *BlockStatement) statementNode() {}
+func (bs *BlockStatement) Pos() token.Pos { return bs.Token.Pos }
+
+type IfStatement struct {
+	Token       token.Token
+	Condition   Expression
+	Consequence *BlockStatement
+	Alternative *BlockStatement
+}
+
+func (is *IfStatement) statementNode() {}
+func (is *IfStatement) Pos() token.Pos { return is.Token.Pos }
+
 type PrintStatement struct {
 	Token       token.Token
 	Expressions []Expression

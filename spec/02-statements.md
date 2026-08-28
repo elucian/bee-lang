@@ -2,135 +2,241 @@
 
 ## 1. Executive Statement Taxonomy
 
-Bee divides statements into six distinct syntactic categories:
+Bee divides statements into six distinct syntactic categories, designed for high-performance one-pass compilation and human readability:
 
-1. **Declarative Statements:** Allocate variable names and bind initial static/dynamic types (`new`, `const`).
-2. **Mutation Statements:** Rebind values, clone memory structures, or apply in-place mathematical updates (`let`, `alter`, `:=`, `::`, compound operators).
+1. **Declarative Statements:** Allocate variable names and bind static/inferred types (`set`, `new`).
+2. **Mutation Statements:** Rebind values, clone memory structures, or apply in-place mathematical updates (`let`, `:=`, `::`, compound operators).
 3. **Contract & Verification Statements:** Assert non-fatal warnings and enforce runtime invariants (`assert`, `expect`).
-4. **Control Flow Statements:** Direct branching, pattern matching, and iteration loops (`if`, `match`, `cycle`, `while`, `for`, `with`).
-5. **Error Handling & Trial Statements:** Transactional exception handling and structured cleanup (`trial`, `try`, `fail`, `case`, `miss`, `final`).
-6. **Transfer & Termination Statements:** Direct jump and routine completion (`return`, `stop`, `next`, `yield`, `raise`, `retry`).
+4. **Control Flow Statements:** Direct branching, pattern matching, local scoping, and iteration loops (`if`, `match`, `start`, `with`, `cycle`, `for`).
+5. **Transactional Trial Statements:** Error handling, staged execution steps, and recovery (`trial`, `try`, `case`, `miss`, `final`).
+6. **Transfer & Termination Statements:** Jump, loop control, and routine completion (`return`, `stop`, `redo`, `next`, `pass`, `yield`, `raise`, `resume`, `retry`).
 
 ---
 
 ## 2. Declarations, Mutations & Assignment Operators
 
-### 2.1 Variable Declaration
-- **Mutable Variable (`new`):** `new identifier ∈ Type;` or `new identifier := expression;`.
-- **Immutable Variable (`set`):** `set identifier := expression;` creates a constant binding that cannot be mutated.
+### 2.1 Variable Declaration & Immutability
+- **Immutable Constant (`set`):**
+  $$\text{binding}(x) \leftarrow v \quad (\text{read-only})$$
+  ```bee
+  set max_buffer := 1024;
+  ```
+- **Mutable Variable (`new`):**
+  $$\text{alloc}(x) \in \mathbb{T}, \quad x \leftarrow v_0$$
+  ```bee
+  new count ∈ Z := 0;
+  new name := "Bee";
+  ```
 
 ### 2.2 Mutation Semantics (`let`)
-- **Operator `:=` Evaluation:**
-  - Used with `let` (`let x := expr;`), `:=` updates the value of an existing mutable variable.
-  - Fails with `E0202` if the variable was not previously declared with `new`.
-- **Keyword `using`:**
-  - Reserved keyword for defining secondary parameter lists or separator configurations in statements.
-- **Mutation Operators:**
-  - Compound operators (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`) apply to existing mutable variables declared with `new`.
-- **Deep Clone Assignment (`::`):** `let target :: source;` performs a deep copy of nested collection/object structures, disconnecting ARC references.
+- **Operator `:=` Evaluation:** Modifies an existing variable declared with `new`. Fails with `E0202: UnboundVariable` if the target was not previously initialized.
+- **Mathematical Compound Operators:**
+  $$x \leftarrow x \oplus e, \quad \oplus \in \{ +, -, \times, \div, \%, \wedge, \sqrt{} \}$$
+  ```bee
+  let x += 5;   -- Addition
+  let x *= 2;   -- Multiplication
+  let x ^= 3;   -- Exponentiation (x = x³)
+  let x √= 2;   -- Square root (x = √x)
+  ```
+- **Deep Clone Assignment (`::`):**
+  $$x \mathrel{::} y \implies \text{clone}_{\text{deep}}(y)$$
+  Performs an isolated deep copy of composite structures, creating an independent memory allocation.
+  ```bee
+  let copy_list :: original_list;
+  ```
 
 ### 2.3 Memory Directives
-- **Explicit Deallocation:** `zap identifier;` invalidates the target identifier in Hot Zone performance paths.
+- **Explicit Invalidation (`zap`):** `zap identifier;` invalidates the target identifier in Hot Zone performance paths, forcing immediate reclamation within the active region.
 
 ### 2.4 Contract & Verification Statements (`assert`, `expect`)
-- **Warning Assertion (`assert condition;`):** Evaluates `condition`. If false (or `0`), emits a diagnostic warning to standard error (`stderr`) and continues program execution.
-- **Invariant Expectation (`expect condition;`):** Evaluates `condition`. If false (or `0`), raises a runtime error (`ExpectationFailed`) that propagates up the call stack, halting execution with a failure exit code if unhandled.
+- **Warning Assertion (`assert`):**
+  $$\text{eval}(c) = 0 \implies \text{warn}(\text{stderr}, \text{line})$$
+  Evaluates condition $c$. If false ($0$ or `false`), outputs a diagnostic warning to `stderr` and continues execution.
+  ```bee
+  assert denominator ≠ 0;
+  ```
+- **Invariant Expectation (`expect`):**
+  $$\text{eval}(c) = 0 \implies \text{raise}(\text{ExpectationFailed})$$
+  Evaluates condition $c$. If false ($0$ or `false`), raises a runtime error that halts execution with status $1$ unless handled by `trial`.
+  ```bee
+  expect result * denominator ≈ numerator;
+  ```
 
 ---
 
 ## 3. Control Flow Mechanics
 
-### 3.1 Conditional Execution (`if / else`)
-- **Block Structure:**
-  ```bee
-  if condition then:
-    statement_1;
-    statement_2;
-  else:
-    statement_3;
-  done;
-  ```
-- **Conditional Expression Selector (Ternary Alternative):**
-  ```bee
-  new value := (expr_true if condition else expr_false);
-  ```
+### 3.1 Scope Blocks (`start`, `with`)
 
-### 3.2 Pattern & Decision Matching (`match`)
-- Supports **First Match** (`match_first` / `match`) and **Match Every** (`match_every`) modes.
-  ```bee
-  match mode:
-    when cond_1 do:
-      -- branch 1
-    when cond_2 do:
-      -- branch 2
-    other:
-      -- fallback default
-  done;
-  ```
+#### Local Scope (`start`)
+Encapsulates variables within an isolated stack frame to optimize region lifetime:
+```bee
+start worker_scope:
+  new temp := 10;
+do
+  print ("Temp value:", temp);
+done worker_scope;
+```
 
-### 3.3 Iteration & Cycle Blocks (`cycle`, `while`, `for`)
-1. **Infinite Cycle / Stop Condition:**
-   ```bee
-   cycle loop_label:
-     if exit_condition then:
-       stop loop_label;
-     done;
-   repeat loop_label;
-   ```
-2. **While Cycle:**
-   ```bee
-   while condition do:
-     -- body
-   repeat;
-   ```
-3. **Collection / Range For Cycle:**
-   ```bee
-   for element ∈ collection_or_range do:
-     -- body
-   repeat;
-   ```
-
-### 3.5 Local Scope Blocks (`start`)
-- Used to create a non-repetitive local scope for variable lifetime management:
-  ```bee
-  start:
-    new temp := 10;
-  done;
-  ```
-
-### 3.6 Scoped Qualifier Block (`with`)
-- Simplifies module and object qualifier access without repeating prefixes:
-  ```bee
-  with object_or_module do:
-    method_1();
-    method_2();
-  done;
-  ```
+#### Qualifier Suppression (`with`)
+Suppresses module or object prefixes in an anonymous local block:
+```bee
+with math_module do
+  print sin(angle) + cos(angle);
+done;
+```
 
 ---
 
-## 4. Error Handling & Trial Semantics (`trial`)
+### 3.2 Conditional Execution (`if / else`)
 
-The `trial` block is Bee's unified transactional exception management framework:
+Branch execution is controlled by a logical condition using `do` and closed by `done;`.
 
+#### Simple Conditional Fork
 ```bee
-trial trial_label:
-  try()
-  fail {code: 100, message: "Buffer Overflow"} if check_failed;
-case $error.code = 100 do:
-  -- Handle specific code
-  resume;
-miss:
-  -- Fallback handler for unhandled errors
-final:
-  -- Mandatory cleanup block executed unconditionally
-done trial_label;
+if a < 0 do
+  print ("|a| =", -a);
+done;
 ```
 
-### Transfer Directives in Errors:
-- `resume`: Suppresses the error and continues execution after the failing statement.
-- `retry`: Re-executes the enclosing `trial` block from the beginning.
-- `raise`: Re-raises the captured error up the call stack.
+#### Two-Way Decision Fork
+```bee
+if x > 0 do
+  print "positive";
+else
+  print "non-positive";
+done;
+```
+
+#### Decision Ladder (`else if`)
+$$\text{branch} = \begin{cases} B_1 & \text{if } c_1 \\ B_2 & \text{else if } c_2 \\ B_{\text{default}} & \text{else} \end{cases}$$
+
+```bee
+if a = 0 do
+  print "a = 0";
+else if a > 0 do
+  print "a > 0";
+else if a < 0 do
+  print "a < 0";
+else
+  print "unexpected state";
+done;
+```
+
+#### Conditional Expression Selector (Ternary)
+```bee
+new value := (expr_true if condition else expr_false);
+```
+
+---
+
+### 3.3 Pattern & Value Matching (`match`)
+
+Multi-path enumerable symbol selector based on jump tables. Supports `one` (first match) and `all` (evaluate all matching branches).
+
+![Match Jump Table](img/bee-match.svg)
+
+```bee
+match select one:
+when 1 do
+  print "case one";
+when 2, 3 do
+  print "case two or three";
+when (4..10) do
+  print "in range four to ten";
+other
+  print "default fallback";
+done;
+```
+
+---
+
+### 3.4 Repetitive Loop Statements (`cycle`, `while`, `for`)
+
+All iterative loops are closed by **`repeat [label] [if condition];`**.
+
+#### 1. Infinite & Stop-Condition Cycle
+![Infinite Cycle](img/cycle.svg)
+![Stop Condition Cycle](img/run-cycle.svg)
+
+```bee
+cycle loop_label:
+  new count := 0;
+do
+  let count += 1;
+  stop loop_label if count ≥ 100;
+  write count;
+repeat loop_label;
+```
+
+#### 2. While Cycle (`while ... do`)
+![Start Condition Cycle](img/start-cycle.svg)
+
+```bee
+cycle:
+  new n := 0;
+while n < 10 do
+  let n += 1;
+  write n;
+then
+  print "Loop completed cleanly.";
+repeat;
+```
+
+#### 3. Domain & Collection For Cycle (`for ... do`)
+$$\forall i \in (\text{min} \dots \text{max} : \text{rate})$$
+
+![For Cycle](img/given.svg)
+
+```bee
+cycle:
+  new i ∈ N;
+for ∀ i ∈ (1..9:2) do
+  write i;
+  next if i = 5;
+repeat;
+```
+
+---
+
+## 4. Transactional Error Handling (`trial`)
+
+The `trial` statement provides staged process execution with step-by-step recovery, pattern-matching handlers, and guaranteed finalization.
+
+![Trial Execution Architecture](img/bee-trial.svg)
+
+```bee
+trial transaction:
+  -- Stage 1: Setup & Precondition
+  expect balance ≥ amount;
+
+try step1:
+  -- Attempt primary step; skip to next on success
+  pass if process_primary();
+  fail {code: 101, message: "Primary pipeline failed"} if check_failed;
+
+try step2:
+  -- Secondary step
+  pass if process_secondary();
+  raise {code: 500, message: "Critical failure"} if fatal_condition;
+
+case $error.code = 101 do
+  -- Recover from code 101 and continue with next try
+  resume;
+
+case $error.code ∈ (200..299) do
+  -- Retry entire trial from the beginning
+  retry;
+
+miss
+  -- Fallback handler for unhandled errors
+  raise;
+
+final
+  -- Unconditionally executed cleanup
+  close_resources();
+done transaction;
+```
 
 ---
 
@@ -138,63 +244,75 @@ done trial_label;
 
 ```ebnf
 (* Statements *)
-statement         ::= decl_stmt | mutation_stmt | memory_stmt | io_stmt | contract_stmt | control_stmt | trial_stmt | transfer_stmt ";" ;
+statement         ::= decl_stmt
+                    | mutation_stmt
+                    | memory_stmt
+                    | contract_stmt
+                    | io_stmt
+                    | control_stmt
+                    | trial_stmt
+                    | transfer_stmt ";" ;
 
-decl_stmt         ::= "new" identifier ( "∈" | "in" ) type_specifier [ ":=" expression ]
-                    | "new" identifier ":=" expression
-                    | "set" identifier ":=" expression ;
+(* Declarations & Mutations *)
+decl_stmt         ::= "set" identifier ":=" expression
+                    | "new" identifier ( "∈" | "in" ) type_specifier [ ":=" expression ]
+                    | "new" identifier ":=" expression ;
 
 mutation_stmt     ::= "let" identifier assign_op expression ;
 assign_op         ::= ":=" | "::" | "+=" | "-=" | "*=" | "/=" | "%=" | "^=" | "√=" ;
 memory_stmt       ::= "zap" identifier ;
-contract_stmt     ::= "assert" expression
-                    | "expect" expression ;
-io_stmt           ::= "print" "(" expression ( "," expression )* ")" [ "using" ":" expression ]
-                    | "write" expression ;
 
-(* Control Flow *)
-	if_stmt           ::= "if" condition "then" ":" block [ "else" ":" block ] "done" ;
-	match_stmt        ::= "match" [ match_mode ] ":" ( "when" condition "do" ":" block )+ [ "other" ":" block ] "done" ;
-	match_mode        ::= "first" | "every" | "total" ;
-	
-	cycle_stmt        ::= "cycle" [ label ] ":" block "repeat" [ label ]
-	                    | "while" condition "do" ":" block "repeat"
-	                    | "for" identifier ( "∈" | "in" ) expression "do" ":" block "repeat"
-	                    | "start" ":" block "done" ;
-	
-	with_stmt         ::= "with" expression "do" ":" block "done" ;
-	
-	(* Error Handling *)
-	trial_stmt        ::= "trial" [ label ] ":" block [ ( "try" | "case" condition ) "do" ":" block | "try:" block | "final" block ]* "done" [ label ] ;
-	
-	(* Transfers *)
-	transfer_stmt     ::= "return" [ expression ]
-	                    | "stop" [ label ]
-	                    | "next" [ label ]
-	                    | "yield" [ expression ]
-	                    | "raise" [ expression ]
-	                    | "retry"
-	                    | "pass" ;
+(* Contracts & Diagnostics *)
+contract_stmt     ::= "assert" expression
+                    | "expect" expression [ "else" expression ] ;
+
+(* I/O Directives *)
+io_stmt           ::= "print" [ "(" expression_list ")" | expression_list ] [ "using" [ ":" ] expression ]
+                    | "write" [ "(" expression ")" | expression ]
+                    | "read" "(" [ expression "," ] identifier ")" ;
+
+(* Control Flow Blocks *)
+control_stmt      ::= if_stmt
+                    | match_stmt
+                    | scope_stmt
+                    | cycle_stmt ;
+
+if_stmt           ::= "if" expression "do" block ( "else" "if" expression "do" block )* [ "else" block ] "done" ;
+
+match_stmt        ::= "match" expression [ "all" | "one" ] ":" [ block ] ( "when" match_targets "do" block )+ [ "other" block ] "done" ;
+match_targets     ::= expression ( "," expression )* ;
+
+scope_stmt        ::= "start" [ label ] ":" [ block ] "do" block "done" [ label ]
+                    | "with" expression "do" block "done" ;
+
+cycle_stmt        ::= "cycle" [ label ] ":" [ block ] ( "do" | "while" expression "do" | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do" ) block [ "then" block ] "repeat" [ label ] [ "if" expression ]
+                    | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do" block "repeat" ;
+
+(* Transactional Error Handling *)
+trial_stmt        ::= "trial" [ label ] ":" block ( "try" [ label ] ":" block )* ( "case" expression "do" block )* [ "miss" block ] [ "final" block ] "done" [ label ] ;
+
+(* Transfers & Postfix Guards *)
+transfer_stmt     ::= ( "return" [ expression_list ]
+                      | "stop" [ label ]
+                      | "redo" [ label ]
+                      | "next" [ label ]
+                      | "pass"
+                      | "raise" [ expression ]
+                      | "resume"
+                      | "retry"
+                      | "fail" expression ) [ "if" expression ] ;
 ```
 
 ---
 
 ## 6. Block Indentation & Alignment Rules
 
-1. **Mandatory 2-Space Indentation:** All statements inside a block body MUST be indented by exactly 2 spaces relative to the block header statement (`rule`, `if`, `cycle`, `while`, `for`, `with`, `trial`).
-2. **Block Terminator Alignment:** Block terminators (`done`, `repeat`, `return`) MUST align horizontally with the indentation level of their corresponding block header (0 relative indentation).
-3. **Nested Blocks:** Each nested level adds +2 spaces of indentation.
-4. **Trial Block Alignment:** For `trial` blocks, `trial:` opens the block. Section headers (`try:`, `miss:`, `final`) align with the inner indentation level (e.g., +2 spaces relative to `trial`), and statements inside each section add another +2 spaces of indentation. The closing `done;` aligns with the opening `trial:`.
-
-```bee
-rule main:
-  if x > 0 then:
-    print "positive";
-  else:
-    print "non-positive";
-  done;
-return;
-```
+1. **Mandatory 2-Space Indentation:** Statements inside any block body MUST be indented by exactly 2 spaces relative to the enclosing block header.
+2. **Symmetric Block Terminators:**
+   - **`done [label];`** terminates `if`, `match`, `start`, `with`, and `trial` blocks.
+   - **`repeat [label];`** terminates `cycle` and `for` loops.
+   - **`return;`** terminates `rule` subroutines.
+3. **Alignment Invariant:** Terminator keywords align horizontally with their opening block header (0 relative indentation).
 
 ---
 
@@ -207,10 +325,5 @@ return;
 | `E0203` | `UnterminatedBlock` | Missing `done`, `repeat`, or `return` terminator |
 | `E0204` | `InvalidCloneOperation` | Using `::` clone operator on non-clonable primitive |
 | `E0205` | `LabelMismatch` | Closing label on `repeat` or `done` does not match opening header label |
-
----
-
-## 8. Alignment with Solution & Issues
-
-- **Issues Addressed:** Resolves `issues/01-syntax-design.md` statement specification tasks.
-- **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/02-statements.md`.
+| `W0301` | `AssertionWarning` | Assertion failed in `assert` statement (non-fatal warning logged to stderr) |
+| `E0303` | `ExpectationFailed` | Invariant failed in `expect` statement (fatal runtime error if unhandled) |

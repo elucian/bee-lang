@@ -3,9 +3,9 @@
 rule main:
   new x ∈ Z;
   let x := 10;
-  if x > 5 then:
+  if x > 5 do
     print "positive";
-  else:
-    fail;
+  else
+    print "non-positive";
   done;
 return;

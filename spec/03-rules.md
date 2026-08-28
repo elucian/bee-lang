@@ -2,11 +2,15 @@
 
 ## 1. Architectural Philosophy & Purpose
 
-In Bee, all subroutines, procedures, functions, constructors, and methods are unified under a single core primitive: the **`rule`**.
+In Bee, all subroutines, procedures, functions, constructors, and methods are unified under a single foundational primitive: the **`rule`**.
 
-- **Unified Primitive:** A `rule` acts as a pure function when stateless, a procedure when side-effecting, a constructor when initializing state, or an object method when attached to a closure frame.
+$$\text{Rule}: \quad (\mathbb{P}_1 \times \mathbb{P}_2 \times \dots \times \mathbb{P}_n) \longrightarrow (\mathbb{R}_1 \times \mathbb{R}_2 \times \dots \times \mathbb{R}_m)$$
+
+- **Unified Primitive:** A `rule` acts as a pure mathematical function when stateless, a procedure when side-effecting, a constructor when initializing state, or an object method when attached to a closure frame.
 - **Main Entry Orchestrator:** Every executable Bee main module MUST define a top-level `rule main:` which serves as the application entry point.
-- **Explicit Result Naming:** Rules explicitly declare parameter names and result variable names in their signature, allowing self-documenting signatures and zero-overhead result initialization.
+- **Explicit Result Naming:** Rules explicitly declare parameter names and result variable names in their signature, providing self-documenting signatures and zero-overhead result initialization.
+
+![Bee Rule Architecture](img/bee-rule.svg)
 
 ---
 
@@ -26,8 +30,8 @@ return;
 ```
 
 ### 2.2 Parameter Passing Conventions
-- **Primitive Types (`Z`, `N`, `R`, `Q`, `C`, `B`):** Transferred **by value** (copy on call).
-- **Composite Types (`array`, `list`, `map`, `set`, `object`):** Transferred **by share** (reference counted pointer).
+- **Primitive Types ($\mathbb{Z}, \mathbb{N}, \mathbb{R}, \mathbb{Q}, \mathbb{C}, \mathbb{B}$):** Transferred **by value** (copy on call).
+- **Composite Types (`array`, `list`, `map`, `set`, `object`):** Transferred **by share** (reference-counted Region pointer).
 - **Optional Parameters:** Parameter declarations may specify default values using `:` (e.g. `param: default_val ∈ Type`).
 - **Variadic Parameters (`*varargs`):** The final parameter in a list may be prefixed with `*` to accept a variable number of arguments as an array (`*args ∈ [Z]`).
 
@@ -35,9 +39,13 @@ return;
 - **Named Results:** Results are explicitly declared with identifier and type `=> (y ∈ N)` or `=> (s, d ∈ Z)`.
 - **Default Result Initialization:** Result variables are automatically initialized to their zero-values upon entering the rule body.
 - **Single Capture:** `new r := compute(x);`
-- **Multi-Result Deconstruction:** `new s, d := compute_both(x, y);`
+- **Multi-Result Deconstruction:**
+  $$(s, d) \leftarrow \text{compute\_both}(x, y)$$
+  ```bee
+  new s, d := compute_both(x, y);
+  ```
 - **Result Wildcard (`_`):** Unwanted results can be suppressed using `_` (e.g. `new s, _ := compute_both(x, y);`).
-- **Expression Restriction:** Rules returning multiple results (`> 1`) CANNOT be embedded directly within nested arithmetic expression trees; they must be evaluated via deconstruction assignment.
+- **Expression Restriction:** Rules returning multiple results ($> 1$) CANNOT be embedded directly within nested arithmetic expression trees; they must be evaluated via deconstruction assignment.
 
 ---
 
@@ -54,10 +62,10 @@ return;
   ```
 
 ### 3.2 Terminal Directives
-- **`return` (Mandatory Block Terminator):** Closes the rule block and returns execution to the caller. Must align with 0 relative indentation of `rule`.
+- **`return` (Mandatory Block Terminator):** Closes the rule block and returns execution to the caller. Must align horizontally with the `rule` header (0 relative indentation).
 - **`exit` (Early Successful Return):** Instantly terminates rule execution cleanly, returning current values of result variables without raising an error:
   ```bee
-  if count = 0 then:
+  if count = 0 do
     let result := 0;
     exit;
   done;
@@ -69,23 +77,32 @@ return;
 
 Bee enforces formal contract assertions directly within rule definitions:
 
+$$\text{Contract}(\text{divide}) = \begin{cases} \text{assert}(b \neq 0) & \text{[Precondition Warning]} \\ \text{expect}(\text{ratio} \times b \approx a) & \text{[Invariant Guarantee]} \end{cases}$$
+
 ```bee
 rule divide(a ∈ R, b ∈ R) => (ratio ∈ R):
-  assert b ≠ 0; -- Precondition / Warning check: emits diagnostic warning to stderr if failed
+  assert b ≠ 0;         -- Precondition / Warning check: emits diagnostic warning to stderr if false
   let ratio := a / b;
-  expect ratio * b ≈ a; -- Postcondition / Invariant check: raises runtime error if failed
+  expect ratio * b ≈ a; -- Postcondition / Invariant check: raises runtime error if false
 return;
 ```
 
-- **Assertion Warning (`assert`):** Evaluates a condition. If it fails (evaluates to false or `0`), a diagnostic warning (`W0301: AssertionWarning`) is printed to standard error (`stderr`), but program execution continues uninterrupted.
-- **Expectation Enforcement (`expect`):** Evaluates an invariant condition. If it fails (evaluates to false or `0`), a runtime error (`E0303: ExpectationFailed`) is raised and propagated up the call stack. If not caught by an enclosing `trial` block, the application halts immediately with a failure exit status.
+- **Assertion Warning (`assert`):** Evaluates a condition. If it fails ($0$ or `false`), a diagnostic warning (`W0301: AssertionWarning`) is printed to standard error (`stderr`), but program execution continues uninterrupted.
+- **Expectation Enforcement (`expect`):** Evaluates an invariant condition. If it fails ($0$ or `false`), a runtime error (`E0303: ExpectationFailed`) is raised and propagated up the call stack. If not caught by an enclosing `trial` block, the application halts immediately with a failure exit status.
 
 ---
 
-## 5. Advanced Topics
+## 5. Advanced Rule Architectures
 
-### 5.1 Forward Declarations (No Hoisting)
-Bee does NOT use compiler hoisting. Identifiers must be defined before use. For mutual or cyclic rule dependencies, explicit forward declarations (signature ending with `;`) MUST be provided:
+### 5.1 Companion & Singleton Rules
+![Companion Rule](img/companion-rule.svg)
+![Singleton Rule](img/singleton-rule.svg)
+
+- **Companion Rule:** Binds state and helper logic to an existing module or data type.
+- **Singleton Rule:** Encapsulates globally isolated state within a single instance generator.
+
+### 5.2 Forward Declarations (No Hoisting)
+Bee does NOT use compiler hoisting. Identifiers must be declared before use. For mutual or cyclic rule dependencies, explicit forward declarations (signature ending with `;`) MUST be provided:
 
 ```bee
 -- Forward declaration signature
@@ -94,23 +111,32 @@ rule odd(n ∈ N) => (b ∈ B);
 
 -- Implementation
 rule even(n ∈ N) => (b ∈ B):
-  if n = 0 then: let b := true; exit; done;
+  if n = 0 do
+    let b := true;
+    exit;
+  done;
   let b := odd(n - 1);
 return;
 
 rule odd(n ∈ N) => (b ∈ B):
-  if n = 0 then: let b := false; exit; done;
+  if n = 0 do
+    let b := false;
+    exit;
+  done;
   let b := even(n - 1);
 return;
 ```
 
-### 5.2 Tail Call Optimization (TCO)
-A rule invocation in final return position (`let r := tail_rule(...)` followed immediately by `return`) MUST be optimized by the compiler via Tail Call Optimization:
-- Overwrites caller's Region Arena stack frame instead of pushing a new frame.
+### 5.3 Tail Call Optimization (TCO)
+A rule invocation in final return position (`let r := tail_rule(...)` followed immediately by `return`) is optimized by the compiler via Tail Call Optimization:
+
+$$T(n) = \mathcal{O}(1) \text{ Stack Frames}$$
+
+- Overwrites the caller's Region Arena stack frame instead of pushing a new frame.
 - Re-executes rule body with updated argument values, converting recursion into iteration with $O(1)$ stack space.
 
-### 5.3 Closures & State Generators
-Rules can encapsulate state and nested method rules (`closures`). 
+### 5.4 Closures & State Generators
+Rules can encapsulate persistent state and nested method rules (`closures`). 
 
 - **State Mutability**: Variables stored in the rule closure must be explicitly boxed using the **`[]`** operator (e.g., `set .count := [start];`) to be heap-allocated and mutable. Unboxed variables defined via `set` within a rule are immutable.
 
