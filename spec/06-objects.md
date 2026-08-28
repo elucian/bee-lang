@@ -3,8 +3,8 @@
 ## 1. Executive Object Model & Root Entity Philosophy
 
 Bee employs a unified **Universal Entity Model**:
-- **Root Object Hierarchy:** All values in Bee—including single-letter mathematical primitives (`Z`, `N`, `R`, `S`), collections (`array`, `list`, `map`, `set`), and user-defined instances—derive from the root **`Object`** (or `O`).
-- **Universal `.type()` Introspection:** Because every entity derives from `Object`, every identifier or literal expression responds to the `.type()` introspection method without grammar ambiguity:
+- **Root Object Hierarchy:** All values in Bee—including single-letter mathematical primitives ($\mathbb{Z}, \mathbb{N}, \mathbb{R}, \mathbb{S}$), collections (`array`, `list`, `map`, `set`), and user-defined instances—derive from the root **`Object`** (or `O`).
+- **Universal `.type()` Introspection:** Every entity derives from `Object`, allowing identifier or literal expressions to be introspected without ambiguity:
   ```bee
   new x := 42;
   print x.type(); -- Prints "Z"
@@ -15,13 +15,16 @@ Bee employs a unified **Universal Entity Model**:
   new obj := Foo(1, 2);
   print obj.type(); -- Prints "Foo"
   ```
-  *Note:* The global function `kind(entity)` serves as an alias for `entity.type()`.
+
+![Method Call Architecture](img/method-call.svg)
 
 ---
 
 ## 2. Object Definition & Constructor Rules
 
-An Object is created by a constructor **`rule`** whose return result is designated as **`self`**.
+An Object instance is created by a constructor **`rule`** whose return result is bound to **`self`**.
+
+$$\text{Constructor}(\text{Params}) \longrightarrow \text{Instance}(\text{self}) \in \text{Object}$$
 
 ### 2.1 Constructor Rule Anatomy
 ```bee
@@ -42,7 +45,7 @@ return;
 ```
 
 ### 2.2 Anonymous JSON & Dictionary Objects
-Objects are internally backed by high-performance key-value maps:
+Objects are internally backed by high-performance key-value hash structures:
 ```bee
 -- Anonymous object instantiation via JSON literal
 new obj := {name: "Cleopatra", age: 15};
@@ -51,8 +54,8 @@ new obj := {name: "Cleopatra", age: 15};
 print obj.name;     -- Dot-notation: "Cleopatra"
 print obj["age"];   -- Index-notation: 15
 
--- Dynamic property deletion
-del obj["age"];
+-- Dynamic property deallocation
+zap obj["age"];
 ```
 
 ---
@@ -61,7 +64,7 @@ del obj["age"];
 
 - **Public Members (`.` Prefix):** Any property or method prefixed with `.` (e.g. `self.value`, `.log()`) is exported on the `self` instance and accessible via dot-notation (`instance.log()`).
 - **Private Encapsulation (No Prefix):** Local variables declared within the constructor rule without `self.` (e.g., `new count := 0;`) are strictly private to the constructor's static closure frame.
-- **Dynamic Scope (`self`):** The `self` reference holds the dynamic instance heap context allocated when `new` invokes the constructor.
+- **Instance Reference (`self`):** The `self` reference holds the dynamic instance heap context allocated when `new` invokes the constructor.
 
 ---
 
@@ -69,6 +72,8 @@ del obj["age"];
 
 ### 4.1 Subtype Inheritance (`<:`)
 Subclasses declare inheritance using `<: SuperType` and initialize base state using `super(...)` or `super.method()`:
+
+$$\text{SubClass} <: \text{SuperClass} \implies \text{Methods}(\text{SuperClass}) \subseteq \text{Methods}(\text{SubClass})$$
 
 ```bee
 -- Base type
@@ -99,7 +104,7 @@ return;
 ```
 
 ### 4.2 Abstract Types & Forward Method Signatures
-An abstract constructor rule contains forward declared public method signatures without statement bodies. Derived types MUST override and supply implementations for all abstract methods:
+An abstract constructor rule contains forward-declared public method signatures without statement bodies. Derived types MUST override and supply implementations for all abstract methods:
 
 ```bee
 -- Abstract interface rule
@@ -121,14 +126,16 @@ return;
 
 ## 5. Composition & Traits (`+`)
 
-Traits provide reusable behavior composition (Multiple Inheritance via composition):
+Traits provide reusable behavior composition (horizontal reuse):
+
+$$\text{Class} = \text{BaseType} + \text{Trait}_1 + \text{Trait}_2$$
 
 ```bee
 -- Trait rule definition
 rule Printable(self ∈ Object):
   rule .print_summary(self ∈ Object):
-    for k ∈ self.keys() do:
-      print k, " => ", self[k];
+    for k ∈ self.keys() do
+      print (k, "=>", self[k]) using: " ";
     repeat;
   return;
 return;

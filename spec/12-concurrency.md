@@ -9,16 +9,20 @@ Bee provides a high-performance, race-free concurrency model combining **Region 
 3. **Thread-Safe Reduction (`+>`):** Concurrently appends or reduces worker thread return values into shared parent collections via a lock-free channel queue.
 4. **Cooperative Coroutines (`yield`):** Suspends execution of a stateful task and yields control back to the consumer thread.
 
+![Producer Consumer Architecture](img/producer-consumer.svg)
+
 ---
 
 ## 2. Multithreaded Execution (`begin` / `wait`)
+
+$$\text{Parent Thread} \xrightarrow{\text{begin}} \{ \mathcal{T}_1, \mathcal{T}_2, \dots, \mathcal{T}_k \} \xrightarrow{\text{wait}} \text{Synchronized Parent}$$
 
 ### 2.1 Asynchronous Thread Creation
 When `begin` is invoked, the runtime creates a lightweight thread context with an isolated Region Arena stack/heap:
 ```bee
 -- Asynchronous rule execution
 rule main:
-  for ∀ i ∈ (1..4) do:
+  for ∀ i ∈ (1..4) do
     begin worker_task(i); -- Spawns 4 concurrent worker threads
   repeat;
   
@@ -27,7 +31,7 @@ return;
 ```
 
 ### 2.2 Unsynchronized Worker Protection
-If a scope exits with active worker threads spawned by `begin` before a `wait` barrier is encountered, the compiler raises a compile-time error `E0406: UnsynchronizedWorker`.
+If a scope exits with active worker threads spawned by `begin` before a `wait` barrier is encountered, the compiler raises a compile-time error `E1201: UnsynchronizedWorker`.
 
 ---
 
@@ -35,9 +39,11 @@ If a scope exits with active worker threads spawned by `begin` before a `wait` b
 
 Passing a shared collection into a worker thread using the reduction append operator **`+>`** directs the worker's output into a lock-free, atomic queue:
 
+$$\mathcal{T}_i \xrightarrow{\text{return}} \text{AtomicQueue} \xrightarrow{\text{wait}} \text{TargetCollection}$$
+
 ```bee
 rule sum_range(a, b ∈ Z) => (r ∈ Z):
-  for i ∈ (a..b) do:
+  for i ∈ (a..b) do
     let r += i;
   repeat;
 return;
@@ -52,8 +58,8 @@ rule main:
   
   wait; -- Synchronizes threads and flushes reduction queue into parts
   
-  new total := 0 ∈ Z;
-  for ∀ p ∈ parts do:
+  new total ∈ Z := 0;
+  for ∀ p ∈ parts do
     let total += p;
   repeat;
   print total;
@@ -70,7 +76,7 @@ Coroutines allow stateful tasks to suspend execution, returning control and valu
 A rule containing `yield` acts as a stateful coroutine generator. Reaching `yield` freezes the coroutine's local frame:
 ```bee
 rule ticker(n ∈ N) => (v ∈ N):
-  for i ∈ (1..n) do:
+  for i ∈ (1..n) do
     let v := i;
     yield; -- Suspends execution and yields control
   repeat;
@@ -82,12 +88,12 @@ return;
 The consumer thread extracts yielded values from an active coroutine using the `yield var << coroutine` channel operator:
 ```bee
 rule main:
-  new r := 1 ∈ N;
+  new r ∈ N := 1;
   begin ticker(4); -- Instantiates coroutine task
   
-  while r > 0 do:
+  while r > 0 do
     yield r << ticker; -- Extracts next yielded value from ticker
-    write r, " ";
+    write (r, " ");
   repeat;
   print;
   wait;
@@ -134,5 +140,5 @@ target_collection ::= identifier | expression ;
 
 ## 8. Alignment Status
 
-- **Issues Addressed:** Formalized multithreading (`begin`/`wait`), thread-safe reduction (`+>`), coroutines (`yield`), channel extraction (`<<`), worker exception isolation, and diagnostic codes. Updated all examples in `/demo/concurrency`.
+- **Issues Addressed:** Formalized multithreading (`begin`/`wait`), thread-safe reduction (`+>`), coroutines (`yield`), channel extraction (`<<`), worker exception isolation, and diagnostic codes.
 - **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/12-concurrency.md`.

@@ -1,54 +1,54 @@
 # Bee Specification: Type System Architecture (05-types.md)
 
-## 2. Type Inference & Gradual Typing
+## 1. Type Inference & Gradual Typing
 
 Bee employs a gradual typing system where types are resolved at compile time through deterministic inference.
 
-### 2.1 First-Assignment Invariant
-- **Binding Rule**: When a variable is declared without an explicit type (e.g., `new x := expression;`), the compiler binds the variable's type to the result of the first assignment within the current lexical scope.
-- **Inference Propagation**: The inferred type is propagated back to the declaration site, ensuring static type safety for all subsequent usages within the scope.
+$$\mathbb{T} = \mathbb{T}_{\text{prim}} \cup \mathbb{T}_{\text{comp}} \cup \mathbb{T}_{\text{sub}} \cup \mathbb{T}_{\text{variant}}$$
 
-### 2.2 Variant Promotion (Divergent Paths)
-When a variable is assigned different types across divergent control flow paths (e.g., `if-else` blocks), the compiler promotes the variable to a **Variant Type** (Union Type).
+### 1.1 First-Assignment Invariant
+- **Binding Rule**: When a variable is declared without an explicit type (e.g., `new x := expression;`), the compiler binds the variable's type to the evaluated static type of the initial assignment within the current lexical scope.
+- **Inference Propagation**: The inferred type is propagated back to the declaration site, ensuring static type safety for all subsequent usages.
 
-- **Promotion Rule**: If branch A assigns `Z` (Integer) and branch B assigns `R` (Real), the variable's final type is promoted to `Z | R` (Variant).
-- **Usage Invariant**: Accessing a Variant-typed variable requires a type-guarded check (`type()` introspection or `match` statement) to resolve the underlying type before performing path-specific operations.
+### 1.2 Variant Promotion (Divergent Paths)
+When a variable is assigned different types across divergent control flow paths (e.g., `if-else` blocks), the compiler promotes the variable to a **Variant Type** (Union Type):
 
-- **Universal Entity Model & Introspection:** Every value or variable in Bee is an **`Entity`** that exposes the `.type()` introspection method (e.g. `10.type()`, `"hello".type()`). The legacy `kind()` function is removed in favor of `entity.type()`.
-- **Mathematical Primitive Designator:** Single uppercase Latin letters are strictly reserved for primitive data types (e.g., `Z` for Integer, `R` for Real, `Q` for Rational).
-- **Custom & Subtype Identifiers:** User-defined types must use title-cased identifiers (`TypeIdentifier`).
+$$\tau_{\text{var}} = \tau_1 \cup \tau_2 \cup \dots \cup \tau_k$$
+
+- **Promotion Rule**: If branch A assigns $\mathbb{Z}$ (Integer) and branch B assigns $\mathbb{R}$ (Real), the variable's final type is promoted to $\mathbb{Z} \mid \mathbb{R}$ (`Variant`).
+- **Usage Invariant**: Accessing a Variant-typed variable requires a type guard (`entity.type()` introspection or `match` statement) to resolve the underlying type before executing path-specific operations.
+- **Universal Entity Model:** Every value in Bee is an **`Entity`** exposing the `.type()` method (e.g. `10.type()`, `"hello".type()`).
 
 ---
 
 ## 2. Primitive & Built-In Type Catalogue
 
-### 2.1 Single-Letter Primitive Types
-| Type Symbol | Alias | Representation / Width | Alignment | Default Value | Description |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **`B`** | Boolean | 8-bit unsigned integer | 1 byte | `0b0` (`false`) | Logic boolean: `0` = False, `≥1` = True |
-| **`A`** | Alpha | 8-bit E-ASCII character | 1 byte | `'0'` | ASCII character literal (`'a'`, `'Z'`, `'0'`) |
-| **`U`** | Unicode | 32-bit unsigned code point | 4 bytes | `U+0000` | UTF-32 Rune code point (`'Ω'`, `U+0041`) |
-| **`N`** | Natural | 64-bit unsigned integer | 8 bytes | `0` | Non-negative integer range $[0 \dots 2^{64}-1]$ |
-| **`Z`** | Integer | 64-bit signed integer | 8 bytes | `0` | Signed 2's complement $[-2^{63} \dots 2^{63}-1]$ |
-| **`R`** | Real | 64-bit IEEE 754 Float | 8 bytes | `0.0` | Double precision floating point |
-| **`Q`** | Rational | Fixed-point fraction / $Qm.n$ | 4–16 bytes | `0\1` | Fixed-point fraction $p/q$ or $Q(14.17)$ |
+Single uppercase Latin letters are strictly reserved for primitive mathematical data types:
 
-### 2.2 Special Reference & Domain Types
-| Type Symbol | Alias | Heap Structure | Description |
-| :--- | :--- | :--- | :--- |
-| **`C`** | Complex | Float Pair $(a + bj)$ | 128-bit pair of double precision Reals |
-| **`S`** | String | UTF-8 Slice / Rope | GC-managed immutable string payload |
-| **`D`** | Date | Struct `(day, month, year)` | Calendar date representation |
-| **`T`** | Time | Struct `(h, m, s, ms)` | Time of day representation |
-| **`L`** | Lambda | Function Pointer Descriptor | Callable closure or rule reference |
-| **`G`** | Angular | Fixed 16-bit float | Angular range $[1^\circ \dots 360^\circ]$ |
+| Type Symbol | Alias | Mathematical Space | Representation | Alignment | Default Value | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **`B`** | Boolean | $\{0, 1\}$ | 8-bit unsigned integer | 1 byte | `0b0` (`false`) | Logic boolean: `0` = False, `1` = True |
+| **`A`** | Alpha | $\text{ASCII}[0..127]$ | 8-bit E-ASCII character | 1 byte | `'0'` | ASCII character literal (`'a'`, `'Z'`, `'0'`) |
+| **`U`** | Unicode | $\text{UTF-32}$ | 32-bit unsigned code point | 4 bytes | `U+0000` | Unicode Rune code point (`'Ω'`, `U+0041`) |
+| **`N`** | Natural | $\mathbb{N}_0 = [0 \dots 2^{64}-1]$ | 64-bit unsigned integer | 8 bytes | `0` | Non-negative integer |
+| **`Z`** | Integer | $\mathbb{Z} = [-2^{63} \dots 2^{63}-1]$ | 64-bit signed 2's comp | 8 bytes | `0` | Signed integer |
+| **`R`** | Real | $\mathbb{R} \approx \text{IEEE 754}$ | 64-bit double precision | 8 bytes | `0.0` | Double precision floating point |
+| **`Q`** | Rational | $\mathbb{Q} = \{ \frac{p}{q} \mid p, q \in \mathbb{Z}, q \ne 0 \}$ | Fixed-point / $Qm.n$ fraction | 4–16 bytes | `0\1` | Fixed-point fraction or $Q(14.17)$ |
+| **`C`** | Complex | $\mathbb{C} = \{ a + bj \mid a, b \in \mathbb{R} \}$ | Float Pair $(a, b)$ | 16 bytes | `0.0 + 0.0j` | 128-bit pair of double precision Reals |
+| **`S`** | String | $\text{UTF-8}^*$ | GC-managed immutable slice | 16 bytes | `""` | Immutable UTF-8 string |
+| **`D`** | Date | $\mathbb{N}^3$ | Struct `(day, month, year)` | 8 bytes | `01/01/1970` | Gregorian calendar date |
+| **`T`** | Time | $\mathbb{N}^4$ | Struct `(h, m, s, ms)` | 8 bytes | `00:00:00` | 24-hour time representation |
+| **`L`** | Lambda | $\mathbb{T}_1 \to \mathbb{T}_2$ | Function Descriptor | 16 bytes | `nil` | Pure lambda function closure |
+| **`G`** | Angular | $[1^\circ \dots 360^\circ]$ | Fixed 16-bit float | 2 bytes | `0.0°` | Geometric angular degree coordinate |
 
 ---
 
 ## 3. Subtypes (`<:`), Ranges & Domain Constraints
 
-### 3.1 Type Aliasing & Subtype Inheritance
+### 3.1 Subtype Inheritance & Aliasing
 Subtypes constrain existing types to specific value domains using the `<:` operator:
+
+$$\tau_{\text{sub}} <: \tau_{\text{super}} \iff \forall x \in \tau_{\text{sub}} \implies x \in \tau_{\text{super}}$$
 
 ```bee
 -- Custom type declarations
@@ -58,15 +58,20 @@ type LatinRune: (U+0041..U+FB02) <: U;
 ```
 
 ### 3.2 Range Notation & Limits
-Ranges define numeric or character bounds:
-- `(min..max)`: Fully inclusive range $[min, max]$.
-- `(min.!max)`: Left-inclusive, right-exclusive $[min, max)$.
-- `(min!.max)`: Left-exclusive, right-inclusive $(min, max]$.
-- `(min!!max)`: Fully open / exclusive $(min, max)$.
-- Unbounded open limits use `-` or `+` (e.g. `(0..+)` for non-negative numbers).
+Ranges define numeric or character bounds with explicit endpoint inclusion semantics:
+
+| Syntax | Notation | Mathematical Meaning |
+| :--- | :--- | :--- |
+| `(min..max)` | $[min, max]$ | Closed interval: both endpoints inclusive |
+| `(min.!max)` | $[min, max)$ | Left-closed, right-open interval |
+| `(min!.max)` | $(min, max]$ | Left-open, right-closed interval |
+| `(min!!max)` | $(min, max)$ | Fully open / exclusive interval |
 
 ### 3.3 Domain Types with Step Ratio
-Domains extend ranges by specifying a discretization step ratio `(min..max:step)`:
+Domains extend ranges by specifying a discretization step ratio:
+
+$$\text{Domain}(\text{min}, \text{max}, \delta) = \{ \text{min} + k\delta \mid k \in \mathbb{N}_0, \; \text{min} + k\delta \le \text{max} \}$$
+
 ```bee
 -- Domain producing rational step 1\4
 new q_domain := (0..1: 1\4); -- 0\4, 1\4, 2\4, 3\4, 1\1
@@ -80,20 +85,27 @@ new r_domain := (0..1: 0.25); -- 0.00, 0.25, 0.50, 0.75, 1.00
 ## 4. Rational Fixed-Point Arithmetic & Approximate Comparison (`≈`)
 
 ### 4.1 $Q$ Notation & Fixed-Point Representation
-Fixed-point rationals are expressed as $Qm.n$ where $m$ is integer bits, $n$ is fractional bits, and step resolution is $2^{-n}$:
+Fixed-point rationals are expressed as $Q(m.n)$ where $m$ is integer bit width, $n$ is fractional bit width, and precision resolution is $2^{-n}$:
+
+$$\text{Resolution} = 2^{-n}, \quad x = \frac{\text{integer\_value}}{2^n}$$
+
 - **Default Rational Format:** $Q(14.17)$ stored in a 32-bit container with resolution $2^{-17} \approx 0.0000076$.
-- **Literal Notation:** Numerator backslash denominator $p \backslash q$ (e.g., `1\2`, `1\4`, `3\16`).
+- **Literal Fraction Notation:** Numerator backslash denominator $p \backslash q$ (e.g., `1\2`, `1\4`, `3\16`).
 
 ### 4.2 Approximate Equality (`≈`) & Tolerance (`±`)
-Because rationals and reals represent real-world approximations, Bee provides native approximate equality testing:
-- **Default Comparison:** `a ≈ b` checks if $|a - b| \le \$precision$ (where `$precision` defaults to $10^{-5} = 0.00001$).
+Because rationals and reals represent real-world physical and mathematical measurements, Bee provides native approximate equality testing:
+
+$$a \approx b \iff |a - b| \le \epsilon$$
+
+- **Default Comparison:** `a ≈ b` checks if $|a - b| \le \$max\_precision$ (default: $10^{-5} = 0.00001$).
 - **Explicit Tolerance Modifier:** `a ≈ b ± tolerance` overrides the default precision threshold:
   ```bee
-  set $precision := 0.01;
   new a := 0.25; -- Real
   new b := 1\3;  -- Rational (0.333...)
   
-  pass if (a ≈ b ± 0.10); -- True because |0.25 - 0.333| = 0.083 <= 0.10
+  if a ≈ b ± 0.10 do
+    print "Approximate match within tolerance.";
+  done;
   ```
 
 ### 4.3 Type Cast Operator (`:>`)
@@ -109,25 +121,15 @@ Because rationals and reals represent real-world approximations, Bee provides na
 
 ## 5. Type Promotion Hierarchy
 
-When operators combine operands of different primitive types, Bee applies deterministic type promotion:
-
-```
-  B (Boolean)
-   │
-   ▼
-  N (Natural) ──► A (Alpha)
-   │
-   ▼
-  Z (Integer) ──► U (Unicode)
-   │
-   ▼
-  R (Real)
-   │
-   ▼
-  Q (Rational)
-   │
-   ▼
-  C (Complex)
+```mermaid
+graph TD
+    B[B - Boolean] --> N[N - Natural]
+    N --> A[A - Alpha]
+    N --> Z[Z - Integer]
+    Z --> U[U - Unicode]
+    Z --> R[R - Real]
+    R --> Q[Q - Rational]
+    Q --> C[C - Complex]
 ```
 
 ---
@@ -149,7 +151,7 @@ limit             ::= [ "-" | "+" ] ( literal | identifier ) ;
 range_sep         ::= ".." | ".!" | "!." | "!!" ;
 step_expr         ::= expression ;
 
-(* Type Casting & Universal Introspection *)
+(* Type Casting & Introspection *)
 type_cast         ::= expression ":>" type_specifier ;
 type_check        ::= expression ( "∈" | "in" ) type_specifier ;
 type_intro        ::= expression "." "type" "(" ")" ;
@@ -166,11 +168,11 @@ type_intro        ::= expression "." "type" "(" ")" ;
 | `E0503` | `DomainOutOfBounds` | Assigned literal falls outside constrained range/domain |
 | `E0504` | `RationalOverflow` | Value exceeds maximum capacity of specified $Qm.n$ container |
 | `E0505` | `SingleLetterTypeReserved` | User type identifier uses reserved single uppercase Latin letter |
-| `E0506` | `PrecisionUndefined` | Approximate comparison `≈` executed with uninitialized `$precision` |
+| `E0506` | `PrecisionUndefined` | Approximate comparison `≈` executed with uninitialized `$max_precision` |
 
 ---
 
 ## 8. Alignment Status
 
-- **Issues Addressed:** Formalized mathematical primitives, fixed-point $Qm.n$ rationals, subtyping (`<:`), ranges/domains, approximate equality (`≈`), type casting (`:>`), and universal `.type()` introspection (`kind()` removed).
+- **Issues Addressed:** Formalized mathematical primitives, fixed-point $Qm.n$ rationals, subtyping (`<:`), ranges/domains, approximate equality (`≈`), type casting (`:>`), and universal `.type()` introspection.
 - **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/05-types.md`.

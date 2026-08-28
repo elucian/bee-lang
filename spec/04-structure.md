@@ -2,7 +2,7 @@
 
 ## 1. Executive Program Architecture
 
-A Bee application is built as a graph of isolated, single-responsibility **modules**. Each module resides in its own `.bee` source file and defines a strict lexical scope (namespace).
+A Bee application is engineered as a directed dependency graph of isolated, single-responsibility **modules**. Each module resides in its own `.bee` source file and defines an encapsulated lexical namespace.
 
 ```text
 $pro_home/             # Project Root Directory
@@ -12,39 +12,55 @@ $pro_home/             # Project Root Directory
 │   └── data_store.bee # Secondary module (src/data_store.bee)
 ├── lib/               # Project-local library modules
 │   └── logger.bee     # Library module (lib/logger.bee)
+├── spec/              # Formal language specifications & diagrams
+│   └── img/           # Architectural SVG & PNG diagrams
 ├── main.bee           # Main module application entry point
 └── config.json        # Environment configuration
 ```
 
 ---
 
-## 2. Module Classification & Rules
+## 2. Module Classification & Roles
+
+$$\text{Program} = \mathcal{M}_{\text{main}} \cup \left( \bigcup_{i=1}^n \mathcal{M}_{\text{src}, i} \right) \cup \left( \bigcup_{j=1}^m \mathcal{M}_{\text{lib}, j} \right)$$
 
 ### 2.1 Main Module (`main.bee`)
-- **Role:** Application orchestrator and executable entry point.
+- **Role:** Application orchestrator and top-level entry point.
 - **Invariants:**
-  1. MUST contain exactly one `rule main(*params ∈ S) => (code ∈ Z):` or `rule main:`.
-  2. MUST NOT be imported or loaded by any secondary or library module.
-  3. Serves as the top-level parent scope for global system configuration directives.
+  1. MUST contain exactly one top-level `rule main:` entry point:
+     ```bee
+     rule main(*params ∈ S) => (code ∈ Z):
+       print "Application initialized.";
+     return;
+     ```
+  2. MUST NOT be imported by secondary or library modules.
+  3. Holds global system configuration directives and top-level defaults.
 
-### 2.2 Secondary Modules (`src/`)
-- **Role:** Project-specific domain logic, data models, and sub-orchestrators.
+### 2.2 Secondary Modules (`src/*.bee`)
+- **Role:** Project-specific domain logic, algorithms, and business services.
 - **Invariants:**
-  1. MUST NOT contain a `rule main`.
-  2. Loaded via local import directive: `use module_name;` or `use qualifier:module_name;`.
-  3. Accessible via explicit module qualifier dot-notation (`module_name.member`).
+  1. MUST NOT contain `rule main`.
+  2. Loaded via the import directive: `use module_name;` or `use path/module_name as alias_name;`.
+  3. Exported public members are accessible via qualifier dot notation (`module_name.member`).
 
-### 2.4 Module Lifecycle Persistence Invariant
-- **Lifecycle**: All modules (Secondary and Library) are loaded as singleton instances upon the first `use` directive.
-- **Persistence**: Loaded modules are persistent in memory. Explicit dynamic unloading or reloading of modules is NOT supported. Module state exists for the entire execution lifecycle of the program and is finalized only upon program termination.
+### 2.3 Library Modules (`lib/*.bee`)
+- **Role:** Reusable, standalone components distributed across projects.
+- **Invariants:**
+  1. Self-contained and strictly decoupled from application domain state.
+  2. Managed as immutable singletons upon first initialization.
+
+### 2.4 Module Lifecycle & Singleton Persistence
+- **Zero Dynamic Unload:** All modules are loaded into the Region Arena as persistent singletons upon first encounter of a `use` directive.
+- **Thread Safety:** Module global constants (`set .name := val;`) are immutable and shared across threads without locking. Module mutable states are guarded by atomic reference counting or isolated thread frames.
 
 ---
 
-## 3. System Variables & Compiler Directives
+## 3. System Variables & Sigil Namespaces (`$`)
 
-System paths, compiler settings, and environment variables are protected behind the **`$`** sigil to prevent accidental shadowing by user code.
+System paths, runtime configurations, and diagnostic limits are protected under the **`$`** sigil:
 
-### 3.1 Standard System Path Variables
+$$\mathbb{V}_{\text{system}} = \{ \$id \mid id \in \text{Identifier} \}$$
+
 | Sigil Identifier | Description | Default Resolution |
 | :--- | :--- | :--- |
 | `$bee_home` | Bee compiler runtime installation directory | OS System Installation Path |
@@ -53,71 +69,80 @@ System paths, compiler settings, and environment variables are protected behind 
 | `$pro_lib` | Project-local library directory | `$pro_home/lib/` |
 | `$pro_mod` | Secondary module search path list | `$pro_home/src/` |
 | `$pro_log` | Diagnostic and execution log folder | `$pro_home/log/` |
-
-### 3.2 Compiler Directives & Execution Limits
-Global compiler control parameters are defined at top-of-file scope or in configuration:
-- `$max_precision`: Precision threshold for rational arithmetic (Default: `0.00001`).
-- `$max_recursion`: Maximum allowed call-stack call depth (Default: `10000`).
-- `$log_debug`: Toggles debug instrumentation output (`"On"` / `"Off"`).
-- `$platform`: Target OS runtime build platform (`"Windows"`, `"Linux"`, `"Darwin"`).
+| `$max_iterations` | Infinite cycle safety break threshold | `1000000` |
+| `$max_precision` | Rational comparison epsilon ($\epsilon$) | `0.00001` |
 
 ---
 
-## 4. Name Space & Encapsulation Rules
+## 4. Name Space, Visibility & Encapsulation
 
-### 4.1 Member Visibility
-Module encapsulation is governed by a strict prefix convention:
+```mermaid
+graph TD
+    A[Module Definition Scope] --> B[Public Interface '.member']
+    A --> C[Private Encapsulation 'member']
+    
+    B --> B1[Accessible externally via module.member]
+    B --> B2[Directly accessible inside 'with module do' block]
+    
+    C --> C1[Strictly file-local scope]
+    C --> C2[Hidden from external importers]
+```
 
-- **Public Members (`.` Prefix):** Members prefixed with `.` are exported and accessible outside the module scope.
+### 4.1 Export Prefix (`.`)
+- **Public Members (`.` Prefix):** Exported and visible outside the module boundary.
   ```bee
   #module math_utils
+
   set .pi := 3.14159265; -- Public constant
-  
-  rule .add(a, b ∈ R) => (r ∈ R): -- Public rule
+
+  rule .add(a, b ∈ R) => (r ∈ R):
     let r := a + b;
   return;
   ```
-- **Private Members (No Prefix):** Members without `.` are strictly private to the defining module file.
+- **Private Members (No Prefix):** Hidden and strictly private to the module source file.
   ```bee
-  new helper_cache ∈ [R]; -- Private module variable
-  
-  rule compute_internal(x ∈ R) => (r ∈ R): -- Private rule
+  new cache ∈ [R]; -- Private module variable
+
+  rule internal_calc(x ∈ R) => (r ∈ R):
     let r := x * 2;
   return;
   ```
 
-### 4.2 Qualifier Suppression (`with`) & Symbol Aliasing
-- **Qualifier Suppression (`with`):** Inside a `with` block, exported members of the specified module/object can be invoked directly without repeating the qualifier prefix:
+### 4.2 Qualifier Suppression (`with`) & Aliasing (`alias`)
+- **Qualifier Suppression (`with`):** Eliminates verbose prefixes inside a dedicated local scope block:
   ```bee
-  use qualifier:math_utils;
-  
-  with math_utils do:
-    print .add(10, 20); -- Invokes math_utils.add
-  done;
+  use src/math_utils as math;
+
+  rule main:
+    with math do
+      print add(10, 20); -- Invokes math.add
+    done;
+  return;
   ```
-- **Symbol Aliasing (`alias`):** Binds a module export to a local alias:
+- **Symbol Aliasing (`alias`):** Maps a qualified member to a short local identifier:
   ```bee
-  alias sum: math_utils.add;
-  print sum(10, 20);
+  alias sum: math.add;
+
+  rule main:
+    print sum(10, 20);
+  return;
   ```
 
 ---
 
 ## 5. Execution Primitives & Scope Boundaries
 
-Bee separates execution modes into distinct primitives:
+Bee separates execution modes into three distinct primitives:
 
-1. **Synchronous Execution (`apply` / Call):**
-   - Executed inline on the calling thread within the active Region Arena frame.
-   - `apply module.rule(args);` executes for side effects, discarding return values.
+1. **Synchronous Invocation (`apply` / Direct Call):**
+   - Inline execution on the current thread frame.
+   - `apply module.action(args);` executes for side-effects, discarding return values.
 
-2. **Asynchronous Parallel Spawning (`begin`):**
-   - `begin module.rule(args);` spawns a new concurrent task thread.
-   - The task receives an isolated Region Arena and executes concurrently with the parent thread.
+2. **Asynchronous Spawning (`begin`):**
+   - `begin module.task(args);` spawns a concurrent worker with an isolated region frame.
 
 3. **Barrier Synchronization (`wait`):**
-   - `wait;` acts as a synchronization barrier, blocking caller execution until ALL asynchronous tasks spawned in the current scope complete.
-   - Any worker thread errors or panics captured in worker `$trial` state are re-raised at the `wait` barrier.
+   - `wait;` halts the parent thread until all spawned child workers complete.
 
 ---
 
@@ -127,18 +152,19 @@ Bee separates execution modes into distinct primitives:
 (* Module Header & Directives *)
 module_file       ::= [ module_header ] ( import_stmt | directive_stmt )* ( member_decl )* ;
 module_header     ::= ( "#module" | "#define" ) identifier ;
-import_stmt       ::= "use" [ "qualifier:" ] module_path [ "as" identifier ] ";" ;
-module_path       ::= [ "$" identifier "." ] identifier ( "." identifier )* ;
+
+import_stmt       ::= "use" module_path [ "as" identifier ] ";" ;
+module_path       ::= [ "$" identifier "/" ] identifier ( "/" identifier )* ;
 directive_stmt    ::= "$" identifier ":=" expression ";" ;
 
 (* Member Visibility & Declarations *)
-member_decl       ::= [ "." ] ( variable_decl | rule_def | object_def | const_decl ) ;
+member_decl       ::= [ "." ] ( decl_stmt | rule_def | object_def | type_def ) ;
 alias_stmt        ::= "alias" identifier ":" module_path "." identifier ";" ;
 
-(* Scoped Blocks & Execution *)
-with_stmt         ::= "with" expression "do" ":" block "done" ;
-sync_execution    ::= "apply" module_path "." identifier "(" [ arg_list ] ")" ";" ;
-async_execution   ::= "begin" module_path "." identifier "(" [ arg_list ] ")" ";" ;
+(* Scoped Blocks & Directives *)
+with_stmt         ::= "with" expression "do" block "done" ;
+sync_execution    ::= "apply" expression "(" [ arg_list ] ")" ";" ;
+async_execution   ::= "begin" expression "(" [ arg_list ] ")" ";" ;
 wait_barrier      ::= "wait" ";" ;
 ```
 
@@ -159,5 +185,5 @@ wait_barrier      ::= "wait" ";" ;
 
 ## 8. Alignment Status
 
-- **Issues Addressed:** Formalized module types, system paths (`$`), encapsulation rules (`.`), `#using`/`use`, `with` blocks, and `begin`/`wait` primitives.
+- **Issues Addressed:** Formalized module namespaces, singleton lifecycle persistence, member visibility (`.`), and clean `with ... do ... done;` scope syntax.
 - **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/04-structure.md`.

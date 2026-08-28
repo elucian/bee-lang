@@ -5,17 +5,21 @@
 Bee provides native mathematical primitives for complex data manipulation, pipeline processing, pointer-free boxing, and parallel collection transformation:
 
 1. **Explicit Primitive Boxing (`[x]`):** Wraps stack primitives into mutable heap reference cells without pointer arithmetic.
-2. **Mathematical Quantifiers (`∀`, `∃`):** Language-level universal and existential quantifiers for iterations and boolean constraints.
+2. **Mathematical Quantifiers ($\forall, \exists$):** Language-level universal and existential quantifiers for iterations and boolean constraints.
 3. **Data Pipelines (`>>`) & Map-Reduce:** Expressive, composable streaming transformations over collections.
 4. **Deconstruction & Spread (`*`):** Tuple/collection unpacking into named variables.
-5. **Matrix Slice Mutation:** Operations targeting entire rows or columns (`M[1, *]`).
+5. **Matrix Slice Mutation:** Operations targeting entire rows or columns ($M[1, *]$).
+
+![Map Reduce Architecture](img/map-reduce.svg)
 
 ---
 
 ## 2. Value Boxing & Unboxing Semantics
 
 ### 2.1 Primitive Boxing (`[x]`)
-Primitives in Bee (`Z`, `R`, `B`) reside on the stack by default. Enclosing a value or variable in square brackets `[value]` allocates a heap-managed mutable reference cell typed as `[Type]`:
+Primitives in Bee ($\mathbb{Z}, \mathbb{R}, \mathbb{B}$) reside on the stack by default. Enclosing a value or variable in square brackets `[value]` allocates a heap-managed mutable reference cell typed as `[Type]`:
+
+$$\text{Box}(v) \in \text{Heap}[\mathbb{T}]$$
 
 ```bee
 -- Declare boxed integer variable
@@ -38,15 +42,17 @@ let raw_val := Z(boxed_int); -- Extract integer scalar
 
 ---
 
-## 3. Quantifier Expressions (`∀`, `∃`)
+## 3. Quantifier Expressions ($\forall, \exists$)
 
-Bee integrates mathematical predicate logic directly into language expressions and iteration blocks.
+Bee integrates formal mathematical predicate logic directly into language expressions and iteration blocks.
 
-### 3.1 Universal Quantifier (`∀` / `forall`)
+### 3.1 Universal Quantifier ($\forall$ / `forall`)
+$$\forall x \in S, \quad P(x) \in \{0, 1\}$$
+
 - **Iteration Clause:** Iterates through every element in a collection or range:
   ```bee
-  for ∀ item ∈ collection do:
-    process(item);
+  for ∀ item ∈ collection do
+    apply process(item);
   repeat;
   ```
 - **Predicate Evaluation:** Returns `true` if every element satisfies the condition:
@@ -54,7 +60,9 @@ Bee integrates mathematical predicate logic directly into language expressions a
   new all_positive := (∀ x ∈ numbers : x > 0);
   ```
 
-### 3.2 Existential Quantifier (`∃` / `exists`)
+### 3.2 Existential Quantifier ($\exists$ / `exists`)
+$$\exists x \in S \quad \text{s.t.} \quad P(x) = 1$$
+
 - **Predicate Evaluation:** Returns `true` if at least one element satisfies the condition:
   ```bee
   new has_zero := (∃ x ∈ numbers : x = 0);
@@ -65,6 +73,8 @@ Bee integrates mathematical predicate logic directly into language expressions a
 ## 4. Pipeline Processing (`>>`) & Map-Reduce
 
 Data transformations can be chained using the pipe operator **`>>`** or invoked via collection methods:
+
+$$\text{Pipeline}: \quad \text{Input} \xrightarrow{f_1} T_1 \xrightarrow{f_2} T_2 \dots \xrightarrow{f_k} \text{Output}$$
 
 ### 4.1 Chained Pipeline Syntax (`>>`)
 ```bee
@@ -87,7 +97,8 @@ new result := data >> filter(λ(x) => x % 2 = 0)
 ## 5. Deconstruction, Spreading (`*`) & Matrix Slicing
 
 ### 5.1 Variable Deconstruction & Spread (`*`)
-Collection elements can be unpacked directly into variables using the spread operator `*`:
+$$(x, y, \dots, \text{tail}) \leftarrow \text{Collection}$$
+
 ```bee
 new list := [10, 20, 30, 40, 50];
 
@@ -119,7 +130,7 @@ unboxed_expr      ::= primitive_type "(" expression ")" ;
 deep_clone        ::= identifier "::" expression ;
 
 (* Quantifiers *)
-quantifier_expr   ::= "(" ( "∀" | "forall" | "∃" | "exists" ) identifier "∈" expression ":" condition ")" ;
+quantifier_expr   ::= "(" ( "∀" | "forall" | "∃" | "exists" ) identifier ( "∈" | "in" ) expression ":" condition ")" ;
 
 (* Pipelines & Map-Reduce *)
 pipeline_expr     ::= expression ">>" transform_step ( ">>" transform_step )* ;
