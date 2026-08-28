@@ -1,0 +1,4 @@
+-- @DESC: Multiple arguments
+rule main:
+  print "Hello,", "World!";
+return;

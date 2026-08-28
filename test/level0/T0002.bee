@@ -1,5 +1,4 @@
--- @DESC: Large collection processing and indexing
+-- @DESC: Large list of numbers
 rule main:
-  new lista := [10, 20, 30, 40, 50];
-  print lista;
+  print 10, 20, 30, 40, 50;
 return;
