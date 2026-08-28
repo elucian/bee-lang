@@ -168,18 +168,23 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	}
 
 	// Parse arguments
-	first := p.parseExpression()
-	stmt.Expressions = append(stmt.Expressions, first)
+	fmt.Fprintf(os.Stderr, "DEBUG: parsing args...\n")
 	for {
+		expr := p.parseExpression()
+		if expr != nil {
+			stmt.Expressions = append(stmt.Expressions, expr)
+			fmt.Fprintf(os.Stderr, "DEBUG: Added expr, len: %d\n", len(stmt.Expressions))
+		}
 		peek := p.l.PeekToken()
+		fmt.Fprintf(os.Stderr, "DEBUG: peeked: type=%v, lit=%q\n", peek.Type, peek.Literal)
 		if peek.Type == token.COMMA {
 			p.l.NextToken() // consume ','
-			expr := p.parseExpression()
-			stmt.Expressions = append(stmt.Expressions, expr)
 		} else {
 			break
 		}
 	}
+	fmt.Fprintf(os.Stderr, "DEBUG: Done parsing args, count: %d\n", len(stmt.Expressions))
+	fmt.Fprintf(os.Stderr, "DEBUG: Done parsing args, count: %d\n", len(stmt.Expressions))
 
 	// Consume optional ')'
 	if hasParens && p.l.PeekToken().Type == token.RPAREN {
@@ -204,6 +209,7 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 
 func (p *Parser) parseExpression() Expression {
 	tok := p.l.NextToken()
+	fmt.Fprintf(os.Stderr, "DEBUG: Parsing expr, token: %q type: %v\n", tok.Literal, tok.Type)
 	if tok.Type == token.EOF {
 		return nil
 	}

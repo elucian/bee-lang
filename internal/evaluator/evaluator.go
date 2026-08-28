@@ -55,6 +55,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			sepVal := e.evalExpression(s.Separator)
 			separator = strings.Trim(sepVal, "\"")
 		}
+
 		for i, expr := range s.Expressions {
 			if i > 0 {
 				fmt.Print(separator)

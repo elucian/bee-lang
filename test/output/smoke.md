@@ -8,11 +8,13 @@ Smoke test
 
 --- STDERR ---
 ```
-DEBUG: Parser peek char: "\""
-DEBUG: peek after first expr: "\""
-DEBUG: peek after first: "\n"
-DEBUG: peek after loop: "\n"
-DEBUG: S.Separator is nil? true
+DEBUG: parsing args...
+DEBUG: Parsing expr, token: "Smoke test" type: STRING
+DEBUG: In binary loop, peekTok type: ;, literal: ";"
+DEBUG: Added expr, len: 1
+DEBUG: peeked: type=;, lit=";"
+DEBUG: Done parsing args, count: 1
+DEBUG: Done parsing args, count: 1
 
 ```
 
