@@ -110,14 +110,16 @@ A rule invocation in final return position (`let r := tail_rule(...)` followed i
 - Re-executes rule body with updated argument values, converting recursion into iteration with $O(1)$ stack space.
 
 ### 5.3 Closures & State Generators
-Rules can encapsulate state and nested method rules (`closures`):
+Rules can encapsulate state and nested method rules (`closures`). 
+
+- **State Mutability**: Variables stored in the rule closure must be explicitly boxed using the **`[]`** operator (e.g., `set .count := [start];`) to be heap-allocated and mutable. Unboxed variables defined via `set` within a rule are immutable.
 
 ```bee
 rule counter_generator(start ∈ Z) => (next ∈ Rule):
-  set .count := [start];
+  set .count := [start];  -- Boxed for mutability
   
   rule .next() => (val ∈ Z):
-    let .count += 1;
+    let .count += 1;      -- Mutation allowed due to boxing
     let val := .count;
   return;
 return;

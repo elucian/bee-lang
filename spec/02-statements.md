@@ -83,7 +83,15 @@ Bee divides statements into five distinct syntactic categories:
    repeat;
    ```
 
-### 3.4 Scoped Qualifier Block (`with`)
+### 3.5 Local Scope Blocks (`start`)
+- Used to create a non-repetitive local scope for variable lifetime management:
+  ```bee
+  start:
+    new temp := 10;
+  done;
+  ```
+
+### 3.6 Scoped Qualifier Block (`with`)
 - Simplifies module and object qualifier access without repeating prefixes:
   ```bee
   with object_or_module do:
@@ -136,26 +144,28 @@ io_stmt           ::= "print" expression ( "," expression )*
                     | "write" expression ;
 
 (* Control Flow *)
-if_stmt           ::= "if" condition "then" ":" block [ "else" ":" block ] "done" ;
-match_stmt        ::= "match" [ match_mode ] ":" ( "when" condition "do" ":" block )+ [ "other" ":" block ] "done" ;
-match_mode        ::= "first" | "every" | "total" ;
-
-cycle_stmt        ::= "cycle" [ label ] ":" block "repeat" [ label ]
-                    | "while" condition "do" ":" block "repeat"
-                    | "for" identifier ( "∈" | "in" ) expression "do" ":" block "repeat" ;
-
-with_stmt         ::= "with" expression "do" ":" block "done" ;
-
-(* Error Handling *)
+	if_stmt           ::= "if" condition "then" ":" block [ "else" ":" block ] "done" ;
+	match_stmt        ::= "match" [ match_mode ] ":" ( "when" condition "do" ":" block )+ [ "other" ":" block ] "done" ;
+	match_mode        ::= "first" | "every" | "total" ;
+	
+	cycle_stmt        ::= "cycle" [ label ] ":" block "repeat" [ label ]
+	                    | "while" condition "do" ":" block "repeat"
+	                    | "for" identifier ( "∈" | "in" ) expression "do" ":" block "repeat"
+	                    | "start" ":" block "done" ;
+	
+	with_stmt         ::= "with" expression "do" ":" block "done" ;
+	
+	(* Error Handling *)
 	trial_stmt        ::= "trial" [ label ] ":" block [ ( "try" | "case" condition ) "do" ":" block | "try:" block | "final" block ]* "done" [ label ] ;
-
-(* Transfers *)
-transfer_stmt     ::= "return" [ expression ]
-                    | "stop" [ label ]
-                    | "next" [ label ]
-                    | "yield" [ expression ]
-                    | "raise" [ expression ]
-                    | "retry" ;
+	
+	(* Transfers *)
+	transfer_stmt     ::= "return" [ expression ]
+	                    | "stop" [ label ]
+	                    | "next" [ label ]
+	                    | "yield" [ expression ]
+	                    | "raise" [ expression ]
+	                    | "retry"
+	                    | "pass" ;
 ```
 
 ---

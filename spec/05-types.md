@@ -1,8 +1,18 @@
 # Bee Specification: Type System Architecture (05-types.md)
 
-## 1. Executive Type System Architecture
+## 2. Type Inference & Gradual Typing
 
-Bee utilizes a **strongly typed, static type system with global type inference**. Types represent domain constraints over values.
+Bee employs a gradual typing system where types are resolved at compile time through deterministic inference.
+
+### 2.1 First-Assignment Invariant
+- **Binding Rule**: When a variable is declared without an explicit type (e.g., `new x := expression;`), the compiler binds the variable's type to the result of the first assignment within the current lexical scope.
+- **Inference Propagation**: The inferred type is propagated back to the declaration site, ensuring static type safety for all subsequent usages within the scope.
+
+### 2.2 Variant Promotion (Divergent Paths)
+When a variable is assigned different types across divergent control flow paths (e.g., `if-else` blocks), the compiler promotes the variable to a **Variant Type** (Union Type).
+
+- **Promotion Rule**: If branch A assigns `Z` (Integer) and branch B assigns `R` (Real), the variable's final type is promoted to `Z | R` (Variant).
+- **Usage Invariant**: Accessing a Variant-typed variable requires a type-guarded check (`type()` introspection or `match` statement) to resolve the underlying type before performing path-specific operations.
 
 - **Universal Entity Model & Introspection:** Every value or variable in Bee is an **`Entity`** that exposes the `.type()` introspection method (e.g. `10.type()`, `"hello".type()`). The legacy `kind()` function is removed in favor of `entity.type()`.
 - **Mathematical Primitive Designator:** Single uppercase Latin letters are strictly reserved for primitive data types (e.g., `Z` for Integer, `R` for Real, `Q` for Rational).

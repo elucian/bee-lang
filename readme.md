@@ -35,16 +35,25 @@ sh setup.sh
 
 ## 3. Workflow Automation & Developer Notes
 
+## 3. Workflow Automation & Developer Notes
+
 ### Automation Scripts
 - **Reset Environment**: `python test/reset.py`
   *(Cleans build artifacts and test outputs/statuses).*
 - **Run Syntax Check**: `python scripts/check.py`
-  *(Runs syntax checks on all test files. Generates reports in `test/output/` and statuses in `test/status/`).*
+  *(Runs syntax checks on all test files).*
 - **Master Workflow (`run.sh`)**:
   - Build compiler: `sh run.sh build`
   - Run test pipeline: `sh run.sh test`
   - Run self-health check: `sh run.sh smoke`
-  - Iterative fix loop: `sh run.sh fix level1` (up to 10 iterations)
+
+### Development Methodology (TDD & Specification-Driven)
+Bee development follows a **Strict Test-Driven Development (TDD)** lifecycle:
+1. **Architectural Gap**: Any design change must first be documented in `/issues/` and `/solution/`.
+2. **Specification Update**: Update relevant `/spec/` EBNF and rules.
+3. **Test-First**: Create a failing `.bee` test case under `/test/levelX/`.
+4. **Implementation**: Modify the compiler to satisfy the spec and pass the test.
+5. **Freeze**: Mark new tests as `@FROZEN` in `/test/levelX/`.
 
 ---
 

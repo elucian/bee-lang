@@ -34,12 +34,9 @@ $pro_home/             # Project Root Directory
   2. Loaded via local import directive: `use module_name;` or `use qualifier:module_name;`.
   3. Accessible via explicit module qualifier dot-notation (`module_name.member`).
 
-### 2.3 Library Modules (`lib/` or `$bee_lib`)
-- **Role:** Reusable utility packages across projects and system core APIs.
-- **Invariants:**
-  1. MUST NOT contain a `rule main`.
-  2. Loaded via system or project library path: `use $bee.lib.library_name;`.
-  3. Loaded exactly once into memory during execution lifecycle (singleton module instance).
+### 2.4 Module Lifecycle Persistence Invariant
+- **Lifecycle**: All modules (Secondary and Library) are loaded as singleton instances upon the first `use` directive.
+- **Persistence**: Loaded modules are persistent in memory. Explicit dynamic unloading or reloading of modules is NOT supported. Module state exists for the entire execution lifecycle of the program and is finalized only upon program termination.
 
 ---
 
