@@ -1,0 +1,4 @@
+-- @DESC: Hello World Test
+fn main() {
+    print("Hello World")
+}

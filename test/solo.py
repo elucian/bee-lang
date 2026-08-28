@@ -13,7 +13,7 @@ def run_solo():
     if os.path.exists(target):
         test_path = target
     else:
-        for lvl in ["level1", "level2", "level3", "level4", "level5"]:
+        for lvl in ["level0", "level1", "level2", "level3", "level4", "level5", "level6", "level7", "level8"]:
             p = os.path.join("test", lvl, f"{target}.bee")
             if os.path.exists(p):
                 test_path = p

@@ -1,4 +1,4 @@
--- @DESC:Benchmark: Large collection processing and indexing
+-- @DESC: Large collection processing and indexing
 rule main:
   new lista := [10, 20, 30, 40, 50];
   print lista;

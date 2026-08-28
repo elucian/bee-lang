@@ -1,10 +1,11 @@
--- @DESC:T0115 Comprehensive print statement test suite (single arg, numbers, multiple args, string, empty lines)
+-- @DESC: Comprehensive print statement test
+-- (single arg, numbers, multiple args, string, empty lines)
 rule main:
+  print;
   print "Hello, Bee!";
   print 42;
   print ("Number:", 100);
   print "Multiple", "arguments", 365, "passed";
-  print;
-  print;
+  print 42, 43, 44;
   print 3.14;
 return;

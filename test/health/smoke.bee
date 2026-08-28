@@ -1,4 +1,0 @@
--- @DESC:@FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
-fn main() {
-    print("health-check-ok")
-}
