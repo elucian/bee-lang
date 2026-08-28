@@ -32,7 +32,7 @@ func main() {
 
 	// 3. Smoke test with smoke.bee
 	fmt.Println("-> Running integrated smoke test...")
-	smokeTest := "test/health/smoke.bee"
+	smokeTest := "test/level0/smoke.bee"
 
 	runCmd := exec.Command(beeCompiler, "-c", smokeTest)
 	out, err := runCmd.CombinedOutput()

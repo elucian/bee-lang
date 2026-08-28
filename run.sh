@@ -45,7 +45,7 @@ elif [ "$COMMAND" = "reset" ]; then
     fi
 elif [ "$COMMAND" = "smoke" ]; then
     echo "Running intelligent self-health check..."
-    go run test/health/health.go
+    python test/smoke.py
 else
     echo "Usage: sh run.sh [build | test [level1] | check [level1] | solo <target> | reset [level1] | clean | smoke]"
     exit 1

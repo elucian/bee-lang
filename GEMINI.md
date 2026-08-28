@@ -34,6 +34,11 @@ When generating, modifying, or debugging Go code for the Bee programming languag
     - Use absolute or relative paths starting from project root (`bee-lang/`) for all file operations.
     - Check the authoritative keyword list in `internal/token/token.go` before introducing or modifying language keywords.
     - All language documentation and specification changes MUST occur in the `/spec` directory.
+    - **TDD Integration:** Every feature or fix must maintain test parity:
+        1. Audit `/spec/` and update EBNF.
+        2. Create/update a `.bee` test case in `test/levelX/` with a `-- @DESC:` tag.
+        3. Run `python test/solo.py <test_name>` to verify and auto-update `test/levelX/README.md`.
+        4. Run `sh run.sh smoke` for system-wide health check before yielding.
 
 ## Final message
 When you finish send this message: "Task Completed in <runtime>"

@@ -1,0 +1,4 @@
+-- @DESC:Smoke test validation
+rule main:
+  print "Smoke test";
+return;

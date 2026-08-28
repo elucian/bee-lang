@@ -2,7 +2,13 @@ import os
 import argparse
 
 def update_test_status(test_name, status, description):
-    level_num = int(test_name[1:3])
+    # Determine level from test_name (e.g., T0101 -> level1, T0001 -> level0)
+    # Handle smoke.bee as well if needed
+    if test_name == "smoke":
+        level_num = 0
+    else:
+        level_num = int(test_name[1:3])
+    
     level_dir = f"test/level{level_num}"
     readme_path = os.path.join(level_dir, "README.md")
     

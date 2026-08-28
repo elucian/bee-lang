@@ -51,6 +51,7 @@ sh setup.sh
 Bee development follows a **Strict Test-Driven Development (TDD)** lifecycle:
 - [x] Operator Taxonomy (Binding `:` vs. Mutation `:=` vs. Clone `::`)
 - [x] Operator Taxonomy (Equality `=` vs. Reference `==` vs. Equivalence `≡`)
+- [x] Test Infrastructure Migration (Level 0 - Level 8 Audit & README Sync)
 1. **Architectural Gap**: Any design change must first be documented in `/issues/` and `/solution/`.
 2. **Specification Update**: Update relevant `/spec/` EBNF and rules.
 3. **Test-First**: Create a failing `.bee` test case under `/test/levelX/`.

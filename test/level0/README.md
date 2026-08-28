@@ -2,5 +2,6 @@
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
-| T0001    | @FROZEN: Generated from /spec... | PASS       |
-| T0002    | Benchmark: Large collection p... | PASS       |
+| smoke    | Smoke test validation            | PASS       |
+| T0001    | Hello World Test                 | PASS       |
+| T0002    | Large collection processing a... | PASS       |
