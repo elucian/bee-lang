@@ -41,6 +41,11 @@ func (e *Evaluator) Eval(program *parser.Program) {
 
 func (e *Evaluator) evalStatement(node parser.Statement) {
 	switch s := node.(type) {
+	case *parser.AssertStatement:
+		val := e.evalIntExpression(s.Condition)
+		if val == 0 {
+			fmt.Fprintf(os.Stderr, "[WARNING] Assertion failed at line %d\n", int(s.Token.Pos))
+		}
 	case *parser.ExpectStatement:
 		val := e.evalIntExpression(s.Condition)
 		if val == 0 {

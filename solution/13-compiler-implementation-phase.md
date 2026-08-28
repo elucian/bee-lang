@@ -21,7 +21,7 @@ Work is executed incrementally, **one task at a time**, followed by verification
 - [ ] **Task 2.3:** Add support for string interpolation `#(expr)`, raw backtick strings `` `...` ``, and embedded markup DSL blocks (`<sql>`, `<html>`).
 
 ### Phase 3: Recursive Descent Parser & AST Expansion (`internal/parser`)
-- [ ] **Task 3.1:** Implement EBNF AST nodes for `require`/`ensure` contracts, `if`/`match`/`cycle`/`while`/`for` blocks, and `trial` error handling.
+- [ ] **Task 3.1:** Implement EBNF AST nodes for `assert`/`expect` contracts, `if`/`match`/`cycle`/`while`/`for` blocks, and `trial` error handling.
 - [ ] **Task 3.2:** Implement 2-space indentation verification and error reporting (`E0201: IndentationMismatch`).
 - [ ] **Task 3.3:** Implement deconstruction assignment parsing (`new x, y, *rest := coll;`).
 

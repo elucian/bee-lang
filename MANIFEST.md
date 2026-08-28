@@ -17,7 +17,7 @@
 ### Phase 5: Type Checker & Semantic Analysis (`internal/typechecker`)
 - [ ] Task 5.1: Implement symbol table, scoping rules, and static type resolution.
 - [ ] Task 5.2: Enforce zero-based indexing validation across array/list node expressions.
-- [ ] Task 5.3: Validate precondition (`require`) and postcondition (`ensure`) contract bindings.
+- [ ] Task 5.3: Validate precondition warning (`assert`) and invariant enforcement (`expect`) contract bindings.
 
 ### Phase 6: LLVM IR Codegen Engine (`internal/codegen`)
 - [ ] Task 6.1: Map AST nodes to LLVM IR module definitions.

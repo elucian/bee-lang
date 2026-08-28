@@ -27,3 +27,4 @@ web/
 
 # Test results
 test/status/
+test/output/

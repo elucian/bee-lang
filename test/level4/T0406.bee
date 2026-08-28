@@ -2,8 +2,8 @@
 -- file: contract_old_collection.bee
 -- old works on a collection too demo
 rule grow(items ∈ [Z], by ∈ Z):
-  expect by ≥ 0;
-  ensure items.length = old items.length + by;
+  assert by ≥ 0;
+  expect items.length = old items.length + by;
   let items ++ by;
 return;
 

@@ -8,6 +8,8 @@ This level covers rules, contracts, and function definitions as defined in:
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
+| T0321    | Rule contract assert failure ... | PASS       |
+| T0320    | Rule contract verification wi... | PASS       |
 | T0301    | file: append_collection_examp... | PASS       |
 | T0302    | file: arrays.bee                 | PASS       |
 | T0303    | file: array_traversal.bee        | PASS       |

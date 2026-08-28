@@ -1,0 +1,10 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: Rule contract verification with assert and expect
+rule main:
+  new a ∈ Z; new b ∈ Z;
+  let a := 10;
+  let b := 20;
+  assert a < b;
+  expect a + b = 30;
+  print (a, b) using: " + ";
+return;

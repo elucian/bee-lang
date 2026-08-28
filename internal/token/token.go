@@ -188,6 +188,8 @@ const (
 	START      = "START"
 	TRY        = "TRY"
 	USING      = "USING"
+	ASSERT     = "ASSERT"
+	EXPECT     = "EXPECT"
 )
 
 var keywords = map[string]Type{
@@ -254,6 +256,8 @@ var keywords = map[string]Type{
 	"in":       IN_KEYWORD,
 	"start":    START,
 	"try":      TRY,
+	"assert":   ASSERT,
+	"expect":   EXPECT,
 }
 
 func LookupIdent(ident string) Type {

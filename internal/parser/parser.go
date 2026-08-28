@@ -81,6 +81,10 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 		return p.parseAssignment(tok)
 	case token.PRINT:
 		return p.parsePrintStatement(tok)
+	case token.ASSERT:
+		return p.parseAssertStatement(tok)
+	case token.EXPECT:
+		return p.parseExpectStatement(tok)
 	}
 	return nil
 }
@@ -150,10 +154,21 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 	return stmt
 }
 
+func (p *Parser) parseAssertStatement(tok token.Token) Statement {
+	stmt := &AssertStatement{Token: tok}
+	stmt.Condition = p.parseExpression()
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken() // Skip ;
+	}
+	return stmt
+}
+
 func (p *Parser) parseExpectStatement(tok token.Token) Statement {
 	stmt := &ExpectStatement{Token: tok}
 	stmt.Condition = p.parseExpression()
-	p.l.NextToken() // Skip ;
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken() // Skip ;
+	}
 	return stmt
 }
 

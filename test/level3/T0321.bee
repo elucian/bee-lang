@@ -1,0 +1,10 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: Rule contract assert failure emits warning to stderr and continues execution
+rule main:
+  new a ∈ Z; new b ∈ Z;
+  let a := 50;
+  let b := 20;
+  assert a < b;
+  expect a > b;
+  print (a, b) using: " > ";
+return;

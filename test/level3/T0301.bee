@@ -3,8 +3,8 @@
 -- to verify the size increased by exactly one.
 
 rule append_item(items ∈ @[Z], new_val ∈ Z):
-  ensure length(items) = length(old items) + 1;
-  ensure items[length(items)-1] = new_val;
+  expect length(items) = length(old items) + 1;
+  expect items[length(items)-1] = new_val;
   let append(items, new_val);
 return;
 

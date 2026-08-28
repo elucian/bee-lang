@@ -41,6 +41,14 @@ type AssignmentStatement struct {
 func (as *AssignmentStatement) statementNode() {}
 func (as *AssignmentStatement) Pos() token.Pos { return as.Token.Pos }
 
+type AssertStatement struct {
+	Token     token.Token
+	Condition Expression
+}
+
+func (as *AssertStatement) statementNode() {}
+func (as *AssertStatement) Pos() token.Pos { return as.Token.Pos }
+
 type ExpectStatement struct {
 	Token     token.Token
 	Condition Expression

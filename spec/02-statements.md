@@ -2,13 +2,14 @@
 
 ## 1. Executive Statement Taxonomy
 
-Bee divides statements into five distinct syntactic categories:
+Bee divides statements into six distinct syntactic categories:
 
 1. **Declarative Statements:** Allocate variable names and bind initial static/dynamic types (`new`, `const`).
 2. **Mutation Statements:** Rebind values, clone memory structures, or apply in-place mathematical updates (`let`, `alter`, `:=`, `::`, compound operators).
-3. **Control Flow Statements:** Direct branching, pattern matching, and iteration loops (`if`, `match`, `cycle`, `while`, `for`, `with`).
-4. **Error Handling & Trial Statements:** Transactional exception handling and structured cleanup (`trial`, `try`, `fail`, `case`, `miss`, `final`).
-5. **Transfer & Termination Statements:** Direct jump and routine completion (`return`, `stop`, `next`, `yield`, `raise`, `retry`).
+3. **Contract & Verification Statements:** Assert non-fatal warnings and enforce runtime invariants (`assert`, `expect`).
+4. **Control Flow Statements:** Direct branching, pattern matching, and iteration loops (`if`, `match`, `cycle`, `while`, `for`, `with`).
+5. **Error Handling & Trial Statements:** Transactional exception handling and structured cleanup (`trial`, `try`, `fail`, `case`, `miss`, `final`).
+6. **Transfer & Termination Statements:** Direct jump and routine completion (`return`, `stop`, `next`, `yield`, `raise`, `retry`).
 
 ---
 
@@ -30,6 +31,10 @@ Bee divides statements into five distinct syntactic categories:
 
 ### 2.3 Memory Directives
 - **Explicit Deallocation:** `zap identifier;` invalidates the target identifier in Hot Zone performance paths.
+
+### 2.4 Contract & Verification Statements (`assert`, `expect`)
+- **Warning Assertion (`assert condition;`):** Evaluates `condition`. If false (or `0`), emits a diagnostic warning to standard error (`stderr`) and continues program execution.
+- **Invariant Expectation (`expect condition;`):** Evaluates `condition`. If false (or `0`), raises a runtime error (`ExpectationFailed`) that propagates up the call stack, halting execution with a failure exit code if unhandled.
 
 ---
 
@@ -133,7 +138,7 @@ done trial_label;
 
 ```ebnf
 (* Statements *)
-statement         ::= decl_stmt | mutation_stmt | memory_stmt | io_stmt | control_stmt | trial_stmt | transfer_stmt ";" ;
+statement         ::= decl_stmt | mutation_stmt | memory_stmt | io_stmt | contract_stmt | control_stmt | trial_stmt | transfer_stmt ";" ;
 
 decl_stmt         ::= "new" identifier ( "∈" | "in" ) type_specifier [ ":=" expression ]
                     | "new" identifier ":=" expression
@@ -142,6 +147,8 @@ decl_stmt         ::= "new" identifier ( "∈" | "in" ) type_specifier [ ":=" ex
 mutation_stmt     ::= "let" identifier assign_op expression ;
 assign_op         ::= ":=" | "::" | "+=" | "-=" | "*=" | "/=" | "%=" | "^=" | "√=" ;
 memory_stmt       ::= "zap" identifier ;
+contract_stmt     ::= "assert" expression
+                    | "expect" expression ;
 io_stmt           ::= "print" "(" expression ( "," expression )* ")" [ "using" ":" expression ]
                     | "write" expression ;
 

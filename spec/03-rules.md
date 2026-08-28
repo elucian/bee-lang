@@ -16,12 +16,12 @@ In Bee, all subroutines, procedures, functions, constructors, and methods are un
 ```bee
 rule identifier(param_list) => (result_list):
   -- Preconditions (Contracts)
-  require condition;
+  assert condition;
   
   -- Body statements (indented 2 spaces)
   
-  -- Postconditions (Contracts)
-  ensure condition;
+  -- Postconditions / Invariants (Contracts)
+  expect condition;
 return;
 ```
 
@@ -65,20 +65,20 @@ return;
 
 ---
 
-## 4. Design by Contract (`require` / `ensure`)
+## 4. Design by Contract (`assert` / `expect`)
 
 Bee enforces formal contract assertions directly within rule definitions:
 
 ```bee
 rule divide(a ∈ R, b ∈ R) => (ratio ∈ R):
-  require b ≠ 0; -- Precondition: caller must satisfy
+  assert b ≠ 0; -- Precondition / Warning check: emits diagnostic warning to stderr if failed
   let ratio := a / b;
-  ensure ratio * b ≈ a; -- Postcondition: rule guarantees
+  expect ratio * b ≈ a; -- Postcondition / Invariant check: raises runtime error if failed
 return;
 ```
 
-- **Precondition Violation (`require`):** Triggers `RuntimeError: PreconditionFailed` pointing to the **caller's** call site.
-- **Postcondition Violation (`ensure`):** Triggers `RuntimeError: PostconditionFailed` pointing to the **rule's** internal logic.
+- **Assertion Warning (`assert`):** Evaluates a condition. If it fails (evaluates to false or `0`), a diagnostic warning (`W0301: AssertionWarning`) is printed to standard error (`stderr`), but program execution continues uninterrupted.
+- **Expectation Enforcement (`expect`):** Evaluates an invariant condition. If it fails (evaluates to false or `0`), a runtime error (`E0303: ExpectationFailed`) is raised and propagated up the call stack. If not caught by an enclosing `trial` block, the application halts immediately with a failure exit status.
 
 ---
 
@@ -142,7 +142,7 @@ result_list       ::= result_item ( "," result_item )* ;
 result_item       ::= identifier [ ":" expression ] [ ( "∈" | "in" ) type_specifier ] ;
 
 (* Contracts *)
-contract_clause   ::= ( "require" condition ";" )* ( "ensure" condition ";" )* ;
+contract_clause   ::= ( "assert" condition ";" )* ( "expect" condition ";" )* ;
 
 (* Invocations *)
 rule_apply        ::= "apply" identifier "(" [ arg_list ] ")" ";" ;
@@ -158,8 +158,8 @@ argument          ::= [ identifier ":" ] expression ;
 | Error Code | Error Condition | Description |
 | :--- | :--- | :--- |
 | `E0301` | `UndeclaredRule` | Rule invoked prior to definition or forward declaration |
-| `E0302` | `PreconditionFailed` | Argument failed `require` condition at call site |
-| `E0303` | `PostconditionFailed` | Rule output failed `ensure` condition upon return |
+| `W0301` | `AssertionWarning` | Assertion failed in `assert` contract clause (warning emitted to stderr) |
+| `E0303` | `ExpectationFailed` | Expectation failed in `expect` contract clause or body statement (fatal runtime error if unhandled) |
 | `E0304` | `MultiResultInExpression` | Multi-result rule used inside arithmetic expression tree |
 | `E0305` | `MissingReturnTerminator` | Rule block does not end with aligned `return;` |
 | `E0306` | `SignatureMismatch` | Forward declaration does not match rule implementation signature |
