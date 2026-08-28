@@ -1,4 +1,4 @@
--- @DESC:file: while_demo.bee
+-- @DESC:T0216 While cycle iteration loop
 -- while demo
 rule main:
   new n := 0;

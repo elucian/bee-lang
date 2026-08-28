@@ -186,6 +186,11 @@ func (p *Parser) parseExpectStatement(tok token.Token) Statement {
 func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	stmt := &PrintStatement{Token: tok}
 
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken()
+		return stmt
+	}
+
 	// Consume optional '('
 	hasParens := false
 	if p.l.PeekToken().Type == token.LPAREN {
@@ -196,6 +201,12 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	// Parse arguments
 	p.debugLog("DEBUG: parsing args...\n")
 	for {
+		if p.l.PeekToken().Type == token.SEMICOLON || p.l.PeekToken().Type == token.EOF {
+			break
+		}
+		if hasParens && p.l.PeekToken().Type == token.RPAREN {
+			break
+		}
 		expr := p.parseExpression()
 		if expr != nil {
 			stmt.Expressions = append(stmt.Expressions, expr)
@@ -226,7 +237,7 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 		stmt.Separator = p.parseExpression()
 	}
 
-	if p.l.PeekChar() == ';' {
+	if p.l.PeekToken().Type == token.SEMICOLON {
 		p.l.NextToken()
 	}
 	return stmt
@@ -247,16 +258,6 @@ func (p *Parser) parseExpression() Expression {
 		// Consume ')'
 		if p.l.PeekToken().Type == token.RPAREN {
 			p.l.NextToken()
-		}
-		nextTok := p.l.NextToken()
-		if nextTok.Type == token.CARET || nextTok.Literal == "^" || nextTok.Type == token.INT || (nextTok.Literal >= "⁰" && nextTok.Literal <= "⁹") {
-			var right Expression
-			if nextTok.Type == token.INT {
-				right = &IntegerLiteral{Token: nextTok, Value: nextTok.Literal}
-			} else {
-				right = p.parseExpression()
-			}
-			return &BinaryExpression{Token: token.Token{Type: token.CARET, Literal: "^"}, Left: left, Right: right}
 		}
 	} else if tok.Type == token.LOGICAL_NOT {
 		right := p.parseExpression()

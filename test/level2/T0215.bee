@@ -1,4 +1,4 @@
--- @DESC:file: then_runs.bee
+-- @DESC:T0215 Loop completion block with then clause
 -- then runs once at the end demo
 rule main:
   new n := 0;

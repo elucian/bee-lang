@@ -1,4 +1,4 @@
--- @DESC:file: match_every.bee
+-- @DESC:T0210 Pattern match with match all mode
 -- match, every hit demo
 rule main:
   match all 4:

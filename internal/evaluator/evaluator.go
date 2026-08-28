@@ -11,9 +11,10 @@ import (
 )
 
 type Evaluator struct {
-	symbols     map[string]int
-	arrayValues map[string][]int
-	debug       bool
+	symbols       map[string]int
+	stringSymbols map[string]string
+	arrayValues   map[string][]int
+	debug         bool
 }
 
 func (e *Evaluator) SetDebug(debug bool) {
@@ -28,8 +29,9 @@ func (e *Evaluator) debugLog(format string, a ...interface{}) {
 
 func New() *Evaluator {
 	return &Evaluator{
-		symbols:     make(map[string]int),
-		arrayValues: make(map[string][]int),
+		symbols:       make(map[string]int),
+		stringSymbols: make(map[string]string),
+		arrayValues:   make(map[string][]int),
 	}
 }
 
@@ -37,6 +39,9 @@ func (e *Evaluator) DumpContext() {
 	fmt.Fprintln(os.Stderr, "=== VARIABLE CONTEXT ===")
 	for name, val := range e.symbols {
 		fmt.Fprintf(os.Stderr, "  %s : int = %d\n", name, val)
+	}
+	for name, s := range e.stringSymbols {
+		fmt.Fprintf(os.Stderr, "  %s : string = %q\n", name, s)
 	}
 	for name, arr := range e.arrayValues {
 		fmt.Fprintf(os.Stderr, "  %s : []int = %v\n", name, arr)
@@ -85,6 +90,20 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		for i, name := range s.Names {
 			e.debugLog("EVALUATOR DEBUG: Assigning to %s\n", name.Value)
 			if i < len(s.Values) {
+				if strLit, ok := s.Values[i].(*parser.StringLiteral); ok {
+					e.stringSymbols[name.Value] = strLit.Value
+					delete(e.symbols, name.Value)
+					e.debugLog("EVALUATOR DEBUG: Assigned string %s = %q\n", name.Value, strLit.Value)
+					continue
+				} else if strIdent, ok := s.Values[i].(*parser.Identifier); ok {
+					if strVal, hasStr := e.stringSymbols[strIdent.Value]; hasStr {
+						e.stringSymbols[name.Value] = strVal
+						delete(e.symbols, name.Value)
+						e.debugLog("EVALUATOR DEBUG: Assigned string %s = %q\n", name.Value, strVal)
+						continue
+					}
+				}
+
 				rightVal := e.evalIntExpression(s.Values[i])
 				e.debugLog("EVALUATOR DEBUG: RightVal = %d\n", rightVal)
 
@@ -131,7 +150,10 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 	case *parser.DeclarationStatement:
 		e.debugLog("EVALUATOR DEBUG: Declaring %s\n", s.Name)
 		if s.Value != nil {
-			if arrLit, ok := s.Value.(*parser.ArrayLiteral); ok {
+			if strLit, ok := s.Value.(*parser.StringLiteral); ok {
+				e.stringSymbols[s.Name] = strLit.Value
+				e.debugLog("EVALUATOR DEBUG: Declared string %s = %q\n", s.Name, strLit.Value)
+			} else if arrLit, ok := s.Value.(*parser.ArrayLiteral); ok {
 				elems := make([]int, len(arrLit.Elements))
 				for i, el := range arrLit.Elements {
 					elems[i] = e.evalIntExpression(el)
@@ -268,6 +290,9 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 		}
 		return "0"
 	case *parser.Identifier:
+		if strVal, ok := e.stringSymbols[expr.Value]; ok {
+			return strVal
+		}
 		if val, ok := e.symbols[expr.Value]; ok {
 			return strconv.Itoa(val)
 		}

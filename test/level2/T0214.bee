@@ -1,4 +1,4 @@
--- @DESC:file: stop_next.bee
+-- @DESC:T0214 Loop control with stop and next directives
 -- stop and next demo
 rule main:
   for i ∈ (1..10) do

@@ -1,4 +1,4 @@
--- @DESC:file: cycle_condition.bee
+-- @DESC:T0206 Cycle with repeat condition loop
 -- cycle with a condition demo
 rule main:
   new n := 3;

@@ -1,4 +1,4 @@
--- @DESC:file: match_total.bee
+-- @DESC:T0212 Total pattern match with range conditions
 -- A total match needs no default demo
 type Small: (0..3) <: Z;
 rule main:

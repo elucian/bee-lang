@@ -1,4 +1,4 @@
--- @DESC:file: labels.bee
+-- @DESC:T0209 Nested cycles with labels and early stop
 -- Labels demo
 rule main:
   cycle outer:

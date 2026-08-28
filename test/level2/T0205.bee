@@ -1,4 +1,4 @@
--- @DESC:T0106 Test Expectation and variable resolution
+-- @DESC:T0205 Test Expectation and variable resolution
 rule main:
   new a ∈ Z;
   let a := 42;

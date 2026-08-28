@@ -1,4 +1,4 @@
--- @DESC:file: else_if_ladder.bee
+-- @DESC:T0207 Conditional execution with else-if ladder
 -- An else-if ladder demo
 rule main:
   new n := 0;

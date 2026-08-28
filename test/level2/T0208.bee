@@ -1,4 +1,4 @@
--- @DESC:file: if_else.bee
+-- @DESC:T0208 Conditional if-else branching
 -- if and else demo
 rule main:
   new n := 7;
