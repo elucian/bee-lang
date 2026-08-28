@@ -139,8 +139,7 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 		p.l.NextToken() // Skip ;
 		return stmt
 	}
-	// Also handle newline / end of statement without explicit semicolon
-	if p.l.PeekChar() == '\n' || p.l.PeekChar() == 0 {
+	if p.l.PeekChar() == '\n' || p.l.PeekChar() == '\r' || p.l.PeekChar() == 0 {
 		return stmt
 	}
 	stmt.Expressions = append(stmt.Expressions, p.parseExpression())
