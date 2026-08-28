@@ -8,10 +8,10 @@
 
 ## 2. Test Lifecycle & Freeze Protocol (.bee Test Cases)
 * **Spec-Driven Generation:** Generate new test files (`.bee`) strictly under `test/levelX/` derived directly from `/spec/`.
-* **Locking Created Tests:** Every newly generated `.bee` test file MUST include this header tag on line 1:
-  `// @FROZEN: Generated from /spec/. Immutable ground truth.`
-* **Read-Only Enforcement:** Test files in `test/levelX/*.bee` (especially those marked `@FROZEN`) are strictly immutable. NEVER modify `.bee` test inputs, assertions, or expected outputs to force a failing compiler build to pass.
-* **Disable, Never Delete:** If a test fails persistently across fix attempts, NEVER delete the file. Disable it by prepending `// @DISABLED: <reason>` on line 1 of the `.bee` file.
+* **Locking Created Tests (AI-Immunity):** Every newly generated `.bee` test file MUST include this header tag on line 1:
+  `// @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.`
+* **AI Read-Only Enforcement:** Test files in `test/levelX/*.bee` marked `@FROZEN` are strictly immutable for AI agents. AI agents must NEVER modify `.bee` test inputs, assertions, or expected outputs to force a failing compiler build to pass. (Human users retain full permission to modify or author tests).
+* **Disable, Never Delete:** If a test fails persistently across fix attempts, AI agents must NEVER delete the file. Disable it by prepending `// @DISABLED: <reason>` on line 1 of the `.bee` file.
 
 ## 3. Execution & Workflow Rules
 - **Zero Preamble:** Omit conversational chatter. Output actionable Go code, unified diffs, or terminal commands directly.

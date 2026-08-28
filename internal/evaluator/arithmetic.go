@@ -84,24 +84,30 @@ func evalArithmetic(op string, left, right int, literal string) int {
 		return 0
 	case "^":
 		rightVal := right
-		if literal == "³" || literal == "3" {
+		if literal == "³" {
 			rightVal = 3
-		} else if literal == "²" || literal == "2" {
+		} else if literal == "²" {
 			rightVal = 2
-		} else if literal == "⁴" || literal == "4" {
+		} else if literal == "⁴" {
 			rightVal = 4
-		} else if literal == "⁵" || literal == "5" {
+		} else if literal == "⁵" {
 			rightVal = 5
-		} else if literal == "⁶" || literal == "6" {
+		} else if literal == "⁶" {
 			rightVal = 6
-		} else if literal == "⁷" || literal == "7" {
+		} else if literal == "⁷" {
 			rightVal = 7
-		} else if literal == "⁸" || literal == "8" {
+		} else if literal == "⁸" {
 			rightVal = 8
-		} else if literal == "⁹" || literal == "9" {
+		} else if literal == "⁹" {
 			rightVal = 9
 		} else if literal != "" && literal != "^" {
-			rightVal = parseSuperscriptInt(literal)
+			parsed := parseSuperscriptInt(literal)
+			if parsed > 0 && literal != "^" && literal != "1" && literal != "2" && literal != "3" && literal != "4" && literal != "5" && literal != "6" && literal != "7" && literal != "8" && literal != "9" {
+				rightVal = parsed
+			}
+		}
+		if rightVal == 0 && literal == "0" {
+			rightVal = 0
 		}
 		res := 1
 		for i := 0; i < rightVal; i++ {
@@ -109,10 +115,10 @@ func evalArithmetic(op string, left, right int, literal string) int {
 		}
 		return res
 	case "√":
-		if left != 0 {
-			return evalSqrt(literal, left)
+		if right != 0 {
+			return evalSqrt(literal, right)
 		}
-		return evalSqrt(literal, right)
+		return evalSqrt(literal, left)
 	default:
 		if literal != "" && (strings.HasSuffix(literal, "√") || strings.Contains(literal, "√")) {
 			if left != 0 {

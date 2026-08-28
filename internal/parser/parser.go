@@ -135,21 +135,32 @@ func (p *Parser) parseExpectStatement(tok token.Token) Statement {
 
 func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	stmt := &PrintStatement{Token: tok}
+	if p.l.PeekChar() == ';' {
+		p.l.NextToken() // Skip ;
+		return stmt
+	}
+	// Also handle newline / end of statement without explicit semicolon
+	if p.l.PeekChar() == '\n' || p.l.PeekChar() == 0 {
+		return stmt
+	}
 	stmt.Expressions = append(stmt.Expressions, p.parseExpression())
 	for p.l.PeekChar() == ',' {
 		p.l.NextToken() // consume comma
 		stmt.Expressions = append(stmt.Expressions, p.parseExpression())
 	}
-	p.l.NextToken() // Skip ;
+	if p.l.PeekChar() == ';' {
+		p.l.NextToken() // Skip ;
+	}
 	return stmt
 }
 
 func (p *Parser) parseExpression() Expression {
 	tok := p.l.NextToken()
 	var left Expression
+	// <!-- FEATURE: RADICAL_PREFIX_PARSER -->
 	if tok.Type == token.SQRT || tok.Literal == "²√" || tok.Literal == "³√" || tok.Literal == "⁴√" || tok.Literal == "⁵√" || tok.Literal == "⁶√" || tok.Literal == "⁷√" || tok.Literal == "⁸√" || tok.Literal == "⁹√" || tok.Literal == "¹⁰√" || tok.Literal == "√" {
 		right := p.parseExpression()
-		return &BinaryExpression{Token: tok, Left: &IntegerLiteral{Token: token.Token{Literal: "0"}, Value: "0"}, Right: right}
+		return &BinaryExpression{Token: tok, Left: &Identifier{Token: token.Token{Literal: "0"}, Value: "0"}, Right: right}
 	} else if tok.Type == token.LPAREN {
 		left = p.parseExpression()
 		p.l.NextToken() // consume ')'
@@ -168,7 +179,7 @@ func (p *Parser) parseExpression() Expression {
 		return &BinaryExpression{Token: tok, Left: &IntegerLiteral{Token: token.Token{Literal: "0"}, Value: "0"}, Right: right}
 	} else if tok.Type == token.STRING {
 		left = &StringLiteral{Token: tok, Value: tok.Literal}
-	} else if tok.Type == token.INT {
+	} else if tok.Type == token.INT || tok.Type == token.REAL {
 		left = &IntegerLiteral{Token: tok, Value: tok.Literal}
 	} else if tok.Type == token.LBRACKET {
 		arrLit := &ArrayLiteral{Token: tok}
@@ -190,20 +201,23 @@ func (p *Parser) parseExpression() Expression {
 		left = arrLit
 	} else {
 		left = &Identifier{Token: tok, Value: tok.Literal}
-		// Check for index expression e.g. lista[1] or lista[x]
-		if p.l.PeekChar() == '[' {
-			p.l.NextToken() // consume '['
-			bracketTok := p.l.NextToken()
-			var idxExpr Expression
-			if bracketTok.Literal == "$" {
-				idxExpr = &Identifier{Token: bracketTok, Value: "$"}
-			} else if bracketTok.Type == token.IDENT {
-				idxExpr = &Identifier{Token: bracketTok, Value: bracketTok.Literal}
-			} else {
-				idxExpr = &IntegerLiteral{Token: bracketTok, Value: bracketTok.Literal}
+		// Check if token is IDENT and might be evaluated as symbol
+		if tok.Type == token.IDENT {
+			// Check for index expression e.g. lista[1] or lista[x]
+			if p.l.PeekChar() == '[' {
+				p.l.NextToken() // consume '['
+				bracketTok := p.l.NextToken()
+				var idxExpr Expression
+				if bracketTok.Literal == "$" {
+					idxExpr = &Identifier{Token: bracketTok, Value: "$"}
+				} else if bracketTok.Type == token.IDENT {
+					idxExpr = &Identifier{Token: bracketTok, Value: bracketTok.Literal}
+				} else {
+					idxExpr = &IntegerLiteral{Token: bracketTok, Value: bracketTok.Literal}
+				}
+				p.l.NextToken() // consume ']'
+				left = &IndexExpression{Token: bracketTok, Left: left, Index: idxExpr}
 			}
-			p.l.NextToken() // consume ']'
-			left = &IndexExpression{Token: bracketTok, Left: left, Index: idxExpr}
 		}
 	}
 

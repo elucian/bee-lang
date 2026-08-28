@@ -50,9 +50,12 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			fmt.Fprintf(os.Stderr, "DEBUG: Expectation passed in line %d\n", int(s.Token.Pos))
 		}
 	case *parser.PrintStatement:
-		for _, expr := range s.Expressions {
+		for i, expr := range s.Expressions {
 			val := e.evalExpression(expr)
-			fmt.Print(val, " ")
+			if i > 0 {
+				fmt.Print(" ")
+			}
+			fmt.Print(val)
 		}
 		fmt.Println()
 	case *parser.AssignmentStatement:
@@ -144,6 +147,7 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 			return evalComparison(lit, leftVal, rightVal, expr.Token.Type, lit)
 		}
 
+		// <!-- EVAL: RADICAL_OPERATOR_EVALUATION -->
 		if strings.HasSuffix(lit, "√") || strings.Contains(lit, "√") || expr.Token.Type == token.SQRT || lit == "√" {
 			deg := 2
 			orderStr := strings.TrimSuffix(lit, "√")
@@ -153,7 +157,15 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 					deg = d
 				}
 			}
-			val := e.evalIntExpression(expr.Right)
+			var val int
+			if ident, ok := expr.Right.(*parser.Identifier); ok {
+				if symVal, okSym := e.symbols[ident.Value]; okSym {
+					val = symVal
+				}
+			}
+			if val == 0 {
+				val = e.evalIntExpression(expr.Right)
+			}
 			res := math.Round(math.Pow(float64(val), 1.0/float64(deg)))
 			return int(res)
 		}
@@ -206,6 +218,11 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 			return strconv.Itoa(val)
 		}
 		return expr.Value
+	case *parser.BinaryExpression:
+		return strconv.Itoa(e.evalIntExpression(expr))
 	}
-	return ""
+	if il, ok := node.(*parser.IntegerLiteral); ok {
+		return il.Value
+	}
+	return strconv.Itoa(e.evalIntExpression(node))
 }
