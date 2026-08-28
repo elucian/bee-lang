@@ -2,6 +2,10 @@
 // Package token defines constants, structures, and keyword mapping for lexical tokens in the Bee Programming Language.
 package token
 
+import (
+	"strings"
+)
+
 type Type string
 
 type Pos int
@@ -183,22 +187,21 @@ const (
 	IN_KEYWORD = "IN"
 	START      = "START"
 	TRY        = "TRY"
-	EXPECT     = "EXPECT"
+	USING      = "USING"
 )
 
 var keywords = map[string]Type{
-	"rule":  RULE,
-	"new":   NEW,
-	"let":   LET,
-	"set":   SET,
-	"type":  TYPE,
-	"zap":   ZAP,
-	"self":  SELF,
-	"super": SUPER,
-	"apply": APPLY,
-	"with":  WITH,
-
-	"begin":    BEGIN,
+	"rule":     RULE,
+	"new":      NEW,
+	"let":      LET,
+	"set":      SET,
+	"type":     TYPE,
+	"zap":      ZAP,
+	"self":     SELF,
+	"super":    SUPER,
+	"apply":    APPLY,
+	"with":     WITH,
+	"using":    USING,
 	"alias":    ALIAS,
 	"and":      AND,
 	"abort":    ABORT,
@@ -251,11 +254,11 @@ var keywords = map[string]Type{
 	"in":       IN_KEYWORD,
 	"start":    START,
 	"try":      TRY,
-	"expect":   EXPECT,
 }
 
 func LookupIdent(ident string) Type {
-	if tok, ok := keywords[ident]; ok {
+	cleanIdent := strings.ToLower(strings.TrimSpace(ident))
+	if tok, ok := keywords[cleanIdent]; ok {
 		return tok
 	}
 	return IDENT

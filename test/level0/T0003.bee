@@ -1,4 +1,4 @@
 -- @DESC: Multiple arguments
 rule main:
-  print "Hello,", "World!";
+  print ("Hello,", "World!");
 return;

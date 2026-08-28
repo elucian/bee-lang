@@ -3,11 +3,12 @@ import os
 import shutil
 
 def clean_status():
-    status_dir = "test/status"
-    if os.path.exists(status_dir):
-        shutil.rmtree(status_dir)
-    os.makedirs(status_dir)
-    print(f"Cleaned {status_dir} directory.")
+    dirs_to_clean = ["test/status", "test/output"]
+    for d in dirs_to_clean:
+        if os.path.exists(d):
+            shutil.rmtree(d)
+        os.makedirs(d)
+        print(f"Cleaned {d} directory.")
 
 if __name__ == "__main__":
     clean_status()

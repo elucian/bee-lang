@@ -79,13 +79,10 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 		return p.parseDeclaration(tok)
 	case token.LET:
 		return p.parseAssignment(tok)
-	case token.EXPECT:
-		return p.parseExpectStatement(tok)
 	case token.PRINT:
 		return p.parsePrintStatement(tok)
-	default:
-		return nil
 	}
+	return nil
 }
 
 func (p *Parser) parseDeclaration(tok token.Token) Statement {
@@ -162,34 +159,64 @@ func (p *Parser) parseExpectStatement(tok token.Token) Statement {
 
 func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	stmt := &PrintStatement{Token: tok}
+
+	// Consume optional '('
+	hasParens := false
+	if p.l.PeekToken().Type == token.LPAREN {
+		hasParens = true
+		p.l.NextToken()
+	}
+
+	// Parse arguments
+	first := p.parseExpression()
+	stmt.Expressions = append(stmt.Expressions, first)
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.COMMA {
+			p.l.NextToken() // consume ','
+			expr := p.parseExpression()
+			stmt.Expressions = append(stmt.Expressions, expr)
+		} else {
+			break
+		}
+	}
+
+	// Consume optional ')'
+	if hasParens && p.l.PeekToken().Type == token.RPAREN {
+		p.l.NextToken()
+	}
+
+	// Parse "using" separator
+	peek := p.l.PeekToken()
+	if peek.Literal == "using" || peek.Type == token.USING {
+		p.l.NextToken() // Consume "using"
+		if p.l.PeekToken().Type == token.COLON {
+			p.l.NextToken() // Consume ':'
+		}
+		stmt.Separator = p.parseExpression()
+	}
+
 	if p.l.PeekChar() == ';' {
-		p.l.NextToken() // Skip ;
-		return stmt
-	}
-	if p.l.PeekChar() == '\n' || p.l.PeekChar() == '\r' || p.l.PeekChar() == 0 {
-		return stmt
-	}
-	stmt.Expressions = append(stmt.Expressions, p.parseExpression())
-	for p.l.PeekChar() == ',' {
-		p.l.NextToken() // consume comma
-		stmt.Expressions = append(stmt.Expressions, p.parseExpression())
-	}
-	if p.l.PeekChar() == ';' {
-		p.l.NextToken() // Skip ;
+		p.l.NextToken()
 	}
 	return stmt
 }
 
 func (p *Parser) parseExpression() Expression {
 	tok := p.l.NextToken()
+	if tok.Type == token.EOF {
+		return nil
+	}
 	var left Expression
-	// <!-- FEATURE: RADICAL_PREFIX_PARSER -->
 	if tok.Type == token.SQRT || tok.Literal == "²√" || tok.Literal == "³√" || tok.Literal == "⁴√" || tok.Literal == "⁵√" || tok.Literal == "⁶√" || tok.Literal == "⁷√" || tok.Literal == "⁸√" || tok.Literal == "⁹√" || tok.Literal == "¹⁰√" || tok.Literal == "√" {
 		right := p.parseExpression()
 		return &BinaryExpression{Token: tok, Left: &Identifier{Token: token.Token{Literal: "0"}, Value: "0"}, Right: right}
 	} else if tok.Type == token.LPAREN {
 		left = p.parseExpression()
-		p.l.NextToken() // consume ')'
+		// Consume ')'
+		if p.l.PeekToken().Type == token.RPAREN {
+			p.l.NextToken()
+		}
 		nextTok := p.l.NextToken()
 		if nextTok.Type == token.CARET || nextTok.Literal == "^" || nextTok.Type == token.INT || (nextTok.Literal >= "⁰" && nextTok.Literal <= "⁹") {
 			var right Expression
@@ -248,10 +275,16 @@ func (p *Parser) parseExpression() Expression {
 	}
 
 	// Simple binary expression check (including √)
-	peekTok := p.l.NextToken()
-	if peekTok.Type == token.PLUS || peekTok.Type == token.MINUS || peekTok.Type == token.ASTERISK || peekTok.Type == token.SLASH || peekTok.Literal == "/" || peekTok.Type == token.PERCENT || peekTok.Literal == "%" || peekTok.Type == token.CARET || peekTok.Literal == "^" || peekTok.Type == token.SQRT || peekTok.Literal == "√" || peekTok.Literal == "²√" || peekTok.Literal == "³√" || peekTok.Literal == "⁴√" || peekTok.Literal == "⁵√" || peekTok.Literal == "⁶√" || peekTok.Literal == "⁷√" || peekTok.Literal == "⁸√" || peekTok.Literal == "⁹√" || peekTok.Literal == "¹⁰√" || peekTok.Type == token.EQ || peekTok.Literal == "=" || peekTok.Literal == "==" || peekTok.Type == token.NEQ_UNICODE || peekTok.Literal == "≠" || peekTok.Literal == "â‰ " || peekTok.Type == token.NOT_EQ || peekTok.Type == token.GT || peekTok.Type == token.GTE || peekTok.Type == token.LT || peekTok.Type == token.LTE || peekTok.Type == token.AND || peekTok.Type == token.OR || peekTok.Type == token.XOR || peekTok.Literal == ">" || peekTok.Literal == "<" || peekTok.Literal == ">=" || peekTok.Literal == "<=" || peekTok.Literal == "!=" {
-		right := p.parseExpression()
-		return &BinaryExpression{Token: peekTok, Left: left, Right: right}
+	for {
+		peekTok := p.l.PeekToken()
+		fmt.Fprintf(os.Stderr, "DEBUG: In binary loop, peekTok type: %v, literal: %q\n", peekTok.Type, peekTok.Literal)
+		if peekTok.Type == token.PLUS || peekTok.Type == token.MINUS || peekTok.Type == token.ASTERISK || peekTok.Type == token.SLASH || peekTok.Literal == "/" || peekTok.Type == token.PERCENT || peekTok.Literal == "%" || peekTok.Type == token.CARET || peekTok.Literal == "^" || peekTok.Type == token.SQRT || peekTok.Literal == "√" || peekTok.Literal == "²√" || peekTok.Literal == "³√" || peekTok.Literal == "⁴√" || peekTok.Literal == "⁵√" || peekTok.Literal == "⁶√" || peekTok.Literal == "⁷√" || peekTok.Literal == "⁸√" || peekTok.Literal == "⁹√" || peekTok.Literal == "¹⁰√" || peekTok.Type == token.EQ || peekTok.Literal == "=" || peekTok.Literal == "==" || peekTok.Type == token.NEQ_UNICODE || peekTok.Literal == "≠" || peekTok.Literal == "â‰ " || peekTok.Type == token.NOT_EQ || peekTok.Type == token.GT || peekTok.Type == token.GTE || peekTok.Type == token.LT || peekTok.Type == token.LTE || peekTok.Type == token.AND || peekTok.Type == token.OR || peekTok.Type == token.XOR || peekTok.Literal == ">" || peekTok.Literal == "<" || peekTok.Literal == ">=" || peekTok.Literal == "<=" || peekTok.Literal == "!=" {
+			p.l.NextToken() // Consume operator
+			right := p.parseExpression()
+			left = &BinaryExpression{Token: peekTok, Left: left, Right: right}
+			continue
+		}
+		break
 	}
 	return left
 }

@@ -26,6 +26,7 @@ type Program struct {
 type PrintStatement struct {
 	Token       token.Token
 	Expressions []Expression
+	Separator   Expression
 }
 
 func (ps *PrintStatement) statementNode() {}

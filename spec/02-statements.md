@@ -22,6 +22,8 @@ Bee divides statements into five distinct syntactic categories:
 - **Operator `:=` Evaluation:**
   - Used with `let` (`let x := expr;`), `:=` updates the value of an existing mutable variable.
   - Fails with `E0202` if the variable was not previously declared with `new`.
+- **Keyword `using`:**
+  - Reserved keyword for defining secondary parameter lists or separator configurations in statements.
 - **Mutation Operators:**
   - Compound operators (`+=`, `-=`, `*=`, `/=`, `%=`, `^=`, `√=`) apply to existing mutable variables declared with `new`.
 - **Deep Clone Assignment (`::`):** `let target :: source;` performs a deep copy of nested collection/object structures, disconnecting ARC references.
@@ -140,7 +142,7 @@ decl_stmt         ::= "new" identifier ( "∈" | "in" ) type_specifier [ ":=" ex
 mutation_stmt     ::= "let" identifier assign_op expression ;
 assign_op         ::= ":=" | "::" | "+=" | "-=" | "*=" | "/=" | "%=" | "^=" | "√=" ;
 memory_stmt       ::= "zap" identifier ;
-io_stmt           ::= "print" expression ( "," expression )*
+io_stmt           ::= "print" "(" expression ( "," expression )* ")" [ "using" ":" expression ]
                     | "write" expression ;
 
 (* Control Flow *)

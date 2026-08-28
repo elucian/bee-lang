@@ -16,7 +16,7 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | T0106    | PASS                             | Expectation/Variable resolu... |
 | T0107    | UNKNOWN                          | TBD        |
 | T0108    | UNKNOWN                          | TBD        |
-| T0115    | T0115 Comprehensive print sta... | PASS       |
+| T0115    | Comprehensive print statement... | PASS       |
 | T0116    | file: comments_demo.bee          | PASS       |
 | T0117    | file: constants.bee              | PASS       |
 | T0118    | file: declaring_variable.bee     | PASS       |

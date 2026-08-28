@@ -50,11 +50,16 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			fmt.Fprintf(os.Stderr, "DEBUG: Expectation passed in line %d\n", int(s.Token.Pos))
 		}
 	case *parser.PrintStatement:
+		separator := " "
+		if s.Separator != nil {
+			sepVal := e.evalExpression(s.Separator)
+			separator = strings.Trim(sepVal, "\"")
+		}
 		for i, expr := range s.Expressions {
-			val := e.evalExpression(expr)
 			if i > 0 {
-				fmt.Print(" ")
+				fmt.Print(separator)
 			}
+			val := e.evalExpression(expr)
 			fmt.Print(val)
 		}
 		fmt.Println()

@@ -2,6 +2,7 @@
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
+| T0004    | Test print with custom separator | PASS       |
 | smoke    | Smoke test validation            | PASS       |
 | T0001    | Hello World Test                 | PASS       |
 | T0002    | Large list of numbers            | PASS       |

@@ -1,4 +1,4 @@
 -- @DESC: Large list of numbers
 rule main:
-  print 10, 20, 30, 40, 50;
+  print (10, 20, 30, 40, 50) using ",";
 return;

@@ -43,17 +43,6 @@ def run_solo():
     print("--- STDERR ---")
     print(res.stderr)
     
-    code_lines = []
-    try:
-        with open(test_path, "r", encoding="utf-8") as tf:
-            code_lines = tf.readlines()
-    except Exception:
-        pass
-        
-    os.makedirs("test/output", exist_ok=True)
-    report_name = f"{os.path.splitext(os.path.basename(test_path))[0]}.md"
-    report_path = os.path.join("test/output", report_name)
-    
     status = "PASS" if res.returncode == 0 else "FAIL"
     
     # Extract description
@@ -66,6 +55,22 @@ def run_solo():
                     break
     except:
         pass
+    
+    os.makedirs("test/output", exist_ok=True)
+    report_name = f"{os.path.splitext(os.path.basename(test_path))[0]}.md"
+    report_path = os.path.join("test/output", report_name)
+    status = "PASS" if res.returncode == 0 else "FAIL"
+    
+    code_lines = []
+    try:
+        with open(test_path, "r", encoding="utf-8") as tf:
+            code_lines = tf.readlines()
+    except Exception:
+        pass
+        
+    os.makedirs("test/output", exist_ok=True)
+    report_name = f"{os.path.splitext(os.path.basename(test_path))[0]}.md"
+    report_path = os.path.join("test/output", report_name)
     
     # Update README
     test_name = os.path.splitext(os.path.basename(test_path))[0]

@@ -48,11 +48,21 @@ func (l *Lexer) PeekChar() rune {
 	return l.runes[l.readPosition]
 }
 
-func (l *Lexer) PeekN(n int) string {
-	if l.readPosition+n > len(l.runes) {
-		return string(l.runes[l.readPosition:])
-	}
-	return string(l.runes[l.readPosition : l.readPosition+n])
+func (l *Lexer) PeekToken() token.Token {
+	// Simple peek
+	savedPos := l.position
+	savedReadPos := l.readPosition
+	savedCh := l.ch
+	savedLine := l.line
+
+	tok := l.NextToken()
+
+	l.position = savedPos
+	l.readPosition = savedReadPos
+	l.ch = savedCh
+	l.line = savedLine
+
+	return tok
 }
 
 func (l *Lexer) NextToken() token.Token {
@@ -316,7 +326,8 @@ func (l *Lexer) NextToken() token.Token {
 
 		if isLetter(l.ch) {
 			lit := l.readIdentifier()
-			tok = token.Token{Type: token.LookupIdent(lit), Literal: lit, Pos: token.Pos(l.line)}
+			tokType := token.LookupIdent(lit)
+			tok = token.Token{Type: tokType, Literal: lit, Pos: token.Pos(l.line)}
 			return tok
 		} else if isDigit(l.ch) {
 			numTok := l.readNumberLiteral()
