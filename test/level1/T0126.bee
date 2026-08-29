@@ -5,8 +5,8 @@ rule main:
   new r := 0.5;
   new s := "text";
   new f := True;
-  expect a.type() == Z;
-  expect r.type() == R;
-  expect s.type() == U;
-  expect f.type() == B;
+  expect a.type() is Z;
+  expect r.type() is R;
+  expect s.type() is U;
+  expect f.type() is B;
 return;

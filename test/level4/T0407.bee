@@ -1,4 +1,4 @@
--- @DESC:@DISABLED: === VARIABLE CONTEXT ===
+-- @DESC:@DISABLED: is= VARIABLE CONTEXT is=
 -- file: contract_postcondition.bee
 -- A postcondition demo
 rule bump(n ∈ Z) => (r ∈ Z):

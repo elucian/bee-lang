@@ -15,18 +15,52 @@ Bee divides statements into six distinct syntactic categories, designed for high
 
 ## 2. Declarations, Mutations & Assignment Operators
 
-### 2.1 Variable Declaration & Immutability
-- **Immutable Constant (`set`):**
-  $$\text{binding}(x) \leftarrow v \quad (\text{read-only})$$
+### 2.1 Variable Declaration & Gradual Typing Initialization
+Bee provides two declaration keywords (`set` for constants, `new` for mutable variables) with gradual typing semantics governed by the choice of operator (`:=` for type inference, `:` for structural pair-up):
+
+- **Type Inference (`:=` with `set` / `new`):**
+  Defines and initializes variables without explicit type specification. The compiler infers static types from the assigned expression(s).
+  $$\text{binding}(x_i) \leftarrow v_i \quad (\text{read-only constant for } set)$$
+  $$\text{alloc}(x_i) \in \text{typeof}(v_i), \quad x_i \leftarrow v_i \quad (\text{mutable for } new)$$
   ```bee
   set max_buffer := 1024;
-  ```
-- **Mutable Variable (`new`):**
-  $$\text{alloc}(x) \in \mathbb{T}, \quad x \leftarrow v_0$$
-  ```bee
-  new count ∈ Z := 0;
+  set width, height := 1920, 1080;
   new name := "Bee";
+  new x, y, z := 1, 2, 3;    -- parallel 1-to-1 inferred binding
   ```
+
+- **Explicit Type Declaration & Zero-Initialization (`∈ Type`):**
+  Declares single or multiple variables with a static type constraint, automatically zero-initializing each identifier according to its type.
+  $$\forall i \in [1, n], \quad \text{alloc}(x_i) \in \mathbb{T}, \quad x_i \leftarrow \text{zero}(\mathbb{T})$$
+  ```bee
+  new count ∈ Z;             -- single variable zero-initialized to 0
+  new a, b, c ∈ Z;           -- multiple variables all initialized to 0
+  ```
+
+- **Explicit Type Initialization (`= with ∈ Type`):**
+  The `=` operator assigns an initial value while mandating explicit type specification $Type$.
+  $$\forall i \in [1, n], \quad \text{alloc}(x_i) \in \mathbb{T}, \quad x_i \leftarrow v_0$$
+  ```bee
+  new count ∈ Z = 0;
+  new xo, yo, zo ∈ Z = 10;   -- type Z explicitly specified; broadcast initialization
+  ```
+- **Equality & Relation Operators:**
+  - **Value Comparison (`==`, `<>`)**: Evaluates structural equality/inequality of two entities.
+  - **Identity Check (`is`, `is not`)**: Evaluates reference/pointer identity (or negation).
+  - **Range Notation (`!`)**: Denotes range boundaries.
+  ```bee
+  expect count == 0;
+  expect count <> 1;         -- inequality
+  expect xo is yo;
+  expect xo is not zo;       -- identity negation
+  new r ∈ N := 1!10;        -- range 1 to 10
+  ```
+
+- **Logical Operators:**
+Bee utilizes descriptive keywords for boolean logic: `and`, `or`, `xor`, `not`.
+```bee
+if (a == 0) and (not (b == 0)) do ...
+```
 
 ### 2.2 Mutation Semantics (`let`)
 - **Operator `:=` Evaluation:** Modifies an existing variable declared with `new`. Fails with `E0202: UnboundVariable` if the target was not previously initialized.
@@ -254,9 +288,11 @@ statement         ::= decl_stmt
                     | transfer_stmt ";" ;
 
 (* Declarations & Mutations *)
-decl_stmt         ::= "set" identifier ":=" expression
-                    | "new" identifier ( "∈" | "in" ) type_specifier [ ":=" expression ]
-                    | "new" identifier ":=" expression ;
+decl_stmt         ::= "set" ident_list ":=" expr_list
+                    | "new" ident_list ( "∈" | "in" ) type_specifier [ "=" ( expression | expr_list ) | ":=" expr_list ]
+                    | "new" ident_list ":=" expr_list ;
+ident_list        ::= identifier ( "," identifier )* ;
+expr_list         ::= expression ( "," expression )* ;
 
 mutation_stmt     ::= "let" identifier assign_op expression ;
 assign_op         ::= ":=" | "::" | "+=" | "-=" | "*=" | "/=" | "%=" | "^=" | "√=" ;
@@ -265,6 +301,15 @@ memory_stmt       ::= "zap" identifier ;
 (* Contracts & Diagnostics *)
 contract_stmt     ::= "assert" expression
                     | "expect" expression [ "else" expression ] ;
+
+(* Expressions (Standard Comparison Operators) *)
+comparison_expr   ::= expression ( "==" | "<>" | "is" | "is not" | "<" | ">" | "<=" | ">=" | "≈" ) expression ;
+
+(* Logical Operators *)
+logical_expr      ::= expression ( "and" | "or" | "xor" | "not" ) expression ;
+
+(* Range Notation *)
+range_expr        ::= expression "!" expression ;
 
 (* I/O Directives *)
 io_stmt           ::= "print" [ "(" expression_list ")" | expression_list ] [ "using" [ ":" ] expression ]

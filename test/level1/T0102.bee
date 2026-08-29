@@ -4,7 +4,7 @@ rule main:
   new a, b, r1, r2, r3 ∈ Z;
   let a := 5;
   let b := 10;
-  let r1 := a != b;
+  let r1 := a is not b;
   expect r1 = 1;
   let r2 := a < b;
   expect r2 = 1;

@@ -4,7 +4,7 @@ rule main:
   let s := "Hello World";
   let n := s;
   expect s  = n; -- same value
-  expect s == n; -- same refference
+  expect s is n; -- same refference
   expect s
   print s;
 return;

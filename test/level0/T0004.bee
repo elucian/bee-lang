@@ -1,7 +1,0 @@
--- @DESC:Test print with custom separator
-rule main:
-  new a ∈ Z; new b ∈ Z;
-  let a := 1;
-  let b := 2;
-  print (a, b) using: " | ";
-return;

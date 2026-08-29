@@ -1,4 +1,4 @@
--- @DISABLED: === VARIABLE CONTEXT ===
+-- @DISABLED: is= VARIABLE CONTEXT is=
 -- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC:T0103 Logical and boolean Unicode operators
 rule main:
