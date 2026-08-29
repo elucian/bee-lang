@@ -1,5 +1,5 @@
--- @DESC:file: constants.bee
--- Constants demo
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0117 Constant declaration with set
 set LIMIT: 10 ∈ Z;
 rule main:
   print LIMIT;

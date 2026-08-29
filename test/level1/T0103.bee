@@ -1,8 +1,10 @@
--- @DESC: Logical/Bitwise operators
--- T0103: Logical and bitwise operators group using Unicode symbols
+-- @DISABLED: === VARIABLE CONTEXT ===
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0103 Logical and boolean Unicode operators
 rule main:
-  new p ∈ Z; new q ∈ Z;
-  let p := 1; let q := 0;
+  new p, q ∈ Z;
+  let p := 1;
+  let q := 0;
   expect p ∧ p;
   expect p ∨ q;
   expect p ⊕ q;

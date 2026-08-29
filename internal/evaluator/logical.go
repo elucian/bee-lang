@@ -2,17 +2,17 @@ package evaluator
 
 func evalLogical(op string, left, right int) int {
 	switch op {
-	case "and":
+	case "and", "∧":
 		if left != 0 && right != 0 {
 			return 1
 		}
 		return 0
-	case "or":
+	case "or", "∨":
 		if left != 0 || right != 0 {
 			return 1
 		}
 		return 0
-	case "xor":
+	case "xor", "⊕":
 		if (left != 0) != (right != 0) {
 			return 1
 		}

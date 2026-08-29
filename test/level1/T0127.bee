@@ -1,6 +1,5 @@
--- @DESC:@DISABLED: === VARIABLE CONTEXT ===
--- file: zero_values.bee
--- Zero values demo
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0127 Zero-value initialization across types
 rule zeros() => (z ∈ Z, r ∈ R, f ∈ B):
   expect True;
 return;

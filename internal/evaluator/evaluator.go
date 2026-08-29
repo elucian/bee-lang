@@ -153,6 +153,14 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 						}
 						e.symbols[name.Value] = res
 					}
+				case "^=":
+					e.symbols[name.Value] = int(math.Pow(float64(e.symbols[name.Value]), float64(rightVal)))
+				case "√=":
+					deg := rightVal
+					if deg <= 0 {
+						deg = 2
+					}
+					e.symbols[name.Value] = int(math.Round(math.Pow(float64(e.symbols[name.Value]), 1.0/float64(deg))))
 				case ":=", "=":
 					e.symbols[name.Value] = rightVal
 				default:
@@ -163,25 +171,41 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			}
 		}
 	case *parser.DeclarationStatement:
-		e.debugLog("EVALUATOR DEBUG: Declaring %s\n", s.Name)
-		if s.Value != nil {
-			if strLit, ok := s.Value.(*parser.StringLiteral); ok {
-				e.stringSymbols[s.Name] = strLit.Value
-				e.debugLog("EVALUATOR DEBUG: Declared string %s = %q\n", s.Name, strLit.Value)
-			} else if arrLit, ok := s.Value.(*parser.ArrayLiteral); ok {
-				elems := make([]int, len(arrLit.Elements))
-				for i, el := range arrLit.Elements {
-					elems[i] = e.evalIntExpression(el)
+		names := s.Names
+		if len(names) == 0 && s.Name != "" {
+			names = []string{s.Name}
+		}
+		for i, name := range names {
+			e.debugLog("EVALUATOR DEBUG: Declaring %s\n", name)
+			if i < len(s.Values) && s.Values[i] != nil {
+				if strLit, ok := s.Values[i].(*parser.StringLiteral); ok {
+					e.stringSymbols[name] = strLit.Value
+				} else if arrLit, ok := s.Values[i].(*parser.ArrayLiteral); ok {
+					elems := make([]int, len(arrLit.Elements))
+					for j, el := range arrLit.Elements {
+						elems[j] = e.evalIntExpression(el)
+					}
+					e.arrayValues[name] = elems
+				} else {
+					val := e.evalIntExpression(s.Values[i])
+					e.symbols[name] = val
 				}
-				e.arrayValues[s.Name] = elems
+			} else if s.Value != nil && len(names) == 1 {
+				if strLit, ok := s.Value.(*parser.StringLiteral); ok {
+					e.stringSymbols[name] = strLit.Value
+				} else if arrLit, ok := s.Value.(*parser.ArrayLiteral); ok {
+					elems := make([]int, len(arrLit.Elements))
+					for j, el := range arrLit.Elements {
+						elems[j] = e.evalIntExpression(el)
+					}
+					e.arrayValues[name] = elems
+				} else {
+					val := e.evalIntExpression(s.Value)
+					e.symbols[name] = val
+				}
 			} else {
-				val := e.evalIntExpression(s.Value)
-				e.symbols[s.Name] = val
-				e.debugLog("EVALUATOR DEBUG: Declared %s = %d\n", s.Name, val)
+				e.symbols[name] = 0
 			}
-		} else {
-			e.symbols[s.Name] = 0
-			e.debugLog("EVALUATOR DEBUG: Declared %s = 0\n", s.Name)
 		}
 	}
 }
@@ -229,10 +253,21 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 			rightVal := e.evalIntExpression(expr.Right)
 			return evalComparison(lit, leftVal, rightVal, expr.Token.Type, lit)
 		}
-		if expr.Token.Type == token.NEQ_UNICODE || lit == "≠" || strings.Contains(lit, "≠") {
+		if expr.Token.Type == token.NOT_EQ || lit == "!=" || lit == "<>" || expr.Token.Type == token.NEQ_UNICODE || lit == "≠" || strings.Contains(lit, "≠") {
 			leftVal := e.evalIntExpression(expr.Left)
 			rightVal := e.evalIntExpression(expr.Right)
 			return evalComparison(lit, leftVal, rightVal, expr.Token.Type, lit)
+		}
+		if lit == "in" || lit == "∈" || expr.Token.Type == token.IN_OP || expr.Token.Type == token.IN_KEYWORD {
+			leftVal := e.evalIntExpression(expr.Left)
+			if binRight, ok := expr.Right.(*parser.BinaryExpression); ok && (binRight.Token.Literal == ".." || binRight.Token.Type == token.RANGE_INCL) {
+				start := e.evalIntExpression(binRight.Left)
+				end := e.evalIntExpression(binRight.Right)
+				if leftVal >= start && leftVal <= end {
+					return 1
+				}
+				return 0
+			}
 		}
 
 		// <!-- EVAL: RADICAL_OPERATOR_EVALUATION -->
@@ -270,9 +305,9 @@ func (e *Evaluator) evalIntExpression(node parser.Expression) int {
 		switch lit {
 		case "+", "-", "*", "/", "%", "^", "√":
 			return evalArithmetic(lit, left, right, lit)
-		case "and", "or", "xor", "¬":
+		case "and", "or", "xor", "¬", "∧", "∨", "⊕":
 			return evalLogical(lit, left, right)
-		case "<", ">", "<=", ">=", "≠":
+		case "<", ">", "<=", ">=", "≠", "!=", "<>":
 			return evalComparison(lit, left, right, expr.Token.Type, lit)
 		default:
 			if strings.HasSuffix(lit, "√") || strings.Contains(lit, "√") {

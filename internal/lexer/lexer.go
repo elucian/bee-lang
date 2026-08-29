@@ -194,6 +194,9 @@ func (l *Lexer) NextToken() token.Token {
 		if l.PeekChar() == '>' {
 			l.readChar()
 			tok = token.Token{Type: token.FAT_ARROW, Literal: "=>", Pos: token.Pos(l.line)}
+		} else if l.PeekChar() == '=' {
+			l.readChar()
+			tok = token.Token{Type: token.EQ, Literal: "==", Pos: token.Pos(l.line)}
 		} else {
 			tok = token.Token{Type: token.EQ, Literal: "=", Pos: token.Pos(l.line)}
 		}
@@ -294,6 +297,9 @@ func (l *Lexer) NextToken() token.Token {
 		} else if l.PeekChar() == '=' {
 			l.readChar()
 			tok = token.Token{Type: token.LTE, Literal: "<=", Pos: token.Pos(l.line)}
+		} else if l.PeekChar() == '>' {
+			l.readChar()
+			tok = token.Token{Type: token.NOT_EQ, Literal: "<>", Pos: token.Pos(l.line)}
 		} else {
 			tok = token.Token{Type: token.LT, Literal: "<", Pos: token.Pos(l.line)}
 		}

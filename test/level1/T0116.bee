@@ -1,8 +1,10 @@
--- @DESC:file: comments_demo.bee
--- Comments demo --
--- a whole-line comment
--- another one
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0116 Line and block comments formatting
++-------------------------------
+|  a whole-line comment        |
+|  another one, all boxed      |
+-------------------------------+
 rule main:
-  print 1;                              -- trailing comment
+  print "comments"; -- trailing comment
 return;
-
+-- after the return we have comments

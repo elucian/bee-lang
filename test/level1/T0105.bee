@@ -1,4 +1,5 @@
--- @DESC:T0105 Range operators and types test case
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0105 Range membership with in operator
 rule main:
   new a ∈ Z;
   let a := 10;

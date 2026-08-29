@@ -1,6 +1,5 @@
--- @DESC:@DISABLED: PARSER DEBUG: ident tok="x"
--- file: T0109_repro.bee
-// @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0124 In-place addition mutation operator
 rule main:
   new x ∈ Z;
   let x := 10;

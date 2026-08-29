@@ -1,6 +1,9 @@
 -- @DESC:file: hello_world.bee
 -- hello world demo
 rule main:
-  print "Hello World";
+  write "Hello";
+  write " ";
+  write "World";
+  print;
+  print "done";
 return;
-

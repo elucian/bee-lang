@@ -6,6 +6,7 @@ import (
 	"bee/internal/token"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func parseSuperscriptIntStatic(s string) int {
@@ -104,20 +105,50 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 
 func (p *Parser) parseDeclaration(tok token.Token) Statement {
 	ds := &DeclarationStatement{Token: tok}
-	identTok := p.l.NextToken() // ident
+	identTok := p.l.NextToken() // first ident
 	ds.Name = identTok.Literal
-	nextTok := p.l.NextToken() // ∈ or :=
+	ds.Names = append(ds.Names, identTok.Literal)
+
+	// Check for comma-separated identifier list (e.g. new a, b, c ∈ Z;)
+	for p.l.PeekToken().Type == token.COMMA {
+		p.l.NextToken() // consume ','
+		nextIdent := p.l.NextToken()
+		ds.Names = append(ds.Names, nextIdent.Literal)
+	}
+
+	nextTok := p.l.NextToken() // ∈, in, :=, or colon
 	if nextTok.Literal == ":=" {
-		ds.Value = p.parseExpression()
-	} else {
-		// e.g. new lista := [10, 20, 30];
-		// Let's check next token
-		t2 := p.l.NextToken()
-		if t2.Literal == ":=" {
-			ds.Value = p.parseExpression()
+		val := p.parseExpression()
+		ds.Value = val
+		ds.Values = append(ds.Values, val)
+		for p.l.PeekToken().Type == token.COMMA {
+			p.l.NextToken()
+			ds.Values = append(ds.Values, p.parseExpression())
+		}
+	} else if nextTok.Type == token.IN_OP || nextTok.Type == token.IN_KEYWORD || nextTok.Literal == "∈" || nextTok.Literal == "in" {
+		// e.g. new a, b, c ∈ Z [:= ...]
+		_ = p.l.NextToken() // consume type (e.g. Z)
+		if p.l.PeekToken().Literal == ":=" {
+			p.l.NextToken() // consume :=
+			val := p.parseExpression()
+			ds.Value = val
+			ds.Values = append(ds.Values, val)
+			for p.l.PeekToken().Type == token.COMMA {
+				p.l.NextToken()
+				ds.Values = append(ds.Values, p.parseExpression())
+			}
+		}
+	} else if nextTok.Literal == ":" {
+		// e.g. new a: 1, b: 2 ∈ Z;
+		_ = p.parseExpression() // consume initial val
+		for p.l.PeekToken().Type != token.SEMICOLON && p.l.PeekToken().Type != token.EOF {
+			p.l.NextToken()
 		}
 	}
-	p.l.NextToken() // Skip ;
+
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken() // Skip ;
+	}
 	return ds
 }
 
@@ -315,6 +346,29 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	return stmt
 }
 
+func isBinaryOp(tok token.Token) bool {
+	switch tok.Type {
+	case token.PLUS, token.MINUS, token.ASTERISK, token.SLASH, token.PERCENT, token.CARET,
+		token.SQRT, token.MULT, token.DIV, token.EQ, token.NOT_EQ, token.NEQ_UNICODE,
+		token.LT, token.LTE, token.LTE_UNICODE, token.GT, token.GTE, token.GTE_UNICODE,
+		token.APPROX_EQ, token.EQUIV, token.LOGICAL_AND, token.LOGICAL_OR, token.XOR_PLUS,
+		token.XOR_MINUS, token.IN_OP, token.NOT_IN, token.SET_INTERSECT, token.SET_UNION,
+		token.SUBSET, token.SUPERSET, token.SYM_DIFF, token.RANGE_INCL, token.AND, token.OR,
+		token.XOR, token.IN_KEYWORD:
+		return true
+	}
+	switch tok.Literal {
+	case "+", "-", "*", "/", `\`, "%", "^", "×", "÷", "√", "=", "==", "!=", "≠", "<>",
+		"<", ">", "<=", ">=", "≤", "≥", "≈", "≡", "and", "or", "xor", "∧", "∨", "⊕", "⊖",
+		"in", "∈", "!∈", "∩", "∪", "⊂", "⊃", "Δ", "..":
+		return true
+	}
+	if strings.HasSuffix(tok.Literal, "√") || strings.Contains(tok.Literal, "√") {
+		return true
+	}
+	return false
+}
+
 func (p *Parser) parseExpression() Expression {
 	tok := p.l.NextToken()
 	p.debugLog("DEBUG: Parsing expr, token: %q type: %v\n", tok.Literal, tok.Type)
@@ -382,7 +436,7 @@ func (p *Parser) parseExpression() Expression {
 	for {
 		peekTok := p.l.PeekToken()
 		p.debugLog("DEBUG: In binary loop, peekTok type: %v, literal: %q\n", peekTok.Type, peekTok.Literal)
-		if peekTok.Type == token.PLUS || peekTok.Type == token.MINUS || peekTok.Type == token.ASTERISK || peekTok.Type == token.SLASH || peekTok.Literal == "/" || peekTok.Type == token.PERCENT || peekTok.Literal == "%" || peekTok.Type == token.CARET || peekTok.Literal == "^" || peekTok.Type == token.SQRT || peekTok.Literal == "√" || peekTok.Literal == "²√" || peekTok.Literal == "³√" || peekTok.Literal == "⁴√" || peekTok.Literal == "⁵√" || peekTok.Literal == "⁶√" || peekTok.Literal == "⁷√" || peekTok.Literal == "⁸√" || peekTok.Literal == "⁹√" || peekTok.Literal == "¹⁰√" || peekTok.Type == token.EQ || peekTok.Literal == "=" || peekTok.Literal == "==" || peekTok.Type == token.NEQ_UNICODE || peekTok.Literal == "≠" || peekTok.Literal == "â‰ " || peekTok.Type == token.NOT_EQ || peekTok.Type == token.GT || peekTok.Type == token.GTE || peekTok.Type == token.LT || peekTok.Type == token.LTE || peekTok.Type == token.AND || peekTok.Type == token.OR || peekTok.Type == token.XOR || peekTok.Literal == ">" || peekTok.Literal == "<" || peekTok.Literal == ">=" || peekTok.Literal == "<=" || peekTok.Literal == "!=" {
+		if isBinaryOp(peekTok) {
 			p.l.NextToken() // Consume operator
 			right := p.parseExpression()
 			left = &BinaryExpression{Token: peekTok, Left: left, Right: right}

@@ -1,7 +1,9 @@
--- @DESC:T0104 Exponentiation operators group
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0104 Exponentiation and power operators
 rule main:
-  new base ∈ Z; new exp ∈ Z; new res ∈ Z;
-  let base := 2; let exp := 3;
+  new base, exp, res ∈ Z;
+  let base := 2;
+  let exp := 3;
   let res := base ^ exp;
   expect res = 8;
   expect base ^ exp = 8;

@@ -1,6 +1,5 @@
--- @DESC:@DISABLED: DEBUG: Expectation passed in line 7
-// @ENABLED: Reset by user
--- T0106: Test assignment, equality (=), and inequality (≠) operators
+-- @FROZEN: Generated from spec. Immutable ground truth for AI agents.
+-- @DESC:T0106 Test assignment, equality (=), and inequality (≠) operators
 rule main:
   new a ∈ Z; new b ∈ Z; new r1 ∈ Z; new r2 ∈ Z;
   let a := 42;

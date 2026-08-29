@@ -1,10 +1,15 @@
--- @DESC:test is frozen
--- T0101: Essential arithmetic and assignment
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0101 Essential arithmetic operations and assignments
 rule main:
-  new a ∈ Z; new b ∈ Z; new c ∈ Z; new d ∈ Z; new e ∈ Z;
-  let a := 10 + 3; expect a = 13;
-  let b := 10 - 3; expect b = 7;
-  let c := 10 * 3; expect c = 30;
-  let d := 10 / 3; expect d = 3;
-  let e := 10 % 3; expect e = 1;
+  new a, b, c, d, e ∈ Z;
+  let a := 10 + 3;
+  expect a = 13;
+  let b := 10 - 3;
+  expect b = 7;
+  let c := 10 * 3;
+  expect c = 30;
+  let d := 10 / 3;
+  expect d = 3;
+  let e := 10 % 3;
+  expect e = 1;
 return;

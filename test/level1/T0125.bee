@@ -1,6 +1,5 @@
--- @DESC:@DISABLED: PARSER DEBUG: ident tok="x"
--- file: T0116_mutation.bee
-// @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0125 Chained arithmetic mutation operators
 rule main:
   new x ∈ Z;
   let x := 10;

@@ -3,6 +3,6 @@
 rule main:
   print "before";
   over;
-  print "never";
+  print "never"; -- if this print fail
+  expect False;  -- force failure
 return;
-

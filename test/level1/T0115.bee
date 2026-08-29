@@ -1,5 +1,5 @@
--- @DESC: Comprehensive print statement test
--- (single arg, numbers, multiple args, string, empty lines)
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0115 Comprehensive print and formatted output forms
 rule main:
   print;
   print "Hello, Bee!";

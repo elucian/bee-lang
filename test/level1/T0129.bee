@@ -3,6 +3,6 @@
 rule main:
   new a ∈ Z;
   let a := 10;
-  a += 5; 
+  let a += 5;
   expect a;
 return;

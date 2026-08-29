@@ -76,9 +76,11 @@ func (es *ExpectStatement) statementNode() {}
 func (es *ExpectStatement) Pos() token.Pos { return es.Token.Pos }
 
 type DeclarationStatement struct {
-	Token token.Token
-	Name  string
-	Value Expression
+	Token  token.Token
+	Name   string
+	Names  []string
+	Value  Expression
+	Values []Expression
 }
 
 func (ds *DeclarationStatement) statementNode() {}

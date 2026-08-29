@@ -5,6 +5,8 @@ rule main:
   new r := 0.5;
   new s := "text";
   new f := True;
-  print (kind(a), kind(r), kind(s), kind(f));
+  expect a.type() == Z;
+  expect r.type() == R;
+  expect s.type() == U;
+  expect f.type() == B;
 return;
-

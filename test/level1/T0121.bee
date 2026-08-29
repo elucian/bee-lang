@@ -2,6 +2,7 @@
 -- Initial values demo
 rule main:
   new a: 1, b: 2 ∈ Z;
-  print (a, b);
+  expect a = 1;
+  expect b = 2;
+  print "successful initialization"
 return;
-

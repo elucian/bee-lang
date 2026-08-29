@@ -1,6 +1,5 @@
--- @DESC:@DISABLED: === VARIABLE CONTEXT ===
-// @ENABLED: Reset by user
--- T0107: Square root, cube root, and radical operators (`²√`, `³√`, `⁴√`) and superscripts
+-- @FROZEN: Generated from spec. Immutable ground truth for AI agents.
+-- @DESC:T0107 Square root, cube root, and radical operators
 rule main:
   new x ∈ Z;
   let x := 27;
@@ -9,7 +8,7 @@ rule main:
   expect ⁴√16 = 2;
   expect ³√ 2³ = 2;
   expect (1 + 2)³ = 27;
-  expect 144^(1/2) = 12;
-  expect 625^(1/4) = 5;
-  expect 1000^(1/3) = 10;
+  expect ²√144 = 12;
+  expect ⁴√625 = 5;
+  expect ³√1000 = 10;
 return;

@@ -3,6 +3,7 @@
 rule main:
   new a: 1, b: 2 ∈ Z;
   let a, b := b, a;
-  print (a, b);
+  expect a = 2;
+  expect b = 1;
+  print ("success switching a,b);
 return;
-
