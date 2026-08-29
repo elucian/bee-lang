@@ -95,6 +95,16 @@ Shapes respond to affine transformations in place:
 
 ---
 
+### 5.1 Congruence (≡)
+The geometric congruence operator `≡` determines if two geometric shapes are congruent (sharing identical interior/exterior angles, same number of sides, and same shape class), regardless of their relative scale (size) or position.
+
+```bee
+-- Congruence test for polygons
+expect poly_a ≡ poly_b;
+```
+
+---
+
 ## 6. Formal EBNF Grammar
 
 ```ebnf
@@ -107,6 +117,9 @@ pol_point         ::= "{" "r" ":" expression "," "θ" ":" expression "}" ;
 circle_lit        ::= "CRC" "(" "o" ":" crt_point "," "r" ":" expression ")" ;
 square_lit        ::= "SQR" "(" "o" ":" crt_point "," "b" ":" expression "," "θ" ":" expression ")" ;
 vector_lit        ::= "VEC" "(" "o" ":" crt_point "," "p" ":" crt_point ")" ;
+
+(* Geometric Operators *)
+geometry_expr     ::= expression "≡" expression ;
 
 (* Drawing Statements *)
 draw_stmt         ::= "draw" expression "on" identifier ";" ;
