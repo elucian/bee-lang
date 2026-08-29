@@ -1,7 +1,9 @@
--- @DESC:T0201 Basic variable declaration and print
+-- @DESC:T0201 Basic variable initialization
 rule main:
-  new a ∈ Z;
-  let a := 10;
-  expect a = 10;
-  print a;
+  new a, b, c ∈ Z;          -- explicit declare 3 variable
+  expect a = b = c = 0;     -- default value is zero
+  new x, y, z := 1, 2, 3;   -- type inference, mapping
+  expext x + y + z = 6;     -- check all 3 in one go
+  new xo, yo, zo ∈ Z:10;    -- explicit pair-up;
+  expect xo = yo = zo = 10; -- transitive equal
 return;

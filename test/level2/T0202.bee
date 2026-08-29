@@ -1,6 +1,10 @@
 -- @DESC:T0202 Hello World with String variable
 rule main:
-  new s ∈ S;
+  new s ∈ S; -- declare without initialization
   let s := "Hello World";
+  let n := s;
+  expect s  = n; -- same value
+  expect s == n; -- same refference
+  expect s
   print s;
 return;
