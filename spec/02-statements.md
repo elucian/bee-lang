@@ -9,7 +9,9 @@ Bee divides statements into six distinct syntactic categories, designed for high
 3. **Contract & Verification Statements:** Assert non-fatal warnings and enforce runtime invariants (`assert`, `expect`).
 4. **Control Flow Statements:** Direct branching, pattern matching, local scoping, and iteration loops (`if`, `match`, `start`, `with`, `cycle`, `for`).
 5. **Transactional Trial Statements:** Error handling, staged execution steps, and recovery (`trial`, `try`, `case`, `miss`, `final`).
-6. **Transfer & Termination Statements:** Jump, loop control, and routine completion (`return`, `stop`, `redo`, `next`, `pass`, `yield`, `raise`, `resume`, `retry`).
+5. **Transfer & Termination Statements:** Jump, loop control, and routine completion (`return`, `stop`, `redo`, `next`, `pass`, `yield`, `raise`, `resume`, `retry`).
+
+> **Decision 6 alignment (2026-09-12):** Bee `print` / `write` / `read` directives are themselves `rule_call` invocations; they participate in the canonical *curried rule signature* system defined in `spec/03-rules.md` §2.4 and §3.1. The legacy `using` postfix on `io_stmt` is **deprecated**. The canonical call-site form is `print(a, b)(sep: " | ");` where the `print` rule declares a named-parameter slot `(sep: ", " ∈ Str)` in its signature. Deprecated `using` forms emit non-fatal `E0011` until Phase 7 audit task 7.2 hardens the diagnostic to `E0009`. The full EBNF lives in §5 below.
 
 ---
 
@@ -44,22 +46,22 @@ Bee provides two declaration keywords (`set` for constants, `new` for mutable va
   new count ∈ Z = 0;
   new xo, yo, zo ∈ Z = 10;   -- type Z explicitly specified; broadcast initialization
   ```
-- **Equality & Relation Operators:**
-  - **Value Comparison (`==`, `<>`)**: Evaluates structural equality/inequality of two entities.
-  - **Identity Check (`is`, `is not`)**: Evaluates reference/pointer identity (or negation).
+- **Equality & Relation Operators (mirror of `spec/01-lexical-structure.md` §3.3, Decisions 2-3):**
+  - **Value Comparison (`=`, `<>`)**: `=` evaluates structural equality of two values (true across distinct allocations). `<>` is canonical inequality — the Unicode form `≠` is deprecated (Decision 3) and will be hard-rejected (E0009) once Phase 7 audit task 7.2 completes; the lexer currently emits non-fatal E0010.
+  - **Identity Check (`is`, `is not`)**: Evaluates reference/pointer identity (or negation). `a is b` returns false across distinct allocations even when `a = b`.
   - **Range Notation (`!`)**: Denotes range boundaries.
   ```bee
-  expect count == 0;
-  expect count <> 1;         -- inequality
-  expect xo is yo;
-  expect xo is not zo;       -- identity negation
-  new r ∈ N := 1!10;        -- range 1 to 10
+  expect count = 0;          -- value equality
+  expect count <> 1;          -- canonical inequality (Unicode ≠ rejected)
+  expect xo is yo;            -- identity
+  expect xo is not zo;        -- identity negation
+  new r ∈ N := 1!10;          -- range 1 to 10
   ```
 
 - **Logical Operators:**
 Bee utilizes descriptive keywords for boolean logic: `and`, `or`, `xor`, `not`.
 ```bee
-if (a == 0) and (not (b == 0)) do ...
+if (a = 0) and (not (b = 0)) do ...
 ```
 
 ### 2.2 Mutation Semantics (`let`)
@@ -87,7 +89,7 @@ if (a == 0) and (not (b == 0)) do ...
   $$\text{eval}(c) = 0 \implies \text{warn}(\text{stderr}, \text{line})$$
   Evaluates condition $c$. If false ($0$ or `false`), outputs a diagnostic warning to `stderr` and continues execution.
   ```bee
-  assert denominator ≠ 0;
+  assert denominator <> 0;    -- canonical form per Decision 3 (≠ emits E0010)
   ```
 - **Invariant Expectation (`expect`):**
   $$\text{eval}(c) = 0 \implies \text{raise}(\text{ExpectationFailed})$$
@@ -294,16 +296,17 @@ decl_stmt         ::= "set" ident_list ":=" expr_list
 ident_list        ::= identifier ( "," identifier )* ;
 expr_list         ::= expression ( "," expression )* ;
 
-mutation_stmt     ::= "let" identifier assign_op expression ;
-assign_op         ::= ":=" | "::" | "+=" | "-=" | "*=" | "/=" | "%=" | "^=" | "√=" ;
+mutation_stmt     ::= "let" identifier ( assign_op | mutate_op_sugar ) expression ;
+assign_op         ::= ":=" | "::" | "*=" | "/=" | "%=" | "^=" | "√=" ;
+mutate_op_sugar   ::= "+=" | "-=" ;    (* Decision 2, 2026-09-12: lex-level alias for "+:=" / "-:="; canonical home is spec/01-lexical-structure.md §5 *)
 memory_stmt       ::= "zap" identifier ;
 
 (* Contracts & Diagnostics *)
 contract_stmt     ::= "assert" expression
                     | "expect" expression [ "else" expression ] ;
 
-(* Expressions (Standard Comparison Operators) *)
-comparison_expr   ::= expression ( "==" | "<>" | "is" | "is not" | "<" | ">" | "<=" | ">=" | "≈" ) expression ;
+(* Expressions (Comparison Operators — canonical home: spec/01-lexical-structure.md §5) *)
+comparison_expr   ::= expression ( "=" | "<>" | "is" | "is not" | "<" | ">" | "<=" | ">=" | "≈" ) expression ;
 
 (* Logical Operators *)
 logical_expr      ::= expression ( "and" | "or" | "xor" | "not" ) expression ;
@@ -311,10 +314,21 @@ logical_expr      ::= expression ( "and" | "or" | "xor" | "not" ) expression ;
 (* Range Notation *)
 range_expr        ::= expression "!" expression ;
 
-(* I/O Directives *)
-io_stmt           ::= "print" [ "(" expression_list ")" | expression_list ] [ "using" [ ":" ] expression ]
-                    | "write" [ "(" expression ")" | expression ]
-                    | "read" "(" [ expression "," ] identifier ")" ;
+(* I/O Directives (Decision 6 — curried named-argument postfix) *)
+io_stmt           ::= "print" [ "(" expression_list ")" | expression_list ] [ "(" [ named_arg_list ] ")" ]
+                    | "write" [ "(" expression ")" | expression ] [ "(" [ named_arg_list ] ")" ]
+                    | "read" "(" [ expression "," ] identifier ")" [ "(" [ named_arg_list ] ")" ] ;
+
+(* Decision 6 (2026-09-12): io_stmt is a thin wrapper over rule_call.
+   The optional trailing parenthesised list is the canonical curried application
+   of the directive's named-parameter slot (see spec/03-rules.md §2.4 / §3.1).
+   The legacy postfix `"using" [ ":" ] expression` is deprecated; the lexer
+   emits non-fatal E0011 'DeprecatedSymbol using' until Phase 7.2 hardens it
+   to E0009. *)
+named_arg_list    ::= named_argument ( "," named_argument )* ;
+named_argument    ::= identifier ":" expression ;
+(* named_arguments are order-independent; positional entries are not
+   permitted in the named slot — see spec/03-rules.md §3.1. *)
 
 (* Control Flow Blocks *)
 control_stmt      ::= if_stmt
@@ -372,3 +386,17 @@ transfer_stmt     ::= ( "return" [ expression_list ]
 | `E0205` | `LabelMismatch` | Closing label on `repeat` or `done` does not match opening header label |
 | `W0301` | `AssertionWarning` | Assertion failed in `assert` statement (non-fatal warning logged to stderr) |
 | `E0303` | `ExpectationFailed` | Invariant failed in `expect` statement (fatal runtime error if unhandled) |
+| `E0307` | `MissingNamedArgument` | Curried call site omits a required named-parameter slot binding with no default (Decision 6; canonical home `spec/03-rules.md` §7) |
+| `W0308` | `NamedSlotIgnored` | Curried `(...)` argument list appended where the directive / rule declares no named slot (silently tolerated, warning emitted; Decision 6) |
+| `E0309` | `UnknownNamedArgument` | Curried call site names an identifier not present in the rule's declared named slot (Decision 6) |
+| `E0011` | `DeprecatedSymbol 'using'` | Legacy `using` / `using:` postfix encountered on `io_stmt`; canonical is curried named-argument `(name: ...)` per Decision 6 (Phase 7 audit pre-`E0009`) |
+
+---
+
+## 8. Decision 6 Alignment Status
+
+- **Harmonization complete (this pass).** §5 `io_stmt` EBNF now mirrors `spec/03-rules.md` §2.4 / §3.1 — the `print`, `write`, and `read` directives accept the same curried `(named_arg_list)` postfix as ordinary `rule_call` invocations. The legacy `"using" [ ":" ] expression` postfix is deprecated.
+- **Canonical call-site form:** `print(a, b)(sep: " | ");` — the `sep` name is bound by the `print` rule's declared `(sep: ", " ∈ Str)` named-parameter slot (see `spec/03-rules.md` §2.4).
+- **Deprecation surface.** Encountering a `using` postfix on `io_stmt` lexes successfully but emits non-fatal `E0011 DeprecatedSymbol 'using'`; Phase 7 audit task 7.2 hardens this to a hard `E0009` syntax error.
+- **Procedural note.** Stage 0 source programs (e.g. `test/level0/T0001.bee`, `T0002.bee`) that still employ the legacy `using:` postfix are migrated to the curried form as part of the Decision 6 harmonization pass; the migration is permitted because the change is spec-driven and well-documented in §3.1 of `spec/03-rules.md`.
+- **Next gate.** Implementation in `internal/lexer/`, `internal/parser/`, and the print/write/read evaluators is unlocked once `spec/01-lexical-structure.md`, `spec/02-statements.md`, and `spec/03-rules.md` are all harmonized with Decision 6. As of this pass, all three specs are consistent. The pre-implementation parser hazard remains tracked in `issues/14-parser-silent-token-drop.md`.

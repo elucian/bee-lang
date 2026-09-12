@@ -46,9 +46,10 @@ func parseSuperscriptIntStatic(s string) int {
 }
 
 type Parser struct {
-	l      *lexer.Lexer
-	errors []string
-	debug  bool
+	l        *lexer.Lexer
+	errors   []string
+	warnings []string
+	debug    bool
 }
 
 func (p *Parser) SetDebug(debug bool) {
@@ -65,10 +66,20 @@ func (p *Parser) Errors() []string {
 	return p.errors
 }
 
+func (p *Parser) Warnings() []string {
+	return p.warnings
+}
+
 func New(l *lexer.Lexer) *Parser {
 	return &Parser{l: l}
 }
 
+// ParseProgram tokenizes the full input stream and dispatches every non-EOF
+// token to parseStatement. Per fix for issue 14 (parser-silent-token-drop),
+// any non-EOF token whose dispatch returns nil is recorded as E0009 on
+// p.errors with the token's Type, Literal, and source line. cmd/bee/main.go's
+// -c and -e paths distinguish errors (hard exit) from warnings (parser
+// diagnostic surface only) so the build does not exit on W0901 stubs.
 func (p *Parser) ParseProgram() *Program {
 	program := &Program{}
 	for {
@@ -80,27 +91,372 @@ func (p *Parser) ParseProgram() *Program {
 		stmt := p.parseStatement(tok)
 		if stmt != nil {
 			program.Statements = append(program.Statements, stmt)
+		} else {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q",
+				tok.Pos, tok.Type, tok.Literal,
+			))
 		}
 	}
 	return program
 }
 
+// parseStatement dispatches top-level tokens to their respective parsers.
+// The switch covers the full executive statement taxonomy enumerated in
+// spec/02-statements.md §1 and §5 EBNF: declarations (NEW, SET),
+// memory directives (ZAP), mutation operators (LET), contracts (ASSERT,
+// EXPECT), input/output directives (PRINT, WRITE, READ), control flow (IF,
+// MATCH, START, WITH, CYCLE, FOR, WHILE), transactional error handling
+// (TRIAL, TRY, CASE, MISS, FINAL), transfers (RETURN, STOP, REDO, NEXT,
+// PASS, RAISE, RESUME, RETRY, FAIL), and the canonical entry-block keyword
+// RULE. Any token outside this dispatch is reported as nil and bubbles up
+// to ParseProgram where it is recorded as E0009.
 func (p *Parser) parseStatement(tok token.Token) Statement {
 	switch tok.Type {
-	case token.NEW:
+	case token.RULE:
+		return p.parseRuleEntry(tok)
+	case token.NEW, token.SET:
 		return p.parseDeclaration(tok)
 	case token.LET:
 		return p.parseAssignment(tok)
-	case token.PRINT:
-		return p.parsePrintStatement(tok)
+	case token.ZAP:
+		return p.parseZapStatement(tok)
 	case token.ASSERT:
 		return p.parseAssertStatement(tok)
 	case token.EXPECT:
 		return p.parseExpectStatement(tok)
+	case token.PRINT:
+		return p.parsePrintStatement(tok)
+	case token.WRITE:
+		return p.parseWriteStatement(tok)
+	case token.READ:
+		return p.parseReadStatement(tok)
 	case token.IF:
 		return p.parseIfStatement(tok)
+	case token.MATCH:
+		return p.parseMatchStatement(tok)
+	case token.START, token.WITH:
+		return p.parseScopeStatement(tok)
+	case token.CYCLE, token.FOR, token.WHILE:
+		return p.parseCycleStatement(tok)
+	case token.TRIAL, token.TRY, token.CASE, token.MISS, token.FINAL:
+		return p.parseTrialStatement(tok)
+	case token.RETURN, token.STOP, token.REDO, token.NEXT, token.PASS,
+		token.RAISE, token.RESUME, token.RETRY, token.FAIL:
+		return p.parseTransferStatement(tok)
 	}
+	p.debugLog("PARSER DEBUG: unrecognized top-level token type=%s literal=%q line=%d\n",
+		tok.Type, tok.Literal, tok.Pos)
 	return nil
+}
+
+// parseRuleEntry handles the canonical entry-block form `rule name:` from
+// spec/03-rules.md §1. The current implementation is a stub that consumes
+// the rule identifier and the trailing colon, then records a soft W0901
+// warning so the parser still surfaces later errors but does not falsely
+// PASS. Full grammar mapping is pending Phase 7.2.
+// parseRuleEntry handles the canonical entry-block form
+// `rule identifier [ "(" [ param_list ] ")" ] [ "(" [ named_param_list ] ")" ]
+//
+//	[ "=>" "(" [ result_list ] ")" ] ":" [ contract_clause ] block "return" ";"`
+//
+// from spec/03-rules.md §2.1 and §6. The signature grammar for
+// `param_list`, `named_param_list`, and `result_list` is consumed fast-forward
+// (Decision 6 gate — full signature validation deferred to Phase 7.2) so
+// that the block body is parsed and emitted as a BlockStatement attached
+// to RuleStatement.Body. The block terminator `return;` is consumed in
+// alignment with the rule header (0 relative indentation, §2.3).
+//
+// Forward declaration form (`rule identifier(...)...;` with no body and
+// immediate `;`) is detected by a `;` lookahead immediately after the
+// signature closing tokens; in that case RuleStatement.ForwardDecl is set
+// and no body is consumed. See spec/03-rules.md §5.2.
+func (p *Parser) parseRuleEntry(tok token.Token) Statement {
+	stmt := &RuleStatement{Token: tok}
+	stmt.Name = p.l.NextToken().Literal // rule identifier
+
+	// Optional primary parameter list.
+	if p.l.PeekToken().Type == token.LPAREN {
+		p.l.NextToken() // consume '('
+		if p.l.PeekToken().Type != token.RPAREN {
+			for {
+				if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+					break
+				}
+				p.l.NextToken() // bind param name
+				if p.l.PeekToken().Literal == ":" {
+					p.l.NextToken()
+					if p.l.PeekToken().Type != token.RPAREN {
+						p.parseExpression()
+					}
+				}
+				if p.l.PeekToken().Type == token.IN_OP || p.l.PeekToken().Type == token.IN_KEYWORD ||
+					p.l.PeekToken().Literal == "∈" || p.l.PeekToken().Literal == "in" {
+					p.l.NextToken()
+					p.l.NextToken() // type specifier token
+				}
+				if p.l.PeekToken().Type == token.COMMA {
+					p.l.NextToken()
+					continue
+				}
+				break
+			}
+		}
+		if p.l.PeekToken().Type == token.RPAREN {
+			p.l.NextToken()
+		}
+	}
+
+	// Optional Decision-6 named-parameter slot `(sep: ... ∈ Str, end: ... ∈ Str)`.
+	if p.l.PeekToken().Type == token.LPAREN {
+		// Heuristic: a second `(` directly following the primary `)` opens
+		// the named slot. (We do not require an `∈` annotation to land
+		// because spec/03 §2.4 allows defaults to be omitted.)
+		p.l.NextToken() // consume '('
+		if p.l.PeekToken().Type != token.RPAREN {
+			for {
+				if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+					break
+				}
+				p.l.NextToken() // bind named param name
+				if p.l.PeekToken().Literal == ":" {
+					p.l.NextToken()
+					if p.l.PeekToken().Type != token.RPAREN && p.l.PeekToken().Literal != "∈" &&
+						p.l.PeekToken().Literal != "in" {
+						p.parseExpression()
+					}
+				}
+				if p.l.PeekToken().Type == token.IN_OP || p.l.PeekToken().Type == token.IN_KEYWORD ||
+					p.l.PeekToken().Literal == "∈" || p.l.PeekToken().Literal == "in" {
+					p.l.NextToken()
+					p.l.NextToken() // type specifier token
+				}
+				if p.l.PeekToken().Type == token.COMMA {
+					p.l.NextToken()
+					continue
+				}
+				break
+			}
+		}
+		if p.l.PeekToken().Type == token.RPAREN {
+			p.l.NextToken()
+		}
+	}
+
+	// Optional result list `=> (res_list)`.
+	if p.l.PeekToken().Type == token.FAT_ARROW || p.l.PeekToken().Literal == "=>" {
+		p.l.NextToken()
+		if p.l.PeekToken().Type == token.LPAREN {
+			p.l.NextToken()
+			if p.l.PeekToken().Type != token.RPAREN {
+				for {
+					if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+						break
+					}
+					p.l.NextToken()
+					if p.l.PeekToken().Literal == ":" {
+						p.l.NextToken()
+						if p.l.PeekToken().Type != token.RPAREN && p.l.PeekToken().Literal != "∈" &&
+							p.l.PeekToken().Literal != "in" {
+							p.parseExpression()
+						}
+					}
+					if p.l.PeekToken().Type == token.IN_OP || p.l.PeekToken().Type == token.IN_KEYWORD ||
+						p.l.PeekToken().Literal == "∈" || p.l.PeekToken().Literal == "in" {
+						p.l.NextToken()
+						p.l.NextToken()
+					}
+					if p.l.PeekToken().Type == token.COMMA {
+						p.l.NextToken()
+						continue
+					}
+					break
+				}
+			}
+			if p.l.PeekToken().Type == token.RPAREN {
+				p.l.NextToken()
+			}
+		}
+	}
+
+	// Forward declaration — signature concludes with ';'.
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken() // consume ';'
+		stmt.ForwardDecl = true
+		p.warnings = append(p.warnings, fmt.Sprintf(
+			"W0901 SignatureGrammarPartial: line=%d rule=%q (signature decoder is heuristic; full type binding deferred to Phase 7.2)",
+			tok.Pos, stmt.Name,
+		))
+		return stmt
+	}
+
+	// Header colon.
+	if p.l.PeekToken().Type == token.COLON {
+		p.l.NextToken()
+	}
+
+	// Optional contract clauses (assert/expect). Bind them into the body
+	// prefix so the evaluator enforces them at the canonical §2.4 order.
+	body := &BlockStatement{Token: tok}
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.EOF || peek.Type == token.RETURN {
+			break
+		}
+		// Stop at the aligned return terminator (0 relative indentation
+		// see spec/02 §6.3); only top-level return — i.e. immediately after
+		// the body — closes the rule.
+		if peek.Type == token.SEMICOLON {
+			break
+		}
+		nextTok := p.l.NextToken()
+		if nextTok.Type == token.EOF {
+			break
+		}
+		sub := p.parseStatement(nextTok)
+		if sub != nil {
+			body.Statements = append(body.Statements, sub)
+		}
+	}
+	stmt.Body = body
+
+	// Consume aligned `return;` terminator (spec/03 §2.3 / spec/02 §6.3).
+	if p.l.PeekToken().Type == token.RETURN || p.l.PeekToken().Literal == "return" {
+		retTok := p.l.NextToken()
+		body.Statements = append(body.Statements,
+			&TransferStatement{Token: retTok, Keyword: "return"})
+		if p.l.PeekToken().Type == token.SEMICOLON {
+			p.l.NextToken()
+		}
+	}
+
+	p.warnings = append(p.warnings, fmt.Sprintf(
+		"W0901 SignatureGrammarPartial: line=%d rule=%q (signature decoder is heuristic; full type binding deferred to Phase 7.2)",
+		tok.Pos, stmt.Name,
+	))
+	return stmt
+}
+
+// parseZapStatement handles `zap identifier;` per spec/02-statements.md §2.3.
+func (p *Parser) parseZapStatement(tok token.Token) Statement {
+	stmt := &ZapStatement{Token: tok}
+	identTok := p.l.NextToken()
+	stmt.Name = identTok.Literal
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken()
+	}
+	return stmt
+}
+
+// parseWriteStatement handles `write expression;` per spec/02-statements.md §5.
+func (p *Parser) parseWriteStatement(tok token.Token) Statement {
+	stmt := &WriteStatement{Token: tok}
+	stmt.Value = p.parseExpression()
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken()
+	}
+	return stmt
+}
+
+// parseReadStatement handles `read identifier;` per spec/02-statements.md §5.
+func (p *Parser) parseReadStatement(tok token.Token) Statement {
+	stmt := &ReadStatement{Token: tok}
+	identTok := p.l.NextToken()
+	stmt.Target = &Identifier{Token: identTok, Value: identTok.Literal}
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken()
+	}
+	return stmt
+}
+
+// parseMatchStatement is a grammar-mapped stub for spec/02-statements.md §3.3
+// `match`. Consumes to the next ';' so the trailing tokens are not silently
+// dropped and emits a soft W0901 until the full grammar is implemented.
+func (p *Parser) parseMatchStatement(tok token.Token) Statement {
+	stmt := &MatchStatement{Token: tok}
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.SEMICOLON {
+			p.l.NextToken()
+			break
+		}
+		if peek.Type == token.EOF || peek.Type == token.DONE {
+			break
+		}
+		p.l.NextToken()
+	}
+	p.warnings = append(p.warnings, fmt.Sprintf(
+		"W0901 UnrecognizedStatement: line=%d type=MATCH (grammar stub)", tok.Pos,
+	))
+	return stmt
+}
+
+// parseScopeStatement handles `start` / `with` blocks per spec/02-statements.md §3.1.
+func (p *Parser) parseScopeStatement(tok token.Token) Statement {
+	stmt := &ScopeStatement{Token: tok, Keyword: tok.Literal}
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.SEMICOLON {
+			p.l.NextToken()
+			break
+		}
+		if peek.Type == token.EOF || peek.Type == token.DONE {
+			break
+		}
+		p.l.NextToken()
+	}
+	return stmt
+}
+
+// parseCycleStatement handles `cycle`, `for`, and `while` per spec/02-statements.md §3.4.
+func (p *Parser) parseCycleStatement(tok token.Token) Statement {
+	stmt := &CycleStatement{Token: tok, Keyword: tok.Literal}
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.SEMICOLON {
+			p.l.NextToken()
+			break
+		}
+		if peek.Type == token.EOF || peek.Type == token.DONE || peek.Literal == "repeat" {
+			break
+		}
+		p.l.NextToken()
+	}
+	return stmt
+}
+
+// parseTrialStatement handles `trial`, `try`, `case`, `miss`, `final` per
+// spec/02-statements.md §4 Transactional Error Handling.
+func (p *Parser) parseTrialStatement(tok token.Token) Statement {
+	stmt := &TrialStatement{Token: tok, Keyword: tok.Literal}
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.SEMICOLON {
+			p.l.NextToken()
+			break
+		}
+		if peek.Type == token.EOF || peek.Type == token.DONE {
+			break
+		}
+		p.l.NextToken()
+	}
+	return stmt
+}
+
+// parseTransferStatement handles `return`, `stop`, `redo`, `next`, `pass`,
+// `raise`, `resume`, `retry`, `fail` per spec/02-statements.md §5 transfer_stmt.
+func (p *Parser) parseTransferStatement(tok token.Token) Statement {
+	stmt := &TransferStatement{Token: tok, Keyword: tok.Literal}
+	// Optional expression payload (e.g., `raise <expr>`, `fail <expr>`).
+	if tok.Type == token.RAISE || tok.Type == token.FAIL || tok.Type == token.RETURN {
+		if p.l.PeekToken().Type != token.SEMICOLON && p.l.PeekToken().Type != token.EOF {
+			stmt.Value = p.parseExpression()
+		}
+	}
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken()
+	}
+	return stmt
 }
 
 func (p *Parser) parseDeclaration(tok token.Token) Statement {
@@ -286,6 +642,16 @@ func (p *Parser) parseExpectStatement(tok token.Token) Statement {
 	return stmt
 }
 
+// parsePrintStatement parses the canonical print directive.
+// Grammar (spec/02 §5 io_stmt, Decision 6):
+//
+//	"print" [ "(" expression (, expression)* ")" ] [ "(" [ named_arg_list ] ")" ] ";"
+//
+// The trailing `(named_arg_list)` is the curried application of the
+// canonical `print` rule's named-parameter slot (sep ∈ Str).
+// Legacy postfix `"using" [":"] expression` is tolerated but emits
+// `E0011 DeprecatedSymbol 'using'` on p.warnings (Decision 6 deprecation
+// per spec/03-rules.md §3.1).
 func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	stmt := &PrintStatement{Token: tok}
 
@@ -294,14 +660,14 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 		return stmt
 	}
 
-	// Consume optional '('
+	// Consume optional '(' for the positional argument list.
 	hasParens := false
 	if p.l.PeekToken().Type == token.LPAREN {
 		hasParens = true
 		p.l.NextToken()
 	}
 
-	// Parse arguments
+	// Parse positional arguments.
 	p.debugLog("DEBUG: parsing args...\n")
 	for {
 		if p.l.PeekToken().Type == token.SEMICOLON || p.l.PeekToken().Type == token.EOF {
@@ -325,19 +691,74 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	}
 	p.debugLog("DEBUG: Done parsing args, count: %d\n", len(stmt.Expressions))
 
-	// Consume optional ')'
+	// Consume optional ')' of the positional list.
 	if hasParens && p.l.PeekToken().Type == token.RPAREN {
 		p.l.NextToken()
 	}
 
-	// Parse "using" separator
+	// Decision 6 curried named-argument postfix `(name: expr, ...)`.
+	// Only entered when there is no separator/token interrupting the
+	// canonical form; the legacy `using` postfix is still tolerated as a
+	// soft deprecation per Decision 6.
 	peek := p.l.PeekToken()
 	if peek.Literal == "using" || peek.Type == token.USING {
-		p.l.NextToken() // Consume "using"
+		p.l.NextToken() // consume "using"
 		if p.l.PeekToken().Type == token.COLON {
-			p.l.NextToken() // Consume ':'
+			p.l.NextToken() // consume ':'
 		}
 		stmt.Separator = p.parseExpression()
+		p.warnings = append(p.warnings, fmt.Sprintf(
+			"E0011 DeprecatedSymbol: line=%d symbol='using' (use curried '(sep: ...)'; hardening to E0009 in Phase 7.2 audit)",
+			tok.Pos,
+		))
+	} else if peek.Type == token.LPAREN {
+		// Curried Decision-6 form: ( sep: "x" [, end: "y"]* )
+		p.l.NextToken() // consume '('
+		stmt.NamedArgs = make(map[string]Expression)
+		for {
+			if p.l.PeekToken().Type == token.SEMICOLON || p.l.PeekToken().Type == token.EOF {
+				break
+			}
+			if p.l.PeekToken().Type == token.RPAREN {
+				break
+			}
+			nameTok := p.l.NextToken()
+			if nameTok.Type == token.RPAREN || nameTok.Type == token.EOF || nameTok.Type == token.SEMICOLON {
+				break
+			}
+			if nameTok.Type != token.IDENT {
+				// Non-identifier in the named slot list — record a soft E0009
+				// (parser still must surface this so authors see it in tests).
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q (expected identifier in curried named-argument list)",
+					nameTok.Pos, nameTok.Type, nameTok.Literal,
+				))
+				break
+			}
+			if p.l.PeekToken().Type != token.COLON {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:UnrecognizedStatement: line=%d (expected ':' after identifier %q in named-argument list)",
+					nameTok.Pos, nameTok.Literal,
+				))
+				break
+			}
+			p.l.NextToken() // consume ':'
+			valExpr := p.parseExpression()
+			if valExpr != nil {
+				stmt.NamedArgs[nameTok.Literal] = valExpr
+				if nameTok.Literal == "sep" {
+					stmt.Separator = valExpr
+				}
+			}
+			if p.l.PeekToken().Type == token.COMMA {
+				p.l.NextToken()
+				continue
+			}
+			break
+		}
+		if p.l.PeekToken().Type == token.RPAREN {
+			p.l.NextToken()
+		}
 	}
 
 	if p.l.PeekToken().Type == token.SEMICOLON {

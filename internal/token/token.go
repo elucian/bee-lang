@@ -162,6 +162,7 @@ const (
 	PASS       = "PASS"
 	VOID       = "VOID"
 	RETURN     = "RETURN"
+	REDO       = "REDO"
 	RETRY      = "RETRY"
 	NONE       = "NONE"
 	SCRAP      = "SCRAP"
@@ -231,6 +232,7 @@ var keywords = map[string]Type{
 	"pass":     PASS,
 	"void":     VOID,
 	"return":   RETURN,
+	"redo":     REDO,
 	"retry":    RETRY,
 	"none":     NONE,
 	"scrap":    SCRAP,

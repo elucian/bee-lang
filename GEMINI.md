@@ -2,7 +2,8 @@
 
 ## 4. Architectural Constraints
 - **Go Standards:** Idiomatic Go only. Prohibit `panic` in compiler error flows; propagate explicit `error` returns.
-- **Array Semantics:** Enforce zero-based indexing across all compiler passes.
+- **Array Semantics:** Bee source is **1-based**. Lists, arrays, matrices, and string indices begin at `1`. The `$` token is the dynamic **end anchor** (index of the last element), not a zero terminator. Indexing across all compiler passes must use 1-based semantics.
+- **IR Conversion (bridge to LLVM):** All collection indexing must be lowered to **0-based** at the IR boundary. The lowering rule is `ir_index = source_index - 1`. The `$` anchor lowers to `ir_index = len(collection) - 1`. This conversion is centralized in `internal/compiler/` and must be the only place where the delta is applied; lexer, parser, typechecker, and evaluator stay in 1-based land.
 - **LLVM IR Generation:** Ensure every basic block terminates explicitly (`CreateBr`, `CreateRet`, `CreateCondBr`). Validate operands against `llvm.Type` before emission.
 - **Diagnostics:** Route debug logs strictly to `os.Stderr`. Reserve `stdout` exclusively for clean build outputs or raw IR.
 

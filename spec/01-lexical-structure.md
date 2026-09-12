@@ -3,7 +3,7 @@
 ## 1. Character Encoding & Source Representation
 - **Encoding Standard:** All Bee source code files MUST be encoded in valid **UTF-8** (RFC 3629). Byte Order Marks (BOM) are disallowed and trigger a lexical error `E0101: UnexpectedBOM`.
 - **Source Units & Rune Handling:** Source streams consist of decoded UTF-8 sequences (runes). All lexing and parsing MUST treat source inputs strictly as decoded UTF-8 sequences using `[]rune` slices (e.g., `runes []rune`) or `bufio.Reader.ReadRune()`. Never use raw byte indexing (`s[i]`) for tokenization. Parsers and lexers must correctly handle Unicode operators consisting of 1 or 2 Unicode symbols, including superscripts and subscripts.
-- **Operator Syntax:** Bee operators can consist of single Unicode symbols (e.g., `≠`), standard ASCII symbols, mixed combinations of Unicode and ASCII characters, and Unicode superscript/subscript ranges.
+2. **Operator Syntax:** Bee operators can consist of single Unicode symbols, standard ASCII symbols, mixed combinations of Unicode and ASCII characters, and Unicode superscript/subscript ranges. The token form preferred for documentation is the canonical ASCII equivalent unless no ASCII form exists. Deprecated Unicode forms (see §3.3) MUST NOT be the primary citation form.
 - **Lookahead Matching:** Implement lexing with rune lookahead (`peekRune()`) rather than fixed-size assumptions to correctly parse multi-character operators containing mixed scripts or modifiers.
 - **Token Definitions:** Store operators as `[]rune` slices in token lookup tables or transition tries to support arbitrary multi-rune Unicode operators.
 - **Whitespace & Line Terminology:**
@@ -39,6 +39,22 @@ The `:` operator is a **context-sensitive structural binding operator**. Its sem
 
 ### 3.2 Cloning Operator (::)
 Used for explicit shallow or deep memory duplication.
+
+### 3.3 Equality, Identity & Inequality Operators (Decision 2 + Decision 3, 2026-09-12)
+Bee distinguishes **value equality** from **pointer identity**. They are NOT interchangeable.
+
+| Token | Class | Semantics |
+| :--- | :--- | :--- |
+| `=` | Value Equality | Returns true iff the evaluated values are structurally equal. `a = b` is true even if `a` and `b` are different variables holding the same value. |
+| `<>` | Value Inequality | Canonical inequality. Logical negation of `=` over values. |
+| `is` | Pointer Identity | Returns true iff both operands reference the same memory allocation (same pointer). `a is b` is **false** even when `a = b` if they are distinct allocations. A literal compared to a variable via `is` is always false (literals are immutable boxed values, variables are arc-tracked cells). |
+| `is not` | Pointer Non-Identity | Logical negation of `is`. |
+
+- **Modifier aliases (Decision 2):** The compound-style modifiers `+=` and `-=` are pure lexical **shorthand** for `+:=` and `-:=` (the canonical mutation operator). They produce identical AST nodes; the lexer normalizes them before emission. The forms `+is` and `-is` are **NOT** operators — `is` is a closed-class relational token, not an arithmetic nucleus. Any attempt to lex `+is` or `-is` as a token is a hard syntax error (E0011).
+- **Deprecation (Decision 3):** The Unicode form `≠` is deprecated due to Unicode canonical-equivalence imperfections in tokenizer implementations. The canonical replacement is `<>`. The lexer MUST:
+  - From this version onward: emit a non-fatal diagnostic `E0010 deprecated-symbol: '≠' — use '<>'` on every occurrence.
+  - Once Phase 7 audit task 7.2 marks this migration complete: hard-reject `≠` as a syntax error (upgrade the diagnostic to `E0009`).
+- **Migration guideline:** Authors and the tutorial MUST use `<>` (and `is` / `is not`) as the canonical forms in all new content.
 
 ### 3.4 Arithmetic and Modifier Operators
 Arithmetic operators follow standard precedence, with modifiers providing shorthand for assignment.
@@ -158,10 +174,12 @@ integer_lit    ::= digit+ ;
 real_lit       ::= digit+ "." digit+ [ ( "e" | "E" ) [ "+" | "-" ] digit+ ] ;
 
 (* Operators & Delimiters *)
-bind_op        ::= ":" ;
-assign_op      ::= ":=" | "::" | "+=" | "-=" | "*=" | "/=" | "%=" | "^=" | "√=" ;
-cmp_val_op     ::= "=" | "<>" ;
-cmp_ref_op     ::= "==" | "!=" | "≡" ;
+bind_op         ::= ":" ;
+assign_op       ::= ":=" | "::" | "*=" | "/=" | "%=" | "^=" | "√=" ;
+mutate_op       ::= "+:=" | "-:=" ;
+mutate_op_sugar ::= "+=" | "-=" ;  (* Decision 2, 2026-09-12: lex-level shorthand for mutate_op; normalized by lexer before AST emission *)
+cmp_val_op      ::= "=" | "<>" ;
+cmp_ref_op      ::= "is" | "is not" ;  (* Decision 2: pointer-identity; the legacy "==" / "!=" / "≡" tokens are reserved for future graphics congruence and are NOT value-ops. *)
 range_op       ::= ".." | ".!" | "!." | "!!" ;
 coll_op        ::= "+>" | "<+" | "++" | "-=" ;
 arith_op       ::= "+" | "-" | "*" | "/" | "^" | "√" | "%" ;

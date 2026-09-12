@@ -1,4 +1,5 @@
 -- @DESC: Hello World Test
-fn main() {
-    print("Hello World")
-}
+-- @FROZEN: Generated from spec/03-rules.md §2.1 and spec/02-statements.md §3.5. Immutable ground truth for AI agents.
+rule main:
+  print("Hello World");
+return;

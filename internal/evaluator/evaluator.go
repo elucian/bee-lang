@@ -57,6 +57,21 @@ func (e *Evaluator) Eval(program *parser.Program) {
 
 func (e *Evaluator) evalStatement(node parser.Statement) {
 	switch s := node.(type) {
+	case *parser.RuleStatement:
+		// Forward declarations carry no body — they bind the rule signature
+		// for self-recursion and mutual recursion. See spec/03-rules.md §5.2.
+		if s.ForwardDecl || s.Body == nil {
+			return
+		}
+		if s.Name == "main" {
+			e.debugLog("EVALUATOR DEBUG: entering rule main\n")
+		}
+		for _, stmt := range s.Body.Statements {
+			e.evalStatement(stmt)
+		}
+		if s.Name == "main" {
+			e.debugLog("EVALUATOR DEBUG: exited rule main\n")
+		}
 	case *parser.BlockStatement:
 		for _, stmt := range s.Statements {
 			e.evalStatement(stmt)

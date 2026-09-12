@@ -18,7 +18,7 @@ $$\text{Rule}: \quad (\mathbb{P}_1 \times \mathbb{P}_2 \times \dots \times \math
 
 ### 2.1 Complete Signature Syntax
 ```bee
-rule identifier(param_list) => (result_list):
+rule identifier(param_list) [ (named_param_list) ] => (result_list):
   -- Preconditions (Contracts)
   assert condition;
   
@@ -29,11 +29,14 @@ rule identifier(param_list) => (result_list):
 return;
 ```
 
+> **Curried signatures (Decision 6, 2026-09-12):** A rule may declare an optional *named-parameter slot* — a second parenthesised parameter list immediately following the primary parameter list. Each named parameter is bound by name at the call site via curried application, providing a self-documenting, keyword-argument style distinct from the positional primary list. See §2.4 for full semantics and §3.1 for call-site syntax.
+
 ### 2.2 Parameter Passing Conventions
 - **Primitive Types ($\mathbb{Z}, \mathbb{N}, \mathbb{R}, \mathbb{Q}, \mathbb{C}, \mathbb{B}$):** Transferred **by value** (copy on call).
 - **Composite Types (`array`, `list`, `map`, `set`, `object`):** Transferred **by share** (reference-counted Region pointer).
 - **Optional Parameters:** Parameter declarations may specify default values using `:` (e.g. `param: default_val ∈ Type`).
 - **Variadic Parameters (`*varargs`):** The final parameter in a list may be prefixed with `*` to accept a variable number of arguments as an array (`*args ∈ [Z]`).
+- **Named-Parameter Slot** *(Decision 6)*: A rule may declare an optional second parameter list enclosed in its own delimiters (see §2.4). Each parameter in this slot is normally require-bound by name at the call site via curried application; the slot participates in no positional binding. Parameters in the named slot may themselves specify `:` defaults to permit omission.
 
 ### 2.3 Result Declarations & Deconstruction
 - **Named Results:** Results are explicitly declared with identifier and type `=> (y ∈ N)` or `=> (s, d ∈ Z)`.
@@ -46,6 +49,37 @@ return;
   ```
 - **Result Wildcard (`_`):** Unwanted results can be suppressed using `_` (e.g. `new s, _ := compute_both(x, y);`).
 - **Expression Restriction:** Rules returning multiple results ($> 1$) CANNOT be embedded directly within nested arithmetic expression trees; they must be evaluated via deconstruction assignment.
+
+### 2.4 Named-Parameter Slots & Curried Signatures *(Decision 6)*
+
+A rule signature may include **at most one** secondary parameter list — the *named-parameter slot* — rendered directly after the primary parameter list and before the optional result list:
+
+```bee
+rule identifier(param_list) (named_param_list) => (result_list):
+  -- signatures may declare both, named, neither
+return;
+```
+
+- **Slot lifecycle:** The named slot is purely declarative. No positional binding occurs between the primary parameter list and the named slot — the two lists are independent binders.
+- **Slot declaration grammar:** Each entry in the named slot is a `named_parameter`, identical syntactically to a primary-list parameter except that it MUST be standalone (no `*` variadic prefix): `named_parameter ::= identifier [ ":" expression ] ( "∈" | "in" ) type_specifier`.
+- **Slot call site:** The named slot is invoked by appending `(named_arg_list)` after the primary call's closing `)`. The named-argument list consists only of named arguments (`identifier ":" expression`); positional entries are not permitted.
+- **Order independence:** Named arguments may appear in any order. The compiler resolves them by name, not position.
+- **Default fall-back:** A named parameter may declare a default expression following Decision 6 syntax (e.g. `sep: ", "  ∈  Str`). If the call site omits the name, the default binds. If the parameter declares no default and the caller omits it, the compiler emits `E0307 MissingNamedArgument` and halts resolution.
+- **Empty slot:** Either list may be empty. `rule ping()(steady ∈ B):` and `rule ping():` are both valid forms; the named slot is reserved at compile time even when empty.
+
+```bee
+-- Canonical named-slot rule
+rule print(*items ∈ [Any]) (sep: ", "  ∈  Str, end: "."  ∈  Str) => (void ∈ Void):
+  -- body: emit items joined by sep, terminated by end
+return;
+
+-- Canonical call sites
+apply print(1, 2, 3) (sep: " | ", end: ";");
+new x := print("a", "b") ();  -- empty slot, both defaults used
+new y := print("a", "b");     -- ERROR if slot is required and no defaults supplied
+```
+
+**Rationale.** The named-slot pattern unifies keyword-argument calling (Haskell records / Python kwargs / Ruby hashes) with call-site readability. It replaces the legacy `using` keyword on `print`/`write`/formatting primitives with a structural language feature reusable by every rule, not just I/O directives.
 
 ---
 
@@ -60,6 +94,14 @@ return;
   ```bee
   apply log_message("Processing complete");
   ```
+- **Curried Application** *(Decision 6)*: When the invoked rule declares a named-parameter slot (§2.4), the caller applies the slot with a *second* parenthesised argument list:
+  ```bee
+  print("Hello", "World") (sep: " | ");
+  apply write_row(record, fields) (mode: "tsv");
+  ```
+  The named-slot list contains only **named arguments** of the form `identifier ":" expression`. The positional primary list is unaffected. Named-argument naming and order are independent: any permutation is accepted, and omitted named parameters fall back to their declared `:` defaults.
+
+  > **Deprecated syntax:** The legacy `using` / `using:` postfix in `io_stmt` is **deprecated** as of Decision 6. Author-targeted forms such as `print(a, b) using " | ";` are removed from normative examples; the canonical form is `print(a, b) (sep: " | ");` where the `print` rule declares a named slot `(sep ∈ Str)`. The lexer emits a non-fatal `E0011 deprecated-symbol: 'using' — use named-argument `(name: ...)`` until Phase 7 audit task 7.2 hardens it to `E0009`.
 
 ### 3.2 Terminal Directives
 - **`return` (Mandatory Block Terminator):** Closes the rule block and returns execution to the caller. Must align horizontally with the `rule` header (0 relative indentation).
@@ -77,11 +119,13 @@ return;
 
 Bee enforces formal contract assertions directly within rule definitions:
 
-$$\text{Contract}(\text{divide}) = \begin{cases} \text{assert}(b \neq 0) & \text{[Precondition Warning]} \\ \text{expect}(\text{ratio} \times b \approx a) & \text{[Invariant Guarantee]} \end{cases}$$
+$$\text{Contract}(\text{divide}) = \begin{cases} \text{assert}\big(b \;\text{<>}\; 0\big) \;\textit{[Precondition Warning]} \\ \text{expect}\big(\text{ratio} \cdot b \approx a\big) \;\textit{[Invariant Guarantee]} \end{cases}$$
+
+> **Operator syntax note (Decision 3, 2026-09-12):** The canonical value-inequality operator is `<>`. The Unicode form `≠` is deprecated. When authors write `≠` in source, the lexer emits a non-fatal `E0010 deprecated-symbol: '≠' — use '<>'`; after Phase 7 audit task 7.2 the diagnostic upgrades to a hard `E0009` syntax error.
 
 ```bee
 rule divide(a ∈ R, b ∈ R) => (ratio ∈ R):
-  assert b ≠ 0;         -- Precondition / Warning check: emits diagnostic warning to stderr if false
+  assert b <> 0;         -- Precondition / Warning check: emits diagnostic warning to stderr if false (canonical inequality — Decision 3 deprecates ≠)
   let ratio := a / b;
   expect ratio * b ≈ a; -- Postcondition / Invariant check: raises runtime error if false
 return;
@@ -157,12 +201,16 @@ return;
 
 ```ebnf
 (* Rule Definition *)
-rule_def          ::= "rule" [ member_access ] identifier "(" [ param_list ] ")" [ "=>" "(" result_list ")" ] ":" [ contract_clause ] block "return" ";" ;
-forward_decl      ::= "rule" identifier "(" [ param_list ] ")" [ "=>" "(" result_list ")" ] ";" ;
+rule_def          ::= "rule" [ member_access ] identifier "(" [ param_list ] ")" [ "(" [ named_param_list ] ")" ] [ "=>" "(" result_list ")" ] ":" [ contract_clause ] block "return" ";" ;
+forward_decl      ::= "rule" identifier "(" [ param_list ] ")" [ "(" [ named_param_list ] ")" ] [ "=>" "(" result_list ")" ] ";" ;
 
 (* Parameters & Results *)
 param_list        ::= parameter ( "," parameter )* ;
 parameter         ::= [ "*" ] identifier [ ":" expression ] ( "∈" | "in" ) type_specifier ;
+
+named_param_list  ::= named_parameter ( "," named_parameter )* ;
+named_parameter   ::= identifier [ ":" expression ] ( "∈" | "in" ) type_specifier ;
+(* named_parameters MUST NOT be prefixed with "*" (no variadic named slot per Decision 6) *)
 
 result_list       ::= result_item ( "," result_item )* ;
 result_item       ::= identifier [ ":" expression ] [ ( "∈" | "in" ) type_specifier ] ;
@@ -171,10 +219,13 @@ result_item       ::= identifier [ ":" expression ] [ ( "∈" | "in" ) type_spec
 contract_clause   ::= ( "assert" condition ";" )* ( "expect" condition ";" )* ;
 
 (* Invocations *)
-rule_apply        ::= "apply" identifier "(" [ arg_list ] ")" ";" ;
-rule_call         ::= identifier "(" [ arg_list ] ")" ;
+rule_apply        ::= "apply" identifier "(" [ arg_list ] ")" [ "(" [ named_arg_list ] ")" ] ";" ;
+rule_call         ::= identifier "(" [ arg_list ] ")" [ "(" [ named_arg_list ] ")" ] ;
 arg_list          ::= argument ( "," argument )* ;
 argument          ::= [ identifier ":" ] expression ;
+named_arg_list    ::= named_argument ( "," named_argument )* ;
+named_argument    ::= identifier ":" expression ;
+(* named_arguments are order-independent; positional entries are not permitted in the named slot *)
 ```
 
 ---
@@ -189,6 +240,11 @@ argument          ::= [ identifier ":" ] expression ;
 | `E0304` | `MultiResultInExpression` | Multi-result rule used inside arithmetic expression tree |
 | `E0305` | `MissingReturnTerminator` | Rule block does not end with aligned `return;` |
 | `E0306` | `SignatureMismatch` | Forward declaration does not match rule implementation signature |
+| `E0307` | `MissingNamedArgument` | Call site omits a required named-parameter slot binding (no default supplied per Decision 6) |
+| `W0308` | `NamedSlotIgnored` | Curried `(...)` argument list appended where the rule declares no named slot (silently tolerated, warning emitted) |
+| `E0309` | `UnknownNamedArgument` | Curried call site names an identifier not present in the rule's declared named slot |
+| `E0010` | `DeprecatedSymbol '≠'` | Legacy value-inequality operator encountered; canonical `<>` should be used (Phase 7 audit pre-`E0009`) |
+| `E0011` | `DeprecatedSymbol 'using'` | Legacy `using` / `using:` postfix encountered on a call site; canonical is named-argument `(name: ...)` per Decision 6 (Phase 7 audit pre-`E0009`) |
 
 ---
 
@@ -196,3 +252,7 @@ argument          ::= [ identifier ":" ] expression ;
 
 - **Issues Addressed:** Formalized rule semantics, contracts, TCO, closures, and forward declarations.
 - **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/03-rules.md`.
+- **Decision 3 Deprecation Sweep (2026-09-12):** All normative examples in this spec now use the canonical value-inequality operator `<>`. The single residual `≠` reference is an intentional deprecation annotation in a code comment per Decision 3.
+- **Spec Audit Locked (Phase 7 prep):** `spec/01-lexical-structure.md`, `spec/02-statements.md`, and `spec/03-rules.md` are now harmonized with Decisions 1–6.
+- **Decision 6 — Curried Rule Signatures (2026-09-12):** This pass introduces §2.4 (named-parameter slots), updates §2.1/§2.2/§3.1, and extends the §6 EBNF with `named_param_list`, `named_parameter`, `named_arg_list`, and `named_argument` productions. The legacy `using` keyword is deprecated; canonical I/O call sites use curried named arguments (`print(a, b)(sep: " | ")`). New diagnostic codes `E0307`, `W0308`, `E0309`, and `E0011` are added. Implementer (`internal/lexer/` & `internal/parser/`) is gated by Anti-Loop Gate until `spec/02-statements.md` is also harmonized with the new `io_stmt` EBNF (next pass).
+- **Remaining Hurdles:** `spec/02-statements.md` §5 `io_stmt` EBNF still references the legacy `using` postfix; harmonization is sequenced for the immediate next pass under the Anti-Loop Gate. `internal/lexer/` and `internal/parser/` updates are deferred until both specs are locked.

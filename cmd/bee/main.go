@@ -64,6 +64,24 @@ func main() {
 	p := parser.New(l)
 	p.SetDebug(isDebugging)
 	program := p.ParseProgram()
+	parseErrors := p.Errors()
+	parseWarnings := p.Warnings()
+
+	if len(parseErrors) > 0 {
+		for _, e := range parseErrors {
+			fmt.Fprintln(os.Stderr, e)
+		}
+		fmt.Fprintf(os.Stderr, "Parser reported %d error(s).\n", len(parseErrors))
+		os.Exit(1)
+	}
+
+	// Surface parser warnings (W0901 soft stubs, E0011 deprecated symbols)
+	// to stderr but do NOT halt the build. Hardening audit task 7.2 will
+	// promote these to E0009. See issues/14-parser-silent-token-drop.md
+	// for the W0901/E0009 contract boundary.
+	for _, w := range parseWarnings {
+		fmt.Fprintln(os.Stderr, w)
+	}
 
 	if *executeFlag || *executeLong {
 		eval := evaluator.New()
@@ -83,8 +101,6 @@ func main() {
 	// Redirecting to syntax check.
 	if *compileFlag || *compileLong {
 		fmt.Fprintf(os.Stderr, "Warning: Compilation to LLVM IR is not implemented yet. Running syntax check.\n")
-		// Parser.Errors() is currently empty in this simplified implementation.
-		// If needed, the parser should populate p.errors during parsing.
 		fmt.Println("Syntax OK")
 		return
 	}
