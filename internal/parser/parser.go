@@ -74,6 +74,51 @@ func New(l *lexer.Lexer) *Parser {
 	return &Parser{l: l}
 }
 
+// memberNameKeywords are lexer keywords that spec/03-rules.md §5.4 (Closures &
+// State Generators) and §2.x repurposes as ordinary identifiers in signature
+// and member-access position. The canonical closure example names a parameter
+// `start`, a result/member `next`, and a state field `.count` — but `start`
+// and `next` are also statement keywords (START / NEXT). Rather than touch
+// the lexer (which would break `start:` scope blocks and `next` cycle
+// transfers), the parser contextually accepts these tokens as identifiers
+// wherever a name — not a statement — is expected.
+var memberNameKeywords = map[token.Type]bool{
+	token.START: true, // `start` — §5.4 param name / boxed-state element
+	token.NEXT:  true, // `next`  — §5.4 result name / closure method name
+}
+
+// identLiteral returns the surface identifier text for a name token,
+// tolerating the memberNameKeywords that the lexer promoted to keyword types.
+// The token's Literal already carries the exact source text, so this is a
+// pure pass-through; the map is consulted by callers to decide whether a
+// non-IDENT token is admissible as a name in the first place.
+func (p *Parser) identLiteral(tok token.Token) (string, bool) {
+	if tok.Type == token.IDENT {
+		return tok.Literal, true
+	}
+	if memberNameKeywords[tok.Type] {
+		return tok.Literal, true
+	}
+	return tok.Literal, false
+}
+
+// parseMemberName folds a leading-dot member path into a single dotted name.
+// In spec/03 §5.4 the form `set .count := [start];` declares a boxed state
+// field on the enclosing rule's closure frame; the lexer emits the `.` and
+// `count` as two tokens (DOT then IDENT). This helper consumes the leading
+// DOT and returns the folded name `.count`. When the leading token is not a
+// DOT it is returned unchanged (the common single-identifier path).
+func (p *Parser) parseMemberName(first token.Token) string {
+	if first.Type != token.DOT && first.Literal != "." {
+		name, _ := p.identLiteral(first)
+		return name
+	}
+	// Leading-dot member access: fold `.` + identifier into `.name`.
+	memberTok := p.l.NextToken()
+	member, _ := p.identLiteral(memberTok)
+	return "." + member
+}
+
 // ParseProgram tokenizes the full input stream and dispatches every non-EOF
 // token to parseStatement. Per fix for issue 14 (parser-silent-token-drop),
 // any non-EOF token whose dispatch returns nil is recorded as E0009 on
@@ -174,7 +219,10 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 // and no body is consumed. See spec/03-rules.md §5.2.
 func (p *Parser) parseRuleEntry(tok token.Token) Statement {
 	stmt := &RuleStatement{Token: tok}
-	stmt.Name = p.l.NextToken().Literal // rule identifier
+	// Rule identifier. spec/03 §5.4 permits a leading-dot member rule inside a
+	// closure generator (`rule .next() => ...`), which the lexer emits as DOT
+	// then the member name. parseMemberName folds the two into `.next`.
+	stmt.Name = p.parseMemberName(p.l.NextToken())
 
 	// Optional primary parameter list.
 	if p.l.PeekToken().Type == token.LPAREN {
@@ -184,7 +232,11 @@ func (p *Parser) parseRuleEntry(tok token.Token) Statement {
 				if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
 					break
 				}
-				p.l.NextToken() // bind param name
+				paramTok := p.l.NextToken() // bind param name
+				// §5.4 names a parameter `start`, which the lexer promotes to the
+				// START keyword; accept admissible name tokens (identLiteral).
+				paramName, _ := p.identLiteral(paramTok)
+				stmt.Params = append(stmt.Params, paramName)
 				if p.l.PeekToken().Literal == ":" {
 					p.l.NextToken()
 					if p.l.PeekToken().Type != token.RPAREN {
@@ -254,7 +306,10 @@ func (p *Parser) parseRuleEntry(tok token.Token) Statement {
 					if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
 						break
 					}
-					p.l.NextToken()
+					resTok := p.l.NextToken()
+					// §5.4 names a result `next`, which the lexer promotes to NEXT.
+					resName, _ := p.identLiteral(resTok)
+					stmt.Results = append(stmt.Results, resName)
 					if p.l.PeekToken().Literal == ":" {
 						p.l.NextToken()
 						if p.l.PeekToken().Type != token.RPAREN && p.l.PeekToken().Literal != "∈" &&
@@ -301,12 +356,20 @@ func (p *Parser) parseRuleEntry(tok token.Token) Statement {
 	body := &BlockStatement{Token: tok}
 	for {
 		peek := p.l.PeekToken()
-		if peek.Type == token.EOF || peek.Type == token.RETURN {
+		if peek.Type == token.EOF {
 			break
 		}
-		// Stop at the aligned return terminator (0 relative indentation
-		// see spec/02 §6.3); only top-level return — i.e. immediately after
-		// the body — closes the rule.
+		// Stop only at the rule's own aligned `return;` terminator (0 relative
+		// indentation, spec/03 §2.3 / spec/02 §6.3). A nested rule body's
+		// internal `return;` is consumed by the recursive parseRuleEntry call,
+		// so when control returns here the stream is parked just past it. A
+		// RETURN immediately followed by `;` is therefore this (enclosing)
+		// rule's terminator, not a nested body's — break and let the trailing
+		// `return;` consumer below take it.
+		if peek.Type == token.RETURN {
+			break
+		}
+		// A stray `;` can only belong to this rule's terminator.
 		if peek.Type == token.SEMICOLON {
 			break
 		}
@@ -1048,14 +1111,14 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 	}
 
 	identTok := p.l.NextToken() // first ident
-	ds.Name = identTok.Literal
-	ds.Names = append(ds.Names, identTok.Literal)
+	ds.Name = p.parseMemberName(identTok)
+	ds.Names = append(ds.Names, ds.Name)
 
 	// Check for comma-separated identifier list (e.g. new a, b, c ∈ Z;)
 	for p.l.PeekToken().Type == token.COMMA {
 		p.l.NextToken() // consume ','
 		nextIdent := p.l.NextToken()
-		ds.Names = append(ds.Names, nextIdent.Literal)
+		ds.Names = append(ds.Names, p.parseMemberName(nextIdent))
 	}
 
 	nextTok := p.l.NextToken() // ∈, in, :=, or colon
@@ -1157,7 +1220,8 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 	stmt := &AssignmentStatement{Token: tok}
 	tokIdent := p.l.NextToken()
 	p.debugLog("PARSER DEBUG: ident tok=%q\n", tokIdent.Literal)
-	stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent, Value: tokIdent.Literal})
+	name := p.parseMemberName(tokIdent)
+	stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent, Value: name})
 
 	// Check for more comma-separated variables
 	for p.l.PeekToken().Type == token.COMMA {
@@ -1680,6 +1744,15 @@ func (p *Parser) parsePrimary() Expression {
 	if tok.Type == token.INT || tok.Type == token.REAL {
 		return &IntegerLiteral{Token: tok, Value: tok.Literal}
 	}
+	// Leading-dot boxed-state access (spec/03 §5.4): `.count` reads the named
+	// field on the enclosing rule's closure frame. Emitted as a
+	// MemberExpression with no Base so the evaluator resolves it against the
+	// current call frame's boxed cells.
+	if tok.Type == token.DOT || tok.Literal == "." {
+		memberTok := p.l.NextToken()
+		member, _ := p.identLiteral(memberTok)
+		return &MemberExpression{Token: tok, Parts: []string{"." + member}}
+	}
 	if tok.Type == token.LBRACKET {
 		arrLit := &ArrayLiteral{Token: tok}
 		for {
@@ -1689,8 +1762,11 @@ func (p *Parser) parsePrimary() Expression {
 			}
 			if elTok.Type == token.INT {
 				arrLit.Elements = append(arrLit.Elements, &IntegerLiteral{Token: elTok, Value: elTok.Literal})
-			} else if elTok.Type == token.IDENT {
-				arrLit.Elements = append(arrLit.Elements, &Identifier{Token: elTok, Value: elTok.Literal})
+			} else if name, ok := p.identLiteral(elTok); ok {
+				// spec/03 §5.4 boxes a captured parameter: `[start]`. The element
+				// may lex as a keyword (START) rather than IDENT, so admit any
+				// admissible name token here.
+				arrLit.Elements = append(arrLit.Elements, &Identifier{Token: elTok, Value: name})
 			}
 			commaOrBracket := p.l.NextToken()
 			if commaOrBracket.Type == token.RBRACKET || commaOrBracket.Type == token.EOF {
@@ -1702,7 +1778,60 @@ func (p *Parser) parsePrimary() Expression {
 
 	var left Expression
 	left = &Identifier{Token: tok, Value: tok.Literal}
-	if tok.Type == token.IDENT {
+	if _, isName := p.identLiteral(tok); tok.Type == token.IDENT || isName {
+		// Rule call expression (spec/03 §3.1): IDENT followed by `(` is a
+		// CallExpression, not a plain identifier. Consume the full arg list.
+		if p.l.PeekToken().Type == token.LPAREN {
+			p.l.NextToken() // consume '('
+			call := &CallExpression{Token: tok, Name: tok.Literal}
+			if p.l.PeekToken().Type != token.RPAREN {
+				for {
+					if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+						break
+					}
+					call.Args = append(call.Args, p.parseExpression())
+					if p.l.PeekToken().Type == token.COMMA {
+						p.l.NextToken() // consume ','
+						continue
+					}
+					break
+				}
+			}
+			if p.l.PeekToken().Type == token.RPAREN {
+				p.l.NextToken() // consume ')'
+			}
+			return call
+		}
+		// Object member access (spec/03 §5.4): `c.next` or `c.next()` invokes a
+		// method / reads a field on a bound closure object. Consume the dotted
+		// path and the optional call argument list.
+		if p.l.PeekToken().Type == token.DOT || p.l.PeekToken().Literal == "." {
+			p.l.NextToken() // consume '.'
+			memberTok := p.l.NextToken()
+			member, _ := p.identLiteral(memberTok)
+			me := &MemberExpression{Token: tok, Base: left, Parts: []string{member}}
+			if p.l.PeekToken().Type == token.LPAREN {
+				p.l.NextToken() // consume '('
+				me.IsCall = true
+				if p.l.PeekToken().Type != token.RPAREN {
+					for {
+						if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+							break
+						}
+						me.Args = append(me.Args, p.parseExpression())
+						if p.l.PeekToken().Type == token.COMMA {
+							p.l.NextToken() // consume ','
+							continue
+						}
+						break
+					}
+				}
+				if p.l.PeekToken().Type == token.RPAREN {
+					p.l.NextToken() // consume ')'
+				}
+			}
+			return me
+		}
 		if p.l.PeekToken().Type == token.LBRACKET {
 			p.l.NextToken() // consume '['
 			bracketTok := p.l.NextToken()

@@ -1,6 +1,4 @@
--- @DISABLED: E0009 SyntaxError:InvalidScopeHeader: line=5 (expected `:` after `start` label/header; got type=] literal="]")
 -- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
--- @DISABLED: Closures — boxed mutable state in closure, spec/03 §5.4
 -- @DESC: Closures state capture — rule returns a closure with boxed mutable state
 rule counter_generator(start ∈ Z) => (next ∈ Rule):
   set .count := [start];
@@ -11,7 +9,8 @@ rule counter_generator(start ∈ Z) => (next ∈ Rule):
 return;
 
 rule main:
-  new c := counter_generator(0);
+  new c := counter_generator(1);
   print c.next();
   print c.next();
+  expect c.next()=4;
 return;

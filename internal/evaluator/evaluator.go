@@ -10,6 +10,27 @@ import (
 	"strings"
 )
 
+// BoxedCell is a heap-allocated, mutable storage cell for closure state per
+// spec/03-rules.md §5.4. A variable is boxed when declared with the `[...]`
+// operator (`set .count := [start];`), which makes it persist across calls
+// of the enclosing rule's closures. Unboxed `set` variables stay immutable
+// in the flat symbol table.
+type BoxedCell struct {
+	Value int
+}
+
+// closureObject is a heap-allocated closure instance returned by a state
+// generator rule (spec/03 §5.4). It owns the generator's boxed cells (shared
+// by reference with every nested method rule) and the nested rule table that
+// methods like `.next` resolve against. Because Nested maps directly to the
+// parser's nested RuleStatement nodes and Cells holds *BoxedCell pointers,
+// mutations performed inside a method call are visible to every subsequent
+// method call on the same object.
+type closureObject struct {
+	Cells  map[string]*BoxedCell            // boxed state fields (`.count`)
+	Nested map[string]*parser.RuleStatement // member rules keyed by folded name (`.next`)
+}
+
 type Evaluator struct {
 	symbols       map[string]int
 	stringSymbols map[string]string
@@ -22,6 +43,16 @@ type Evaluator struct {
 	nextID        int
 	debug         bool
 	exitingRule   bool
+	// ruleRegistry indexes every *parser.RuleStatement by name so that
+	// CallExpression can resolve rule invocations (spec/03 §3.1).
+	ruleRegistry map[string]*parser.RuleStatement
+	// boxedCells holds the *current* rule frame's boxed state cells
+	// (spec/03 §5.4). It is empty at the top level and swapped in/out by
+	// callRule so nested method invocations share the closure object's cells.
+	boxedCells map[string]*BoxedCell
+	// closureObjects binds variable names to heap-allocated closure objects so
+	// `c.next()` can resolve the object `c` and dispatch to its `.next` method.
+	closureObjects map[string]*closureObject
 }
 
 func (e *Evaluator) SetDebug(debug bool) {
@@ -36,12 +67,15 @@ func (e *Evaluator) debugLog(format string, a ...interface{}) {
 
 func New() *Evaluator {
 	return &Evaluator{
-		symbols:       make(map[string]int),
-		stringSymbols: make(map[string]string),
-		arrayValues:   make(map[string][]int),
-		steppedRanges: make(map[string]*parser.SteppedRangeExpression),
-		identities:    make(map[string]int),
-		nextID:        1,
+		symbols:        make(map[string]int),
+		stringSymbols:  make(map[string]string),
+		arrayValues:    make(map[string][]int),
+		steppedRanges:  make(map[string]*parser.SteppedRangeExpression),
+		identities:     make(map[string]int),
+		nextID:         1,
+		ruleRegistry:   make(map[string]*parser.RuleStatement),
+		boxedCells:     make(map[string]*BoxedCell),
+		closureObjects: make(map[string]*closureObject),
 	}
 }
 
@@ -79,6 +113,15 @@ func (e *Evaluator) DumpContext() {
 }
 
 func (e *Evaluator) Eval(program *parser.Program) {
+	// Pass 1: register all rule definitions so CallExpression can resolve
+	// invocations regardless of definition order (spec/03 §5.2).
+	for _, stmt := range program.Statements {
+		if rs, ok := stmt.(*parser.RuleStatement); ok {
+			e.ruleRegistry[rs.Name] = rs
+		}
+	}
+	// Pass 2: execute top-level statements (rule bodies are only entered
+	// via CallExpression or the implicit `main` entry point).
 	for _, stmt := range program.Statements {
 		e.evalStatement(stmt)
 	}
@@ -92,9 +135,12 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		if s.ForwardDecl || s.Body == nil {
 			return
 		}
-		if s.Name == "main" {
-			e.debugLog("EVALUATOR DEBUG: entering rule main\n")
+		// Only `main` is executed at the top level (spec/03 §1). Other rules
+		// are invoked exclusively via CallExpression → callRule.
+		if s.Name != "main" {
+			return
 		}
+		e.debugLog("EVALUATOR DEBUG: entering rule main\n")
 		prevExiting := e.exitingRule
 		e.exitingRule = false
 		for _, stmt := range s.Body.Statements {
@@ -104,9 +150,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			e.evalStatement(stmt)
 		}
 		e.exitingRule = prevExiting
-		if s.Name == "main" {
-			e.debugLog("EVALUATOR DEBUG: exited rule main\n")
-		}
+		e.debugLog("EVALUATOR DEBUG: exited rule main\n")
 	case *parser.BlockStatement:
 		for _, stmt := range s.Statements {
 			e.evalStatement(stmt)
@@ -163,6 +207,35 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		}
 		for i, name := range s.Names {
 			e.debugLog("EVALUATOR DEBUG: Assigning to %s\n", name.Value)
+			// Boxed closure state mutation (spec/03 §5.4): `let .field op= expr;`
+			// mutates the heap-allocated cell on the current closure frame.
+			if strings.HasPrefix(name.Value, ".") {
+				cell, hasCell := e.boxedCells[name.Value]
+				if !hasCell {
+					cell = &BoxedCell{}
+					e.boxedCells[name.Value] = cell
+				}
+				rhs := pendingInts[i]
+				switch s.Token.Literal {
+				case "+=":
+					cell.Value += rhs
+				case "-=":
+					cell.Value -= rhs
+				case "*=":
+					cell.Value *= rhs
+				case "/=":
+					if rhs != 0 {
+						cell.Value /= rhs
+					}
+				case "%=":
+					if rhs != 0 {
+						cell.Value %= rhs
+					}
+				default: // ":=", "="
+					cell.Value = rhs
+				}
+				continue
+			}
 			if i < len(s.Values) {
 				if strLit, ok := s.Values[i].(*parser.StringLiteral); ok {
 					e.stringSymbols[name.Value] = strLit.Value
@@ -270,8 +343,54 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		if len(names) == 0 && s.Name != "" {
 			names = []string{s.Name}
 		}
+		// Multi-result deconstruction (spec/03 §2.3): when a single
+		// CallExpression is assigned to multiple names, invoke once and
+		// distribute results positionally.
+		if len(names) > 1 && len(s.Values) == 1 {
+			if call, ok := s.Values[0].(*parser.CallExpression); ok {
+				results := e.callRule(call, nil)
+				for i, name := range names {
+					if i < len(results) {
+						e.bindResultValue(name, results[i])
+					} else {
+						e.symbols[name] = 0
+						e.ensureIdentity(name)
+					}
+				}
+				break
+			}
+		}
+		// Single-result rule call (spec/03 §3.1): `new r := rule_call(...)`
+		// where the CallExpression is the sole value for a single name.
+		if len(names) == 1 && len(s.Values) == 1 {
+			if call, ok := s.Values[0].(*parser.CallExpression); ok {
+				results := e.callRule(call, nil)
+				if len(results) > 0 {
+					e.bindResultValue(names[0], results[0])
+				} else {
+					e.symbols[names[0]] = 0
+					e.ensureIdentity(names[0])
+				}
+				break
+			}
+		}
 		for i, name := range names {
 			e.debugLog("EVALUATOR DEBUG: Declaring %s\n", name)
+			// Boxed closure state (spec/03 §5.4): `set .field := [expr];` boxes the
+			// value into a heap-allocated, mutable cell on the current closure
+			// frame so nested method rules can mutate it persistently.
+			if strings.HasPrefix(name, ".") {
+				if i < len(s.Values) && s.Values[i] != nil {
+					if arrLit, isArr := s.Values[i].(*parser.ArrayLiteral); isArr && len(arrLit.Elements) > 0 {
+						e.boxedCells[name] = &BoxedCell{Value: e.evalIntExpression(arrLit.Elements[0])}
+						continue
+					}
+					e.boxedCells[name] = &BoxedCell{Value: e.evalIntExpression(s.Values[i])}
+					continue
+				}
+				e.boxedCells[name] = &BoxedCell{}
+				continue
+			}
 			if i < len(s.Values) && s.Values[i] != nil {
 				if strLit, ok := s.Values[i].(*parser.StringLiteral); ok {
 					e.stringSymbols[name] = strLit.Value
@@ -655,6 +774,36 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			return 0, e.ensureIdentity(expr.Value)
 		}
 		return 0, e.allocID()
+	case *parser.CallExpression:
+		// Rule invocation (spec/03 §3.1): resolve the rule in the registry,
+		// bind arguments in a scoped call frame, execute the body, and
+		// return the first declared result (single-result capture).
+		results := e.callRule(expr, nil)
+		if len(results) > 0 {
+			if iv, isInt := results[0].(int); isInt {
+				return iv, e.allocID()
+			}
+			return 0, e.allocID()
+		}
+		return 0, e.allocID()
+	case *parser.MemberExpression:
+		// Member access (spec/03 §5.4). Leading-dot reads a boxed cell on the
+		// current closure frame; `obj.member()` invokes a closure method.
+		if expr.Base == nil && len(expr.Parts) == 1 {
+			if cell, okCell := e.boxedCells[expr.Parts[0]]; okCell {
+				return cell.Value, e.allocID()
+			}
+			return 0, e.allocID()
+		}
+		if expr.IsCall {
+			if val, okVal := e.callMember(expr); okVal {
+				if iv, isInt := val.(int); isInt {
+					return iv, e.allocID()
+				}
+			}
+			return 0, e.allocID()
+		}
+		return 0, e.allocID()
 	case *parser.IndexExpression:
 		// Decision 13 (D13, 2026-09-13): if the indexed expression is a
 		// SteppedRangeExpression directly, or an identifier bound to a
@@ -809,7 +958,7 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			return evalArithmetic(lit, left, right, lit), 0
 		case "and", "or", "xor", "¬", "∧", "∨", "⊕":
 			return evalLogical(lit, left, right), 0
-		case "<", ">", "<=", ">=", "≠", "!=", "<>":
+		case "<", ">", "<=", ">=", "≤", "≥", "≠", "!=", "<>":
 			return evalComparison(lit, left, right, expr.Token.Type, lit), 0
 		default:
 			if strings.HasSuffix(lit, "√") || strings.Contains(lit, "√") {
@@ -856,6 +1005,10 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 		}
 		return expr.Value
 	case *parser.BinaryExpression:
+		return strconv.Itoa(e.evalIntExpression(expr))
+	case *parser.MemberExpression:
+		// Member access (spec/03 §5.4): leading-dot boxed field read, or an
+		// object method call `c.next()` whose int result is printed.
 		return strconv.Itoa(e.evalIntExpression(expr))
 	}
 	if il, ok := node.(*parser.IntegerLiteral); ok {
@@ -964,4 +1117,215 @@ func (e *Evaluator) steppedRangeValue(sre *parser.SteppedRangeExpression, i int)
 		}
 	}
 	return val
+}
+
+// callRule executes a rule invocation per spec/03-rules.md §3.1. It creates
+// a scoped call frame: the caller's symbols are saved, the rule's declared
+// parameters are bound to the evaluated argument values, the body is
+// executed, and the declared result variables are captured back. The
+// caller's environment is restored on return so recursion and nested calls
+// do not leak state.
+//
+// Returns a slice of result values in declaration order. Each element is
+// either an int (ordinary result) or a *closureObject (spec/03 §5.4 state
+// generator result). For a single-result rule the slice has length 1; for a
+// multi-result rule it matches len(Results).
+//
+// When `bound` is non-nil the call is a closure *method* invocation
+// (`c.next()`): the object's boxed cells and nested-rule table are installed
+// so the body reads/mutates persistent state. When `bound` is nil the call
+// is a top-level rule invocation and a fresh closure object is allocated if
+// the rule is a state generator (it declares boxed cells or nested rules).
+func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) []interface{} {
+	rule, ok := e.ruleRegistry[call.Name]
+	var obj *closureObject
+	if !ok {
+		// Not a top-level rule — resolve as a nested closure method. The folded
+		// name is `.`+call.Name (e.g. `c.next()` resolves member `.next`).
+		if bound != nil {
+			if nr, isNested := bound.Nested["."+call.Name]; isNested {
+				rule = nr
+				obj = bound
+				ok = true
+			}
+		}
+		if !ok {
+			fmt.Fprintf(os.Stderr, "[ERROR] E0301 UndeclaredRule: %q at line %d\n", call.Name, int(call.Token.Pos))
+			return nil
+		}
+	} else {
+		obj = bound
+	}
+	if rule.ForwardDecl || rule.Body == nil {
+		fmt.Fprintf(os.Stderr, "[ERROR] E0301 UndeclaredRule: %q at line %d\n", call.Name, int(call.Token.Pos))
+		return nil
+	}
+
+	// A state generator (declares boxed cells or nested member rules) allocates
+	// a fresh closure object per invocation (spec/03 §5.4).
+	if obj == nil && isStateGenerator(rule) {
+		obj = newClosureObject(rule)
+	}
+
+	// Evaluate arguments in the caller's frame before switching.
+	argVals := make([]int, len(call.Args))
+	for i, arg := range call.Args {
+		argVals[i] = e.evalIntExpression(arg)
+	}
+
+	// Save the caller's frame.
+	savedSymbols := make(map[string]int, len(e.symbols))
+	for k, v := range e.symbols {
+		savedSymbols[k] = v
+	}
+	savedStrings := make(map[string]string, len(e.stringSymbols))
+	for k, v := range e.stringSymbols {
+		savedStrings[k] = v
+	}
+	savedArrays := make(map[string][]int, len(e.arrayValues))
+	for k, v := range e.arrayValues {
+		savedArrays[k] = v
+	}
+	savedExiting := e.exitingRule
+	savedBoxed := e.boxedCells
+
+	// Fresh frame: bind parameters.
+	e.symbols = make(map[string]int)
+	e.stringSymbols = make(map[string]string)
+	e.arrayValues = make(map[string][]int)
+	e.exitingRule = false
+	// Install the closure's boxed cells so member access resolves to the
+	// shared, persistent state (a fresh generator starts with its own new
+	// cells; a method call reuses the object's existing cells).
+	if obj != nil {
+		e.boxedCells = obj.Cells
+	} else {
+		e.boxedCells = make(map[string]*BoxedCell)
+	}
+	for i, param := range rule.Params {
+		if i < len(argVals) {
+			e.symbols[param] = argVals[i]
+		}
+	}
+	// Initialise result variables to zero (spec/03 §2.3 default init).
+	for _, res := range rule.Results {
+		e.symbols[res] = 0
+	}
+
+	// Execute the body.
+	for _, stmt := range rule.Body.Statements {
+		if e.exitingRule {
+			break
+		}
+		e.evalStatement(stmt)
+	}
+
+	// Capture results. A declared result that matches a nested member rule
+	// (e.g. `=> (next ∈ Rule)` with a `rule .next` body member) yields the
+	// closure object itself, so `new c := counter_generator(0)` binds `c` to
+	// the persistent closure (spec/03 §5.4).
+	results := make([]interface{}, len(rule.Results))
+	for i, res := range rule.Results {
+		if obj != nil {
+			if _, isMember := obj.Nested["."+res]; isMember {
+				results[i] = obj
+				continue
+			}
+		}
+		results[i] = e.symbols[res]
+	}
+
+	// Restore the caller's frame.
+	e.symbols = savedSymbols
+	e.stringSymbols = savedStrings
+	e.arrayValues = savedArrays
+	e.exitingRule = savedExiting
+	e.boxedCells = savedBoxed
+
+	return results
+}
+
+// isStateGenerator reports whether a rule declares boxed state cells
+// (`set .field := [...]`) or nested member rules anywhere in its body — the
+// two markers of a spec/03 §5.4 closure generator.
+func isStateGenerator(rule *parser.RuleStatement) bool {
+	if rule.Body == nil {
+		return false
+	}
+	for _, st := range rule.Body.Statements {
+		switch s := st.(type) {
+		case *parser.RuleStatement:
+			if strings.HasPrefix(s.Name, ".") {
+				return true
+			}
+		case *parser.DeclarationStatement:
+			for _, n := range s.Names {
+				if strings.HasPrefix(n, ".") {
+					return true
+				}
+			}
+			if strings.HasPrefix(s.Name, ".") {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// newClosureObject allocates a closure instance for a state-generator rule,
+// collecting its nested member rules into the dispatch table and starting
+// with an empty boxed-cell map (populated as `set .field := [...]` runs).
+func newClosureObject(rule *parser.RuleStatement) *closureObject {
+	obj := &closureObject{
+		Cells:  make(map[string]*BoxedCell),
+		Nested: make(map[string]*parser.RuleStatement),
+	}
+	for _, st := range rule.Body.Statements {
+		if rs, isRule := st.(*parser.RuleStatement); isRule && strings.HasPrefix(rs.Name, ".") {
+			obj.Nested[rs.Name] = rs
+		}
+	}
+	return obj
+}
+
+// bindResultValue stores a single rule-call result under `name`. Closure
+// objects are recorded in closureObjects (so `c.next()` can dispatch); ints
+// land in the flat symbol table. Identity is ensured either way.
+func (e *Evaluator) bindResultValue(name string, val interface{}) {
+	if co, isClosure := val.(*closureObject); isClosure {
+		e.closureObjects[name] = co
+		delete(e.symbols, name)
+		e.ensureIdentity(name)
+		return
+	}
+	if iv, isInt := val.(int); isInt {
+		e.symbols[name] = iv
+	} else {
+		e.symbols[name] = 0
+	}
+	e.ensureIdentity(name)
+}
+
+// callMember dispatches an object member call `obj.method(args...)` per
+// spec/03 §5.4. It resolves the receiver object, then invokes the named
+// nested rule with the object's boxed cells installed so the method shares
+// the closure's persistent state. Returns the first result value.
+func (e *Evaluator) callMember(me *parser.MemberExpression) (interface{}, bool) {
+	ident, isIdent := me.Base.(*parser.Identifier)
+	if !isIdent || len(me.Parts) == 0 {
+		return 0, false
+	}
+	obj, ok := e.closureObjects[ident.Value]
+	if !ok {
+		return 0, false
+	}
+	// Reuse callRule's frame machinery by resolving the nested rule directly.
+	// The member name folds to `.name` in the generator's Nested table; pass
+	// the bare member name as the call name and bind the object.
+	memberCall := &parser.CallExpression{Token: me.Token, Name: me.Parts[0], Args: me.Args}
+	results := e.callRule(memberCall, obj)
+	if len(results) > 0 {
+		return results[0], true
+	}
+	return 0, true
 }

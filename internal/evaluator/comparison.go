@@ -29,12 +29,12 @@ func evalComparison(op string, left, right int, tokenType token.Type, literal st
 			return 1
 		}
 		return 0
-	case "<=":
+	case "<=", "≤":
 		if left <= right {
 			return 1
 		}
 		return 0
-	case ">=":
+	case ">=", "≥":
 		if left >= right {
 			return 1
 		}

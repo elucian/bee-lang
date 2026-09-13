@@ -373,3 +373,30 @@ type CallExpression struct {
 
 func (ce *CallExpression) expressionNode() {}
 func (ce *CallExpression) Pos() token.Pos  { return ce.Token.Pos }
+
+// MemberExpression implements a dotted member-access path per spec/03-rules.md
+// §5.4 (Closures & State Generators). It is produced in two surface forms:
+//
+//	set .count := [start];   -- leading-dot: a field on the enclosing rule's
+//	                         -- own closure frame (Parts = [".count"], Base = nil)
+//	print c.next();          -- object-dot: a method/field access on a bound
+//	                         -- closure object (Base = c, Parts = ["next"])
+//
+// `Parts` is the dotted path with the leading dot folded in, so `.count`
+// yields Parts=[".count"] and `c.next` yields Parts=["next"] with Base=c.
+// `IsCall` distinguishes `c.next()` (invoke the closure method) from a bare
+// `c.next` reference. Args holds the call argument list when IsCall is set.
+//
+// The evaluator resolves the leading-dot form against the *current* rule
+// frame's boxed cells and the object-dot form against a heap-allocated
+// closure object, keeping closure state out of the flat symbol table.
+type MemberExpression struct {
+	Token  token.Token
+	Base   Expression   // receiver object for `obj.member`; nil for leading-dot `.member`
+	Parts  []string     // dotted member path (leading `.member` folds the dot into Parts[0])
+	IsCall bool         // true when followed by `(...)` — invoke as a closure method
+	Args   []Expression // call arguments (only when IsCall)
+}
+
+func (me *MemberExpression) expressionNode() {}
+func (me *MemberExpression) Pos() token.Pos  { return me.Token.Pos }
