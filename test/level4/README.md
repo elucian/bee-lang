@@ -27,7 +27,7 @@ This level covers data collections and processing pipelines as defined in:
 | T0417    | file: maps.bee                   | FAIL       |
 | T0418    | file: map_builder.bee            | FAIL       |
 | T0419    | file: quantifiers.bee            | FAIL       |
-| T0420    | file: sets_sorted.bee            | FAIL       |
+| T0420    | file: sets_sorted.bee            | PASS       |
 | T0421    | file: set_add_remove.bee         | FAIL       |
 | T0422    | file: set_algebra.bee            | FAIL       |
 | T0423    | file: set_algebra_ascii.bee      | FAIL       |

@@ -1768,6 +1768,47 @@ func (p *Parser) parsePrimary() Expression {
 		member, _ := p.identLiteral(memberTok)
 		return &MemberExpression{Token: tok, Parts: []string{"." + member}}
 	}
+	if tok.Type == token.LBRACE {
+		// spec/10-collections.md §4: set_lit ::= "{" expression ( "," expression )* "}" ;
+		//                          map_lit ::= "{" key_value_pair ( "," key_value_pair )* "}" ;
+		// Distinguished per D9 (ratified 2026-09-13): `:` is the structural
+		// pair-up. The climb loop treats `:` and `,` as non-operators, so the
+		// first element parse parks on whichever separator follows. A top-level
+		// `:` after the key expression selects MapLiteral; otherwise the
+		// element list folds into a SetLiteral. Empty `{}` is an empty set.
+		if p.l.PeekToken().Type == token.RBRACE {
+			p.l.NextToken() // consume '}'
+			return &SetLiteral{Token: tok}
+		}
+		first := p.parseExpression()
+		if p.l.PeekToken().Type == token.COLON {
+			p.l.NextToken() // consume ':'
+			mapLit := &MapLiteral{Token: tok}
+			mapLit.Pairs = append(mapLit.Pairs, MapPair{Key: first, Value: p.parseExpression()})
+			for p.l.PeekToken().Type == token.COMMA {
+				p.l.NextToken() // consume ','
+				key := p.parseExpression()
+				if p.l.PeekToken().Type == token.COLON {
+					p.l.NextToken() // consume ':'
+				}
+				mapLit.Pairs = append(mapLit.Pairs, MapPair{Key: key, Value: p.parseExpression()})
+			}
+			if p.l.PeekToken().Type == token.RBRACE {
+				p.l.NextToken() // consume '}'
+			}
+			return mapLit
+		}
+		setLit := &SetLiteral{Token: tok}
+		setLit.Elements = append(setLit.Elements, first)
+		for p.l.PeekToken().Type == token.COMMA {
+			p.l.NextToken() // consume ','
+			setLit.Elements = append(setLit.Elements, p.parseExpression())
+		}
+		if p.l.PeekToken().Type == token.RBRACE {
+			p.l.NextToken() // consume '}'
+		}
+		return setLit
+	}
 	if tok.Type == token.LBRACKET {
 		// spec/10-collections.md §4: array_lit  ::= "[" expression ( "," expression )* "]" ;
 		//                           matrix_lit ::= "[" array_lit ( "," array_lit )* "]" ;
