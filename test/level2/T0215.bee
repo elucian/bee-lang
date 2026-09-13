@@ -1,13 +1,13 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=10 type=; literal=";"
--- @DESC:T0215 Loop completion block with then clause
--- then runs once at the end demo
+-- @DESC:T0215 Loop completion block with then epilogue (D14)
+-- D14: `then` is the post-loop epilogue, runs once after loop exit.
+-- Cycle terminates with `done main;`.
 rule main:
-  new n := 0;
-  cycle:
+  cycle main:
+    new n := 0;
     while n < 3 do
       let n += 1;
-      then
-      print "finished at " + n;
-    repeat;
-  return;
+  then
+    print "finished at " + n;
+  done main;
+return;
 

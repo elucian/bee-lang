@@ -1,13 +1,10 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=9 type=; literal=";"
--- @DESC:T0216 While cycle iteration loop
--- while demo
+-- @DESC:T0216 While cycle iteration loop (D14)
+-- D14: `while … do` body closes with `done;` (mandatory terminator).
 rule main:
   new n := 0;
-  cycle:
-    while n < 3 do
-      write n;
-      let n += 1;
-    repeat;
-    print;
-  return;
+  cycle while n < 3 do
+    write n;
+    let n += 1;
+  done;
+return;
 

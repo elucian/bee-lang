@@ -1,11 +1,15 @@
--- @DESC:T0214 Loop control with stop and next directives
--- stop and next demo
+-- @DESC:T0214 Redo directive restarts current iteration (D14)
+-- D14: `redo` re-evaluates the loop header without flushing volatile body state.
 rule main:
-  for i ∈ (1..10) do
-    next if i % 2 = 0;
-    stop if i > 7;
-    write i;
-  repeat;
-  print;
+  cycle:
+    new attempts := 0;
+    new succeeded := 0;
+  do
+    let attempts += 1;
+    redo if attempts < 3;
+    let succeeded += 1;
+    stop if succeeded = 2;
+  done;
+  print succeeded;
 return;
 

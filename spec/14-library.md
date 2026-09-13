@@ -67,7 +67,7 @@ new file_list := IO.Folder.list("data/");
 
 for ∀ file_name ∈ file_list do:
   print "Found file: ", file_name;
-repeat;
+done;
 ```
 
 ---

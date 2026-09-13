@@ -1,23 +1,22 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=6 type=; literal=";"
--- @DESC:file: map_reduce.bee
--- Map and reduce demo
+-- @DESC:T0806 map-reduce with done terminators (D14)
+-- D14: for terminators migrated to done;.
 rule sum(a, b ∈ Z) => (r ∈ Z):
   for i ∈ (a..b) do:
     let r += i;
-  repeat;
+  done;
 return;
 
 rule main:
   new parts ∈ List(Z);
   for lo ∈ (1..76:25) do:
     begin sum(lo, lo + 24) +> parts;
-  repeat;
+  done;
   wait;
 
   new total := 0 ∈ Z;
   for ∀ p ∈ parts do:
     let total += p;
-  repeat;
+  done;
   print total;
 return;
 

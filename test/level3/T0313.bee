@@ -1,4 +1,4 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
+-- @ENABLED: Reset by user
 -- @DESC:file: set_add_remove.bee
 -- Adding and removing demo
 rule main:

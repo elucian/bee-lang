@@ -1,4 +1,4 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=15 type=; literal=";"
+-- @ENABLED: Reset by user
 -- @DESC:file: trial_pass_fail.bee
 -- pass, fail and abort demo
 rule main:

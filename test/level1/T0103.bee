@@ -1,4 +1,5 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=1 type=- literal="-"
+-- @ENABLED: Reset by user
+-- @ENABLED: Reset by user
 - @DESC:T0103 Logical and boolean Unicode operators
 rule main:
   new p, q ∈ Z;

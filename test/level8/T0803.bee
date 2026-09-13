@@ -1,11 +1,10 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=7 type=; literal=";"
--- @DESC:file: coroutines_turn.bee
--- Two coroutines taking turns demo
+-- @DESC:T0803 two coroutines taking turns (D14)
+-- D14: loop terminators migrated to done;.
 rule odds(n ∈ N) => (v ∈ N):
   for i ∈ (1..n) do:
     let v := i * 2 - 1;
     yield;
-  repeat;
+  done;
   let v := 0;
 return;
 
@@ -13,7 +12,7 @@ rule evens(n ∈ N) => (v ∈ N):
   for i ∈ (1..n) do:
     let v := i * 2;
     yield;
-  repeat;
+  done;
   let v := 0;
 return;
 
@@ -22,11 +21,11 @@ rule main:
   new b := 1 ∈ N;
   begin odds(3);
   begin evens(3);
-  while a > 0 do:
+  cycle while a > 0 do:
     yield a << odds;
     yield b << evens;
     write a + "/" + b + " ";
-  repeat;
+  done;
   print;
   wait;
 return;

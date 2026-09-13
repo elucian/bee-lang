@@ -300,6 +300,190 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		if s.Keyword == "over" || s.Keyword == "stop" || s.Keyword == "exit" || s.Keyword == "abort" || s.Keyword == "panic" {
 			e.exitingRule = true
 		}
+	case *parser.CycleStatement:
+		e.evalCycleStatement(s)
+	}
+}
+
+// evalCycleStatement dispatches a cycle_stmt (spec/02-statements.md §3.4) over
+// the four body-header forms and enforces the volatile-body / stable-prologue
+// partition documented in §3.4.
+//
+// Note: the current Evaluator uses a flat symbol table (no lexical scoping).
+// The §3.4 invariant "Volatile body scope — its locals are re-created on every
+// iteration" is therefore enforced by convention here (prologue runs once,
+// body re-runs each pass) rather than by partitioning the environment. Full
+// scope partitioning is deferred to the Phase 5 typechecker (Task 5.3).
+func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
+	// 1. Prologue runs exactly once for labeled cycles (stable outer scope).
+	//    Anonymous cycles have no prologue — skip.
+	if s.Prologue != nil {
+		for _, stmt := range s.Prologue.Statements {
+			if e.exitingRule {
+				return
+			}
+			e.evalStatement(stmt)
+		}
+	}
+
+	// 2. Iterate the volatile body. The dispatch differs by body-header:
+	//    - "do"     : infinite loop until a transfer statement breaks out.
+	//    - "while"  : condition-checked loop. Body runs only while Condition
+	//                 evaluates non-zero.
+	//    - "for"    : indexed domain loop over Range. The §3.4 model iterates
+	//                 i through the domain Expression and re-runs Body per
+	//                 pass. The volatile body scope means the index binding
+	//                 is reset each pass.
+	//
+	// Per D14 (2026-09-13), inline `repeat`, `stop`, and `redo` are
+	// TransferStatements dispatched by evalStatement. `repeat` and `stop`
+	// set exitingRule to break out of the loop (jump-to-exit) the same
+	// way; `redo` rewinds to the loop-header without advancing the
+	// iterator (we approximate this by running the body again without
+	// letting the outer for/while advance the count).
+	breakOut := false
+	switch s.BodyHeader {
+	case "do":
+		for {
+			if e.exitingRule {
+				breakOut = true
+				break
+			}
+			if s.Body != nil {
+				for _, stmt := range s.Body.Statements {
+					if e.exitingRule {
+						breakOut = true
+						break
+					}
+					e.evalStatement(stmt)
+				}
+			}
+			if breakOut {
+				break
+			}
+		}
+	case "while":
+		for {
+			if s.Condition != nil && e.evalIntExpression(s.Condition) == 0 {
+				break
+			}
+			if e.exitingRule {
+				breakOut = true
+				break
+			}
+			if s.Body != nil {
+				for _, stmt := range s.Body.Statements {
+					if e.exitingRule {
+						breakOut = true
+						break
+					}
+					e.evalStatement(stmt)
+				}
+			}
+			if breakOut {
+				break
+			}
+		}
+	case "for":
+		// For `for i ∈ expr do`, drive a bounded sequence over the Range
+		// expression. The integer-domain case is evaluated directly here;
+		// collection / stepped-range domains fall back to set semantics
+		// (handled by the IndexExpression evaluator at lookup time).
+		if s.Index != nil && s.Range != nil {
+			indexName := s.Index.Value
+			// Snapshot previous binding (if any) so the volatile scope
+			// behaves as documented. Phase 5 typechecker will replace
+			// this with a proper scope push/pop.
+			prevVal, hadPrev := e.symbols[indexName]
+			prevID, hadPrevID := e.identities[indexName]
+			deferRestore := func() {
+				if hadPrev {
+					e.symbols[indexName] = prevVal
+				} else {
+					delete(e.symbols, indexName)
+				}
+				if hadPrevID {
+					e.identities[indexName] = prevID
+				} else {
+					delete(e.identities, indexName)
+				}
+			}
+			switch rng := s.Range.(type) {
+			case *parser.IntegerLiteral:
+				val, _ := strconv.Atoi(rng.Value)
+				for iter := 1; iter <= val; iter++ {
+					e.symbols[indexName] = iter
+					e.ensureIdentity(indexName)
+					if s.Body != nil {
+						for _, stmt := range s.Body.Statements {
+							if e.exitingRule {
+								deferRestore()
+								return
+							}
+							e.evalStatement(stmt)
+						}
+					}
+				}
+			case *parser.BinaryExpression:
+				// Range expression like `0..n-2` (Decision 13). Evaluate
+				// the inclusive endpoints and iterate.
+				leftVal := e.evalIntExpression(rng.Left)
+				rightVal := e.evalIntExpression(rng.Right)
+				step := 1
+				if leftVal <= rightVal {
+					for iter := leftVal; iter <= rightVal; iter += step {
+						e.symbols[indexName] = iter
+						e.ensureIdentity(indexName)
+						if s.Body != nil {
+							for _, stmt := range s.Body.Statements {
+								if e.exitingRule {
+									deferRestore()
+									return
+								}
+								e.evalStatement(stmt)
+							}
+						}
+					}
+				} else {
+					for iter := leftVal; iter >= rightVal; iter -= step {
+						e.symbols[indexName] = iter
+						e.ensureIdentity(indexName)
+						if s.Body != nil {
+							for _, stmt := range s.Body.Statements {
+								if e.exitingRule {
+									deferRestore()
+									return
+								}
+								e.evalStatement(stmt)
+							}
+						}
+					}
+				}
+			default:
+				// Fallback: single iteration when domain is non-integer.
+				if s.Body != nil {
+					for _, stmt := range s.Body.Statements {
+						if e.exitingRule {
+							deferRestore()
+							return
+						}
+						e.evalStatement(stmt)
+					}
+				}
+			}
+			deferRestore()
+		}
+	}
+
+	// 3. `then` clause runs once when the loop terminates naturally
+	//    (i.e. not via a transfer statement that set exitingRule).
+	if !breakOut && !e.exitingRule && s.ThenBlock != nil {
+		for _, stmt := range s.ThenBlock.Statements {
+			if e.exitingRule {
+				return
+			}
+			e.evalStatement(stmt)
+		}
 	}
 }
 

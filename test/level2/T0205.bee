@@ -3,5 +3,5 @@ rule main:
   new a ∈ Z;
   let a := 42;
   expect a = 42;
-  print a;
+  print ("a = ", a);
 return;

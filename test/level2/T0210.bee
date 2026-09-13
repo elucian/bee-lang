@@ -1,12 +1,13 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=9 type=; literal=";"
--- @DESC:T0210 Pattern match with match all mode
--- match, every hit demo
+-- @DESC:T0210 Anonymous cycle: prologue with next and stop jumps (D14)
+-- D14: anonymous `cycle:` opens stable prologue without label.
 rule main:
-  match all 4:
-  when 4 do
-    print "exactly four";
-  when (0..9) do
-    print "a digit";
+  cycle:
+    new count := 0;
+  do
+    let count += 1;
+    next if count % 2 = 0;
+    stop if count ≥ 100;
+    write count;
   done;
 return;
 

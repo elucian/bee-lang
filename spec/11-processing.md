@@ -53,7 +53,7 @@ $$\forall x \in S, \quad P(x) \in \{0, 1\}$$
   ```bee
   for ∀ item ∈ collection do
     apply process(item);
-  repeat;
+  done;
   ```
 - **Predicate Evaluation:** Returns `true` if every element satisfies the condition:
   ```bee

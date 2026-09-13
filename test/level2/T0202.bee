@@ -1,11 +1,14 @@
--- @DISABLED: W0901 SignatureGrammarPartial: line=2 rule="main" (signature decoder is heuristic; full type binding deferred to Phase 7.2)
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=10 type=; literal=";"
+-- @ENABLED: Reset by user
+-- @ENABLED: Reset by user
 -- @DESC:T0202 Hello World with String variable
 rule main:
   new s ∈ S; -- declare without initialization
   let s := "Hello World";
   let n := s;
-  expect s  = n; -- same value
-  expect s is n; -- same refference
-  expect s
+  expect s  = n;  -- same value
+  expect s is n;  -- same refference
+  expect @s = @n; -- same pointer
   print s;
+  print n;
 return;

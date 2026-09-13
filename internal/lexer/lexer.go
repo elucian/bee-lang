@@ -441,6 +441,14 @@ func (l *Lexer) NextToken() token.Token {
 				}
 			}
 			tokType := token.LookupIdent(lit)
+			// D15 (2026-09-13): `next` is the canonical loop-jump keyword.
+			// Legacy `repeat` is a deprecated synonym that lexes to NEXT
+			// with an E0010 deprecation warning.
+			if lit == "repeat" {
+				l.emitWarning("E0010", `deprecated-keyword: 'repeat' — use 'next' (Decision 15)`, l.line)
+				tok = token.Token{Type: token.NEXT, Literal: "next", Pos: token.Pos(l.line)}
+				return tok
+			}
 			tok = token.Token{Type: tokType, Literal: lit, Pos: token.Pos(l.line)}
 			return tok
 		} else if isDigit(l.ch) {

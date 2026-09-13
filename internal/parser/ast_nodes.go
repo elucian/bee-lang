@@ -219,9 +219,44 @@ type ScopeStatement struct {
 func (ss *ScopeStatement) statementNode() {}
 func (ss *ScopeStatement) Pos() token.Pos { return ss.Token.Pos }
 
+// CycleStatement implements the `cycle` repetition statement per
+// spec/02-statements.md §3.4 and the Decision 14 (D14, 2026-09-13) EBNF:
+//
+//	cycle_stmt ::= "cycle" [ label ] [ ":" decl_block ]
+//	               ( "do" | "while" expression "do"
+//	               | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do" )
+//	               block
+//	               [ "then" block ]
+//	               "done" [ label ] ";"
+//	             | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do"
+//	               block "done" ";" ;
+//
+// is partitioned into:
+//   - Label: optional cycle label. Per D14 the label is independent of the
+//     `:` scope marker; `cycle name do` is a labeled jump target only,
+//     `cycle name:` opens a labeled prologue, `cycle:` opens an anonymous
+//     prologue, and `cycle do` is fully anonymous with no outer scope.
+//   - Prologue: optional stable outer scope. Per D14, the colon (`:`) — not
+//     the label — is the sole scope marker. Created once before the first
+//     iteration and shared across all iterations when present.
+//   - Header: BodyHeader ∈ {"do", "while", "for"} together with Condition /
+//     Index / Range domain — captures the body-header form.
+//   - Body: the volatile block (re-created on every iteration).
+//   - ThenBlock: optional `then` post-loop epilogue block (D14).
+//   - DoneLabel: the optional closing label on `done`.
 type CycleStatement struct {
-	Token   token.Token
-	Keyword string
+	Token      token.Token
+	Keyword    string // "cycle", "for", or "while"
+	Label      *Identifier
+	Prologue   *BlockStatement // stable outer scope (nil when no `:` marker — D14)
+	BodyHeader string          // "do" | "while" | "for"
+	Condition  Expression      // for `while expr do` (nil otherwise)
+	Index      *Identifier     // for `for i ∈ expr do` (nil otherwise)
+	Range      Expression      // for `for i ∈ expr do` (nil otherwise)
+	IsForall   bool            // true if `for ∀ i ∈ …` (D11 quantifier)
+	Body       *BlockStatement // volatile block
+	ThenBlock  *BlockStatement // optional `then` post-loop epilogue (D14)
+	DoneLabel  *Identifier     // optional label on `done` (D14)
 }
 
 func (cs *CycleStatement) statementNode() {}
@@ -236,9 +271,11 @@ func (ts *TrialStatement) statementNode() {}
 func (ts *TrialStatement) Pos() token.Pos { return ts.Token.Pos }
 
 type TransferStatement struct {
-	Token   token.Token
-	Keyword string
-	Value   Expression
+	Token     token.Token
+	Keyword   string
+	Value     Expression
+	Label     *Identifier // optional target label for `stop label;` / `repeat label;` / `redo label;` (D14)
+	Condition Expression  // optional `if cond` clause on D14 jump statements
 }
 
 func (ts *TransferStatement) statementNode() {}

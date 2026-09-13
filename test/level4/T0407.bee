@@ -1,5 +1,4 @@
--- @DESC:@DISABLED: is= VARIABLE CONTEXT is=
--- file: contract_postcondition.bee
+-- @DESC:T0407 contract postcondition with result binding
 -- A postcondition demo
 rule bump(n ∈ Z) => (r ∈ Z):
   expect r > n;

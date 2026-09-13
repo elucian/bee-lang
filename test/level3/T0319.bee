@@ -1,11 +1,10 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
--- @DESC:file: walking_map.bee
--- Walking a map demo
+-- @DESC:T0319 walking a map with done terminator (D14)
+-- D14: for loop terminates with done;.
 rule main:
   new m := {1:"a", 2:"b"};
   for k, v ∈ m do
     write k + "=" + v + " ";
-  repeat;
+  done;
   print;
 return;
 

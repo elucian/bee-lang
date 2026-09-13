@@ -1,16 +1,17 @@
--- @DESC:@DISABLED: PARSER DEBUG: ident tok="items"
--- file: contract_old_collection.bee
--- old works on a collection too demo
-rule grow(items ∈ [Z], by ∈ Z):
-  assert by ≥ 0;
-  expect items.length = old items.length + by;
-  let items ++ by;
+-- @DESC:T0406 contract clamp with named results
+-- Both, naming results and parameters demo
+rule clamp(v, lo, hi ∈ Z) => (r ∈ Z):
+  expect lo ≤ hi;
+  expect lo ≤ r ≤ hi;
+  let r := v;
+  if v < lo do
+    let r := lo;
+  else if v > hi do
+    let r := hi;
+  done;
 return;
 
 rule main:
-  new xs ∈ [Z](2);
-  print xs.length;
-  apply grow(xs, 3);
-  print xs.length;
+  print (clamp(-5,0,10), clamp(5,0,10), clamp(99,0,10));
 return;
 

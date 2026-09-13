@@ -30,7 +30,7 @@ Bee utilizes a deterministic, three-tier hybrid memory management model engineer
 ### 2.2 Tier 2: Region-Based Arena Allocation & `zap` Directive
 - **Region Boundary:** Every `rule` or nested block execution frame allocates a light stack-bound Region Arena (2KB initial chunk).
 - **Transient Objects:** Short-lived local variables allocate directly from the active Region Arena offset without individual heap allocations (`ptr = arena.top; arena.top += size`).
-- **Region Cleanup:** Upon reaching block termination (`return`, `done`, `repeat`), the entire Region Arena offset is unwound in a single instruction (`arena.top = arena.base`), instantly reclaiming all region-allocated memory.
+- **Region Cleanup:** Upon reaching block termination or iteration jump (`return`, `done`, `next`), the entire Region Arena offset is unwound in a single instruction (`arena.top = arena.base`), instantly reclaiming all region-allocated memory.
 - **Manual Deallocation (`zap`):**
   - Syntax: `zap identifier;`
   - In Hot Zones (performance-critical loops), `zap` explicitly invalidates the pointer and resets the target memory slot immediately.

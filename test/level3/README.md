@@ -13,7 +13,7 @@ This level covers rules, contracts, and function definitions as defined in:
 | T0301    | file: append_collection_examp... | FAIL       |
 | T0302    | file: arrays.bee                 | FAIL       |
 | T0303    | file: array_traversal.bee        | FAIL       |
-| T0304    | file: bubble_sort.bee            | FAIL       |
+| T0304    | file: bubble_sort.bee            | PASS       |
 | T0305    | file: builders.bee               | FAIL       |
 | T0306    | file: concatenation.bee          | FAIL       |
 | T0307    | file: growing_shrinking_list.bee | FAIL       |

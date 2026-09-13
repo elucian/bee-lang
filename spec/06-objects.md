@@ -136,7 +136,7 @@ rule Printable(self ∈ Object):
   rule .print_summary(self ∈ Object):
     for k ∈ self.keys() do
       print (k, "=>", self[k]) using: " ";
-    repeat;
+    done;
   return;
 return;
 

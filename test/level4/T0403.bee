@@ -1,18 +1,14 @@
--- @DESC:@DISABLED: PARSER DEBUG: ident tok="r"
--- file: contract_clamp.bee
--- Both, naming results and parameters demo
-rule clamp(v, lo, hi ∈ Z) => (r ∈ Z):
-  expect lo ≤ hi;
-  expect lo ≤ r ≤ hi;
-  let r := v;
-  if v < lo do
-    let r := lo;
-  else if v > hi do
-    let r := hi;
-  done;
+-- @DESC:T0403 contract deposit with expectation
+-- Exact money, with a promise it went up demo
+rule deposit(balance ∈ @Q, amount ∈ Q):
+  expect amount > 0;
+  expect balance > old balance;
+  let balance += amount;
 return;
 
 rule main:
-  print (clamp(-5,0,10), clamp(5,0,10), clamp(99,0,10));
+  new balance: 10 ∈ Q;
+  apply deposit(@balance, 1\4);
+  print balance;
 return;
 

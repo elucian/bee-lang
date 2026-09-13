@@ -141,7 +141,7 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 		return p.parseCycleStatement(tok)
 	case token.TRIAL, token.TRY, token.CASE, token.MISS, token.FINAL:
 		return p.parseTrialStatement(tok)
-	case token.RETURN, token.STOP, token.REDO, token.NEXT, token.PASS,
+	case token.RETURN, token.STOP, token.REDO, token.REPEAT, token.NEXT, token.PASS,
 		token.RAISE, token.RESUME, token.RETRY, token.FAIL, token.OVER,
 		token.ABORT, token.EXIT, token.PANIC, token.YIELD:
 		return p.parseTransferStatement(tok)
@@ -409,21 +409,304 @@ func (p *Parser) parseScopeStatement(tok token.Token) Statement {
 	return stmt
 }
 
-// parseCycleStatement handles `cycle`, `for`, and `while` per spec/02-statements.md §3.4.
+// parseCycleStatement implements spec/02-statements.md §3.4 cycle_stmt grammar
+// per Decision 14 (D14, ratified 2026-09-13). The D14 grammar decouples the
+// optional label from the colon — they are independent options:
+//
+//	cycle_stmt ::= "cycle" [ label ] [ ":" decl_block ]
+//	               ( "do" | "while" expression "do"
+//	               | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do" )
+//	               block
+//	               [ "then" block ]
+//	               "done" [ label ] ";"
+//	             | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do"
+//	               block "done" ";" ;
+//
+// The colon (`:`) is the **scope marker**: when present (with or without a
+// label) the cycle opens a stable outer-scope prologue that runs exactly
+// once before the first iteration and is shared across all iterations. A
+// label without a colon (`cycle name do …`) is purely a jump target for
+// `stop/repeat/redo`; it creates no scope. The block terminator is
+// uniformly `done [label];` for every cycle form. Inline `repeat` /
+// `redo` / `stop` statements appearing INSIDE the volatile body are
+// dispatched as TransferStatements (continue/break semantics).
 func (p *Parser) parseCycleStatement(tok token.Token) Statement {
 	stmt := &CycleStatement{Token: tok, Keyword: tok.Literal}
-	for {
+
+	// 1. Optional label + optional colon — D14 makes them INDEPENDENT.
+	//    Only the entry keyword `cycle` accepts a label; bare `for` and
+	//    `while` cycles are unlabeled by construction. The dispatch is:
+	//
+	//      peek IDENT               → consume label
+	//        peek COLON             → consume colon → parse prologue (Label set)
+	//        peek do|while|for      → label as jump target only (no prologue)
+	//      peek COLON              → bare `cycle:` → anonymous prologue
+	//      peek do|while|for       → fully anonymous (no label, no prologue)
+	if tok.Type == token.CYCLE {
 		peek := p.l.PeekToken()
-		if peek.Type == token.SEMICOLON {
+		if peek.Type == token.IDENT &&
+			peek.Literal != "do" && peek.Literal != "while" && peek.Literal != "for" &&
+			peek.Literal != "then" && peek.Literal != "done" {
+			// Optional label.
+			labelTok := p.l.NextToken() // consume label ident
+			stmt.Label = &Identifier{Token: labelTok, Value: labelTok.Literal}
+			// Optional colon — if present, opens the prologue.
+			if p.l.PeekToken().Type == token.COLON {
+				p.l.NextToken() // consume colon
+				stmt.Prologue = p.parseCyclePrologue(tok)
+			}
+			// No colon: label is a pure jump target (no prologue).
+		} else if peek.Type == token.COLON {
+			// Bare `cycle:` (anonymous prologue, no label).
+			p.l.NextToken() // consume colon
+			stmt.Prologue = p.parseCyclePrologue(tok)
+		}
+		// Else: fully anonymous (no label, no colon, no prologue).
+	}
+
+	// 2. Body-header dispatch. Two entry shapes per spec §3.4 / EBNF:
+	//
+	//    - When the entry keyword is `cycle`, the body-header
+	//      (`do` | `while expr do` | `for ∀? ident ∈ expr do`) follows
+	//      the optional label and prologue. We dispatch on the NEXT
+	//      token (peek) to choose the form.
+	//
+	//    - When the entry keyword is `for` or `while`, the keyword
+	//      was already consumed by parseStatement, so the body-header
+	//      shape is fixed by `tok.Type`. We dispatch on `tok` directly
+	//      and parse the header tokens that immediately follow.
+	switch {
+	case tok.Type == token.FOR:
+		// Entry was `for [∀] ident ∈ expr do` — kw already consumed.
+		stmt.BodyHeader = "for"
+		// Optional ∀ quantifier (D11).
+		if p.l.PeekToken().Type == token.FORALL {
 			p.l.NextToken()
-			break
+			stmt.IsForall = true
 		}
-		if peek.Type == token.EOF || peek.Type == token.DONE || peek.Literal == "repeat" {
-			break
+		// Index loop variable — required identifier.
+		indexTok := p.l.NextToken()
+		if indexTok.Type != token.IDENT {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:InvalidCycleHeader: line=%d (expected index identifier after `for` in cycle header; got type=%s literal=%q)",
+				indexTok.Pos, indexTok.Type, indexTok.Literal,
+			))
+		} else {
+			stmt.Index = &Identifier{Token: indexTok, Value: indexTok.Literal}
 		}
+		// ∈ / in domain operator.
+		peekOp := p.l.PeekToken()
+		if peekOp.Type != token.IN_OP && peekOp.Type != token.IN_KEYWORD {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:InvalidCycleHeader: line=%d (expected `∈` or `in` after for-index identifier; got type=%s literal=%q)",
+				peekOp.Pos, peekOp.Type, peekOp.Literal,
+			))
+		} else {
+			p.l.NextToken() // consume ∈ / in
+		}
+		stmt.Range = p.parseExpression()
+		if !p.matchDo() {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:InvalidCycleHeader: line=%d (expected `do` after `for` domain expression in cycle header)",
+				tok.Pos,
+			))
+		}
+	case tok.Type == token.WHILE:
+		// Entry was `while expr do` — kw already consumed.
+		stmt.BodyHeader = "while"
+		stmt.Condition = p.parseExpression()
+		if !p.matchDo() {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:InvalidCycleHeader: line=%d (expected `do` after `while` condition in cycle header)",
+				tok.Pos,
+			))
+		}
+	default:
+		// Entry was `cycle` — body-header keyword follows the (optional)
+		// label and prologue. Dispatch on the next token's type:
+		//   WHILE → `while expr do`
+		//   FOR   → `for [∀] ident ∈ expr do`
+		//   DO    → `do` (infinite cycle)
+		//   IDENT matching `do`/`while`/`for` → same as their tokenised forms
+		switch p.l.PeekToken().Type {
+		case token.WHILE:
+			p.l.NextToken() // consume `while`
+			stmt.BodyHeader = "while"
+			stmt.Condition = p.parseExpression()
+			if !p.matchDo() {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:InvalidCycleHeader: line=%d (expected `do` after `while` condition in cycle header)",
+					tok.Pos,
+				))
+			}
+		case token.FOR:
+			p.l.NextToken() // consume `for`
+			stmt.BodyHeader = "for"
+			// Optional ∀ quantifier (D11).
+			if p.l.PeekToken().Type == token.FORALL {
+				p.l.NextToken()
+				stmt.IsForall = true
+			}
+			// Index loop variable — required identifier.
+			indexTok := p.l.NextToken()
+			if indexTok.Type != token.IDENT {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:InvalidCycleHeader: line=%d (expected index identifier after `for` in cycle header; got type=%s literal=%q)",
+					indexTok.Pos, indexTok.Type, indexTok.Literal,
+				))
+			} else {
+				stmt.Index = &Identifier{Token: indexTok, Value: indexTok.Literal}
+			}
+			// ∈ / in domain operator.
+			peekOp := p.l.PeekToken()
+			if peekOp.Type != token.IN_OP && peekOp.Type != token.IN_KEYWORD {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:InvalidCycleHeader: line=%d (expected `∈` or `in` after for-index identifier; got type=%s literal=%q)",
+					peekOp.Pos, peekOp.Type, peekOp.Literal,
+				))
+			} else {
+				p.l.NextToken() // consume ∈ / in
+			}
+			stmt.Range = p.parseExpression()
+			if !p.matchDo() {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:InvalidCycleHeader: line=%d (expected `do` after `for` domain expression in cycle header)",
+					tok.Pos,
+				))
+			}
+		default:
+			// `do` is the infinite-cycle body-header. Required for `cycle`.
+			if !p.matchDo() {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:InvalidCycleHeader: line=%d (expected `do`, `while`, or `for` as cycle body-header)",
+					tok.Pos,
+				))
+				stmt.BodyHeader = "do"
+			} else {
+				stmt.BodyHeader = "do"
+			}
+		}
+	}
+
+	// 3. Volatile body block — terminated by `repeat` (cycle terminator,
+	//    spec §6.3) or EOF.
+	stmt.Body = p.parseCycleBody(tok)
+
+	// 4. Optional `then` clause (post-loop epilogue; runs once after loop
+	//    exit per D14).
+	if p.l.PeekToken().Literal == "then" {
+		p.l.NextToken() // consume `then`
+		stmt.ThenBlock = p.parseCycleBody(tok)
+	}
+
+	// 5. Required `done` terminator with optional `[label]` followed by
+	//    `;` (D14 unifies the cycle terminator).
+	if p.l.PeekToken().Type != token.DONE {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0203 UnterminatedBlock:MissingDone: line=%d (cycle missing `done` terminator)",
+			tok.Pos,
+		))
+		return stmt
+	}
+	p.l.NextToken() // consume `done`
+
+	// Optional done label.
+	if p.l.PeekToken().Type == token.IDENT &&
+		p.l.PeekToken().Literal != ";" {
+		labelTok := p.l.NextToken()
+		stmt.DoneLabel = &Identifier{Token: labelTok, Value: labelTok.Literal}
+		// Spec §3.4 / D14 / E0205: closing label must match the opening
+		// label when present.
+		if stmt.Label != nil && stmt.Label.Value != stmt.DoneLabel.Value {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0205 LabelMismatch: line=%d (cycle `done %s` does not match opening label `%s`)",
+				labelTok.Pos, stmt.DoneLabel.Value, stmt.Label.Value,
+			))
+		}
+	}
+
+	// Consume trailing semicolon (cycle terminator requires `;`).
+	if p.l.PeekToken().Type == token.SEMICOLON {
 		p.l.NextToken()
 	}
+
 	return stmt
+}
+
+// matchDo consumes an optional `do` keyword — either the keyword token
+// (token.DO) or an identifier with the literal "do". Returns true if a
+// `do` was consumed.
+func (p *Parser) matchDo() bool {
+	peek := p.l.PeekToken()
+	if peek.Type == token.DO || (peek.Type == token.IDENT && peek.Literal == "do") {
+		p.l.NextToken()
+		return true
+	}
+	return false
+}
+
+// parseCyclePrologue collects the optional stable-outer-scope declarations
+// following `cycle name:` and before the body-header. Stops at `do` /
+// `while` / `for` (body-header) or EOF.
+func (p *Parser) parseCyclePrologue(tok token.Token) *BlockStatement {
+	prologue := &BlockStatement{Token: tok}
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.EOF {
+			break
+		}
+		if peek.Type == token.DO ||
+			peek.Literal == "do" ||
+			peek.Type == token.WHILE || peek.Literal == "while" ||
+			peek.Type == token.FOR || peek.Literal == "for" {
+			break
+		}
+		if peek.Type == token.SEMICOLON {
+			// Stray semicolons in prologue are tolerated.
+			p.l.NextToken()
+			continue
+		}
+		nextTok := p.l.NextToken()
+		if nextTok.Type == token.EOF {
+			break
+		}
+		sub := p.parseStatement(nextTok)
+		if sub != nil {
+			prologue.Statements = append(prologue.Statements, sub)
+		}
+	}
+	return prologue
+}
+
+// parseCycleBody collects the volatile body block. Stops at `then`
+// (post-loop epilogue), `done` (cycle terminator), or EOF. Inline
+// `repeat`/`redo`/`stop` statements are dispatched as TransferStatements
+// and remain inside the body (D14, Decision 14, 2026-09-13).
+func (p *Parser) parseCycleBody(tok token.Token) *BlockStatement {
+	body := &BlockStatement{Token: tok}
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.EOF {
+			break
+		}
+		if peek.Literal == "then" || peek.Type == token.DONE {
+			break
+		}
+		if peek.Type == token.SEMICOLON {
+			// Stray semicolons in body are tolerated.
+			p.l.NextToken()
+			continue
+		}
+		nextTok := p.l.NextToken()
+		if nextTok.Type == token.EOF {
+			break
+		}
+		sub := p.parseStatement(nextTok)
+		if sub != nil {
+			body.Statements = append(body.Statements, sub)
+		}
+	}
+	return body
 }
 
 // parseTrialStatement handles `trial`, `try`, `case`, `miss`, `final` per
@@ -444,14 +727,43 @@ func (p *Parser) parseTrialStatement(tok token.Token) Statement {
 	return stmt
 }
 
-// parseTransferStatement handles `return`, `stop`, `redo`, `next`, `pass`,
-// `raise`, `resume`, `retry`, `fail` per spec/02-statements.md §5 transfer_stmt.
+// parseTransferStatement handles `return`, `stop`, `redo`, `repeat` (D14),
+// `next`, `pass`, `raise`, `resume`, `retry`, `fail` per spec/02-statements.md §5
+// transfer_stmt. D14 (2026-09-13) extends the grammar to:
+//
+//	jump_stmt ::= ( "repeat" | "stop" | "redo" ) [ label ] [ "if" condition ] ";" ;
+//
+// so inline jump statements carry an optional target label and an optional
+// `if <cond>` guard.
 func (p *Parser) parseTransferStatement(tok token.Token) Statement {
 	stmt := &TransferStatement{Token: tok, Keyword: tok.Literal}
 	// Optional expression payload (e.g., `raise <expr>`, `fail <expr>`).
 	if tok.Type == token.RAISE || tok.Type == token.FAIL || tok.Type == token.RETURN {
 		if p.l.PeekToken().Type != token.SEMICOLON && p.l.PeekToken().Type != token.EOF {
 			stmt.Value = p.parseExpression()
+		}
+	}
+	// D14: jump-style transfers accept an optional target label and an
+	// optional `if <cond>` guard. D15 (2026-09-13): `next` is the canonical
+	// loop-jump keyword; legacy `repeat` lexes to NEXT with an E0010
+	// deprecation warning, so this dispatch sees both spellings as NEXT. The
+	// token.REPEAT case is retained defensively for directly constructed
+	// legacy tokens.
+	if tok.Type == token.STOP || tok.Type == token.REDO ||
+		tok.Type == token.REPEAT || tok.Type == token.NEXT {
+		// Optional label (skip reserved body-header keywords so they remain
+		// grammatically distinct in case the parser is misdispatched).
+		if peek := p.l.PeekToken(); peek.Type == token.IDENT &&
+			peek.Literal != "if" && peek.Literal != "do" &&
+			peek.Literal != "while" && peek.Literal != "for" {
+			labTok := p.l.NextToken()
+			stmt.Label = &Identifier{Token: labTok, Value: labTok.Literal}
+		}
+		// Optional `if <cond>` guard.
+		if p.l.PeekToken().Type == token.IF ||
+			(p.l.PeekToken().Type == token.IDENT && p.l.PeekToken().Literal == "if") {
+			p.l.NextToken() // consume `if`
+			stmt.Condition = p.parseExpression()
 		}
 	}
 	if p.l.PeekToken().Type == token.SEMICOLON {
@@ -462,6 +774,100 @@ func (p *Parser) parseTransferStatement(tok token.Token) Statement {
 
 func (p *Parser) parseDeclaration(tok token.Token) Statement {
 	ds := &DeclarationStatement{Token: tok}
+
+	// Decision 11 (2026-09-13): parallel parenthesised colon-initialisation.
+	// When `new` is followed by `(`, enter the `(ident_list) : (expr_list) ∈ T;`
+	// branch. Arity N=M is enforced statically; missing trailing type or
+	// bare comma-only form is E0009.
+	if p.l.PeekToken().Type == token.LPAREN {
+		openParen := p.l.NextToken() // consume '('
+		// Parse ident_list
+		firstIdent := p.l.NextToken()
+		if firstIdent.Type != token.IDENT {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q (expected identifier inside '(' in D11 parallel declaration)",
+				firstIdent.Pos, firstIdent.Type, firstIdent.Literal,
+			))
+			return ds
+		}
+		ds.Name = firstIdent.Literal
+		ds.Names = append(ds.Names, firstIdent.Literal)
+		for p.l.PeekToken().Type == token.COMMA {
+			p.l.NextToken() // consume ','
+			nextIdent := p.l.NextToken()
+			if nextIdent.Type != token.IDENT {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q (expected identifier after ',' in D11 parallel ident list)",
+					nextIdent.Pos, nextIdent.Type, nextIdent.Literal,
+				))
+				return ds
+			}
+			ds.Names = append(ds.Names, nextIdent.Literal)
+		}
+		closeParen := p.l.NextToken() // expect ')'
+		if closeParen.Type != token.RPAREN {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q (expected ')' to close D11 ident list)",
+				closeParen.Pos, closeParen.Type, closeParen.Literal,
+			))
+			return ds
+		}
+		colonTok := p.l.NextToken() // expect ':'
+		if colonTok.Literal != ":" {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q (expected ':' after ')' in D11 parallel declaration)",
+				colonTok.Pos, colonTok.Type, colonTok.Literal,
+			))
+			return ds
+		}
+		openValParen := p.l.NextToken() // expect '(' for value list
+		if openValParen.Type != token.LPAREN {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q (expected '(' to open D11 expr list)",
+				openValParen.Pos, openValParen.Type, openValParen.Literal,
+			))
+			return ds
+		}
+		firstVal := p.parseExpression()
+		ds.Value = firstVal
+		ds.Values = append(ds.Values, firstVal)
+		for p.l.PeekToken().Type == token.COMMA {
+			p.l.NextToken() // consume ','
+			ds.Values = append(ds.Values, p.parseExpression())
+		}
+		closeValParen := p.l.NextToken() // expect ')'
+		if closeValParen.Type != token.RPAREN {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q (expected ')' to close D11 expr list)",
+				closeValParen.Pos, closeValParen.Type, closeValParen.Literal,
+			))
+			return ds
+		}
+		// Static arity check N = M (Decision 11).
+		if len(ds.Names) != len(ds.Values) {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:ArityMismatch: line=%d (D11 parallel declaration: ident count N=%d does not match expr count M=%d)",
+				openParen.Pos, len(ds.Names), len(ds.Values),
+			))
+			return ds
+		}
+		// Trailing `∈` or `in` is mandatory (Decision 11 rule).
+		typeTok := p.l.NextToken()
+		if !(typeTok.Type == token.IN_OP || typeTok.Type == token.IN_KEYWORD || typeTok.Literal == "∈" || typeTok.Literal == "in") {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:MissingTypeAnnotation: line=%d type=%s literal=%q (D11 parallel form requires trailing '∈ Type'; use ':=' for inference)",
+				typeTok.Pos, typeTok.Type, typeTok.Literal,
+			))
+			return ds
+		}
+		// Consume the type identifier (full type binding deferred to Phase 7.2).
+		_ = p.l.NextToken()
+		if p.l.PeekToken().Type == token.SEMICOLON {
+			p.l.NextToken()
+		}
+		return ds
+	}
+
 	identTok := p.l.NextToken() // first ident
 	ds.Name = identTok.Literal
 	ds.Names = append(ds.Names, identTok.Literal)

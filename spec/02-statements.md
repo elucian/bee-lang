@@ -11,6 +11,8 @@ Bee divides statements into six distinct syntactic categories, designed for high
 5. **Transactional Trial Statements:** Error handling, staged execution steps, and recovery (`trial`, `try`, `case`, `miss`, `final`).
 5. **Transfer & Termination Statements:** Jump, loop control, and routine completion (`return`, `stop`, `redo`, `next`, `pass`, `yield`, `raise`, `resume`, `retry`).
 
+> **Decision 15 alignment (2026-09-13):** `next` is the canonical loop-jump keyword (continue semantics). The legacy keyword `repeat` is a **deprecated synonym**: the lexer maps it to the `NEXT` token and emits a non-fatal `E0010 deprecated-keyword: 'repeat' — use 'next'` warning. It will be hardened to `E0009` in the Phase 7.2 deprecation sweep.
+
 > **Decision 6 alignment (2026-09-12):** Bee `print` / `write` / `read` directives are themselves `rule_call` invocations; they participate in the canonical *curried rule signature* system defined in `spec/03-rules.md` §2.4 and §3.1. The legacy `using` postfix on `io_stmt` is **deprecated**. The canonical call-site form is `print(a, b)(sep: " | ");` where the `print` rule declares a named-parameter slot `(sep: ", " ∈ Str)` in its signature. Deprecated `using` forms emit non-fatal `E0011` until Phase 7 audit task 7.2 hardens the diagnostic to `E0009`. The full EBNF lives in §5 below.
 
 ---
@@ -57,6 +59,28 @@ Bee provides two declaration keywords (`set` for constants, `new` for mutable va
   new a: 1, b: 2 ∈ Z;        -- parallel typed declaration (Issue 18)
   new name: "Alice" ∈ U;     -- single-var typed literal via pair-up
   new a: 1;                  -- ERROR E0009: missing explicit '∈ Type' (use ':=' for inference)
+  ```
+
+- **Parallel Colon-Initialisation (parenthesised form, Decision 11, 2026-09-13):**
+  The parenthesised parallel form packs the identifier list and the value list
+  into explicit groups separated by the pair-up `:` operator. The number of
+  identifiers (N) MUST equal the number of value expressions (M); arity mismatch
+  is a hard compile-time error (E0009 ArityMismatch, see §5). This form is the
+  canonical spelling when the value list is long enough that a repeated
+  `ident: expr` chain reads ambiguously. Type behaviour is identical to the
+  repeated pair-up form (Decision 9): the trailing `∈ Type` is mandatory, no
+  inference is performed, so each value is stored as a literal of the named
+  type. Bare `new (a, b) : (1, 2);` (no trailing type) is E0009; bare
+  `new a, b : 1, 2;` is also E0009 (the comma-only form is rejected — see D11
+  rejected form).
+  $$\forall i \in [1, n], \quad \text{alloc}(x_i) \in \mathbb{T}, \quad x_i \leftarrow v_i$$
+  ```bee
+  new (a, b) : (1, 2) ∈ Z;            -- parallel typed declaration (D11)
+  new (x, y, z) : (10, 20, 30) ∈ Z;   -- three-element parallel typed binding
+  new (name) : ("Alice") ∈ U;         -- single-element parallel literal form
+  new (a, b) : (1, 2);                -- ERROR E0009: missing trailing '∈ Type'
+  new a, b : 1, 2 ∈ Z;                -- ERROR E0009: rejected comma-only form
+  new (a, b) : (1, 2, 3) ∈ Z;         -- ERROR E0009: arity mismatch (N=2, M=3)
   ```
 - **Equality & Relation Operators (mirror of `spec/01-lexical-structure.md` §3.3, Decisions 2-3):**
   - **Value Comparison (`=`, `¬`)**: `=` evaluates structural equality of two values (true across distinct allocations). `¬` is canonical value inequality — the Unicode form `≠` is deprecated (Decision 12) and will be hard-rejected (E0009) once Phase 7 audit task 7.2 completes; the lexer currently emits non-fatal E0010.
@@ -205,11 +229,44 @@ done;
 
 ### 3.4 Repetitive Loop Statements (`cycle`, `while`, `for`)
 
-All iterative loops are closed by **`repeat [label] [if condition];`**.
+All iterative loops are closed by **`done [label];`**.
+
+**Optional label, optional scope:** the label and the colon are
+independent options — `cycle [label] [:]`.
+- The **colon** is the scope marker: whenever `:` is present — with a
+  label (`cycle name:`) or without (`cycle:`) — a **stable outer scope**
+  (a local-declaration prologue) is created once, before the first
+  iteration, and survives all iterations until the cycle ends. The
+  prologue block declares the cycle's local variables.
+- An **anonymous cycle without colon** (`cycle do`, `cycle while … do`)
+  has no outer scope: the body header follows immediately after `cycle`.
+- The **label** is only a jump target for `stop` / `next` / `redo` and
+  a cross-check against the closing `done [label];`. It plays no role in
+  scope creation.
+
+**Volatile body scope:** the `do` block scope is re-created on every
+iteration. Avoid `new` inside the repetitive block for anything meant to
+persist between iterations — each pass creates fresh variables. Loop
+invariants and carried state belong in the prologue scope of a colon
+cycle (`cycle:` or `cycle name:`), or in the enclosing scope.
 
 #### 1. Infinite & Stop-Condition Cycle
 ![Infinite Cycle](img/cycle.svg)
 ![Stop Condition Cycle](img/run-cycle.svg)
+
+Anonymous, with local-declaration prologue (bare `cycle:`):
+
+```bee
+cycle:
+  new count := 0;
+do
+  let count += 1;
+  stop if count ≥ 100;
+  write count;
+done;
+```
+
+Labeled, with stable outer scope and label on `done`:
 
 ```bee
 cycle loop_label:
@@ -218,21 +275,23 @@ do
   let count += 1;
   stop loop_label if count ≥ 100;
   write count;
-repeat loop_label;
+done loop_label;
 ```
 
 #### 2. While Cycle (`while ... do`)
 ![Start Condition Cycle](img/start-cycle.svg)
 
+The `then` epilogue executes **once** after loop exit (via `stop` or
+condition exhaustion), before the prologue scope is cleaned up.
+
 ```bee
-cycle:
-  new n := 0;
-while n < 10 do
+new n := 0;
+cycle while n < 10 do
   let n += 1;
   write n;
 then
   print "Loop completed cleanly.";
-repeat;
+done;
 ```
 
 #### 3. Domain & Collection For Cycle (`for ... do`)
@@ -240,13 +299,14 @@ $$\forall i \in (\text{min} \dots \text{max} : \text{rate})$$
 
 ![For Cycle](img/given.svg)
 
+Anonymous `for` cycles without a prologue may omit `cycle` entirely
+(second grammar alternative):
+
 ```bee
-cycle:
-  new i ∈ N;
 for ∀ i ∈ (1..9)(2) do
   write i;
   next if i = 5;
-repeat;
+done;
 ```
 
 ---
@@ -309,7 +369,8 @@ statement         ::= decl_stmt
 decl_stmt         ::= "set" ident_list ":=" expr_list
                     | "new" ident_list ( "∈" | "in" ) type_specifier [ "=" ( expression | expr_list ) | ":=" expr_list ]
                     | "new" ident_list ":=" expr_list
-                    | "new" pair_up_list ( "∈" | "in" ) type_specifier ;
+                    | "new" pair_up_list ( "∈" | "in" ) type_specifier
+                    | "new" "(" ident_list ")" ":" "(" expr_list ")" ( "∈" | "in" ) type_specifier ";" ;
 ident_list        ::= identifier ( "," identifier )* ;
 expr_list         ::= expression ( "," expression )* ;
 (* Decision 9 (2026-09-13): `:` is the structural pair-up operator.
@@ -319,6 +380,13 @@ expr_list         ::= expression ( "," expression )* ;
    expression (infix membership); the parser splits that top-level
    BinaryExpression into value + type annotation. *)
 pair_up_list      ::= identifier ":" expression ( "," identifier ":" expression )* ;
+(* Decision 11 (2026-09-13): Parenthesised parallel colon-initialisation.
+   Both sides are parenthesised explicitly so the arity N=M can be checked
+   statically. Each value is stored as a literal of the named type; the
+   trailing `∈ Type` qualifier is mandatory. Arity mismatch (N ≠ M) is a
+   hard compile-time error (E0009 ArityMismatch). The bare comma-only form
+   `new a, b : 1, 2 ∈ Z;` is grammatically rejected — D11 rejected form. *)
+parallel_pair_up  ::= "(" ident_list ")" ":" "(" expr_list ")" ( "∈" | "in" ) type_specifier ";" ;
 
 mutation_stmt     ::= "let" identifier ( assign_op | mutate_op_sugar ) expression ;
 assign_op         ::= ":=" | "::" | "*=" | "/=" | "%=" | "^=" | "√=" ;
@@ -376,13 +444,26 @@ match_targets     ::= expression ( "," expression )* ;
 scope_stmt        ::= "start" [ label ] ":" [ block ] "do" block "done" [ label ]
                     | "with" expression "do" block "done" ;
 
-cycle_stmt        ::= "cycle" [ label ] ":" [ block ] ( "do" | "while" expression "do" | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do" ) block [ "then" block ] "repeat" [ label ] [ "if" expression ]
-                    | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do" block "repeat" ;
+(* Optional label, optional scope — the colon alone marks the prologue:
+   1. `cycle name:` — labeled, with stable declaration prologue.
+   2. `cycle:`      — anonymous, with stable declaration prologue.
+   3. `cycle name`  — labeled, no prologue (label is only a jump target).
+   4. `cycle`       — anonymous, no prologue; the body header follows
+      immediately (`do`, `while … do`, `for … do`).
+   The `do` block scope is volatile: its locals are re-created on every
+   iteration. All forms terminate with `done [label];`. *)
+cycle_stmt        ::= "cycle" [ label ] [ ":" [ block ] ]
+                      ( "do" | "while" expression "do" | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do" )
+                      block [ "then" block ] "done" [ label ]
+                    | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do" block "done" ;
 
 (* Transactional Error Handling *)
 trial_stmt        ::= "trial" [ label ] ":" block ( "try" [ label ] ":" block )* ( "case" expression "do" block )* [ "miss" block ] [ "final" block ] "done" [ label ] ;
 
 (* Transfers & Postfix Guards *)
+(* `next` is the canonical loop-jump keyword (D15, 2026-09-13), reversing
+   the D14 retirement. Legacy `repeat` is a deprecated synonym: the lexer
+   maps it to the NEXT token with a non-fatal E0010 warning. *)
 transfer_stmt     ::= ( "return" [ expression_list ]
                       | "stop" [ label ]
                       | "redo" [ label ]
@@ -400,8 +481,8 @@ transfer_stmt     ::= ( "return" [ expression_list ]
 
 1. **Mandatory 2-Space Indentation:** Statements inside any block body MUST be indented by exactly 2 spaces relative to the enclosing block header.
 2. **Symmetric Block Terminators:**
-   - **`done [label];`** terminates `if`, `match`, `start`, `with`, and `trial` blocks.
-   - **`repeat [label];`** terminates `cycle` and `for` loops.
+   - **`done [label];`** terminates ALL control blocks — `if`, `match`,
+     `start`, `with`, `trial`, `cycle`, and `for`.
    - **`return;`** terminates `rule` subroutines.
 3. **Alignment Invariant:** Terminator keywords align horizontally with their opening block header (0 relative indentation).
 
@@ -413,15 +494,17 @@ transfer_stmt     ::= ( "return" [ expression_list ]
 | :--- | :--- | :--- |
 | `E0201` | `IndentationMismatch` | Statement is not aligned to 2-space offset boundary |
 | `E0202` | `UnboundVariable` | Attempt to mutate variable without prior `new` declaration |
-| `E0203` | `UnterminatedBlock` | Missing `done`, `repeat`, or `return` terminator |
+| `E0203` | `UnterminatedBlock` | Missing `done` or `return` terminator |
 | `E0204` | `InvalidCloneOperation` | Using `::` clone operator on non-clonable primitive |
-| `E0205` | `LabelMismatch` | Closing label on `repeat` or `done` does not match opening header label |
+| `E0205` | `LabelMismatch` | Closing label on `done` does not match opening header label |
+| `E0206` | `InvalidJumpContext` | `next`, `stop`, or `redo` used outside a loop body |
 | `W0301` | `AssertionWarning` | Assertion failed in `assert` statement (non-fatal warning logged to stderr) |
 | `E0303` | `ExpectationFailed` | Invariant failed in `expect` statement (fatal runtime error if unhandled) |
 | `E0307` | `MissingNamedArgument` | Curried call site omits a required named-parameter slot binding with no default (Decision 6; canonical home `spec/03-rules.md` §7) |
 | `W0308` | `NamedSlotIgnored` | Curried `(...)` argument list appended where the directive / rule declares no named slot (silently tolerated, warning emitted; Decision 6) |
 | `E0309` | `UnknownNamedArgument` | Curried call site names an identifier not present in the rule's declared named slot (Decision 6) |
 | `E0011` | `DeprecatedSymbol 'using'` | Legacy `using` / `using:` postfix encountered on `io_stmt`; canonical is curried named-argument `(name: ...)` per Decision 6 (Phase 7 audit pre-`E0009`) |
+| `E0010` | `DeprecatedKeyword 'repeat'` | Legacy loop-jump keyword encountered; canonical is `next` per Decision 15 (lexer maps it to `NEXT`; Phase 7 audit pre-`E0009`) |
 
 ---
 

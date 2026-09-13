@@ -28,9 +28,10 @@ production.
 | D8    | Rule-call result destructuring (T0127 park) | 🟢 Deferred       | 2026-09-12  |
 | D9    | Colon `:` pair-up semantics                 | ✅ Ratified       | 2026-09-13  |
 | D10   | Radical (`²√`, `³√`) precedence table      | ✅ Ratified       | 2026-09-12 |
-| D11   | Parallel colon-initialisation (T0121/0122) | 🟡 Pending ratification | 2026-09-12 |
+| D11   | Parallel colon-init `new (a,b):(1,2)`     | 🟡 Pending ratification (revised) | 2026-09-13 |
 | D12   | Inequality/NOT operator refactoring        | ✅ Ratified       | 2026-09-13  |
-| D13   | Range operator + postfix-step refactor     | 🟡 Pending ratification | 2026-09-13 |
+| D13   | Range operator + postfix-step refactor     | ✅ Ratified       | 2026-09-13  |
+| D14   | Uniform `done` terminator + `repeat` jump  | ✅ Ratified       | 2026-09-13  |
 
 ---
 
@@ -329,32 +330,64 @@ team will:
 
 ## D11 — Parallel colon-initialisation
 
-**Status:** 🟡 Pending ratification 2026-09-12.
-**Affects tests:** T0121, T0122 (currently disabled).
+**Status:** 🟡 Pending ratification (revised 2026-09-13).
+**Affects tests:** T0122 (currently disabled).
 
-The grammar extension to `decl_stmt` in
-`spec/02-statements.md` §2.1:
+### User directive (verbatim, 2026-09-13)
 
-```ebnf
-decl_stmt ::= "new" ident_list ":" expr_list ( "∈" | "in" ) type_specifier ";"
-            | "set" ident_list ":" expr_list ( "∈" | "in" ) type_specifier ";"
-ident_list ::= identifier ( "," identifier )* ;
-expr_list  ::= expression   ( "," expression  )* ;
+> *"new a, b: 1, 2 ∈ Z should be new (a, b) : (1, 2) ∈ Z or
+> new a:1, b:2 ∈ Z"*
+
+### Rejected form
+
+The bare parallel list form is **rejected**:
+
+```bee
+new a, b: 1, 2 ∈ Z;   -- INVALID
 ```
 
-When the length of `ident_list` (N) equals the length of `expr_list`
-(N), each identifier is bound to the corresponding expression, and
-all share the trailing `∈ Type` qualifier. The `:` form is **not**
-type-inferring — the RHS values are treated as literals of the
-specified type.
+Rationale: `:` is the pair-up operator (D9) binding **one** name to
+**one** value. Two bare comma-lists around a single `:` hide the
+pairing and read ambiguously against `expr_list` elsewhere in the
+grammar. The previously proposed `set` parallel form is dropped with
+it.
+
+### Accepted forms
+
+1. **Parenthesised parallel form** (new grammar — the substance of D11):
+
+```bee
+new (a, b) : (1, 2) ∈ Z;
+```
+
+```ebnf
+decl_stmt ::= "new" "(" ident_list ")" ":" "(" expr_list ")" ( "∈" | "in" ) type_specifier ";"
+```
+
+The parenthesised `ident_list` (N names) and `expr_list` (M values)
+MUST have equal length (N = M); binding is positional (`a : 1`,
+`b : 2`), all sharing the trailing `∈ Type` qualifier. The `:` form
+is **not** type-inferring — the RHS values are treated as literals
+of the specified type.
+
+2. **Repeated pair-up form** (already ratified under D9 — no new
+grammar needed):
+
+```bee
+new a: 1, b: 2 ∈ Z;
+```
+
+This is the D9 `pair_up_list` production, already implemented and
+verified by active test T0121.
 
 When ratified:
-* `parseDeclaration` `:` branch is rewritten to read the parallel
-  expression list, then expect `∈` / `in` + a type identifier.
-* T0121 (`new a: 1, b: 2 ∈ Z;` simple typed pair-up) is promoted
-  back. T0122 has a separate string-literal typo that requires
-  user-side correction (the frozen test source has unterminated
-  quotes).
+* `parseDeclaration` gains a paren-detect branch: after `new`, a
+  `(` token enters the parallel form — parse `ident_list`, expect
+  `)`, `:`, `(`, `expr_list`, `)`, then `∈` / `in` + type identifier.
+* A static arity check (E0009-class diagnostic) enforces N = M.
+* T0122 has a separate string-literal typo requiring user-side
+  correction (the frozen test source has unterminated quotes) before
+  it can be promoted.
 
 ---
 
@@ -442,7 +475,7 @@ counterparts during the deprecation window.
 > and returning number 1.3. Instead of (a.!b) we use (a..<b) to exclude
 > b or we can use (a>..b) to exclude a and (a>..<b) to exclude both."*
 
-### Ratified semantics (design-of-record; pending ratification)
+### Ratified semantics (design-of-record)
 
 | Source syntax | Notation           | Endpoint inclusion | Replaces  |
 | :------------ | :----------------- | :----------------- | :-------- |
@@ -557,6 +590,179 @@ lexer/parser/evaluator edits may begin until `/spec/` is
 the spec** (this entry + spec edits) and **request user
 ratification**.
 
+## D14 — Uniform `done` terminator + `repeat` repurposed as jump
+
+**Status:** ✅ Ratified 2026-09-13, spec harmonized 2026-09-13.
+**Supersedes:** the pre-D14 overloaded `repeat` keyword that served as
+both block terminator and post-conditioned loop-continuation modifier.
+**Source of truth (final):** `spec/02-statements.md` §3.4, §5, §6, §7.
+
+### User directive (verbatim)
+
+> *"I have decided again about the semantic of control statements: Uniform
+> Block Termination (`done`): Eliminating `repeat` as a block closer creates
+> a single closure rule across all AST control nodes. Repurposing `repeat`:
+> Demoting `repeat` to an inline jump statement inside the loop body gives
+> it an unambiguous operational meaning (re-evaluate / step to next
+> iteration) equivalent to `continue` in C-family languages. Anonymous
+> Scope Prologue (`cycle:`): Decoupling stable scope allocation from
+> obligatory label identifiers removes arbitrary naming overhead while
+> preserving two-tier scope lifetime."*
+
+### Ratified semantics
+
+#### 1. Uniform Block Termination (`done`)
+All control blocks (`cycle`, `for`, `if`, `match`, `start`, `with`,
+`trial`) terminate with **`done [label];`**. The `repeat` keyword is
+removed as a block terminator entirely.
+
+| Control Block | Previous Terminator | Updated Terminator |
+| :--- | :--- | :--- |
+| `start` / `with` | `done` | `done` (unchanged) |
+| `if` / `else` / `ladder` | `done` | `done` (unchanged) |
+| `match` | `done` | `done` (unchanged) |
+| `trial` | `done` | `done` (unchanged) |
+| `cycle` | `repeat [label]` | **`done [label]`** |
+| `for` | `repeat [label]` | **`done [label]`** |
+
+#### 2. Optional Label, Optional Scope (colon = prologue marker)
+The `:` (colon) is the **prologue marker**, decoupled from label binding.
+Label and colon are independent options — `cycle [label] [:]`:
+
+| Form | Label? | Prologue? | Semantics |
+| :--- | :--- | :--- | :--- |
+| `cycle name:` decls `do` body `done name;` | ✅ | ✅ | Labeled with stable prologue |
+| `cycle:` decls `do` body `done;` | ❌ | ✅ | Anonymous with stable prologue |
+| `cycle name` `do` body `done name;` | ✅ | ❌ | Labeled volatile body (label is jump target only) |
+| `cycle do` body `done;` | ❌ | ❌ | Anonymous volatile body |
+| `cycle while cond do` body `done;` | ❌ | ❌ | While-loop volatile body |
+
+Variables declared in the prologue persist across all iterations.
+Variables declared in the `do` body are volatile (re-created per pass).
+
+#### 3. `repeat` Repurposed as Inline Jump
+`repeat` is demoted from block terminator to inline transfer statement:
+
+```ebnf
+jump_stmt ::= ( "repeat" | "stop" | "redo" ) [ label ] [ "if" condition ] ";" ;
+```
+
+- **`repeat`** — skip remainder of current iteration body; jump to
+  loop-header re-evaluation. In a `for` loop, advance to next element.
+- **`stop`** — terminate the loop immediately; transfer execution past
+  `done [label];`.
+- **`redo`** — restart current iteration without advancing the iterator
+  (non-`for` cycles only).
+
+#### 4. `next` Retirement
+The `next` keyword is retired; its semantic (advance to next iteration)
+is absorbed by `repeat`. No grammar production retains `next`.
+
+#### 5. `then` Post-Loop Epilogue
+The optional `then` block executes exactly once after the loop exits
+(via `stop` or condition exhaustion), before the prologue scope is
+popped. It does NOT execute between iterations.
+
+### EBNF changes (spec/02-statements.md §5)
+
+```ebnf
+cycle_stmt  ::= "cycle" [ label ] [ ":" decl_block ]
+                ( "do" | "while" expression "do"
+                | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do" )
+                block
+                [ "then" block ]
+                "done" [ label ] ";"
+              | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do"
+                block "done" ";" ;
+
+(* colon ⇒ prologue, with or without label; label alone ⇒ jump target only *)
+decl_block  ::= { declaration_stmt } ;
+```
+
+```ebnf
+transfer_stmt ::= ( "return" [ expression_list ]
+                  | "stop" [ label ]
+                  | "redo" [ label ]
+                  | "repeat" [ label ]
+                  | "pass"
+                  | "raise" [ expression ]
+                  | "resume"
+                  | "retry"
+                  | "fail" expression ) [ "if" expression ] ;
+```
+
+### Diagnostic codes
+- `E0203` — updated: "Missing `done` or `return` terminator" (removed
+  `repeat`)
+- `E0205` — updated: "Closing label on `done` does not match opening
+  header label"
+- `E0206` — new: `InvalidJumpContext` — `repeat`/`stop`/`redo` outside
+  a loop body
+
+### Implementation consequence (deferred)
+Compiler changes (`internal/lexer/`, `internal/parser/`,
+`internal/evaluator/`) are **not** in this pass. The spec and tutorial
+are now 100% harmonized with D14. The next implementation phase must:
+1. Update `internal/parser/parser.go` to enforce `done` terminators.
+2. Treat `repeat` as a `TransferStatement` (jump), not a block closer.
+3. Remove `next` from the token dispatch.
+4. Update `internal/evaluator/evaluator.go` for the new loop-jump
+   semantics and `then` epilogue.
+
+> **Superseded (2026-09-13):** Items 2–3 are reversed by **Decision 15**
+> below — `next` is canonical; `repeat` is retained as a deprecated
+> synonym lexing to `NEXT`.
+
+---
+
+## D15 — `next` canonicalized as the loop-jump keyword; `repeat` deprecated
+
+### User directive (verbatim)
+
+> *"The repeat keyword should be replaced by 'next' — this will make the
+> language more consistent. A single word instead of continue is shorter.
+> `next [label]` jumps directly to loop header / re-evaluates while
+> condition; advances iterator to next domain element and re-evaluates
+> domain boundaries. `stop [label]` exits the loop block immediately past
+> done. `redo [label]` (optional) restarts the current iteration body
+> without re-evaluating the condition; re-runs the body for the current
+> iterator value without advancing the domain."*
+
+### Ratified semantics
+
+1. **`next` is canonical.** The loop-jump statement (continue semantics)
+   is spelled `next [label] [if condition];`. This reverses the D14
+   retirement of `next`.
+2. **`repeat` is a deprecated synonym.** The keyword remains in the
+   token dispatch; the lexer maps it to the `NEXT` token and emits a
+   non-fatal `E0010 deprecated-keyword: 'repeat' — use 'next'` warning
+   (identical mechanism to the D7/D12/D13 deprecation surfaces). It
+   hardens to `E0009` in the Phase 7.2 sweep.
+3. **Synonymy preserves the frozen suite.** `@FROZEN` tests in
+   `test/levelX/` that spell the jump `repeat` keep passing — the parser
+   sees only `NEXT`. No frozen test is modified.
+4. **`stop` and `redo` are unchanged.** The jump table is now:
+
+| Keyword | While-cycle behaviour | For-cycle behaviour |
+| :--- | :--- | :--- |
+| `next [label]` | Jump to loop header; re-evaluate condition | Advance iterator to next domain element; re-evaluate domain boundaries |
+| `stop [label]` | Exit loop block immediately past `done` | Exit loop block immediately past `done` |
+| `redo [label]` | Restart current iteration body without re-evaluating the condition | Re-run body for current iterator value without advancing the domain |
+
+### Implementation consequence (✅ lexer COMPLETED 2026-09-13)
+
+* `internal/lexer/lexer.go`: `NextToken` intercepts the identifier
+  `repeat`, emits `E0010` via the lexer warning surface, and returns
+  `token.NEXT` with literal `"next"`. The `"repeat": REPEAT` entry in
+  `internal/token/token.go` Keywords is retained for lookup stability.
+* `internal/parser/parser.go`: `parseTransferStatement` already
+  dispatches `token.NEXT` (and `token.REPEAT` defensively); both accept
+  the optional label and `if` guard.
+* Docs pass (this entry): `spec/02-statements.md` §1/§3.4/§5/§7,
+  `spec/00-memory-model.md` §2.2, `bee-tutorial/control.html`,
+  `bee-tutorial/syntax.html`, `bee-tutorial/js/bee.js`, `MANIFEST.md`,
+  `issues/20-next-canonical-jump.md`, `solution/20-next-canonical-jump.md`.
+
 ---
 
 ## Resolution Workflow
@@ -577,5 +783,6 @@ downstream decisions.
 
 ---
 
-*Last updated: 2026-09-13 — D1–D7, D9, D10, D12 ratified (D3 superseded by
-D12), D8 deferred, D11, D13 pending user ratification.*
+*Last updated: 2026-09-13 — D1–D7, D9, D10, D12, D13, D14, D15 ratified
+(D3 superseded by D12; D14 items 2–3 superseded by D15), D8 deferred,
+D11 revised and pending user ratification.*

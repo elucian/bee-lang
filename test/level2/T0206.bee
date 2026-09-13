@@ -1,12 +1,12 @@
--- @DESC:T0206 Cycle with repeat condition loop
--- cycle with a condition demo
+-- @DESC:T0206 Cycle with inline next and stop conditions (D14)
+-- D14: cycle block closes with done; next is an inline jump (continue).
 rule main:
   new n := 3;
-  cycle:
-    do
+  cycle do
       write n;
       let n -= 1;
-    repeat if n > 0;
-    print;
-  return;
+      stop if n = 0;
+  done;
+  print;
+return;
 

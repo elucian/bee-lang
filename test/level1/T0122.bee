@@ -1,4 +1,5 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
+-- @ENABLED: Reset by user
+-- @ENABLED: Reset by user
 -- @DESC:file: parallel_assignment.bee
 -- Parallel assignment demo
 rule main:

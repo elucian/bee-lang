@@ -8,6 +8,8 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
+| T0140    | T0140 Decision 11: arity-mism... | FAIL       |
+| T0139    | T0139 Decision 11: parenthesi... | PASS       |
 | T0138    | T0138 Decision 13: postfix-st... | PASS       |
 | T0137    | T0137 Decision 13: postfix-st... | PASS       |
 | T0136    | T0136 Decision 13: postfix-st... | PASS       |
@@ -17,7 +19,7 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | T0132    | T0132 Decision 13: left-exclu... | PASS       |
 | T0131    | T0131 Decision 13: right-excl... | PASS       |
 | T0101    | T0101 Essential arithmetic op... | PASS       |
-| T0102    | T0102 Relational and comparis... | FAIL       |
+| T0102    | T0102 Relational and comparis... | PASS       |
 | T0103    | TBD                              | FAIL       |
 | T0104    | T0104 Exponentiation and powe... | PASS       |
 | T0105    | T0105 Range membership with i... | PASS       |
@@ -28,7 +30,7 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | T0116    | T0116 Line and block comments... | PASS       |
 | T0117    | T0117 Constant declaration wi... | PASS       |
 | T0118    | T0118 Variable declaration wi... | PASS       |
-| T0119    | file: ending_early.bee           | FAIL       |
+| T0119    | file: ending_early.bee           | PASS       |
 | T0120    | file: hello_world.bee            | PASS       |
 | T0121    | file: initial_values.bee         | PASS       |
 | T0122    | file: parallel_assignment.bee    | FAIL       |

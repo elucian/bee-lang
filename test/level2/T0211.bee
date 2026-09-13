@@ -1,14 +1,15 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=11 type=; literal=";"
--- @DESC:T0211 Pattern match with first match mode and fallback
--- match, first hit demo
+-- @DESC:T0211 Labeled nested cycles with cross-label stop (D14)
+-- D14: labels are jump targets for stop/next/redo.
 rule main:
-  match 2:
-  when 1 do
-    print "one";
-  when 2, 3 do
-    print "two or three";
-  other:
-    print "other";
-  done;
+  cycle outer:
+    new i ∈ Z := 0;
+  do
+    cycle inner:
+    for ∀ y ∈ (1..3) do
+      stop outer if y = 9;
+      next outer if y = 2;
+      write y;
+    done inner;
+  done outer;
 return;
 

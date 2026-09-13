@@ -1,13 +1,12 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=3 type=TYPE literal="type"
--- @DESC:T0212 Total pattern match with range conditions
--- A total match needs no default demo
-type Small: (0..3) <: Z;
+-- @DESC:T0212 For cycle with inline next jump (skip evens) (D14)
+-- D14: `next` is an inline transfer (continue), not a block terminator.
 rule main:
-  new v: 2 ∈ Small;
-  match v:
-  when 0, 1 do
-    print "low";
-  when (2..3) do
-    print "high";
+  cycle:
+    new total := 0;
+  for i ∈ (1..10) do
+    next if i % 2 = 0;
+    let total := total + i;
   done;
+  print total;
 return;
+

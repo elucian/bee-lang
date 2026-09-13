@@ -24,7 +24,7 @@ When `begin` is invoked, the runtime creates a lightweight thread context with a
 rule main:
   for ∀ i ∈ (1..4) do
     begin worker_task(i); -- Spawns 4 concurrent worker threads
-  repeat;
+  done;
   
   wait; -- Mandatory synchronization barrier
 return;
@@ -45,7 +45,7 @@ $$\mathcal{T}_i \xrightarrow{\text{return}} \text{AtomicQueue} \xrightarrow{\tex
 rule sum_range(a, b ∈ Z) => (r ∈ Z):
   for i ∈ (a..b) do
     let r += i;
-  repeat;
+  done;
 return;
 
 rule main:
@@ -61,7 +61,7 @@ rule main:
   new total ∈ Z := 0;
   for ∀ p ∈ parts do
     let total += p;
-  repeat;
+  done;
   print total;
 return;
 ```
@@ -79,7 +79,7 @@ rule ticker(n ∈ N) => (v ∈ N):
   for i ∈ (1..n) do
     let v := i;
     yield; -- Suspends execution and yields control
-  repeat;
+  done;
   let v := 0;
 return;
 ```
@@ -94,7 +94,7 @@ rule main:
   while r > 0 do
     yield r << ticker; -- Extracts next yielded value from ticker
     write (r, " ");
-  repeat;
+  done;
   print;
   wait;
 return;
