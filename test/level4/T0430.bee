@@ -1,0 +1,35 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0430 collection assertions for arrays, lists, sets, maps, indexing bounds
+rule main:
+  -- Array literal and indexing (spec/10 §3.2, §2.1)
+  new a := [10, 20, 30];
+  expect a[1] = 10;
+  expect a[2] = 20;
+  expect a[3] = 30;
+  expect a[$] = 30;
+
+  -- Array mutation (spec/10 §3.2)
+  let a[2] := 99;
+  expect a[2] = 99;
+
+  -- List literal and member access (spec/10 §3.1)
+  new l := (1, 2, 3);
+  expect l.head = 1;
+
+  -- Set literal: dedup and sort (spec/10 §3.4)
+  new s := {3, 1, 2, 1};
+  print s;
+
+  -- Map literal (spec/10 §3.5)
+  new m := {"alice": 100, "bob": 200};
+  print m;
+
+  -- Collection in control flow: cycle over array indices (spec/11 §1)
+  new total := 0;
+  for i ∈ (1..3) do
+    let total := total + a[i];
+  done;
+  expect total = 10 + 99 + 30;
+
+  print "T0430 all assertions passed";
+return;

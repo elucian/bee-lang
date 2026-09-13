@@ -223,7 +223,57 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		for i, val := range s.Values {
 			pendingInts[i] = e.evalIntExpression(val)
 		}
-		for i, name := range s.Names {
+		// spec/10 §3.2 / §3.5: the LHS targets are full expressions. Index
+		// targets (`let a[i] := …`, `let map["k"] := …`) mutate an element of a
+		// stored collection with 1-based bounds enforcement (E1001 / E1006).
+		// Identifier targets follow the legacy scalar path. Targets is
+		// authoritative and positionally aligned with Values; Names mirrors
+		// only the identifier / dotted targets for legacy consumers.
+		for i, target := range s.Targets {
+			if idxExpr, isIndex := target.(*parser.IndexExpression); isIndex {
+				ident, ok := idxExpr.Left.(*parser.Identifier)
+				if !ok {
+					continue
+				}
+				if m, hasMap := e.mapValues[ident.Value]; hasMap {
+					key := e.evalExpression(idxExpr.Index)
+					if i < len(pendingInts) {
+						m[key] = pendingInts[i]
+					}
+					continue
+				}
+				var idx int
+				if idIdent, isDollar := idxExpr.Index.(*parser.Identifier); isDollar && idIdent.Value == "$" {
+					if arr, hasArr := e.arrayValues[ident.Value]; hasArr {
+						idx = len(arr)
+					}
+				} else {
+					idx = e.evalIntExpression(idxExpr.Index)
+				}
+				if arr, hasArr := e.arrayValues[ident.Value]; hasArr {
+					if idx == 0 {
+						fmt.Fprintf(os.Stderr, "[ERROR] E1006 ZeroBasedIndexAttempt: index 0 at line %d\n", int(idxExpr.Token.Pos))
+						continue
+					}
+					if idx < 1 || idx > len(arr) {
+						fmt.Fprintf(os.Stderr, "[ERROR] E1001 IndexOutOfBounds: index %d out of range 1..%d at line %d\n", idx, len(arr), int(idxExpr.Token.Pos))
+						continue
+					}
+					if i < len(pendingInts) {
+						arr[idx-1] = pendingInts[i]
+					}
+				}
+				continue
+			}
+
+			name, isIdent := target.(*parser.Identifier)
+			if !isIdent {
+				if me, isMember := target.(*parser.MemberExpression); isMember && me.Base == nil && len(me.Parts) == 1 {
+					name = &parser.Identifier{Token: me.Token, Value: me.Parts[0]}
+				} else {
+					continue
+				}
+			}
 			e.debugLog("EVALUATOR DEBUG: Assigning to %s\n", name.Value)
 			// Boxed closure state mutation (spec/03 §5.4): `let .field op= expr;`
 			// mutates the heap-allocated cell on the current closure frame.

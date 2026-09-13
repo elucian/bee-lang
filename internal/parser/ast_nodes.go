@@ -59,9 +59,15 @@ func (ps *PrintStatement) statementNode() {}
 func (ps *PrintStatement) Pos() token.Pos { return ps.Token.Pos }
 
 type AssignmentStatement struct {
-	Token  token.Token
-	Names  []*Identifier
-	Values []Expression
+	Token token.Token
+	Names []*Identifier
+	// Targets holds the full comma-separated LHS expressions (spec/10 §3.2,
+	// §3.5). Each target is either an *Identifier (plain / compound assign)
+	// or an *IndexExpression (element mutation: `let a[i] := v`). When
+	// populated it is authoritative; Names mirrors the identifier targets
+	// for legacy consumers.
+	Targets []Expression
+	Values  []Expression
 }
 
 func (as *AssignmentStatement) statementNode() {}

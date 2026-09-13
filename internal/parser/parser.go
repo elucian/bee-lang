@@ -1218,16 +1218,34 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 
 func (p *Parser) parseAssignment(tok token.Token) Statement {
 	stmt := &AssignmentStatement{Token: tok}
-	tokIdent := p.l.NextToken()
-	p.debugLog("PARSER DEBUG: ident tok=%q\n", tokIdent.Literal)
-	name := p.parseMemberName(tokIdent)
-	stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent, Value: name})
 
-	// Check for more comma-separated variables
-	for p.l.PeekToken().Type == token.COMMA {
-		p.l.NextToken() // comma
-		tokIdent2 := p.l.NextToken()
-		stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent2, Value: tokIdent2.Literal})
+	// spec/10-collections.md §3.2 / §3.5: the LHS of an assignment is a
+	// comma-separated list of *target expressions*. Each target is either a
+	// plain identifier (`let x := …`), a dotted member (`let .field := …`),
+	// or an index expression (`let a[i] := …`, `let M[r, c] := …`,
+	// `let map["k"] := …`). parsePrimary consumes exactly one target —
+	// including any postfix `[…]` index or `.member` chain — and parks on
+	// `,`, the assignment operator, or `;`, because those are climb-loop
+	// operators, not postfix primary operators.
+	for {
+		target := p.parsePrimary()
+		stmt.Targets = append(stmt.Targets, target)
+		switch t := target.(type) {
+		case *Identifier:
+			stmt.Names = append(stmt.Names, t)
+		case *MemberExpression:
+			// Leading-dot boxed-cell target (`let .field := …`): mirror the
+			// single-part dotted name into Names so the evaluator's boxed-cell
+			// path (strings.HasPrefix(name, ".")) still resolves it.
+			if t.Base == nil && len(t.Parts) == 1 {
+				stmt.Names = append(stmt.Names, &Identifier{Token: t.Token, Value: t.Parts[0]})
+			}
+		}
+		if p.l.PeekToken().Type == token.COMMA {
+			p.l.NextToken() // consume ','
+			continue
+		}
+		break
 	}
 
 	// Look ahead to check if next token is an assignment operator

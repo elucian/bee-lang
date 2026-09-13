@@ -8,6 +8,7 @@ This level covers data collections and processing pipelines as defined in:
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
+| T0430    | T0430 collection assertions f... | PASS       |
 | T0401    | T0401 Complex Data Processing... | PASS       |
 | T0402    | file: contract_argument_mutat... | FAIL       |
 | T0403    | T0403 contract deposit with e... | FAIL       |
