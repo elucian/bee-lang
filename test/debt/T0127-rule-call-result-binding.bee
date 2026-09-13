@@ -1,0 +1,10 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DEBT: Parallel destructuring of rule-return tuples (`new a, b, c := zeros();` where `zeros()` returns `=> (z ∈ Z, r ∈ R, f ∈ B)`) is unimplemented. Requires `RuleCallExpression` AST node + multi-binding destructuring grammar in `spec/03-rules.md` §3. See `issues/16-rule-tuple-destructure.md`.
+-- @DESC:T0127 Zero-value initialization across types
+rule zeros() => (z ∈ Z, r ∈ R, f ∈ B):
+  expect True;
+return;
+rule main:
+  new a, b, c := zeros();
+  print (a, b, c);
+return;

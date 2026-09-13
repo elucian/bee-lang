@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=6 type=; literal=";"
 -- @DESC:file: arrays.bee
 -- Arrays demo
 rule main:

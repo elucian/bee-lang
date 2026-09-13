@@ -3,6 +3,15 @@ import os
 import sys
 import subprocess
 
+# Ensure Python's stdout/stderr can emit Unicode (e.g. ≠, ≤, ≥, etc.) on
+# Windows consoles using cp1252 by default, and on terminals whose libc
+# encoding is not UTF-8. Reconfiguring in place is supported on Python 3.7+.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 def run_solo():
     if len(sys.argv) < 2:
         print("Usage: python test/solo.py <test_case_name_or_path>")

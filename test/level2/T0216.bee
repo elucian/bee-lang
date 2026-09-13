@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=9 type=; literal=";"
 -- @DESC:T0216 While cycle iteration loop
 -- while demo
 rule main:

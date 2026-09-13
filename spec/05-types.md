@@ -58,14 +58,14 @@ type LatinRune: (U+0041..U+FB02) <: U;
 ```
 
 ### 3.2 Range Notation & Limits
-Ranges define numeric or character bounds with explicit endpoint inclusion semantics:
+Ranges define numeric or character bounds with explicit endpoint inclusion semantics. The endpoint separator is **distinct from** the postfix step operator (§3.3). Per Decision 13 (2026-09-13), the canonical endpoint operators are `..`, `..<`, `>..`, `>..<`; the legacy `.!`, `!.`, `!!` forms are deprecated.
 
 | Syntax | Notation | Mathematical Meaning |
 | :--- | :--- | :--- |
 | `(min..max)` | $[min, max]$ | Closed interval: both endpoints inclusive |
-| `(min.!max)` | $[min, max)$ | Left-closed, right-open interval |
-| `(min!.max)` | $(min, max]$ | Left-open, right-closed interval |
-| `(min!!max)` | $(min, max)$ | Fully open / exclusive interval |
+| `(min..<max)` | $[min, max)$ | Left-closed, right-open interval |
+| `(min>..max)` | $(min, max]$ | Left-open, right-closed interval |
+| `(min>..<max)` | $(min, max)$ | Fully open / exclusive interval |
 
 ### 3.3 Domain Types with Step Ratio
 Domains extend ranges by specifying a discretization step ratio:
@@ -74,10 +74,13 @@ $$\text{Domain}(\text{min}, \text{max}, \delta) = \{ \text{min} + k\delta \mid k
 
 ```bee
 -- Domain producing rational step 1\4
-new q_domain := (0..1: 1\4); -- 0\4, 1\4, 2\4, 3\4, 1\1
+new q_domain := (0..1)(1\4); -- 0\4, 1\4, 2\4, 3\4, 1\1
 
 -- Domain producing float step 0.25
-new r_domain := (0..1: 0.25); -- 0.00, 0.25, 0.50, 0.75, 1.00
+new r_domain := (0..1)(0.25); -- 0.00, 0.25, 0.50, 0.75, 1.00
+
+-- Stepped range indexing is 1-based (Decision 1):
+-- (1..5)(0.1)[1] = 1.0, [2] = 1.1, [3] = 1.2, [4] = 1.3, ...
 ```
 
 ---
@@ -144,11 +147,11 @@ type_descriptor   ::= primitive_type | range_expr | domain_expr | collection_typ
 primitive_type    ::= "B" | "A" | "U" | "N" | "Z" | "R" | "Q" | "C" | "S" | "D" | "T" | "L" | "G"
                     | "Q" "(" integer_lit "." integer_lit ")" ;
 
-(* Ranges & Domains *)
+(* Ranges & Domains — Decision 13 (2026-09-13) *)
 range_expr        ::= "(" limit range_sep limit ")" ;
-domain_expr       ::= "(" limit range_sep limit ":" step_expr ")" ;
+domain_expr       ::= range_expr "(" step_expr ")" ;
 limit             ::= [ "-" | "+" ] ( literal | identifier ) ;
-range_sep         ::= ".." | ".!" | "!." | "!!" ;
+range_sep         ::= ".." | "..<" | ">.." | ">..<" ;
 step_expr         ::= expression ;
 
 (* Type Casting & Introspection *)

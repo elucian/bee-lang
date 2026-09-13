@@ -67,6 +67,13 @@ func main() {
 	parseErrors := p.Errors()
 	parseWarnings := p.Warnings()
 
+	// Surface lexer deprecation warnings (E0010) emitted during tokenization.
+	// Per Decision 3 / Decision 7 — soft warnings that become hard E0009 once
+	// Phase 7 audit task 7.2 completes.
+	for _, w := range l.Warnings() {
+		fmt.Fprintln(os.Stderr, w)
+	}
+
 	if len(parseErrors) > 0 {
 		for _, e := range parseErrors {
 			fmt.Fprintln(os.Stderr, e)

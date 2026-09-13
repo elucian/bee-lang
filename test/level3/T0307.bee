@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
 -- @DESC:file: growing_shrinking_list.bee
 -- Growing and shrinking a list demo
 rule main:

@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=9 type=; literal=";"
 -- @DESC:file: contract_argument_mutation.bee
 -- A rule that writes through its argument demo
 rule bump(n ∈ @Z):

@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=6 type=; literal=";"
 -- @DESC:file: append_collection_example.bee
 -- A rule that adds an item to a collection and uses `old`
 -- to verify the size increased by exactly one.

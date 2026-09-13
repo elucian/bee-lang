@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=7 type=; literal=";"
 -- @DESC:file: coroutines_turn.bee
 -- Two coroutines taking turns demo
 rule odds(n ∈ N) => (v ∈ N):

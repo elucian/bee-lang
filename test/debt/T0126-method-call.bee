@@ -1,0 +1,14 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DEBT: Method-call dispatch via dotted access (`x.type()`) is unimplemented. Requires new `MethodCallExpression` AST node + method-resolution table wired against `spec/06-objects.md`. See `issues/15-method-call-grant.md`.
+-- @DESC:file: type_inference.bee
+-- Type inference demo
+rule main:
+  new a := 10;
+  new r := 0.5;
+  new s := "text";
+  new f := True;
+  expect a.type() is Z;
+  expect r.type() is R;
+  expect s.type() is U;
+  expect f.type() is B;
+return;

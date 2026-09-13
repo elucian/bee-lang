@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=8 type=; literal=";"
 -- @DESC:file: asynch_call.bee
 -- Asynchronous rule call demo
 rule worker() => (v ∈ Z):

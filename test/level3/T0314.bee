@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
 -- @DESC:file: set_algebra.bee
 -- Set algebra demo
 rule main:

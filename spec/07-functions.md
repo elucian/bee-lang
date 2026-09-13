@@ -92,7 +92,14 @@ type_list         ::= type_specifier ( "," type_specifier )* ;
 
 (* Invocations *)
 lambda_call       ::= expression "(" [ arg_list ] ")" ;
+
+(* Method Calls (T0126 — currently parked in test/debt/) *)
+method_call       ::= expression "." identifier "(" [ arg_list ] ")" ;
 ```
+
+### 6.1 Method-call dispatch (T0126, **debt**)
+
+`x.type()` is the canonical way to query a value's runtime type. The grammar is identical to a function call, but the receiver is namespaced by `.` and the method lookup table is derived from the type's declared method descriptors (see `spec/06-objects.md` §5). Test reference: `test/debt/T0126-method-call.bee`. The compiler currently does not have a `MethodCallExpression` AST node; this entry remains in technical debt until issue `15-method-call-grant.md` is resolved.
 
 ---
 

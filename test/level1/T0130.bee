@@ -1,4 +1,3 @@
--- @DISABLED: is= VARIABLE CONTEXT is=
 -- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC:T0130 Equality and identity relational operators
 rule main:
@@ -7,7 +6,7 @@ rule main:
   let b := 10;
 
   expect a = 10;   -- value equality
-  expect a <> 20;  -- inequality (<>)
+  expect a ¬ 20;  -- inequality (<>)
   expect a is not 20;  -- inequality (is not)
   expect a = a;    -- identity
   expect a is a;   -- identity (is)

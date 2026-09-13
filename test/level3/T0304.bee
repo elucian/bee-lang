@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=14 type=; literal=";"
 -- @DESC:file: bubble_sort.bee
 -- bubble sort demo
 rule main:

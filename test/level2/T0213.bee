@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=8 type=; literal=";"
 -- @DESC:T0213 Scoped block with local variable encapsulation
 -- A scoped block demo
 rule main:

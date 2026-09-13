@@ -142,7 +142,8 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 	case token.TRIAL, token.TRY, token.CASE, token.MISS, token.FINAL:
 		return p.parseTrialStatement(tok)
 	case token.RETURN, token.STOP, token.REDO, token.NEXT, token.PASS,
-		token.RAISE, token.RESUME, token.RETRY, token.FAIL:
+		token.RAISE, token.RESUME, token.RETRY, token.FAIL, token.OVER,
+		token.ABORT, token.EXIT, token.PANIC, token.YIELD:
 		return p.parseTransferStatement(tok)
 	}
 	p.debugLog("PARSER DEBUG: unrecognized top-level token type=%s literal=%q line=%d\n",
@@ -767,19 +768,33 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	return stmt
 }
 
+// isRangeSeparatorToken is true when the token is one of the four
+// range-separator tokens introduced by Decision 13 (D13, 2026-09-13):
+// RANGE_INCL (`..`), RANGE_LEFT_INC (`..<`), RANGE_RGHT_INC (`>..`),
+// or RANGE_EXCL (`>..<`). Used to detect when a parenthesised expression
+// in parsePrimary is a range_expr and is therefore eligible for the
+// `(step)` postfix step.
+func isRangeSeparatorToken(tok token.Token) bool {
+	switch tok.Type {
+	case token.RANGE_INCL, token.RANGE_LEFT_INC, token.RANGE_RGHT_INC, token.RANGE_EXCL:
+		return true
+	}
+	return false
+}
+
 func isBinaryOp(tok token.Token) bool {
 	switch tok.Type {
 	case token.PLUS, token.MINUS, token.ASTERISK, token.SLASH, token.PERCENT, token.CARET,
-		token.SQRT, token.MULT, token.DIV, token.EQ, token.NOT_EQ, token.NEQ_UNICODE,
+		token.SQRT, token.MULT, token.DIV, token.EQ, token.NEQ, token.NOT_EQ, token.NEQ_UNICODE,
 		token.LT, token.LTE, token.LTE_UNICODE, token.GT, token.GTE, token.GTE_UNICODE,
 		token.APPROX_EQ, token.EQUIV, token.LOGICAL_AND, token.LOGICAL_OR, token.XOR_PLUS,
 		token.XOR_MINUS, token.IN_OP, token.NOT_IN, token.SET_INTERSECT, token.SET_UNION,
 		token.SUBSET, token.SUPERSET, token.SYM_DIFF, token.RANGE_INCL, token.AND, token.OR,
-		token.XOR, token.IN_KEYWORD:
+		token.XOR, token.IN_KEYWORD, token.IS, token.IS_NOT:
 		return true
 	}
 	switch tok.Literal {
-	case "+", "-", "*", "/", `\`, "%", "^", "×", "÷", "√", "=", "==", "!=", "≠", "<>",
+	case "+", "-", "*", "/", `\`, "%", "^", "×", "÷", "√", "=", "==", "!=", "≠", "<>", "¬",
 		"<", ">", "<=", ">=", "≤", "≥", "≈", "≡", "and", "or", "xor", "∧", "∨", "⊕", "⊖",
 		"in", "∈", "!∈", "∩", "∪", "⊂", "⊃", "Δ", "..":
 		return true
@@ -790,30 +805,187 @@ func isBinaryOp(tok token.Token) bool {
 	return false
 }
 
+// Precedence levels for the precedence-climbing expression parser.
+// Convention: HIGHER integer = TIGHTER binding (Clinger / Wirth style).
+// The numbering mirrors the canonical table in `todo/DECISIONS.md` §D10
+// and `spec/02-statements.md` §5 EBNF, where the spec's "Level 1 = parens"
+// (highest) is mapped to the tightest binary level.
+const (
+	precLogic    = 2 // and, or, xor, ∨, ∧, ⊕ (left-assoc)
+	precCompare  = 3 // =, ¬, <, >, <=, >=, ≈ (Decision 12: ¬ canonical; left-assoc)
+	precRange    = 4 // .., .! (left-assoc)
+	precAdd      = 5 // +, -, ± (left-assoc)
+	precMul      = 6 // ×, ÷, *, /, %, \\ (left-assoc)
+	precPower    = 7 // ^, ², ³, ⁴, … (RIGHT-associative per D10)
+	precRadicals = 8 // unused; √ / ²√ / … are prefix-only, not climbed
+)
+
+// opPrecedence returns (precedence, isRightAssociative) for a *binary*
+// operator token, or (-1, false) if the token is not a climb-able binary
+// operator. Prefix operators (radicals, logical NOT) are NOT in this table;
+// they are handled in parsePrimary. The climb loop relies on this helper
+// exclusively, which means SQRT/√ is never tracked as a binary mid-climb —
+// closing the early-bail loop reported in issues/17-radical-precedence.md.
+func opPrecedence(tok token.Token) (int, bool) {
+	// Higher number = tighter binding (Clinger convention).
+	switch tok.Type {
+	case token.ASTERISK, token.MUL_ASSIGN, token.SLASH, token.DIV_ASSIGN,
+		token.PERCENT, token.MOD_ASSIGN, token.MULT, token.DIV:
+		return precMul, false
+	case token.PLUS, token.MINUS, token.PLUS_ASSIGN, token.MINUS_ASSIGN, token.PLUS_MINUS:
+		return precAdd, false
+	case token.RANGE_INCL, token.RANGE_LEFT_INC, token.RANGE_RGHT_INC, token.RANGE_EXCL:
+		return precRange, false
+	case token.EQ, token.NEQ, token.NOT_EQ, token.NEQ_UNICODE, token.LT, token.LTE,
+		token.LTE_UNICODE, token.GT, token.GTE, token.GTE_UNICODE,
+		token.APPROX_EQ, token.EQUIV, token.IS, token.IS_NOT:
+		return precCompare, false
+	case token.LOGICAL_AND, token.LOGICAL_OR, token.XOR_PLUS, token.XOR_MINUS,
+		token.AND, token.OR, token.XOR, token.IN_OP, token.IN_KEYWORD,
+		token.NOT_IN, token.SET_INTERSECT, token.SET_UNION, token.SUBSET,
+		token.SUPERSET, token.SYM_DIFF:
+		return precLogic, false
+	case token.CARET:
+		// Power family: ^, ², ³, ⁴ … ⁿ. Right-associative per D10.
+		return precPower, true
+	case token.SQRT:
+		// Prefix radical — handled in parsePrimary. The climb loop should
+		// never see SQRT as a binary mid-expression. Returning -1 makes the
+		// climb terminate cleanly even if a stray √ peeks through.
+		return -1, false
+	}
+	switch tok.Literal {
+	case "*", "/", "\\", "%", "×", "÷":
+		return precMul, false
+	case "+", "-", "±":
+		return precAdd, false
+	case "..":
+		return precRange, false
+	case "=", "==", "¬", "<>", "!=", "≠", "<", ">", "<=", ">=", "≤", "≥", "≈", "≡", "is", "is not":
+		return precCompare, false
+	case "and", "or", "xor", "∧", "∨", "⊕", "⊖", "∪", "∩", "⊂", "⊃", "Δ",
+		"in", "∈", "!∈":
+		return precLogic, false
+	case "^", "²", "³", "⁴", "⁵", "⁶", "⁷", "⁸", "⁹":
+		return precPower, true
+	}
+	return -1, false
+}
+
+// parseExpression is the public entry point used by every statement-level
+// parser (print, expect, assert, if, let, decl, raise, etc.). It begins
+// the climb at the loosest level (logic) so that the entire precedence
+// grammar is honoured.
 func (p *Parser) parseExpression() Expression {
+	return p.parseExpressionClimb(precLogic)
+}
+
+// parseExpressionClimb implements the precedence-climbing algorithm from
+// Wirth / Clinger, replacing the previous naive for+isBinaryOp loop that
+// could not model level-dependent binding for radicals (issue 17).
+//
+// Precedence ladder (highest→lowest), mapped to integer values in this
+// file: parens (always first, syntactic) > power (precPower, right-assoc)
+// > radical prefix (consumed in parsePrimary at minPrec=precPower per D10)
+// > mul/div (precMul) > add/sub (precAdd) > range (precRange) > compare
+// (precCompare) > logic (precLogic).
+//
+// The loop continues while the next binary operator has precedence
+// >= minPrec; the recursive call for the right operand receives minPrec
+// = prec+1 for left-associative operators and minPrec = prec for
+// right-associative operators (canonical power).
+func (p *Parser) parseExpressionClimb(minPrec int) Expression {
+	left := p.parsePrimary()
+	for {
+		opTok := p.l.PeekToken()
+		prec, isRight := opPrecedence(opTok)
+		if prec < minPrec {
+			break
+		}
+		p.debugLog("DEBUG: climb consume op %q (prec %d, rightAssoc=%v) minPrec=%d\n",
+			opTok.Literal, prec, isRight, minPrec)
+		p.l.NextToken() // consume operator
+		var nextMin int
+		if isRight {
+			nextMin = prec
+		} else {
+			nextMin = prec + 1
+		}
+		right := p.parseExpressionClimb(nextMin)
+		left = &BinaryExpression{Token: opTok, Left: left, Right: right}
+	}
+	return left
+}
+
+// parsePrimary reads a single atomic operand or a prefix operator and
+// returns the parsed Expression. It NEVER reads ahead past the operand
+// it must consume, leaving the climb loop in parseExpressionClimb to
+// pick up any trailing binary operators.
+//
+// Special cases:
+//   - LPAREN recurses the full expression grammar (loosest minPrec) so
+//     `(1 + 2)` parses exactly the same way as `1 + 2` — parens are
+//     syntactic grouping, not a separate precedence rung.
+//   - SQRT (any leading-superscript radical like ²√, ³√, …, plus the
+//     bare √) is a NULLARY prefix with minPrec=precPower per D10, so
+//     `³√ 2³` correctly yields prefix(radical, Binary(2, ^, 3)). This
+//     is the core fix for issue 17.
+//   - LOGICAL_NOT (!) recurses at minPrec=precLogic so the NOT binds
+//     as loosely as possible, preserving the old hack semantics where
+//     the operand consumes the entire trailing expression.
+func (p *Parser) parsePrimary() Expression {
 	tok := p.l.NextToken()
-	p.debugLog("DEBUG: Parsing expr, token: %q type: %v\n", tok.Literal, tok.Type)
+	p.debugLog("DEBUG: Parsing primary, token: %q type: %v\n", tok.Literal, tok.Type)
 	if tok.Type == token.EOF {
 		return nil
 	}
-	var left Expression
-	if tok.Type == token.SQRT || tok.Literal == "²√" || tok.Literal == "³√" || tok.Literal == "⁴√" || tok.Literal == "⁵√" || tok.Literal == "⁶√" || tok.Literal == "⁷√" || tok.Literal == "⁸√" || tok.Literal == "⁹√" || tok.Literal == "¹⁰√" || tok.Literal == "√" {
-		right := p.parseExpression()
-		return &BinaryExpression{Token: tok, Left: &Identifier{Token: token.Token{Literal: "0"}, Value: "0"}, Right: right}
-	} else if tok.Type == token.LPAREN {
-		left = p.parseExpression()
-		// Consume ')'
+	if tok.Type == token.SQRT {
+		right := p.parseExpressionClimb(precPower)
+		return &PrefixExpression{Token: tok, Operator: tok.Literal, Right: right}
+	}
+	if tok.Type == token.LOGICAL_NOT {
+		right := p.parseExpressionClimb(precLogic)
+		return &PrefixExpression{Token: tok, Operator: tok.Literal, Right: right}
+	}
+	// Decision 7 (D7, 2026-09-12): `not` keyword is a synonym for the
+	// canonical `!` logical NOT prefix. Treated identically here so the
+	// evaluator can dispatch on `Operator` (`"not"` vs `"!"`) or rely on the
+	// type-agnostic prefix semantics.
+	if tok.Type == token.NOT {
+		right := p.parseExpressionClimb(precLogic)
+		return &PrefixExpression{Token: tok, Operator: tok.Literal, Right: right}
+	}
+	if tok.Type == token.LPAREN {
+		left := p.parseExpressionClimb(precLogic)
 		if p.l.PeekToken().Type == token.RPAREN {
-			p.l.NextToken()
+			p.l.NextToken() // consume ')'
 		}
-	} else if tok.Type == token.LOGICAL_NOT {
-		right := p.parseExpression()
-		return &BinaryExpression{Token: tok, Left: &IntegerLiteral{Token: token.Token{Literal: "0"}, Value: "0"}, Right: right}
-	} else if tok.Type == token.STRING {
-		left = &StringLiteral{Token: tok, Value: tok.Literal}
-	} else if tok.Type == token.INT || tok.Type == token.REAL {
-		left = &IntegerLiteral{Token: tok, Value: tok.Literal}
-	} else if tok.Type == token.LBRACKET {
+		// Decision 13 (D13, 2026-09-13): postfix step `(step)` on a range
+		// expression. We only wrap when `left` is a binary expression whose
+		// operator is a RANGE_ separator (RANGE_INCL, RANGE_LEFT_INC,
+		// RANGE_RGHT_INC, or RANGE_EXCL). For non-range primaries, the
+		// trailing `(...)` is reserved for future function-call syntax and
+		// is left unparsed (the climb loop will see it as the start of a
+		// new primary, which is logically a TypeError at evaluation time).
+		if p.l.PeekToken().Type == token.LPAREN {
+			if be, ok := left.(*BinaryExpression); ok && isRangeSeparatorToken(be.Token) {
+				p.l.NextToken() // consume '('
+				stepExpr := p.parseExpressionClimb(precLogic)
+				if p.l.PeekToken().Type == token.RPAREN {
+					p.l.NextToken() // consume ')'
+				}
+				left = &SteppedRangeExpression{Token: tok, Range: be, Step: stepExpr}
+			}
+		}
+		return left
+	}
+	if tok.Type == token.STRING {
+		return &StringLiteral{Token: tok, Value: tok.Literal}
+	}
+	if tok.Type == token.INT || tok.Type == token.REAL {
+		return &IntegerLiteral{Token: tok, Value: tok.Literal}
+	}
+	if tok.Type == token.LBRACKET {
 		arrLit := &ArrayLiteral{Token: tok}
 		for {
 			elTok := p.l.NextToken()
@@ -830,40 +1002,26 @@ func (p *Parser) parseExpression() Expression {
 				break
 			}
 		}
-		left = arrLit
-	} else {
-		left = &Identifier{Token: tok, Value: tok.Literal}
-		// Check if token is IDENT and might be evaluated as symbol
-		if tok.Type == token.IDENT {
-			// Check for index expression e.g. lista[1] or lista[x]
-			if p.l.PeekChar() == '[' {
-				p.l.NextToken() // consume '['
-				bracketTok := p.l.NextToken()
-				var idxExpr Expression
-				if bracketTok.Literal == "$" {
-					idxExpr = &Identifier{Token: bracketTok, Value: "$"}
-				} else if bracketTok.Type == token.IDENT {
-					idxExpr = &Identifier{Token: bracketTok, Value: bracketTok.Literal}
-				} else {
-					idxExpr = &IntegerLiteral{Token: bracketTok, Value: bracketTok.Literal}
-				}
-				p.l.NextToken() // consume ']'
-				left = &IndexExpression{Token: bracketTok, Left: left, Index: idxExpr}
-			}
-		}
+		return arrLit
 	}
 
-	// Simple binary expression check (including √)
-	for {
-		peekTok := p.l.PeekToken()
-		p.debugLog("DEBUG: In binary loop, peekTok type: %v, literal: %q\n", peekTok.Type, peekTok.Literal)
-		if isBinaryOp(peekTok) {
-			p.l.NextToken() // Consume operator
-			right := p.parseExpression()
-			left = &BinaryExpression{Token: peekTok, Left: left, Right: right}
-			continue
+	var left Expression
+	left = &Identifier{Token: tok, Value: tok.Literal}
+	if tok.Type == token.IDENT {
+		if p.l.PeekToken().Type == token.LBRACKET {
+			p.l.NextToken() // consume '['
+			bracketTok := p.l.NextToken()
+			var idxExpr Expression
+			if bracketTok.Literal == "$" {
+				idxExpr = &Identifier{Token: bracketTok, Value: "$"}
+			} else if bracketTok.Type == token.IDENT {
+				idxExpr = &Identifier{Token: bracketTok, Value: bracketTok.Literal}
+			} else {
+				idxExpr = &IntegerLiteral{Token: bracketTok, Value: bracketTok.Literal}
+			}
+			p.l.NextToken() // consume ']'
+			left = &IndexExpression{Token: bracketTok, Left: left, Index: idxExpr}
 		}
-		break
 	}
 	return left
 }

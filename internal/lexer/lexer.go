@@ -6,6 +6,7 @@ package lexer
 
 import (
 	"bee/internal/token"
+	"fmt"
 	"strings"
 )
 
@@ -16,6 +17,7 @@ type Lexer struct {
 	ch           rune
 	debug        bool
 	line         int
+	warnings     []string
 }
 
 func New(input string) *Lexer {
@@ -26,6 +28,27 @@ func New(input string) *Lexer {
 		l.readChar()
 	}
 	return l
+}
+
+// Warnings returns the deprecation warnings emitted during lexing. The lexer
+// records soft E0010 diagnostics (e.g. `≠`, `==`, `!=`) without halting; the
+// driver surfaces them via stderr.
+func (l *Lexer) Warnings() []string {
+	return l.warnings
+}
+
+// emitWarning appends a deprecation warning to the lexer's warning surface.
+// Per Decision 3 / Decision 7 these are non-fatal until Phase 7 audit task 7.2
+// promotes them to E0009. Idempotent on the same line+code to avoid the
+// peek/next double-emission that PeekToken's NextToken pre-read causes.
+func (l *Lexer) emitWarning(code, msg string, pos int) {
+	key := fmt.Sprintf("%s line=%d %s", code, pos, msg)
+	for _, w := range l.warnings {
+		if w == key {
+			return
+		}
+	}
+	l.warnings = append(l.warnings, key)
 }
 
 func (l *Lexer) readChar() {
@@ -46,6 +69,18 @@ func (l *Lexer) PeekChar() rune {
 		return 0
 	}
 	return l.runes[l.readPosition]
+}
+
+// PeekCharN returns the n-th rune ahead of the current position (n=1 is
+// equivalent to PeekChar, n=2 is the rune after that). Used for Maximal
+// Munch lookaheads in D13 (range separators `..<`, `>..`, `>..<`) where
+// a single-rune peek is insufficient to discriminate the longer matches.
+func (l *Lexer) PeekCharN(n int) rune {
+	idx := l.readPosition + n - 1
+	if idx >= len(l.runes) {
+		return 0
+	}
+	return l.runes[idx]
 }
 
 func (l *Lexer) PeekToken() token.Token {
@@ -131,7 +166,8 @@ func (l *Lexer) NextToken() token.Token {
 	case '∨':
 		tok = token.Token{Type: token.LOGICAL_OR, Literal: "∨", Pos: token.Pos(l.line)}
 	case '¬':
-		tok = token.Token{Type: token.LOGICAL_NOT, Literal: "¬", Pos: token.Pos(l.line)}
+		// D12: ¬ is the canonical binary value-inequality operator.
+		tok = token.Token{Type: token.NEQ, Literal: "¬", Pos: token.Pos(l.line)}
 	case '⊕':
 		tok = token.Token{Type: token.XOR_PLUS, Literal: "⊕", Pos: token.Pos(l.line)}
 	case '⊖':
@@ -185,7 +221,8 @@ func (l *Lexer) NextToken() token.Token {
 	case '≡':
 		tok = token.Token{Type: token.EQUIV, Literal: "≡", Pos: token.Pos(l.line)}
 	case '≠':
-		tok = token.Token{Type: token.NEQ_UNICODE, Literal: "≠", Pos: token.Pos(l.line)}
+		l.emitWarning("E0010", `deprecated-symbol: '≠' — use '¬' (Decision 12)`, l.line)
+		tok = token.Token{Type: token.NEQ, Literal: "≠", Pos: token.Pos(l.line)}
 	case '≤':
 		tok = token.Token{Type: token.LTE_UNICODE, Literal: "≤", Pos: token.Pos(l.line)}
 	case '≥':
@@ -196,6 +233,7 @@ func (l *Lexer) NextToken() token.Token {
 			tok = token.Token{Type: token.FAT_ARROW, Literal: "=>", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '=' {
 			l.readChar()
+			l.emitWarning("E0010", `deprecated-symbol: '==' — use '=' (Decision 12)`, l.line)
 			tok = token.Token{Type: token.EQ, Literal: "==", Pos: token.Pos(l.line)}
 		} else {
 			tok = token.Token{Type: token.EQ, Literal: "=", Pos: token.Pos(l.line)}
@@ -211,30 +249,52 @@ func (l *Lexer) NextToken() token.Token {
 			tok = token.Token{Type: token.COLON, Literal: ":", Pos: token.Pos(l.line)}
 		}
 	case '.':
+		// Decision 13 (D13, 2026-09-13): range tokens are now `..`, `..<`,
+		// `>..`, `>..<`. The lexer applies Maximal Munch so `..<` is one
+		// token (RANGE_LEFT_INC), preferring it over the shorter `..`.
+		// Legacy forms `.!` and `..!` still lex but emit E0010.
 		if l.PeekChar() == '.' {
-			l.readChar()
-			tok = token.Token{Type: token.RANGE_INCL, Literal: "..", Pos: token.Pos(l.line)}
+			l.readChar() // consume second '.'
+			if l.PeekChar() == '<' {
+				l.readChar() // consume '<'
+				tok = token.Token{Type: token.RANGE_LEFT_INC, Literal: "..<", Pos: token.Pos(l.line)}
+			} else if l.PeekChar() == '!' {
+				l.readChar() // consume '!' (legacy "..!")
+				l.emitWarning("E0010", `deprecated-symbol: '..!' — use '..<' (Decision 13)`, l.line)
+				tok = token.Token{Type: token.RANGE_LEFT_INC, Literal: "..<", Pos: token.Pos(l.line)}
+			} else {
+				tok = token.Token{Type: token.RANGE_INCL, Literal: "..", Pos: token.Pos(l.line)}
+			}
 		} else if l.PeekChar() == '!' {
-			l.readChar()
-			tok = token.Token{Type: token.RANGE_LEFT_INC, Literal: ".!", Pos: token.Pos(l.line)}
+			l.readChar() // consume '!' (legacy ".!")
+			l.emitWarning("E0010", `deprecated-symbol: '.!' — use '..<' (Decision 13)`, l.line)
+			tok = token.Token{Type: token.RANGE_LEFT_INC, Literal: "..<", Pos: token.Pos(l.line)}
 		} else {
 			tok = token.Token{Type: token.DOT, Literal: ".", Pos: token.Pos(l.line)}
 		}
 	case '!':
+		// Decision 13 (D13, 2026-09-13): the legacy range-token forms `!.` and
+		// `!!` from pre-D13 drafts are deprecated. We still lex them (to keep
+		// old sources buildable during the deprecation window), but emit
+		// E0010 and map to the canonical RANGE_RGHT_INC / RANGE_EXCL.
 		if l.PeekChar() == '.' {
-			l.readChar()
-			tok = token.Token{Type: token.RANGE_RGHT_INC, Literal: "!.", Pos: token.Pos(l.line)}
+			l.readChar() // consume '.'
+			l.emitWarning("E0010", `deprecated-symbol: '!.' — use '>..' (Decision 13)`, l.line)
+			tok = token.Token{Type: token.RANGE_RGHT_INC, Literal: ">..", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '!' {
-			l.readChar()
-			tok = token.Token{Type: token.RANGE_EXCL, Literal: "!!", Pos: token.Pos(l.line)}
+			l.readChar() // consume second '!'
+			l.emitWarning("E0010", `deprecated-symbol: '!!' — use '>..<' (Decision 13)`, l.line)
+			tok = token.Token{Type: token.RANGE_EXCL, Literal: ">..<", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '=' {
 			l.readChar()
-			tok = token.Token{Type: token.NOT_EQ, Literal: "!=", Pos: token.Pos(l.line)}
+			l.emitWarning("E0010", `deprecated-symbol: '!=' — use '¬' (Decision 12)`, l.line)
+			tok = token.Token{Type: token.NEQ, Literal: "!=", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '∈' {
 			l.readChar()
 			tok = token.Token{Type: token.NOT_IN, Literal: "!∈", Pos: token.Pos(l.line)}
 		} else {
-			tok = token.Token{Type: token.BANG, Literal: "!", Pos: token.Pos(l.line)}
+			// D12: standalone ! is the canonical unary logical NOT.
+			tok = token.Token{Type: token.LOGICAL_NOT, Literal: "!", Pos: token.Pos(l.line)}
 		}
 	case '+':
 		if l.PeekChar() == '=' {
@@ -299,17 +359,31 @@ func (l *Lexer) NextToken() token.Token {
 			tok = token.Token{Type: token.LTE, Literal: "<=", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '>' {
 			l.readChar()
-			tok = token.Token{Type: token.NOT_EQ, Literal: "<>", Pos: token.Pos(l.line)}
+			l.emitWarning("E0010", `deprecated-symbol: '<>' — use '¬' (Decision 12)`, l.line)
+			tok = token.Token{Type: token.NEQ, Literal: "<>", Pos: token.Pos(l.line)}
 		} else {
 			tok = token.Token{Type: token.LT, Literal: "<", Pos: token.Pos(l.line)}
 		}
 	case '>':
+		// Decision 13 (D13, 2026-09-13): `>` participates in range separators
+		// (`>..` and `>..<`). Maximal Munch prefers the longer match.
 		if l.PeekChar() == '=' {
 			l.readChar()
 			tok = token.Token{Type: token.GTE, Literal: ">=", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '>' {
 			l.readChar()
 			tok = token.Token{Type: token.PIPE_RIGHT, Literal: ">>", Pos: token.Pos(l.line)}
+		} else if l.PeekChar() == '.' && l.PeekCharN(2) == '.' && l.PeekCharN(3) == '<' {
+			// `>..<` — three-rune fully-exclusive range (longest match).
+			l.readChar() // consume '.'
+			l.readChar() // consume '.'
+			l.readChar() // consume '<'
+			tok = token.Token{Type: token.RANGE_EXCL, Literal: ">..<", Pos: token.Pos(l.line)}
+		} else if l.PeekChar() == '.' && l.PeekCharN(2) == '.' {
+			// `>..` — two-rune left-exclusive range separator.
+			l.readChar() // consume '.'
+			l.readChar() // consume '.'
+			tok = token.Token{Type: token.RANGE_RGHT_INC, Literal: ">..", Pos: token.Pos(l.line)}
 		} else {
 			tok = token.Token{Type: token.GT, Literal: ">", Pos: token.Pos(l.line)}
 		}
@@ -332,6 +406,40 @@ func (l *Lexer) NextToken() token.Token {
 
 		if isLetter(l.ch) {
 			lit := l.readIdentifier()
+			// Maximal-Munch: "is not" is one relational token (Decision 7).
+			// Detect when the identifier is exactly "is" and a single ASCII space
+			// followed by an identifier-literal "not" is the next token. We
+			// consume the inner whitespace + "not" so the parser sees IS_NOT.
+			if lit == "is" {
+				savedPos := l.position
+				savedReadPos := l.readPosition
+				savedCh := l.ch
+				savedLine := l.line
+				if l.ch == ' ' && l.PeekChar() != 0 {
+					l.readChar() // skip whitespace
+					if isLetter(l.ch) {
+						notLit := l.readIdentifier()
+						if notLit == "not" {
+							tok = token.Token{Type: token.IS_NOT, Literal: "is not", Pos: token.Pos(l.line)}
+							return tok
+						}
+						// Not "is not" — restore lexer position so the lexer
+						// resumes from the whitespace boundary; the producing
+						// call will re-emit the whitespace-suffixed identifier.
+						l.position = savedPos
+						l.readPosition = savedReadPos
+						l.ch = savedCh
+						l.line = savedLine
+					} else {
+						// Whitespace was consumed but no ident follows — also
+						// restore so callers retain reactable state.
+						l.position = savedPos
+						l.readPosition = savedReadPos
+						l.ch = savedCh
+						l.line = savedLine
+					}
+				}
+			}
 			tokType := token.LookupIdent(lit)
 			tok = token.Token{Type: tokType, Literal: lit, Pos: token.Pos(l.line)}
 			return tok

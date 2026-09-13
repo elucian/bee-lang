@@ -1,6 +1,5 @@
--- @DISABLED: is= VARIABLE CONTEXT is=
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
--- @DESC:T0103 Logical and boolean Unicode operators
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=1 type=- literal="-"
+- @DESC:T0103 Logical and boolean Unicode operators
 rule main:
   new p, q ∈ Z;
   let p := 1;
@@ -8,6 +7,6 @@ rule main:
   expect p ∧ p;
   expect p ∨ q;
   expect p ⊕ q;
-  expect ¬q;
-  expect ¬(p ∧ q);
+  expect !q;
+  expect !(p ∧ q);
 return;

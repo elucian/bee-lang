@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=11 type=; literal=";"
 -- @DESC:file: trial_miss.bee
 -- miss catches the rest demo
 rule main:

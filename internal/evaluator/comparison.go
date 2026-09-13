@@ -12,7 +12,7 @@ func evalComparison(op string, left, right int, tokenType token.Type, literal st
 		}
 		return 0
 	}
-	if tokenType == token.NEQ_UNICODE || literal == "≠" || literal == "!=" || literal == "<>" || strings.Contains(literal, "≠") {
+	if tokenType == token.NEQ || tokenType == token.NEQ_UNICODE || literal == "¬" || literal == "≠" || literal == "!=" || literal == "<>" || strings.Contains(literal, "≠") {
 		if left != right {
 			return 1
 		}

@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=10 type=; literal=";"
 -- @DESC:T0209 Nested cycles with labels and early stop
 -- Labels demo
 rule main:

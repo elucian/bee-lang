@@ -22,6 +22,10 @@ Boot-level tests that validate the Bee compiler can lex, parse, evaluate, and pr
 
 `T0002` and `T0004` were migrated from the legacy `print(...) using "sep"` / `print(...) using: "sep"` postfix to the canonical curried `(sep: "sep")` call-site form. The legacy lex surface remains accepted but emits `E0011 DeprecatedSymbol 'using'` and is scheduled to harden to `E0009` in Phase 7 audit task 7.2.
 
+## Phase 8.1 Operator Identity (2026-09-12)
+
+The lexer now collapses `is not` (literal sequence `is` + ASCII space + `not`) into a single `IS_NOT` (Decision 7). The evaluator maintains a parallel identity-ID plane so `a is a` returns 1, `a is b` returns 0 across distinct variables, and integer literals never share ephemeral IDs. The lexer additionally emits a non-fatal `E0010 deprecated-symbol` warning for any of `≠`, `==`, `!=` (they remain functional for legacy reasons but track toward `E0009` enforcement in Phase 7.2).
+
 ## Known Hazards Surfaced
 
 - `issues/14-parser-silent-token-drop.md` — `parseStatement` returns `nil` for unrecognized keywords without recording a parser error. Legacy `fn main() {}` source previously passed as a false positive; canonical `rule main:` form verified below.

@@ -1,0 +1,12 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: T0132 Decision 13: left-exclusive range `>..` semantics
+-- Half-open `(a, b]` — a is NOT in, b IS in.
+rule main:
+  new b ∈ Z;
+  let b := 10;
+
+  expect b in (1>..10);      -- 10 ∈ (1, 10]
+  expect 2 in (1>..10);      -- 2 ∈ (1, 10]
+  expect not (1 in (1>..10));  -- 1 NOT in (1, 10]
+  expect b in (0>..b);       -- 10 ∈ (0, 10]
+return;

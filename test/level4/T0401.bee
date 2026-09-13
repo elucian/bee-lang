@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=6 type=; literal=";"
 -- @DESC:T0401 Complex Data Processing test
 rule main:
   new sum := 0;

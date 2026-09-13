@@ -1,0 +1,12 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: T0131 Decision 13: right-exclusive range `..<` semantics
+-- Closed `[a, b)` — a is in, b is NOT in.
+rule main:
+  new a ∈ Z;
+  let a := 5;
+
+  expect a in (1..<10);     -- 5 is in [1, 10)
+  expect 1 in (1..<10);     -- 1 is in [1, 10)
+  expect a in (1..<6);      -- 5 ∈ [1, 6)
+  expect not (10 in (1..<10));  -- 10 NOT in [1, 10) — right-exclusive
+return;

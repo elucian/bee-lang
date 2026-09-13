@@ -40,21 +40,35 @@ The `:` operator is a **context-sensitive structural binding operator**. Its sem
 ### 3.2 Cloning Operator (::)
 Used for explicit shallow or deep memory duplication.
 
-### 3.3 Equality, Identity & Inequality Operators (Decision 2 + Decision 3, 2026-09-12)
+### 3.3 Equality, Identity & Inequality Operators (Decision 2 + Decision 12, 2026-09-12)
 Bee distinguishes **value equality** from **pointer identity**. They are NOT interchangeable.
 
 | Token | Class | Semantics |
 | :--- | :--- | :--- |
 | `=` | Value Equality | Returns true iff the evaluated values are structurally equal. `a = b` is true even if `a` and `b` are different variables holding the same value. |
-| `<>` | Value Inequality | Canonical inequality. Logical negation of `=` over values. |
+| `¬` | Value Inequality | Canonical inequality. Logical negation of `=` over values. |
 | `is` | Pointer Identity | Returns true iff both operands reference the same memory allocation (same pointer). `a is b` is **false** even when `a = b` if they are distinct allocations. A literal compared to a variable via `is` is always false (literals are immutable boxed values, variables are arc-tracked cells). |
 | `is not` | Pointer Non-Identity | Logical negation of `is`. |
+| `@` | Reference-Of | Unary prefix that yields the reference identity of its operand. `@a = @b` is true iff `a` and `b` share the same allocation (equivalent to `a is b`). `@a ¬ @b` is reference inequality. `@a = value` (comparing a reference against a plain value) is always false. |
 
 - **Modifier aliases (Decision 2):** The compound-style modifiers `+=` and `-=` are pure lexical **shorthand** for `+:=` and `-:=` (the canonical mutation operator). They produce identical AST nodes; the lexer normalizes them before emission. The forms `+is` and `-is` are **NOT** operators — `is` is a closed-class relational token, not an arithmetic nucleus. Any attempt to lex `+is` or `-is` as a token is a hard syntax error (E0011).
-- **Deprecation (Decision 3):** The Unicode form `≠` is deprecated due to Unicode canonical-equivalence imperfections in tokenizer implementations. The canonical replacement is `<>`. The lexer MUST:
-  - From this version onward: emit a non-fatal diagnostic `E0010 deprecated-symbol: '≠' — use '<>'` on every occurrence.
+- **Deprecation (Decision 12, 2026-09-12):** The Unicode form `≠` is deprecated due to Unicode canonical-equivalence imperfections in tokenizer implementations. The canonical replacement is `¬` (value inequality). The lexer MUST:
+  - From this version onward: emit a non-fatal diagnostic `E0010 deprecated-symbol: '≠' — use '¬'` on every occurrence.
   - Once Phase 7 audit task 7.2 marks this migration complete: hard-reject `≠` as a syntax error (upgrade the diagnostic to `E0009`).
-- **Migration guideline:** Authors and the tutorial MUST use `<>` (and `is` / `is not`) as the canonical forms in all new content.
+- The ASCII forms `==` and `!=` are likewise deprecated and emit `E0010 deprecated-symbol: '==' — use '='` (resp. `E0010 deprecated-symbol: '!=' — use '¬'`). They will be hardened to `E0009` in the same Phase 7.2 sweep.
+- **Migration guideline:** Authors and the tutorial MUST use `¬` (and `is` / `is not`) as the canonical forms in all new content.
+
+### 3.6 Logical Operator Synonymy (Decision 7, 2026-09-12)
+Bee recognises two parallel syntaxes for boolean logic. The descriptive keyword forms (`and`, `or`, `xor`, `not`) are first-class tokens and are accepted everywhere the canonical Unicode forms are. The lexer MUST emit `IS_NOT` as a single token when the literal sequence `is` followed by a single ASCII space followed by `not` appears (Maximal-Munch); this collapses the identity-negation operator into one token.
+
+| Canonical | Synonym Class | Notes |
+| :--- | :--- | :--- |
+| `∧` (LOGICAL_AND) | `and` / AND keyword | boolean conjunction |
+| `∨` (LOGICAL_OR) | `or` / OR keyword | boolean disjunction |
+| `⊕` (XOR_PLUS) | `xor` / XOR keyword | exclusive disjunction |
+| `!` (LOGICAL_NOT) | `not` / NOT keyword | boolean negation (unary prefix) |
+| `is` (IS) | none — closed-class | pointer identity (Decision 2) |
+| `is not` (IS_NOT) | none — single token | pointer identity negation (Decision 2 + 7) |
 
 ### 3.4 Arithmetic and Modifier Operators
 Arithmetic operators follow standard precedence, with modifiers providing shorthand for assignment.
@@ -83,13 +97,14 @@ Operators used for managing collection contents and thread synchronization.
 The Bee lexer employs a strict **Maximal Munch (Longest Match)** rule: at any position, the lexer consumes the longest sequence of characters that forms a valid token.
 
 ### 2.1 Ambiguous Character Resolution
-1. **Dot (`.`) Disambiguation:**
+1. **Dot (`.`) and Range-Separator Disambiguation (Decision 13):**
    - Single Dot (`.`): Member access operator (e.g., `object.member`).
-   - Double Dot (`..`): Inclusive range operator (e.g., `1..10`).
-   - Dot-Exclamation (`.!`): Left-inclusive, right-exclusive range (e.g., `1.!10`).
-   - Exclamation-Dot (`!.`): Left-exclusive, right-inclusive range (e.g., `1!.10`).
-   - Double Exclamation (`!!`): Fully exclusive range (e.g., `1!!10`).
-   - Numeric Decimal (`1.5`): Disambiguated by lookahead: if digits follow `.`, it is parsed as a Real literal unless followed immediately by another `.`.
+   - Double Dot (`..`): Inclusive range operator — `[min, max]` (e.g., `1..10`).
+   - Dot-Dot-Less (`..<`): Left-inclusive, right-exclusive range — `[min, max)` (e.g., `1..<10`). The lexer MUST emit `RANGE_LEFT_INC` preferentially over two tokens (`RANGE_INCL` + `LT`) under Maximal Munch.
+   - Greater-Dot-Dot (`>..`): Left-exclusive, right-inclusive range — `(min, max]` (e.g., `1>..10`). The lexer MUST emit `RANGE_RGHT_INC` preferentially over two tokens (`GT` + `RANGE_INCL`) under Maximal Munch.
+   - Greater-Dot-Dot-Less (`>..<`): Fully exclusive range — `(min, max)` (e.g., `1>..<10`). The lexer MUST emit `RANGE_EXCL` preferentially over `>..` and over `>..<` as a single three-rune token under Maximal Munch.
+   - Numeric Decimal (`1.5`): Disambiguated by lookahead: if digits follow `.`, it is parsed as a Real literal unless followed immediately by another `.` or another range separator rune (`<`).
+   - The legacy forms `.!`, `!.`, `!!` from pre-D13 drafts MUST NOT be tokenised as range operators. The lexer MUST still lex any standalone `!` per Decision 12 (canonical `LOGICAL_NOT`); during the D13 deprecation window, encountering `.!`, `!.`, or `!!` in range position emits a non-fatal `E0010 deprecated-symbol` and maps to the corresponding D13 token (`.!` → `RANGE_LEFT_INC` → renders as `..<`; `!.` → `RANGE_RGHT_INC` → renders as `>..`; `!!` → `RANGE_EXCL` → renders as `>..<`).
 
 2. **Colon (`:`) Disambiguation:**
    - Single Colon (`:`): Binding operator (pair-up) for key-value pairs or named parameters (e.g., `map := { "a": 1 }`, `fib(n: 5)`).
@@ -178,9 +193,9 @@ bind_op         ::= ":" ;
 assign_op       ::= ":=" | "::" | "*=" | "/=" | "%=" | "^=" | "√=" ;
 mutate_op       ::= "+:=" | "-:=" ;
 mutate_op_sugar ::= "+=" | "-=" ;  (* Decision 2, 2026-09-12: lex-level shorthand for mutate_op; normalized by lexer before AST emission *)
-cmp_val_op      ::= "=" | "<>" ;
+cmp_val_op      ::= "=" | "¬" ;
 cmp_ref_op      ::= "is" | "is not" ;  (* Decision 2: pointer-identity; the legacy "==" / "!=" / "≡" tokens are reserved for future graphics congruence and are NOT value-ops. *)
-range_op       ::= ".." | ".!" | "!." | "!!" ;
+range_op       ::= ".." | "..<" | ">.." | ">..<" ;  (* Decision 13 (2026-09-13): replaces legacy ".!", "!.", "!!". The lexer applies Maximal Munch so that "..<" emits as one token (RANGE_LEFT_INC), ">.." as one token (RANGE_RGHT_INC), and ">..<" as one token (RANGE_EXCL), in each case preferring the longer match over the shorter ".." alone. *)
 coll_op        ::= "+>" | "<+" | "++" | "-=" ;
 arith_op       ::= "+" | "-" | "*" | "/" | "^" | "√" | "%" ;
 comment_single ::= "--" [^\n]* ;

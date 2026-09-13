@@ -1,0 +1,21 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: T0136 Decision 13: postfix-step with right-exclusive range `..<`
+-- `(1..<5)(1)` discretises the right-exclusive range [1,5) to four elements {1,2,3,4}.
+rule main:
+  new r ∈ Z;
+  new a ∈ Z;
+  new b ∈ Z;
+  new c ∈ Z;
+  new d ∈ Z;
+
+  let r := (1..<5)(1);
+  let a := r[1];
+  let b := r[2];
+  let c := r[3];
+  let d := r[4];
+
+  expect a = 1;
+  expect b = 2;
+  expect c = 3;
+  expect d = 4;
+return;

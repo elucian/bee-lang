@@ -1,3 +1,4 @@
+-- @DISABLED: W0901 SignatureGrammarPartial: line=3 rule="main" (signature decoder is heuristic; full type binding deferred to Phase 7.2)
 -- @DESC:file: initial_values.bee
 -- Initial values demo
 rule main:

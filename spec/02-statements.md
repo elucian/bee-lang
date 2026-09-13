@@ -47,15 +47,19 @@ Bee provides two declaration keywords (`set` for constants, `new` for mutable va
   new xo, yo, zo ∈ Z = 10;   -- type Z explicitly specified; broadcast initialization
   ```
 - **Equality & Relation Operators (mirror of `spec/01-lexical-structure.md` §3.3, Decisions 2-3):**
-  - **Value Comparison (`=`, `<>`)**: `=` evaluates structural equality of two values (true across distinct allocations). `<>` is canonical inequality — the Unicode form `≠` is deprecated (Decision 3) and will be hard-rejected (E0009) once Phase 7 audit task 7.2 completes; the lexer currently emits non-fatal E0010.
-  - **Identity Check (`is`, `is not`)**: Evaluates reference/pointer identity (or negation). `a is b` returns false across distinct allocations even when `a = b`.
-  - **Range Notation (`!`)**: Denotes range boundaries.
+  - **Value Comparison (`=`, `¬`)**: `=` evaluates structural equality of two values (true across distinct allocations). `¬` is canonical value inequality — the Unicode form `≠` is deprecated (Decision 12) and will be hard-rejected (E0009) once Phase 7 audit task 7.2 completes; the lexer currently emits non-fatal E0010.
+  - **Identity Check (`is`, `is not`)**: Evaluates reference/pointer identity (or negation). `a is b` returns false across distinct allocations even when `a = b`. The reference-of operator `@` provides an equivalent formulation: `@a = @b` is true iff `a` and `b` share the same allocation; `@a ¬ @b` is true iff they differ.
+  - **Range Notation (`..`, `..<`, `>..`, `>..<`)**: Denotes range boundaries (Decision 13, 2026-09-13). The four endpoint-inclusion operators are: `..` (closed `[a,b]`), `..<` (right-exclusive `[a,b)`), `>..` (left-exclusive `(a,b]`), `>..<` (fully exclusive `(a,b)`). A postfix positional application `(min..max)(step)` (or any of the four range-op variants) discretises the range into a stepped sequence indexable 1-based.
   ```bee
   expect count = 0;          -- value equality
-  expect count <> 1;          -- canonical inequality (Unicode ≠ rejected)
+  expect count ¬ 1;          -- canonical inequality (Unicode ≠ rejected)
   expect xo is yo;            -- identity
   expect xo is not zo;        -- identity negation
-  new r ∈ N := 1!10;          -- range 1 to 10
+  expect @xo = @yo;           -- reference identity (equivalent to "is")
+  expect @xo ¬ @zo;           -- reference inequality
+  new r ∈ N := (1..10);       -- closed inclusive range [1, 10] (Decision 13)
+  new s ∈ N := (1..<10);      -- right-exclusive range [1, 10) (Decision 13)
+  new t ∈ N := (1>..10);     -- left-exclusive range (1, 10] (Decision 13)
   ```
 
 - **Logical Operators:**
@@ -89,7 +93,7 @@ if (a = 0) and (not (b = 0)) do ...
   $$\text{eval}(c) = 0 \implies \text{warn}(\text{stderr}, \text{line})$$
   Evaluates condition $c$. If false ($0$ or `false`), outputs a diagnostic warning to `stderr` and continues execution.
   ```bee
-  assert denominator <> 0;    -- canonical form per Decision 3 (≠ emits E0010)
+  assert denominator ¬ 0;    -- canonical form per Decision 12 (≠ emits E0010)
   ```
 - **Invariant Expectation (`expect`):**
   $$\text{eval}(c) = 0 \implies \text{raise}(\text{ExpectationFailed})$$
@@ -227,7 +231,7 @@ $$\forall i \in (\text{min} \dots \text{max} : \text{rate})$$
 ```bee
 cycle:
   new i ∈ N;
-for ∀ i ∈ (1..9:2) do
+for ∀ i ∈ (1..9)(2) do
   write i;
   next if i = 5;
 repeat;
@@ -305,14 +309,22 @@ memory_stmt       ::= "zap" identifier ;
 contract_stmt     ::= "assert" expression
                     | "expect" expression [ "else" expression ] ;
 
-(* Expressions (Comparison Operators — canonical home: spec/01-lexical-structure.md §5) *)
-comparison_expr   ::= expression ( "=" | "<>" | "is" | "is not" | "<" | ">" | "<=" | ">=" | "≈" ) expression ;
+(* Expressions (Comparison Operators — canonical home: spec/01-lexical-structure.md §3.3) *)
+comparison_expr   ::= expression ( "=" | "¬" | "is" | "is not" | "<" | ">" | "<=" | ">=" | "≈" ) expression ;
 
-(* Logical Operators *)
-logical_expr      ::= expression ( "and" | "or" | "xor" | "not" ) expression ;
+(* Logical Operators — Decision 7 keyword/Unicode synonymy (canonical home: spec/01-lexical-structure.md §3.6) *)
+logical_expr      ::= expression ( "and" | "or" | "xor" | "not" ) expression
+                    | expression ( "∧" | "∨" | "⊕" | "!" ) expression ;
 
-(* Range Notation *)
-range_expr        ::= expression "!" expression ;
+(* Range Notation — Decision 13 (2026-09-13)
+   The four endpoint-inclusion operators are lexed as single tokens
+   per spec/01-lexical-structure.md §2.1 and §5 (range_op).
+   The step postfix is a curried positional application mirrored
+   after Decision 6 (named-argument postfix). *)
+range_expr        ::= expression range_op expression ;
+range_op          ::= ".." | "..<" | ">.." | ">..<" ;
+domain_expr       ::= range_expr "(" step_expr ")" ;
+step_expr         ::= expression ;
 
 (* I/O Directives (Decision 6 — curried named-argument postfix) *)
 io_stmt           ::= "print" [ "(" expression_list ")" | expression_list ] [ "(" [ named_arg_list ] ")" ]

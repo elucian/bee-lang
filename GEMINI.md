@@ -10,9 +10,14 @@
 ## 2. Lexer & Parser Unicode & Rune Handling Instructions
 When generating, modifying, or debugging Go code for the Bee programming language lexer and parser:
 1. **UTF-8 Handling:** Treat all source inputs strictly as decoded UTF-8 sequences using `[]rune` or `bufio.Reader.ReadRune()`. Never use raw byte indexing (`s[i]`) for tokenization.
-2. **Operator Syntax:** Bee operators can consist of single Unicode symbols (e.g., `≠`), standard ASCII symbols, mixed combinations of Unicode and ASCII characters, and Unicode superscript/subscript ranges.
+2. **Operator Syntax:** Bee operators can consist of single Unicode symbols (e.g., `≠`, `¬`), standard ASCII symbols (e.g., `and`, `or`), mixed combinations of Unicode and ASCII characters, and Unicode superscript/subscript ranges (`²`, `³`, `²√`, `³√`).
 3. **Lookahead Matching:** Implement lexing with rune lookahead (`peekRune()`) rather than fixed-size assumptions to correctly parse multi-character operators containing mixed scripts or modifiers.
 4. **Token Definitions:** Store operators as `[]rune` slices in token lookup tables or transition tries to support arbitrary multi-rune Unicode operators.
+5. **Operator Synonymy (Decision 7):** The ASCII keywords `and`, `or`, `xor`, `not` are canonical synonyms for `∧`, `∨`, `⊕`, `¬`. The lexer MUST emit a single stable TokenType for each pair (`LOGICAL_AND` for both `and` and `∧`, etc.) so the parser has one branch per logical connective.
+6. **`is not` is one token (Decision 7):** Maximal-Munch collapsing is mandatory: when `is` is followed by ASCII whitespace and `not`, the lexer emits a single `IS_NOT` token. Both literal `is not` and parenthetical `(a is not b)` patterns MUST bind this way.
+
+## 5. Decisions Backlog — Reference
+For any new operator, statement, keyword, or grammar production, first consult `todo/DECISIONS.md`. D1–D7 are ratified and mirrored in `MANIFEST.md`. D8 is deferred. D9, D10, D11 are pending the user's ratification before any implementation begins.
 
 ## 3. Test Lifecycle & Freeze Protocol (.bee Test Cases)
 * **Spec-Driven Generation:** Generate new test files (`.bee`) strictly under `test/levelX/` derived directly from `/spec/`.

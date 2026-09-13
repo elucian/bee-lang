@@ -6,9 +6,9 @@ This level contains experimental tests and edge cases.
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
-| T0801    | file: asynch_call.bee            | PASS       |
+| T0801    | file: asynch_call.bee            | FAIL       |
 | T0802    | file: coroutine.bee              | PASS       |
-| T0803    | file: coroutines_turn.bee        | PASS       |
-| T0804    | file: deferred_jobs.bee          | PASS       |
-| T0805    | file: independent_loop.bee       | PASS       |
-| T0806    | file: map_reduce.bee             | PASS       |
+| T0803    | file: coroutines_turn.bee        | FAIL       |
+| T0804    | file: deferred_jobs.bee          | FAIL       |
+| T0805    | file: independent_loop.bee       | FAIL       |
+| T0806    | file: map_reduce.bee             | FAIL       |

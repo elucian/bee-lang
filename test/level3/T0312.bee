@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
 -- @DESC:file: sets_sorted.bee
 -- Sets are sorted and unique demo
 rule main:

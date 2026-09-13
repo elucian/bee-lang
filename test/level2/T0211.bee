@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=11 type=; literal=";"
 -- @DESC:T0211 Pattern match with first match mode and fallback
 -- match, first hit demo
 rule main:

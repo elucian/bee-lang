@@ -5,6 +5,14 @@ import json
 import datetime
 import argparse
 
+# Ensure Python's stdout/stderr can emit Unicode (e.g. ≠, ≤, ≥, etc.) on
+# Windows consoles (cp1252 by default) and other non-UTF-8 terminals.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
 def test():
     parser = argparse.ArgumentParser(description="Bee Test Orchestrator")
     parser.add_argument("level", nargs="?", help="Optional level to test (e.g. level1)")

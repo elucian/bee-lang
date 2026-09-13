@@ -144,6 +144,21 @@ type BinaryExpression struct {
 func (be *BinaryExpression) expressionNode() {}
 func (be *BinaryExpression) Pos() token.Pos  { return be.Token.Pos }
 
+// PrefixExpression implements a nullary/unary prefix operator node.
+// It is the canonical AST form for radicals (√, ²√, ³√, …) per
+// D10 (Ratified 2026-09-12) and for logical NOT (¬, "not").
+// Operator carries the literal form so the evaluator can dispatch on
+// the operator family without losing the degree-n information encoded
+// in the leading superscript of a radical.
+type PrefixExpression struct {
+	Token    token.Token
+	Operator string
+	Right    Expression
+}
+
+func (pe *PrefixExpression) expressionNode() {}
+func (pe *PrefixExpression) Pos() token.Pos  { return pe.Token.Pos }
+
 // Issue 14 — new AST nodes to back the rigid-syntax-gate dispatch table.
 // Each block maps directly to a section in spec/02-statements.md §5 EBNF / §1.
 
@@ -228,3 +243,22 @@ type TransferStatement struct {
 
 func (ts *TransferStatement) statementNode() {}
 func (ts *TransferStatement) Pos() token.Pos { return ts.Token.Pos }
+
+// SteppedRangeExpression implements a postfix step on a range expression
+// per Decision 13 (D13, 2026-09-13). The grammar is
+//
+//	stepped_range ::= range_expr "(" step_expr ")"
+//
+// where `range_expr` is a binary expression over one of the four
+// RANGE_INCL / RANGE_LEFT_INC / RANGE_RGHT_INC / RANGE_EXCL separators.
+// The evaluator materialises the implicit 1-based sequence
+// (start, start+step, start+2*step, …) up to but not crossing the endpoint,
+// and treats `[i]` indexing as the i-th element (1-based, Decision 1).
+type SteppedRangeExpression struct {
+	Token token.Token
+	Range Expression // a BinaryExpression whose operator is a RANGE_*
+	Step  Expression // an IntegerLiteral (or broader Expr in future)
+}
+
+func (sre *SteppedRangeExpression) expressionNode() {}
+func (sre *SteppedRangeExpression) Pos() token.Pos  { return sre.Token.Pos }

@@ -1,3 +1,4 @@
+-- @DISABLED: E0010 line=4 deprecated-symbol: '==' â€” use '=' (Decision 3 / 7)
 -- @DESC:T0201 Basic variable initialization
 rule main:
   new a, b, c ∈ Z;          -- explicit declare 3 variable

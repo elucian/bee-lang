@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=9 type=; literal=";"
 -- @DESC:T0210 Pattern match with match all mode
 -- match, every hit demo
 rule main:

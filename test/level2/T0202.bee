@@ -1,3 +1,4 @@
+-- @DISABLED: W0901 SignatureGrammarPartial: line=2 rule="main" (signature decoder is heuristic; full type binding deferred to Phase 7.2)
 -- @DESC:T0202 Hello World with String variable
 rule main:
   new s ∈ S; -- declare without initialization

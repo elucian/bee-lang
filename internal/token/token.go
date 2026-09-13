@@ -56,8 +56,9 @@ const (
 
 	// Relational / Equality operators
 	EQ          = "="
-	NOT_EQ      = "!="
-	NEQ_UNICODE = "≠"
+	NEQ         = "¬"  // D12: canonical binary value-inequality
+	NOT_EQ      = "!=" // D12: deprecated literal alias, lexed as NEQ
+	NEQ_UNICODE = "≠"  // D12: deprecated literal alias, lexed as NEQ
 	LT          = "<"
 	LTE         = "<="
 	LTE_UNICODE = "≤"
@@ -81,7 +82,7 @@ const (
 	SYM_DIFF      = "Δ"
 	LOGICAL_AND   = "∧"
 	LOGICAL_OR    = "∨"
-	LOGICAL_NOT   = "¬"
+	LOGICAL_NOT   = "!" // D12: canonical unary logical NOT (synonym: keyword "not")
 	XOR_PLUS      = "⊕"
 	XOR_MINUS     = "⊖"
 
@@ -97,11 +98,14 @@ const (
 	PIPE_LEFT      = "<<"
 	REDUCE_CHANNEL = "+>"
 
-	// Range operators
+	// Range operators (Decision 13, 2026-09-13).
+	// Canonical ASCII forms. The legacy ".!", "!.", "!!" forms still lex
+	// via `case '.'` / `case '!'` with E0010 deprecation, mapping to the
+	// canonical RANGE_LEFT_INC / RANGE_RGHT_INC / RANGE_EXCL tokens.
 	RANGE_INCL     = ".."
-	RANGE_LEFT_INC = ".!"
-	RANGE_RGHT_INC = "!."
-	RANGE_EXCL     = "!!"
+	RANGE_LEFT_INC = "..<"
+	RANGE_RGHT_INC = ">.."
+	RANGE_EXCL     = ">..<"
 
 	// Delimiters & Punctuation
 	LPAREN     = "("
@@ -145,6 +149,7 @@ const (
 	DEFAULT    = "DEFAULT"
 	IF         = "IF"
 	IS         = "IS"
+	IS_NOT     = "IS_NOT"
 	DO         = "DO"
 	ELSE       = "ELSE"
 	EXIT       = "EXIT"

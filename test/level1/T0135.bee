@@ -1,0 +1,11 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: T0135 Decision 13: fully-exclusive legacy `!!` still lexes as `>..<`
+-- The legacy `!!` form preserves fully-exclusive semantics and emits a non-fatal E0010 deprecation.
+rule main:
+  new a ∈ Z;
+  let a := 5;
+
+  expect a in (1!!10);       -- 5 ∈ (1, 10), exact equivalence to `1>..<10`
+  expect not (1 in (1!!10));
+  expect not (10 in (1!!10));
+return;

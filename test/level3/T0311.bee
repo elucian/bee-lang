@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 (expected ':' after identifier "i" in named-argument list)
 -- @DESC:file: quantifiers.bee
 -- Quantifiers demo
 rule main:

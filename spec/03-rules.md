@@ -119,13 +119,13 @@ new y := print("a", "b");     -- ERROR if slot is required and no defaults suppl
 
 Bee enforces formal contract assertions directly within rule definitions:
 
-$$\text{Contract}(\text{divide}) = \begin{cases} \text{assert}\big(b \;\text{<>}\; 0\big) \;\textit{[Precondition Warning]} \\ \text{expect}\big(\text{ratio} \cdot b \approx a\big) \;\textit{[Invariant Guarantee]} \end{cases}$$
+$$\text{Contract}(\text{divide}) = \begin{cases} \text{assert}\big(b \;\text{¬}\; 0\big) \;\textit{[Precondition Warning]} \\ \text{expect}\big(\text{ratio} \cdot b \approx a\big) \;\textit{[Invariant Guarantee]} \end{cases}$$
 
-> **Operator syntax note (Decision 3, 2026-09-12):** The canonical value-inequality operator is `<>`. The Unicode form `≠` is deprecated. When authors write `≠` in source, the lexer emits a non-fatal `E0010 deprecated-symbol: '≠' — use '<>'`; after Phase 7 audit task 7.2 the diagnostic upgrades to a hard `E0009` syntax error.
+> **Operator syntax note (Decision 12, 2026-09-12):** The canonical value-inequality operator is `¬`. The Unicode form `≠` is deprecated. When authors write `≠` in source, the lexer emits a non-fatal `E0010 deprecated-symbol: '≠' — use '¬'`; after Phase 7 audit task 7.2 the diagnostic upgrades to a hard `E0009` syntax error. The `¬` glyph doubles as value inequality; logical NOT is `!` (unary prefix), so `¬` and `!` are distinct operators with no ambiguity (binary vs. unary arity disambiguates).
 
 ```bee
 rule divide(a ∈ R, b ∈ R) => (ratio ∈ R):
-  assert b <> 0;         -- Precondition / Warning check: emits diagnostic warning to stderr if false (canonical inequality — Decision 3 deprecates ≠)
+  assert b ¬ 0;         -- Precondition / Warning check: emits diagnostic warning to stderr if false (canonical inequality — Decision 12 deprecates ≠)
   let ratio := a / b;
   expect ratio * b ≈ a; -- Postcondition / Invariant check: raises runtime error if false
 return;
@@ -243,7 +243,7 @@ named_argument    ::= identifier ":" expression ;
 | `E0307` | `MissingNamedArgument` | Call site omits a required named-parameter slot binding (no default supplied per Decision 6) |
 | `W0308` | `NamedSlotIgnored` | Curried `(...)` argument list appended where the rule declares no named slot (silently tolerated, warning emitted) |
 | `E0309` | `UnknownNamedArgument` | Curried call site names an identifier not present in the rule's declared named slot |
-| `E0010` | `DeprecatedSymbol '≠'` | Legacy value-inequality operator encountered; canonical `<>` should be used (Phase 7 audit pre-`E0009`) |
+| `E0010` | `DeprecatedSymbol '≠'` | Legacy value-inequality operator encountered; canonical `¬` should be used (Phase 7 audit pre-`E0009`) |
 | `E0011` | `DeprecatedSymbol 'using'` | Legacy `using` / `using:` postfix encountered on a call site; canonical is named-argument `(name: ...)` per Decision 6 (Phase 7 audit pre-`E0009`) |
 
 ---
@@ -252,7 +252,7 @@ named_argument    ::= identifier ":" expression ;
 
 - **Issues Addressed:** Formalized rule semantics, contracts, TCO, closures, and forward declarations.
 - **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/03-rules.md`.
-- **Decision 3 Deprecation Sweep (2026-09-12):** All normative examples in this spec now use the canonical value-inequality operator `<>`. The single residual `≠` reference is an intentional deprecation annotation in a code comment per Decision 3.
+- **Decision 12 Deprecation Sweep (2026-09-12):** All normative examples in this spec now use the canonical value-inequality operator `¬`. The single residual `≠` reference is an intentional deprecation annotation in a code comment per Decision 12.
 - **Spec Audit Locked (Phase 7 prep):** `spec/01-lexical-structure.md`, `spec/02-statements.md`, and `spec/03-rules.md` are now harmonized with Decisions 1–6.
 - **Decision 6 — Curried Rule Signatures (2026-09-12):** This pass introduces §2.4 (named-parameter slots), updates §2.1/§2.2/§3.1, and extends the §6 EBNF with `named_param_list`, `named_parameter`, `named_arg_list`, and `named_argument` productions. The legacy `using` keyword is deprecated; canonical I/O call sites use curried named arguments (`print(a, b)(sep: " | ")`). New diagnostic codes `E0307`, `W0308`, `E0309`, and `E0011` are added. Implementer (`internal/lexer/` & `internal/parser/`) is gated by Anti-Loop Gate until `spec/02-statements.md` is also harmonized with the new `io_stmt` EBNF (next pass).
 - **Remaining Hurdles:** `spec/02-statements.md` §5 `io_stmt` EBNF still references the legacy `using` postfix; harmonization is sequenced for the immediate next pass under the Anti-Loop Gate. `internal/lexer/` and `internal/parser/` updates are deferred until both specs are locked.

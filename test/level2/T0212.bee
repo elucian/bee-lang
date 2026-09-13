@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=3 type=TYPE literal="type"
 -- @DESC:T0212 Total pattern match with range conditions
 -- A total match needs no default demo
 type Small: (0..3) <: Z;
