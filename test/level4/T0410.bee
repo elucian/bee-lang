@@ -1,11 +1,11 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=8 type=; literal=";"
 -- @ENABLED: Reset by user
 -- @DESC:file: arrays.bee
 -- Arrays demo
 rule main:
   new a := [1,2,3];
   print a;
-  print a[0];
-  print a[-1];
+  print a[1];
+  print a[$];
+  expect a[1] = 1;
+  expect a[$] = 3;
 return;
-
