@@ -38,9 +38,9 @@ D14 optimized for grammar uniformity (demoting `repeat` from block terminator) b
 | `internal/lexer/lexer.go` | `NextToken` ident dispatch | Map `repeat` → `NEXT` + E0010 warning (✅ done) |
 | `spec/02-statements.md` | §1 taxonomy, §3.4, §5 EBNF, §7 diagnostics | `next` canonical; E0010 row; E0206 wording |
 | `spec/00-memory-model.md` | §2.2 region cleanup | Keyword mention `repeat` → `next` |
-| `bee-tutorial/control.html` | §cycle notes, §nested, §for examples | `repeat` → `next` in code/keyword mentions |
-| `bee-tutorial/syntax.html` | Keyword tables | `repeat` → `next` |
-| `bee-tutorial/js/bee.js` | Highlighter | `repeat` recategorized control → interruption |
+| `tutorial/control.html` | §cycle notes, §nested, §for examples | `repeat` → `next` in code/keyword mentions |
+| `tutorial/syntax.html` | Keyword tables | `repeat` → `next` |
+| `tutorial/js/bee.js` | Highlighter | `repeat` recategorized control → interruption |
 | `todo/DECISIONS.md` | D15 entry | Ratification record |
 | `MANIFEST.md` | D15 mirror + Phase 8.6 delta | Status update |
 

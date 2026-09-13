@@ -1,11 +1,9 @@
--- @ENABLED: Reset by user
--- @DESC:file: append_collection_example.bee
--- A rule that adds an item to a collection and uses `old`
--- to verify the size increased by exactly one.
-
-rule append_item(items ∈ @[Z], new_val ∈ Z):
-  expect length(items) = length(old items) + 1;
-  expect items[length(items)-1] = new_val;
-  let append(items, new_val);
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: Rule anatomy no params — minimal rule with no parameters, spec/03 §2.1
+rule greet:
+  print "Hello from rule";
 return;
 
+rule main:
+  print "main done";
+return;

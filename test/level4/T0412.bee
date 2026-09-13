@@ -1,0 +1,20 @@
+-- @DESC:T0304 bubble sort with done terminators (D14)
+-- D14: cycle/for terminator migrated to done;.
+rule main:
+  new a := [5, 4, 3, 2, 1];
+  new n := 5;
+  cycle sort:
+    new swapped: True ∈ B;
+    while swapped do
+      let swapped := False;
+      for i ∈ (1..n-1) do
+        if a[i] > a[i+1] do
+          let a[i], a[i+1] := a[i+1], a[i];
+          let swapped := True;
+        done;
+      done;
+      let n -= 1;
+  done sort;
+  print a;
+return;
+

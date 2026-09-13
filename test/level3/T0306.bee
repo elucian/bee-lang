@@ -1,10 +1,10 @@
--- @ENABLED: Reset by user
--- @DESC:file: concatenation.bee
--- Concatenation demo
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @NEGATIVE
+-- @DESC: Expect postcondition fail — expect raises E0303 and halts, spec/03 §4
 rule main:
-  print [1,2] + [3];
-  new l := (1,2);
-  new m := (3,);
-  print l + m;
+  new a ∈ Z; new b ∈ Z;
+  let a := 10;
+  let b := 20;
+  expect a + b = 99;
+  print "should not reach here";
 return;
-

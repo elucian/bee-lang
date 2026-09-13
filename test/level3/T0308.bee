@@ -1,9 +1,12 @@
--- @ENABLED: Reset by user
--- @DESC:file: lists.bee
--- Lists demo
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: Scoping parameter shadowing — inner scope shadows outer variable, spec/03 §4
 rule main:
-  new l := (1,2,3);
-  print l;
-  print (l.head, l.tail);
+  new x ∈ Z;
+  let x := 1;
+  if true do
+    new x ∈ Z;
+    let x := 2;
+    print x;
+  done;
+  print x;
 return;
-

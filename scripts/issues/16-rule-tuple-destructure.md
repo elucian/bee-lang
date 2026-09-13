@@ -34,7 +34,7 @@ triggers `E0009 SyntaxError:UnrecognizedStatement` at the line `new a, b, c := z
    ```
    The arity of the LHS ident list must match the arity of the call site's declared return tuple. Mismatch → `E0303: TupleArityMismatch`.
 3. **Evaluator integration.** The evaluator must invoke the called rule, capture its tuple-framed environment at the `return;` point, and broadcast each slot to the corresponding LHS identifier.
-4. **Tutorial update.** The tutorial (`bee-tutorial/rules.html`) currently does NOT document tuple-return rules. Add § "Multi-Value Returns" with a running example.
+4. **Tutorial update.** The tutorial (`tutorial/rules.html`) currently does NOT document tuple-return rules. Add § "Multi-Value Returns" with a running example.
 
 ## Acceptance Criteria
 - `test/debt/T0127-rule-call-result-binding.bee` runs green when promoted back to `test/level1/`.

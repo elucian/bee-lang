@@ -1,13 +1,9 @@
--- @ENABLED: Reset by user
--- @DESC:file: growing_shrinking_list.bee
--- Growing and shrinking a list demo
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: Rule docstrings — triple-dash comment above rule body is documentation, spec/03 §2.1
 rule main:
-  new l := (2,3);
-  let l <+ 4;
-  let l +> 1;
-  print l;
-  let l << 1;
-  let l >> 1;
-  print l;
+  ---
+  This rule demonstrates that docstrings are accepted
+  as part of the rule body layout.
+  ---
+  print "docstring ok";
 return;
-

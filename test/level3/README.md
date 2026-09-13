@@ -8,24 +8,24 @@ This level covers rules, contracts, and function definitions as defined in:
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
-| T0321    | Rule contract assert failure ... | PASS       |
+| T0301    | Rule anatomy no params — mini... | PASS       |
+| T0302    | Rule anatomy with params — ru... | FAIL       |
+| T0303    | Assert precondition pass — as... | PASS       |
+| T0304    | Assert precondition fail — as... | PASS       |
+| T0305    | Expect postcondition pass — e... | PASS       |
+| T0306    | Expect postcondition fail — e... | PASS       |
+| T0307    | Rule docstrings — triple-dash... | PASS       |
+| T0308    | Scoping parameter shadowing —... | PASS       |
+| T0309    | Scoping variable locality — r... | PASS       |
+| T0310    | Closures state capture — rule... | FAIL       |
+| T0311    | Early return with exit — exit... | PASS       |
+| T0312    | Nested rule calls — one rule ... | FAIL       |
+| T0313    | Recursion — factorial via rec... | FAIL       |
+| T0314    | Multi-result deconstruction —... | FAIL       |
+| T0315    | Lambda expression — explicit ... | FAIL       |
+| T0316    | Lambda in pipeline — inline s... | FAIL       |
+| T0317    | Compose operator — f ∘ g comp... | FAIL       |
+| T0318    | Pipe operator — value |> f |>... | FAIL       |
+| T0319    | Partial application — ? place... | FAIL       |
 | T0320    | Rule contract verification wi... | PASS       |
-| T0301    | file: append_collection_examp... | FAIL       |
-| T0302    | file: arrays.bee                 | FAIL       |
-| T0303    | file: array_traversal.bee        | FAIL       |
-| T0304    | file: bubble_sort.bee            | PASS       |
-| T0305    | file: builders.bee               | FAIL       |
-| T0306    | file: concatenation.bee          | FAIL       |
-| T0307    | file: growing_shrinking_list.bee | FAIL       |
-| T0308    | file: lists.bee                  | FAIL       |
-| T0309    | file: maps.bee                   | FAIL       |
-| T0310    | file: map_builder.bee            | FAIL       |
-| T0311    | file: quantifiers.bee            | FAIL       |
-| T0312    | file: sets_sorted.bee            | FAIL       |
-| T0313    | file: set_add_remove.bee         | FAIL       |
-| T0314    | file: set_algebra.bee            | FAIL       |
-| T0315    | file: set_algebra_ascii.bee      | FAIL       |
-| T0316    | file: sharing_copying.bee        | FAIL       |
-| T0317    | file: sized_array.bee            | FAIL       |
-| T0318    | file: slices_share.bee           | FAIL       |
-| T0319    | file: walking_map.bee            | FAIL       |
+| T0321    | Rule contract assert failure ... | PASS       |

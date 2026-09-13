@@ -1,0 +1,10 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
+-- @ENABLED: Reset by user
+-- @DESC:file: lists.bee
+-- Lists demo
+rule main:
+  new l := (1,2,3);
+  print l;
+  print (l.head, l.tail);
+return;
+

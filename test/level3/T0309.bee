@@ -1,12 +1,11 @@
--- @ENABLED: Reset by user
--- @DESC:file: maps.bee
--- Maps demo
-rule main:
-  new m := {1:"a", 2:"b"};
-  let m[3] := "c";
-  print m;
-  print m[2];
-  scrap m[1];
-  print m;
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: Scoping variable locality — rule-local variables are not visible outside, spec/03 §4
+rule helper:
+  new local_var ∈ Z;
+  let local_var := 42;
+  print local_var;
 return;
 
+rule main:
+  print "locality ok";
+return;

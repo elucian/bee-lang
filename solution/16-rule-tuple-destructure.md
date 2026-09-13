@@ -70,7 +70,7 @@ The rule's `return;` already propagates results via the rule's `Returns` field o
 - **Zero-tuple return:** a rule that does NOT declare `=> (...)` returns nothing; calling it as `new a := no_ret();` raises `E0305: UnexpectedNonTupleDestructuring`.
 
 ## Tutorial Update
-`bee-tutorial/rules.html` §3 (Calling Rules) gets a subsection:
+`tutorial/rules.html` §3 (Calling Rules) gets a subsection:
 > ### Multi-Value Returns
 > A rule can return multiple values as a tuple. Use parallel destructuring at the call site to bind each:
 > ```bee

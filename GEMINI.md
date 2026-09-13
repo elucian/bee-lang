@@ -26,6 +26,11 @@ For any new operator, statement, keyword, or grammar production, first consult `
 * **AI Read-Only Enforcement:** Test files in `test/levelX/*.bee` marked `@FROZEN` are strictly immutable for AI agents. AI agents must NEVER modify `.bee` test inputs, assertions, or expected outputs to force a failing compiler build to pass. (Human users retain full permission to modify or author tests).
 * **Disable, Never Delete:** If a test fails persistently across fix attempts, AI agents must NEVER delete the file. Disable it by prepending `-- @DISABLED: <reason>` on line 1 of the `.bee` file.
 
+## 6. Tutorial Edit Authorization (Decision 5)
+- **Pre-Authorized Target:** `/tutorial/` is a junction to the user's external live repository (`C:\Users\eluci\sage-code\scl\projects\bee`). The user is fully aware it lives in another repository and pushes it directly to the public site.
+- **No Confirmation Prompts:** When the user asks to modify the tutorial, AI agents MUST edit files under `bee-lang/tutorial/` directly. NEVER ask for confirmation, warn that the target is external, or treat the junction boundary as a reason to halt.
+- **Scope:** This authorization covers all files reachable through the `/tutorial/` junction (HTML pages, `js/`, `data/`, `symbols/`, `img/`). It does NOT authorize pushing, committing, or any git operations against the external repository — file edits only, unless the user explicitly asks.
+
 ## AI Agent Protocol & Anti-Loop Rules
 
 1.  **Strict Anti-Loop Protocol:** 

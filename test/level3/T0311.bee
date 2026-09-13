@@ -1,8 +1,11 @@
--- @ENABLED: Reset by user
--- @DESC:file: quantifiers.bee
--- Quantifiers demo
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: Early return with exit — exit terminates rule early with current result, spec/03 §3.2
 rule main:
-  print ∀ (i ∈ {2,4,6}) ∧ (i % 2 = 0);
-  print ∃ (i ∈ {1,3,5}) ∧ (i = 3);
+  new count ∈ Z;
+  let count := 0;
+  if count = 0 do
+    print "early exit";
+    exit;
+  done;
+  print "should not reach here";
 return;
-

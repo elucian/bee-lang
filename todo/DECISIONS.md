@@ -22,7 +22,7 @@ production.
 | D2    | Identity vs mutation (`is`/`is not`, `+=`)  | ✅ Ratified       | 2026-09-12  |
 | D3    | Operator canonicalisation (`<>` vs `≠`)     | ✅ Ratified       | 2026-09-12  |
 | D4    | Typechecker posture (postpoend)             | ✅ Ratified       | 2026-09-12  |
-| D5    | Tutorial sync (`/bee-tutorial/` live)       | ✅ Ratified       | 2026-09-12  |
+| D5    | Tutorial sync (`/tutorial/` live)           | ✅ Ratified       | 2026-09-12  |
 | D6    | Curried rule signatures `(sep: ...)`        | ✅ Ratified       | 2026-09-12  |
 | D7    | Logic operator synonymy + `is not` token    | ✅ Ratified       | 2026-09-12  |
 | D8    | Rule-call result destructuring (T0127 park) | 🟢 Deferred       | 2026-09-12  |
@@ -106,17 +106,17 @@ evaluator) use 1-based semantics. The bridging pass in
 
 ---
 
-## D5 — Tutorial sync — `/bee-tutorial/` is live
+## D5 — Tutorial sync — `/tutorial/` is live
 
-**Status:** ✅ Ratified 2026-09-12.
+**Status:** ✅ Ratified 2026-09-12. Junction renamed `/bee-tutorial/` → `/tutorial/` 2026-09-13.
 **Source of truth:** MANIFEST.md "Decision 5".
 
 * `/web/` is a legacy local copy (will be discarded).
-* `/bee-tutorial/` is the canonical **live** repository target, with
+* `/tutorial/` is the canonical **live** repository target, with
   direct git push propagation to the user's public site.
 * `.github/` exclusions ensure no GitHub-action workflow auto-mirrors
   the legacy copy.
-* All future documentation edits land in `/bee-tutorial/` only.
+* All future documentation edits land in `/tutorial/` only.
 
 ---
 
@@ -759,8 +759,8 @@ are now 100% harmonized with D14. The next implementation phase must:
   dispatches `token.NEXT` (and `token.REPEAT` defensively); both accept
   the optional label and `if` guard.
 * Docs pass (this entry): `spec/02-statements.md` §1/§3.4/§5/§7,
-  `spec/00-memory-model.md` §2.2, `bee-tutorial/control.html`,
-  `bee-tutorial/syntax.html`, `bee-tutorial/js/bee.js`, `MANIFEST.md`,
+  `spec/00-memory-model.md` §2.2, `tutorial/control.html`,
+  `tutorial/syntax.html`, `tutorial/js/bee.js`, `MANIFEST.md`,
   `issues/20-next-canonical-jump.md`, `solution/20-next-canonical-jump.md`.
 
 ---
@@ -772,7 +772,7 @@ When the user picks a decision to resolve next, the AI MUST:
 1. **ONE EDIT PASS.** Do not iterate silently.
 2. Update `/spec/` to formalise the grammar.
 3. Update `MANIFEST.md` to reflect the ratified status.
-4. Update `/bee-tutorial/` HTML files if the surface area changed.
+4. Update `/tutorial/` HTML files if the surface area changed.
 5. Park the corresponding debt test or unblock it as appropriate.
 6. Run `sh run.sh smoke` for system-wide health check before yielding.
 7. **Yield back** with status report.

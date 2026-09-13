@@ -1,11 +1,16 @@
--- @ENABLED: Reset by user
--- @DESC:file: set_add_remove.bee
--- Adding and removing demo
-rule main:
-  new s := {1,2};
-  let s += 3;
-  let s -= 1;
-  print s;
-  print 3 ∈ s;
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=9 type=; literal=";"
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: Recursion — rule calls itself, spec/03 §3.1
+-- @DESC: Recursion — factorial via recursive rule call
+rule factorial(n ∈ N) => (r ∈ N):
+  if n ≤ 1 do
+    let r := 1;
+    exit;
+  done;
+  let r := n * factorial(n - 1);
 return;
 
+rule main:
+  new f := factorial(5);
+  print f;
+return;

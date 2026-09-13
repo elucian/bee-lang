@@ -1,0 +1,10 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
+-- @ENABLED: Reset by user
+-- @DESC:file: builders.bee
+-- Builders demo
+rule main:
+  print { x | x ∈ (1..6) ∧ (x % 2 = 0) };
+  print { x² | x ∈ (1..4) };
+  print [ x | x ∈ (1..9:2) ];
+return;
+

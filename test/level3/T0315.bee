@@ -1,9 +1,8 @@
--- @ENABLED: Reset by user
--- @DESC:file: set_algebra_ascii.bee
--- Set algebra in ASCII demo
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: T0127 — lambda expressions not yet parsed
+-- @DESC: Lambda expression — explicit λ declaration and call, spec/07 §2.1
 rule main:
-  print {1,2} union {2,3};
-  print {1,2,3} inter {2,3};
-  print {1,2} subset {1,2,3};
+  new double := λ(x ∈ Z) => (x * 2) ∈ Z;
+  print double(21);
 return;
-

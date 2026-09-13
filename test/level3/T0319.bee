@@ -1,10 +1,9 @@
--- @DESC:T0319 walking a map with done terminator (D14)
--- D14: for loop terminates with done;.
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: Parser — partial application not yet implemented
+-- @DESC: Partial application — ? placeholder creates a curried lambda, spec/07 §6
 rule main:
-  new m := {1:"a", 2:"b"};
-  for k, v ∈ m do
-    write k + "=" + v + " ";
-  done;
-  print;
+  new add := λ(x, y ∈ Z) => (x + y) ∈ Z;
+  new add5 := add(5, ?);
+  print add5(3);
 return;
-

@@ -184,6 +184,10 @@ func (te *TernaryExpression) Pos() token.Pos  { return te.Token.Pos }
 type RuleStatement struct {
 	Token token.Token
 	Name  string
+	// Params holds the primary positional parameter names (spec/03 §2.1).
+	Params []string
+	// Results holds the declared result variable names (spec/03 §2.3).
+	Results []string
 	// Body holds the indented statements that follow the rule header,
 	// terminated by the aligned `return;`. See spec/03-rules.md §2.1.
 	// Nil for forward declarations (signature ending in `;`).
@@ -352,3 +356,20 @@ type SteppedRangeExpression struct {
 
 func (sre *SteppedRangeExpression) expressionNode() {}
 func (sre *SteppedRangeExpression) Pos() token.Pos  { return sre.Token.Pos }
+
+// CallExpression implements the rule invocation expression per
+// spec/03-rules.md §3.1 and §6 EBNF:
+//
+//	rule_call ::= identifier "(" [ arg_list ] ")" [ "(" [ named_arg_list ] ")" ] ;
+//
+// The parser produces this node when an IDENT primary is immediately
+// followed by `(`. The evaluator resolves Name against the rule registry
+// and binds Args to the rule's declared parameters in a scoped call frame.
+type CallExpression struct {
+	Token token.Token
+	Name  string
+	Args  []Expression
+}
+
+func (ce *CallExpression) expressionNode() {}
+func (ce *CallExpression) Pos() token.Pos  { return ce.Token.Pos }

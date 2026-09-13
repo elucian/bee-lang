@@ -1,0 +1,12 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=7 type=; literal=";"
+-- @ENABLED: Reset by user
+-- @DESC:file: sharing_copying.bee
+-- Sharing and copying demo
+rule main:
+  new a := [1,2];
+  new shared := a;
+  new copied :: a;
+  let a[1] := 9;
+  print (shared[1], copied[1]);
+return;
+

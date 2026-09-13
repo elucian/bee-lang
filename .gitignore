@@ -32,4 +32,4 @@ test/status/*
 test/output/*
 
 # Local-only junction to external tutorial (do not push to GitHub)
-bee-tutorial/
+tutorial/

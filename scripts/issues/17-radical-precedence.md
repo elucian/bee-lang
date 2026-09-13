@@ -93,6 +93,6 @@ Root-cause analysis is documented above. **Implementation requires three coordin
 - `²√(a + b)` parenthesised form works (parser already supports this).
 
 ## Spec / Tutorial Cross-References
-- `bee-tutorial/library.html` mentions `sqr` (square root) but no `²√` / `³√` — **tutorial gap**.
+- `tutorial/library.html` mentions `sqr` (square root) but no `²√` / `³√` — **tutorial gap**.
 - `spec/01-lexical-structure.md` §3.4 has no entry for n-th root.
 - `spec/02-statements.md` §5 has no precedence table.

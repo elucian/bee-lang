@@ -1,10 +1,12 @@
--- @ENABLED: Reset by user
--- @DESC:file: arrays.bee
--- Arrays demo
-rule main:
-  new a := [1,2,3];
-  print a;
-  print a[0];
-  print a[-1];
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=8 type=; literal=";"
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: Rule Calls — rule call expression not yet implemented, spec/03 §3.1
+-- @DESC: Rule anatomy with params — rule declares typed parameters, spec/03 §2.1
+rule add(a ∈ Z, b ∈ Z) => (sum ∈ Z):
+  let sum := a + b;
 return;
 
+rule main:
+  new r := add(3, 4);
+  print r;
+return;

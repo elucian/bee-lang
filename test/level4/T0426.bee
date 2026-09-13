@@ -1,0 +1,11 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=6 type=; literal=";"
+-- @ENABLED: Reset by user
+-- @DESC:file: slices_share.bee
+-- Slices share storage demo
+rule main:
+  new a := [1,2,3,4,5];
+  new w := a[0..2];
+  let w[*] := 0;
+  print a;
+return;
+

@@ -45,4 +45,4 @@ transfer_stmt ::= ( "return" [ expression_list ]
 ## Verification
 1. Lex a file containing both `next;` and `repeat;` — both must produce `token.NEXT`; only `repeat` emits E0010.
 2. `sh run.sh smoke` — all active `@FROZEN` levels green (repeat-spelling tests pass via synonymy).
-3. Tutorial grep: no `repeat` keyword usage remains in `bee-tutorial/*.html` code examples (prose uses of the English word "repeat" are unaffected).
+3. Tutorial grep: no `repeat` keyword usage remains in `tutorial/*.html` code examples (prose uses of the English word "repeat" are unaffected).

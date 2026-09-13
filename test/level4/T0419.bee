@@ -1,0 +1,9 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 (expected ':' after identifier "i" in named-argument list)
+-- @ENABLED: Reset by user
+-- @DESC:file: quantifiers.bee
+-- Quantifiers demo
+rule main:
+  print ∀ (i ∈ {2,4,6}) ∧ (i % 2 = 0);
+  print ∃ (i ∈ {1,3,5}) ∧ (i = 3);
+return;
+

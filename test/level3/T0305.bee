@@ -1,9 +1,9 @@
--- @ENABLED: Reset by user
--- @DESC:file: builders.bee
--- Builders demo
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: Expect postcondition pass — expect condition holds, no error raised, spec/03 §4
 rule main:
-  print { x | x ∈ (1..6) ∧ (x % 2 = 0) };
-  print { x² | x ∈ (1..4) };
-  print [ x | x ∈ (1..9:2) ];
+  new a ∈ Z; new b ∈ Z;
+  let a := 10;
+  let b := 20;
+  expect a + b = 30;
+  print "expect passed";
 return;
-

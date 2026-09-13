@@ -1,10 +1,10 @@
--- @ENABLED: Reset by user
--- @DESC:file: slices_share.bee
--- Slices share storage demo
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: Parser — pipe operator not yet implemented
+-- @DESC: Pipe operator — value |> f |> g chains transformations, spec/07 §5
 rule main:
-  new a := [1,2,3,4,5];
-  new w := a[0..2];
-  let w[*] := 0;
-  print a;
+  new double := λ(x ∈ Z) => (x * 2) ∈ Z;
+  new inc := λ(x ∈ Z) => (x + 1) ∈ Z;
+  new result := 5 |> double |> inc;
+  print result;
 return;
-

@@ -42,14 +42,14 @@ The `repeat` keyword is overloaded as both a block terminator (`repeat;` closes 
 | `spec/11-processing.md` | §3.1 quantifier example | `repeat;` → `done;` |
 | `spec/12-concurrency.md` | §2.1, §3, §4.1, §4.2 examples | `repeat;` → `done;` |
 | `spec/14-library.md` | §4.2 example | `repeat;` → `done;` |
-| `bee-tutorial/control.html` | §cycle, §for, §nested-cycles, §while-condition | All examples + notes |
-| `bee-tutorial/collections.html` | 3 code examples | `repeat;` → `done;` |
-| `bee-tutorial/concurrency.html` | 4 code examples | `repeat;` → `done;` |
-| `bee-tutorial/objects.html` | 1 code example | `repeat;` → `done;` |
-| `bee-tutorial/processing.html` | 4 code examples | `repeat;` → `done;` |
-| `bee-tutorial/rules.html` | 2 code examples | `repeat;` → `done;` |
-| `bee-tutorial/structure.html` | 1 code example | `repeat;` → `done;` |
-| `bee-tutorial/syntax.html` | Keyword table | Update `repeat` description |
+| `tutorial/control.html` | §cycle, §for, §nested-cycles, §while-condition | All examples + notes |
+| `tutorial/collections.html` | 3 code examples | `repeat;` → `done;` |
+| `tutorial/concurrency.html` | 4 code examples | `repeat;` → `done;` |
+| `tutorial/objects.html` | 1 code example | `repeat;` → `done;` |
+| `tutorial/processing.html` | 4 code examples | `repeat;` → `done;` |
+| `tutorial/rules.html` | 2 code examples | `repeat;` → `done;` |
+| `tutorial/structure.html` | 1 code example | `repeat;` → `done;` |
+| `tutorial/syntax.html` | Keyword table | Update `repeat` description |
 | `todo/DECISIONS.md` | Index + D14 entry | Add D14 ratification record |
 | `MANIFEST.md` | D14 mirror | Add D14 to User-Locked Decisions |
 

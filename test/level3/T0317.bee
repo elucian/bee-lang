@@ -1,9 +1,10 @@
--- @ENABLED: Reset by user
--- @DESC:file: sized_array.bee
--- A sized array demo
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: Parser — compose operator not yet implemented
+-- @DESC: Compose operator — f ∘ g composes two lambdas, spec/07 §5
 rule main:
-  new a ∈ [Z](5);
-  let a[*] := 7;
-  print a;
+  new f := λ(x ∈ Z) => (x + 1) ∈ Z;
+  new g := λ(x ∈ Z) => (x * 2) ∈ Z;
+  new h := f ∘ g;
+  print h(5);
 return;
-

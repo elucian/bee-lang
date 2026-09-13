@@ -1,0 +1,11 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
+-- @ENABLED: Reset by user
+-- @DESC:file: set_algebra.bee
+-- Set algebra demo
+rule main:
+  print {1,2} ∪ {2,3};
+  print {1,2,3} ∩ {2,3};
+  print {1,2,3} Δ {2,3,4};
+  print {1,2} ⊂ {1,2,3};
+return;
+

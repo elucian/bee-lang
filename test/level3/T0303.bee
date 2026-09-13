@@ -1,19 +1,9 @@
--- @DESC:T0303 array traversal with done terminator (D14)
--- D14: for loop terminates with done;.
--- 1-based array indexing (Decision 1).
-
--- array with 10 elements
-new a ∈ [Z](1..10);
-
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: Assert precondition pass — assert condition holds, no warning emitted, spec/03 §4
 rule main:
-                                        -- array initialization
-  for i ∈ (1..10) do
-    let a[i] := i;
-  done;
-
-                                        -- array traversal and print
-  for i ∈ (1..10) do
-    print i;
-  done;
+  new a ∈ Z; new b ∈ Z;
+  let a := 10;
+  let b := 20;
+  assert a < b;
+  print "assert passed";
 return;
-
