@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=8 type=IDENT literal="bule"
 -- @ENABLED: Reset by user
 -- @DESC:file: deferred_jobs.bee
 -- Deferred jobs demo

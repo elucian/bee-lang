@@ -1,6 +1,4 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=9 type=; literal=";"
 -- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
--- @DISABLED: Rule Calls — rule invoking another rule, spec/03 §3.1
 -- @DESC: Nested rule calls — one rule calls another rule and captures result
 rule double(n ∈ Z) => (r ∈ Z):
   let r := n * 2;

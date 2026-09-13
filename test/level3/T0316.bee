@@ -1,6 +1,4 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
--- @DISABLED: T0127 — lambda expressions not yet parsed
 -- @DESC: Lambda in pipeline — inline shorthand passed to a processing operator, spec/07 §2.2
 rule main:
   new result := apply_transform(10, 20, (x, y) => x + y);

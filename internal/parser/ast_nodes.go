@@ -374,6 +374,25 @@ type CallExpression struct {
 func (ce *CallExpression) expressionNode() {}
 func (ce *CallExpression) Pos() token.Pos  { return ce.Token.Pos }
 
+// LambdaExpression implements the pure lambda literal per spec/07-functions.md
+// §2.1 and §6 EBNF `lambda_expr`:
+//
+//	lambda_expr ::= ( "λ" | "\\" ) "(" [ param_list ] ")" "=>" "(" expression ")"
+//	                [ ( "∈" | "in" ) type_specifier ] ;
+//
+// Lambdas are stateless, side-effect-free, first-class values typed `L`.
+// Params holds the parameter identifiers; Body is the single result
+// expression. The optional trailing result-type annotation is parsed but its
+// binding is deferred to Phase 7.2 (mirrors rule-signature handling).
+type LambdaExpression struct {
+	Token  token.Token
+	Params []string
+	Body   Expression
+}
+
+func (le *LambdaExpression) expressionNode() {}
+func (le *LambdaExpression) Pos() token.Pos  { return le.Token.Pos }
+
 // MemberExpression implements a dotted member-access path per spec/03-rules.md
 // §5.4 (Closures & State Generators). It is produced in two surface forms:
 //

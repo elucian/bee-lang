@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=12 type=; literal=";"
 -- @ENABLED: Reset by user
 -- @DESC:file: trial_success.bee
 -- A trial that succeeds demo

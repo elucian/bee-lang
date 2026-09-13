@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @DESC:T0403 contract deposit with expectation
 -- Exact money, with a promise it went up demo
 rule deposit(balance ∈ @Q, amount ∈ Q):

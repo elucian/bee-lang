@@ -1694,7 +1694,22 @@ func (p *Parser) parsePrimary() Expression {
 		right := p.parsePrimary()
 		return &PrefixExpression{Token: tok, Operator: tok.Literal, Right: right}
 	}
+	// Lambda expression (spec/07-functions.md §2.1 / §6):
+	// `λ(params) => (body) [∈ Type]`.
+	if tok.Type == token.LAMBDA {
+		return p.parseLambdaExpression(tok)
+	}
 	if tok.Type == token.LPAREN {
+		// Inline callback shorthand (spec/07 §2.2 short_lambda):
+		// `(x, y) => expr` is a lambda, not a parenthesised expression.
+		// Speculatively probe for the `ident_list ) =>` head; on mismatch
+		// rewind and parse the parenthesised expression as usual.
+		snap := p.l.Snapshot()
+		if params, ok := p.tryParseShortLambdaHead(); ok {
+			body := p.parseExpression()
+			return &LambdaExpression{Token: tok, Params: params, Body: body}
+		}
+		p.l.Restore(snap)
 		left := p.parseExpressionClimb(precLogic)
 
 		// Conditional expression selector (ternary) per spec/02-statements.md
@@ -1848,4 +1863,143 @@ func (p *Parser) parsePrimary() Expression {
 		}
 	}
 	return left
+}
+
+// parseLambdaExpression parses an explicit lambda expression per
+// spec/07-functions.md §2.1 / §6:
+//
+//	lambda_expr ::= ( "λ" | "\" ) "(" [ param_list ] ")" "=>" "(" expression ")"
+//	                [ ( "∈" | "in" ) type_specifier ] ;
+//
+// The λ token has already been consumed by parsePrimary. Parameter type
+// annotations and the optional result-type annotation are consumed but not
+// type-checked (mirrors the rule-signature fast-forward, Phase 7.2 gate).
+// The result-type annotation MUST be consumed here: trailing `∈` would
+// otherwise be folded into a membership BinaryExpression by the climb loop.
+func (p *Parser) parseLambdaExpression(tok token.Token) Expression {
+	le := &LambdaExpression{Token: tok}
+	if p.l.PeekToken().Type != token.LPAREN {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:InvalidLambdaHeader: line=%d (expected `(` after `λ` in lambda_expr; got type=%s literal=%q)",
+			tok.Pos, p.l.PeekToken().Type, p.l.PeekToken().Literal,
+		))
+		return le
+	}
+	p.l.NextToken() // consume '('
+	le.Params = p.parseParamNameList()
+	if p.l.PeekToken().Type == token.RPAREN {
+		p.l.NextToken() // consume ')'
+	} else {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:InvalidLambdaHeader: line=%d (expected `)` after lambda parameter list; got type=%s literal=%q)",
+			tok.Pos, p.l.PeekToken().Type, p.l.PeekToken().Literal,
+		))
+	}
+	if p.l.PeekToken().Type == token.FAT_ARROW {
+		p.l.NextToken() // consume '=>'
+	} else {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:InvalidLambdaHeader: line=%d (expected `=>` after lambda parameter list; got type=%s literal=%q)",
+			tok.Pos, p.l.PeekToken().Type, p.l.PeekToken().Literal,
+		))
+	}
+	// Body — parenthesised expression per the EBNF.
+	if p.l.PeekToken().Type == token.LPAREN {
+		p.l.NextToken() // consume '('
+		le.Body = p.parseExpression()
+		if p.l.PeekToken().Type == token.RPAREN {
+			p.l.NextToken() // consume ')'
+		} else {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:InvalidLambdaBody: line=%d (expected `)` after lambda body expression; got type=%s literal=%q)",
+				tok.Pos, p.l.PeekToken().Type, p.l.PeekToken().Literal,
+			))
+		}
+	} else {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:InvalidLambdaBody: line=%d (expected `(` before lambda body expression; got type=%s literal=%q)",
+			tok.Pos, p.l.PeekToken().Type, p.l.PeekToken().Literal,
+		))
+	}
+	// Optional result-type annotation `∈ Type` — consumed, binding deferred
+	// to Phase 7.2 (same convention as rule signatures).
+	if p.l.PeekToken().Type == token.IN_OP || p.l.PeekToken().Type == token.IN_KEYWORD {
+		p.l.NextToken() // consume ∈ / in
+		p.l.NextToken() // consume type specifier token
+	}
+	return le
+}
+
+// parseParamNameList consumes a comma-separated identifier list where each
+// group may carry a shared `∈ Type` annotation (mirroring the
+// rule-signature fast-forward in parseRuleEntry) and returns the parameter
+// names. The cursor stops on the closing `)` (not consumed).
+func (p *Parser) parseParamNameList() []string {
+	var params []string
+	for {
+		pt := p.l.PeekToken()
+		if pt.Type == token.RPAREN || pt.Type == token.EOF {
+			break
+		}
+		nameTok := p.l.NextToken()
+		name, ok := p.identLiteral(nameTok)
+		if !ok {
+			p.errors = append(p.errors, fmt.Sprintf(
+				"E0009 SyntaxError:InvalidLambdaParam: line=%d (expected parameter identifier; got type=%s literal=%q)",
+				nameTok.Pos, nameTok.Type, nameTok.Literal,
+			))
+			break
+		}
+		params = append(params, name)
+		// Optional group type annotation `∈ Z` — consumed, not type-checked.
+		if p.l.PeekToken().Type == token.IN_OP || p.l.PeekToken().Type == token.IN_KEYWORD {
+			p.l.NextToken() // consume ∈ / in
+			p.l.NextToken() // consume type specifier token
+		}
+		if p.l.PeekToken().Type == token.COMMA {
+			p.l.NextToken() // consume ','
+			continue
+		}
+		break
+	}
+	return params
+}
+
+// tryParseShortLambdaHead probes for the short_lambda head
+// `( ident_list ) =>` of spec/07 §2.2 / §6. On success it returns the
+// parameter names with the cursor positioned just past `=>`; on mismatch it
+// returns ok=false and the caller MUST Restore the lexer snapshot taken
+// before the probe.
+func (p *Parser) tryParseShortLambdaHead() ([]string, bool) {
+	var params []string
+	// Empty parameter list: `() => expr`.
+	if p.l.PeekToken().Type == token.RPAREN {
+		p.l.NextToken() // consume ')'
+		if p.l.PeekToken().Type == token.FAT_ARROW {
+			p.l.NextToken() // consume '=>'
+			return params, true
+		}
+		return nil, false
+	}
+	for {
+		nameTok := p.l.NextToken()
+		name, ok := p.identLiteral(nameTok)
+		if !ok {
+			return nil, false
+		}
+		params = append(params, name)
+		nt := p.l.NextToken()
+		if nt.Type == token.COMMA {
+			continue
+		}
+		if nt.Type == token.RPAREN {
+			break
+		}
+		return nil, false
+	}
+	if p.l.PeekToken().Type != token.FAT_ARROW {
+		return nil, false
+	}
+	p.l.NextToken() // consume '=>'
+	return params, true
 }

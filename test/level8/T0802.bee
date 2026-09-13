@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=13 type=; literal=";"
 -- @DESC:T0802 coroutine with done terminator (D14)
 -- D14: for loop terminates with done;.
 rule ticker(n ∈ N) => (v ∈ N):

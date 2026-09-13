@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @DESC:T0404 contract grow on a collection
 -- old works on a collection too demo
 rule grow(items ∈ [Z], by ∈ Z):

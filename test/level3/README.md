@@ -22,8 +22,8 @@ This level covers rules, contracts, and function definitions as defined in:
 | T0312    | Nested rule calls — one rule ... | PASS       |
 | T0313    | Recursion — factorial via rec... | PASS       |
 | T0314    | Multi-result deconstruction —... | PASS       |
-| T0315    | Lambda expression — explicit ... | FAIL       |
-| T0316    | Lambda in pipeline — inline s... | FAIL       |
+| T0315    | Lambda expression — explicit ... | PASS       |
+| T0316    | Lambda in pipeline — inline s... | PASS       |
 | T0317    | Compose operator — f ∘ g comp... | FAIL       |
 | T0318    | Pipe operator — value |> f |>... | FAIL       |
 | T0319    | Partial application — ? place... | FAIL       |

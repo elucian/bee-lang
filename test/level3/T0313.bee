@@ -1,6 +1,4 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=9 type=; literal=";"
 -- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
--- @DISABLED: Recursion — rule calls itself, spec/03 §3.1
 -- @DESC: Recursion — factorial via recursive rule call
 rule factorial(n ∈ N) => (r ∈ N):
   if n ≤ 1 do

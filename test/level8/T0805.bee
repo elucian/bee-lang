@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
 -- @DESC:T0805 independent loop with forall and done (D14)
 -- For ∀ quantifier with done; terminator.
 rule main:

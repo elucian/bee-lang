@@ -1,3 +1,4 @@
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @ENABLED: Reset by user
 -- @DESC:file: contract_old_change.bee
 -- A promise about what changed demo

@@ -100,6 +100,39 @@ func (l *Lexer) PeekToken() token.Token {
 	return tok
 }
 
+// LexerState is an opaque snapshot of the lexer's cursor, produced by
+// Snapshot and consumed by Restore. It enables speculative multi-token
+// parsing (e.g. the short_lambda head lookahead in spec/07 §2.2) where the
+// parser must rewind after probing a token sequence.
+type LexerState struct {
+	position     int
+	readPosition int
+	ch           rune
+	line         int
+	warningsLen  int
+}
+
+// Snapshot captures the lexer's current cursor.
+func (l *Lexer) Snapshot() LexerState {
+	return LexerState{
+		position:     l.position,
+		readPosition: l.readPosition,
+		ch:           l.ch,
+		line:         l.line,
+		warningsLen:  len(l.warnings),
+	}
+}
+
+// Restore rewinds the lexer to a previously captured Snapshot, discarding
+// any warnings emitted while speculating.
+func (l *Lexer) Restore(s LexerState) {
+	l.position = s.position
+	l.readPosition = s.readPosition
+	l.ch = s.ch
+	l.line = s.line
+	l.warnings = l.warnings[:s.warningsLen]
+}
+
 func (l *Lexer) NextToken() token.Token {
 	l.skipWhitespace()
 

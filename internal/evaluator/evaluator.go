@@ -53,6 +53,13 @@ type Evaluator struct {
 	// closureObjects binds variable names to heap-allocated closure objects so
 	// `c.next()` can resolve the object `c` and dispatch to its `.next` method.
 	closureObjects map[string]*closureObject
+	// lambdaValues binds names to pure lambda expressions (spec/07 §2.1) —
+	// the first-class `L` values that CallExpression resolves before rules.
+	lambdaValues map[string]*parser.LambdaExpression
+	// inLambda tracks lambda invocation depth so the evaluator can enforce
+	// the spec/07 §3 purity invariants (E0701: a lambda cannot call a rule;
+	// E0704: a lambda cannot reference outer variables).
+	inLambda int
 }
 
 func (e *Evaluator) SetDebug(debug bool) {
@@ -76,6 +83,7 @@ func New() *Evaluator {
 		ruleRegistry:   make(map[string]*parser.RuleStatement),
 		boxedCells:     make(map[string]*BoxedCell),
 		closureObjects: make(map[string]*closureObject),
+		lambdaValues:   make(map[string]*parser.LambdaExpression),
 	}
 }
 
@@ -402,6 +410,11 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					}
 					e.arrayValues[name] = elems
 					e.ensureIdentity(name)
+				} else if lambdaExpr, ok := s.Values[i].(*parser.LambdaExpression); ok {
+					// First-class lambda value (spec/07 §2.3): bind in the lambda
+					// registry so CallExpression dispatch can find it.
+					e.lambdaValues[name] = lambdaExpr
+					e.ensureIdentity(name)
 				} else {
 					val := e.evalIntExpression(s.Values[i])
 					e.symbols[name] = val
@@ -417,6 +430,9 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 						elems[j] = e.evalIntExpression(el)
 					}
 					e.arrayValues[name] = elems
+					e.ensureIdentity(name)
+				} else if lambdaExpr, ok := s.Value.(*parser.LambdaExpression); ok {
+					e.lambdaValues[name] = lambdaExpr
 					e.ensureIdentity(name)
 				} else {
 					val := e.evalIntExpression(s.Value)
@@ -773,8 +789,26 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 		if _, ok := e.stringSymbols[expr.Value]; ok {
 			return 0, e.ensureIdentity(expr.Value)
 		}
+		// E0704 UnboundLambdaVariable (spec/07 §3 / §7): inside a pure lambda
+		// frame only parameters are in scope — anything else is unbound.
+		if e.inLambda > 0 {
+			fmt.Fprintf(os.Stderr, "[ERROR] E0704 UnboundLambdaVariable: %q at line %d\n", expr.Value, int(expr.Token.Pos))
+		}
 		return 0, e.allocID()
 	case *parser.CallExpression:
+		// Lambda invocation (spec/07 §6 lambda_call): first-class `L` values
+		// take dispatch precedence — a rule CAN call a lambda (§3 invariant 4).
+		if lambdaExpr, isLambda := e.lambdaValues[expr.Name]; isLambda {
+			return e.callLambda(lambdaExpr, expr), e.allocID()
+		}
+		// E0701 RuleCallInLambda (spec/07 §3 invariant 4 / §7): a lambda
+		// CANNOT call a stateful rule.
+		if e.inLambda > 0 {
+			if _, isRule := e.ruleRegistry[expr.Name]; isRule {
+				fmt.Fprintf(os.Stderr, "[ERROR] E0701 RuleCallInLambda: %q at line %d\n", expr.Name, int(expr.Token.Pos))
+				return 0, e.allocID()
+			}
+		}
 		// Rule invocation (spec/03 §3.1): resolve the rule in the registry,
 		// bind arguments in a scoped call frame, execute the body, and
 		// return the first declared result (single-result capture).
@@ -1243,6 +1277,47 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	e.boxedCells = savedBoxed
 
 	return results
+}
+
+// callLambda invokes a first-class lambda value (spec/07-functions.md §2).
+// Lambdas are pure: the body is evaluated in a fresh frame containing only
+// the bound parameters — outer variables, boxed rule state, and closure
+// objects are invisible by construction (§3 invariants, E0704). Rules
+// cannot be invoked from this frame (E0701, enforced at the CallExpression
+// dispatch). The caller's frame is restored on return, mirroring callRule's
+// savedSymbols/savedStrings discipline.
+func (e *Evaluator) callLambda(le *parser.LambdaExpression, call *parser.CallExpression) int {
+	// Evaluate arguments in the caller's frame before switching.
+	argVals := make([]int, len(call.Args))
+	for i, arg := range call.Args {
+		argVals[i] = e.evalIntExpression(arg)
+	}
+
+	// Fresh pure frame: parameters only.
+	savedSymbols := e.symbols
+	savedStrings := e.stringSymbols
+	savedArrays := e.arrayValues
+	savedBoxed := e.boxedCells
+	e.symbols = make(map[string]int)
+	e.stringSymbols = make(map[string]string)
+	e.arrayValues = make(map[string][]int)
+	e.boxedCells = make(map[string]*BoxedCell)
+	for i, param := range le.Params {
+		if i < len(argVals) {
+			e.symbols[param] = argVals[i]
+		}
+	}
+
+	e.inLambda++
+	result := e.evalIntExpression(le.Body)
+	e.inLambda--
+
+	// Restore the caller's frame.
+	e.symbols = savedSymbols
+	e.stringSymbols = savedStrings
+	e.arrayValues = savedArrays
+	e.boxedCells = savedBoxed
+	return result
 }
 
 // isStateGenerator reports whether a rule declares boxed state cells

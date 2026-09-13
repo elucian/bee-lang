@@ -1,6 +1,4 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=10 type=; literal=";"
 -- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
--- @DISABLED: T0127 — multi-result destructuring not yet implemented
 -- @DESC: Multi-result deconstruction — new s, d := rule_call(), spec/03 §2.3
 rule divmod(a ∈ Z, b ∈ Z) => (q, r ∈ Z):
   let q := a / b;

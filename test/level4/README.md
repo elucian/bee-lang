@@ -8,14 +8,14 @@ This level covers data collections and processing pipelines as defined in:
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
-| T0401    | T0401 Complex Data Processing... | FAIL       |
+| T0401    | T0401 Complex Data Processing... | PASS       |
 | T0402    | file: contract_argument_mutat... | FAIL       |
-| T0403    | @DISABLED: PARSER DEBUG: iden... | FAIL       |
-| T0404    | @DISABLED: PARSER DEBUG: iden... | FAIL       |
+| T0403    | T0403 contract deposit with e... | FAIL       |
+| T0404    | T0404 contract grow on a coll... | FAIL       |
 | T0405    | file: contract_old_change.bee    | FAIL       |
-| T0406    | @DISABLED: PARSER DEBUG: iden... | FAIL       |
-| T0407    | @DISABLED: === VARIABLE CONTE... | FAIL       |
-| T0408    | @DISABLED: === VARIABLE CONTE... | FAIL       |
+| T0406    | T0406 contract clamp with nam... | PASS       |
+| T0407    | T0407 contract postcondition ... | FAIL       |
+| T0408    | T0408 contract precondition w... | PASS       |
 | T0409    | file: append_collection_examp... | FAIL       |
 | T0410    | file: arrays.bee                 | FAIL       |
 | T0411    | T0303 array traversal with do... | FAIL       |
