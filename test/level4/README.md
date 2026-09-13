@@ -23,7 +23,7 @@ This level covers data collections and processing pipelines as defined in:
 | T0413    | file: builders.bee               | FAIL       |
 | T0414    | file: concatenation.bee          | FAIL       |
 | T0415    | file: growing_shrinking_list.bee | FAIL       |
-| T0416    | file: lists.bee                  | FAIL       |
+| T0416    | file: lists.bee                  | PASS       |
 | T0417    | file: maps.bee                   | FAIL       |
 | T0418    | file: map_builder.bee            | FAIL       |
 | T0419    | file: quantifiers.bee            | FAIL       |

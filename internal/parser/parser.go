@@ -1731,6 +1731,28 @@ func (p *Parser) parsePrimary() Expression {
 			return &TernaryExpression{Token: tok, Condition: cond, Then: left, Else: elseExpr}
 		}
 
+		// List literal (spec/10-collections.md §4):
+		// list_lit ::= "(" expression ( "," expression )* ")" ;
+		// Parentheses are overloaded (grouping, ternary, short-lambda), so the
+		// parser only produces a ListLiteral when a top-level comma follows the
+		// first element — the climb loop parks on ',' (a non-operator), which
+		// unambiguously selects list reading over grouping.
+		if p.l.PeekToken().Type == token.COMMA {
+			listLit := &ListLiteral{Token: tok}
+			listLit.Elements = append(listLit.Elements, left)
+			for p.l.PeekToken().Type == token.COMMA {
+				p.l.NextToken() // consume ','
+				if p.l.PeekToken().Type == token.RPAREN {
+					break // trailing comma: `( a, )`
+				}
+				listLit.Elements = append(listLit.Elements, p.parseExpression())
+			}
+			if p.l.PeekToken().Type == token.RPAREN {
+				p.l.NextToken() // consume ')'
+			}
+			return listLit
+		}
+
 		if p.l.PeekToken().Type == token.RPAREN {
 			p.l.NextToken() // consume ')'
 		}
