@@ -30,7 +30,7 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | T0118    | T0118 Variable declaration wi... | PASS       |
 | T0119    | file: ending_early.bee           | FAIL       |
 | T0120    | file: hello_world.bee            | PASS       |
-| T0121    | file: initial_values.bee         | FAIL       |
+| T0121    | file: initial_values.bee         | PASS       |
 | T0122    | file: parallel_assignment.bee    | FAIL       |
 | T0123    | file: print_write.bee            | PASS       |
 | T0124    | T0124 In-place addition mutat... | PASS       |

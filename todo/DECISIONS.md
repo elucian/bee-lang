@@ -26,7 +26,7 @@ production.
 | D6    | Curried rule signatures `(sep: ...)`        | ✅ Ratified       | 2026-09-12  |
 | D7    | Logic operator synonymy + `is not` token    | ✅ Ratified       | 2026-09-12  |
 | D8    | Rule-call result destructuring (T0127 park) | 🟢 Deferred       | 2026-09-12  |
-| D9    | Colon `:` pair-up semantics                 | 🟡 Pending ratification | 2026-09-12 |
+| D9    | Colon `:` pair-up semantics                 | ✅ Ratified       | 2026-09-13  |
 | D10   | Radical (`²√`, `³√`) precedence table      | ✅ Ratified       | 2026-09-12 |
 | D11   | Parallel colon-initialisation (T0121/0122) | 🟡 Pending ratification | 2026-09-12 |
 | D12   | Inequality/NOT operator refactoring        | ✅ Ratified       | 2026-09-13  |
@@ -177,8 +177,9 @@ syntax** (`=> (a ∈ Z, b ∈ R)`) before the AST change (`RuleCall`
 
 ## D9 — Colon `:` is the pair-up operator
 
-**Status:** 🟡 Pending ratification 2026-09-12.
-**Affects tests:** T0121, T0122 (currently disabled).
+**Status:** ✅ Ratified 2026-09-13.
+**Affects tests:** T0121 (promoted to active level1); T0122 remains
+disabled pending D11 + a user-side string-literal typo fix.
 
 The user has proposed and we are ratifying the following semantics for `:`:
 
@@ -206,21 +207,30 @@ The user has proposed and we are ratifying the following semantics for `:`:
 * `=`  — value equality (logic operation). Replaces legacy `==`.
 * `:=` — type-inferred assignment. Compiler infers type from the RHS
          expression and allocates the variable accordingly.
-* `:`  — **structural pair-up**. NO type inference. The RHS is a
-         literal of the type implied by the LHS' declared kind (in a
-         parameter slot, the function's signature governs; in a
-         declaration, the trailing `∈ Type` governs when present,
-         otherwise a heuristic of the RHS literal shape applies).
+* `:`  — **structural pair-up**. NO type inference, EVER. The RHS is
+         a literal of the type supplied by an explicit type context:
+         in a parameter slot the function's signature governs; in a
+         `new`/`let` declaration the trailing `∈ Type` is REQUIRED.
+         If no type is specified, `:` CANNOT be used to set the value
+         of a variable — use `:=` (type inference) instead. Writing
+         `new a: 1;` without `∈ Type` is a compile-time error
+         (E0009), not an invitation to guess the type from the
+         literal shape. Map-literal entries (`{ "k": "v" }`) are not
+         variable bindings, so this rule does not apply to them.
 
 **Consequence for D8:** the `:=` new+let pair-up with `:` collapses
-into a single family once D9 is ratified; `new a: 1` and `new a := 1`
-are no longer ambiguous — they differ purely in whether type
-inference runs.
+into a single family once D9 is ratified; the two forms are
+mutually exclusive rather than ambiguous: `new a := 1` (type
+inferred from the RHS) is the ONLY way to declare without a type,
+while `new a: 1 ∈ Z;` (explicit type) is the ONLY way to use `:`
+in a declaration. Bare `new a: 1;` is rejected.
 
 **When ratified:** Issue 18 unlocks; T0121 + T0122 are promoted back
 to active level1; `parseDeclaration` `:` branch is rewritten to
 build a proper `DeclarationStatement` with N parallel bindings +
-optional `∈ Type` (per the `Issue 18` resolution path).
+REQUIRED trailing `∈ Type` (per the `Issue 18` resolution path);
+a `:` binding without `∈ Type` raises E0009 directing the user
+to `:=`.
 
 ---
 
@@ -567,5 +577,5 @@ downstream decisions.
 
 ---
 
-*Last updated: 2026-09-13 — D1–D7, D10, D12 ratified (D3 superseded by
-D12), D8 deferred, D9, D11, D13 pending user ratification.*
+*Last updated: 2026-09-13 — D1–D7, D9, D10, D12 ratified (D3 superseded by
+D12), D8 deferred, D11, D13 pending user ratification.*

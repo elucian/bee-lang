@@ -496,10 +496,60 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 			}
 		}
 	} else if nextTok.Literal == ":" {
-		// e.g. new a: 1, b: 2 ∈ Z;
-		_ = p.parseExpression() // consume initial val
-		for p.l.PeekToken().Type != token.SEMICOLON && p.l.PeekToken().Type != token.EOF {
-			p.l.NextToken()
+		// D9 (ratified 2026-09-13): `:` is structural pair-up with NO type
+		// inference. Grammar: `new a: 1, b: 2 ∈ Z;` — N parallel bindings
+		// with a REQUIRED trailing `∈ Type`. Bare `new a: 1;` is E0009;
+		// the user must write `new a := 1;` for type inference.
+		//
+		// Split rule: `∈` is an infix operator (precLogic), so for the final
+		// pair parseExpression returns `BinaryExpression{Left: value, Op: ∈,
+		// Right: Type}`. Split that node inline: Left becomes the pair value,
+		// Right is the type annotation (discarded; binding deferred to Phase
+		// 7.2). The literal check excludes `!∈` (NOT_IN), a genuine operator.
+		typeSeen := false
+		splitPair := func(expr Expression) Expression {
+			if be, ok := expr.(*BinaryExpression); ok &&
+				(be.Token.Literal == "∈" || be.Token.Literal == "in") {
+				typeSeen = true
+				return be.Left
+			}
+			return expr
+		}
+		val := splitPair(p.parseExpression())
+		ds.Value = val
+		ds.Values = append(ds.Values, val)
+		for p.l.PeekToken().Type == token.COMMA {
+			p.l.NextToken() // consume ','
+			pairIdent := p.l.NextToken()
+			if pairIdent.Type != token.IDENT {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q (expected identifier after ',' in ':' pair-up declaration)",
+					pairIdent.Pos, pairIdent.Type, pairIdent.Literal,
+				))
+				return ds
+			}
+			ds.Names = append(ds.Names, pairIdent.Literal)
+			pairColon := p.l.NextToken()
+			if pairColon.Literal != ":" {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:UnrecognizedStatement: line=%d (expected ':' after identifier %q in pair-up declaration)",
+					pairIdent.Pos, pairIdent.Literal,
+				))
+				return ds
+			}
+			ds.Values = append(ds.Values, splitPair(p.parseExpression()))
+		}
+		if !typeSeen {
+			typeTok := p.l.NextToken()
+			if typeTok.Type == token.IN_OP || typeTok.Type == token.IN_KEYWORD || typeTok.Literal == "∈" || typeTok.Literal == "in" {
+				_ = p.l.NextToken() // consume type name (full type binding deferred to Phase 7.2)
+			} else {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:MissingTypeAnnotation: line=%d type=%s literal=%q (':' pair-up requires explicit '∈ Type'; use ':=' for type inference)",
+					typeTok.Pos, typeTok.Type, typeTok.Literal,
+				))
+				return ds
+			}
 		}
 	}
 

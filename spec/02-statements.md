@@ -46,6 +46,18 @@ Bee provides two declaration keywords (`set` for constants, `new` for mutable va
   new count ∈ Z = 0;
   new xo, yo, zo ∈ Z = 10;   -- type Z explicitly specified; broadcast initialization
   ```
+- **Structural Pair-Up (`:` with REQUIRED `∈ Type`, Decision 9):**
+  The `:` operator binds each identifier to its paired value with NO type inference.
+  Because `:` performs no inference, the static type MUST be supplied by an explicit
+  trailing `∈ Type` on the final pair; if the type is not specified, `:` cannot be
+  used to set the value of a variable — use `:=` (type inference) instead. Bare
+  `new a: 1;` is a compile-time error (E0009).
+  $$\forall i \in [1, n], \quad \text{alloc}(x_i) \in \mathbb{T}, \quad x_i \leftarrow v_i$$
+  ```bee
+  new a: 1, b: 2 ∈ Z;        -- parallel typed declaration (Issue 18)
+  new name: "Alice" ∈ U;     -- single-var typed literal via pair-up
+  new a: 1;                  -- ERROR E0009: missing explicit '∈ Type' (use ':=' for inference)
+  ```
 - **Equality & Relation Operators (mirror of `spec/01-lexical-structure.md` §3.3, Decisions 2-3):**
   - **Value Comparison (`=`, `¬`)**: `=` evaluates structural equality of two values (true across distinct allocations). `¬` is canonical value inequality — the Unicode form `≠` is deprecated (Decision 12) and will be hard-rejected (E0009) once Phase 7 audit task 7.2 completes; the lexer currently emits non-fatal E0010.
   - **Identity Check (`is`, `is not`)**: Evaluates reference/pointer identity (or negation). `a is b` returns false across distinct allocations even when `a = b`. The reference-of operator `@` provides an equivalent formulation: `@a = @b` is true iff `a` and `b` share the same allocation; `@a ¬ @b` is true iff they differ.
@@ -296,9 +308,17 @@ statement         ::= decl_stmt
 (* Declarations & Mutations *)
 decl_stmt         ::= "set" ident_list ":=" expr_list
                     | "new" ident_list ( "∈" | "in" ) type_specifier [ "=" ( expression | expr_list ) | ":=" expr_list ]
-                    | "new" ident_list ":=" expr_list ;
+                    | "new" ident_list ":=" expr_list
+                    | "new" pair_up_list ( "∈" | "in" ) type_specifier ;
 ident_list        ::= identifier ( "," identifier )* ;
 expr_list         ::= expression ( "," expression )* ;
+(* Decision 9 (2026-09-13): `:` is the structural pair-up operator.
+   N parallel bindings, each `ident: expr`, with a REQUIRED trailing
+   `∈ Type`. NO type inference — bare `new a: 1;` is E0009; use `:=`
+   for inference. Lexically the trailing `∈ Type` attaches to the final
+   expression (infix membership); the parser splits that top-level
+   BinaryExpression into value + type annotation. *)
+pair_up_list      ::= identifier ":" expression ( "," identifier ":" expression )* ;
 
 mutation_stmt     ::= "let" identifier ( assign_op | mutate_op_sugar ) expression ;
 assign_op         ::= ":=" | "::" | "*=" | "/=" | "%=" | "^=" | "√=" ;
