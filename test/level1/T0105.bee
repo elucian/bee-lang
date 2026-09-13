@@ -3,5 +3,5 @@
 rule main:
   new a ∈ Z;
   let a := 10;
-  expect a in 1..10;
+  expect a in (1..10);
 return;
