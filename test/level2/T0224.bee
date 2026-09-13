@@ -1,0 +1,15 @@
+-- @FROZEN: Generated from /spec/02-statements.md §3.3. Immutable ground truth for AI agents.
+-- @DESC:T0224 Match one with multiple comma-separated targets
+rule main:
+  new n := 3;
+  new result := 0;
+  match n one:
+  when 1, 2 do
+    let result := 1;
+  when 3, 4 do
+    let result := 2;
+  when 5 do
+    let result := 3;
+  done;
+  expect result = 2;
+return;

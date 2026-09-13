@@ -1,0 +1,15 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: T0140 Unary minus and negative integer literals
+-- A leading `-` is a unary prefix operator producing a negative value, and
+-- composes with identifiers, parens, and arithmetic via normal precedence.
+rule main:
+  new a ∈ Z; new b ∈ Z; new c ∈ Z;
+  let a := -3;
+  expect a = -3;
+  let b := -a;
+  expect b = 3;
+  let c := -3 + 5;
+  expect c = 2;
+  let a := -(2 + 2);
+  expect a = -4;
+return;

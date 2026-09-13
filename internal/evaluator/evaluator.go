@@ -318,6 +318,10 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		}
 	case *parser.CycleStatement:
 		e.evalCycleStatement(s)
+	case *parser.MatchStatement:
+		e.evalMatchStatement(s)
+	case *parser.ScopeStatement:
+		e.evalScopeStatement(s)
 	}
 }
 
@@ -475,6 +479,40 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 						}
 					}
 				}
+			case *parser.SteppedRangeExpression:
+				// Stepped domain `(start..end)(step)` (Decision 13). Materialise
+				// the implicit sequence start, start+step, … honouring the
+				// endpoint inclusivity of the underlying range operator via
+				// inRangePerOp (mirrors steppedRangeValue's bundle rules).
+				be, ok := rng.Range.(*parser.BinaryExpression)
+				if !ok {
+					break
+				}
+				start := e.evalIntExpression(be.Left)
+				end := e.evalIntExpression(be.Right)
+				step := e.evalIntExpression(rng.Step)
+				if step == 0 {
+					step = 1
+				}
+				// Left-exclusive ranges (`>..`, `>..<`) begin one full step past
+				// start so the first valid element is strictly greater.
+				firstOffset := 0
+				if be.Token.Type == token.RANGE_RGHT_INC || be.Token.Type == token.RANGE_EXCL {
+					firstOffset = step
+				}
+				for v := start + firstOffset; inRangePerOp(be.Token, v, start, end); v += step {
+					e.symbols[indexName] = v
+					e.ensureIdentity(indexName)
+					if s.Body != nil {
+						for _, stmt := range s.Body.Statements {
+							if e.exitingRule {
+								deferRestore()
+								return
+							}
+							e.evalStatement(stmt)
+						}
+					}
+				}
 			default:
 				// Fallback: single iteration when domain is non-integer.
 				if s.Body != nil {
@@ -500,6 +538,85 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 			}
 			e.evalStatement(stmt)
 		}
+	}
+}
+
+// evalMatchStatement evaluates a `match` selector per spec/02-statements.md
+// §3.3. It runs the optional prologue once, then walks the `when` arms in
+// order. In "one" mode (default) the first matching arm executes and the
+// statement returns; in "all" mode every matching arm executes. If no arm
+// matches, the optional `other` fallback runs.
+func (e *Evaluator) evalMatchStatement(s *parser.MatchStatement) {
+	if s.Prologue != nil {
+		e.evalStatement(s.Prologue)
+	}
+
+	subject := e.evalIntExpression(s.Subject)
+	matched := false
+	for _, c := range s.Cases {
+		armMatched := false
+		for _, target := range c.Targets {
+			if e.matchTarget(target, subject) {
+				armMatched = true
+				break
+			}
+		}
+		if !armMatched {
+			continue
+		}
+		matched = true
+		if c.Body != nil {
+			e.evalStatement(c.Body)
+		}
+		if e.exitingRule {
+			return
+		}
+		// "one" mode: stop after the first matching arm.
+		if s.Mode != "all" {
+			return
+		}
+	}
+	if !matched && s.Other != nil {
+		e.evalStatement(s.Other)
+	}
+}
+
+// matchTarget reports whether a single `when` target matches the subject
+// value. A target that is a range binary expression (e.g. `4..10`) matches by
+// endpoint-inclusive membership; any other expression matches by value
+// equality after evaluating to its integer form.
+func (e *Evaluator) matchTarget(target parser.Expression, subject int) bool {
+	if be, ok := target.(*parser.BinaryExpression); ok && isRangeSeparatorToken(be.Token) {
+		start, end, op, ok := e.rangeBounds(target)
+		if ok && inRangePerOp(op, subject, start, end) {
+			return true
+		}
+		return false
+	}
+	return e.evalIntExpression(target) == subject
+}
+
+// evalScopeStatement evaluates a `start` / `with` scope block. The evaluator
+// uses a flat symbol table (no lexical partitioning yet — see Task 5.3), so
+// the optional prologue and the `do` body simply execute in program order.
+func (e *Evaluator) evalScopeStatement(s *parser.ScopeStatement) {
+	if s.Keyword == "with" {
+		// Qualifier suppression (`with <module> do ... done`) requires a
+		// module/object-prefix resolution system that is not implemented yet
+		// (spec/02-statements.md §3.1). Surface a graceful runtime error
+		// instead of silently treating the qualifier as a no-op.
+		mod := "module"
+		if id, ok := s.Qualifier.(*parser.Identifier); ok && id.Value != "" {
+			mod = id.Value
+		}
+		fmt.Fprintf(os.Stderr, "runtime error: %s module not implemented yet (line %d)\n", mod, int(s.Token.Pos))
+		os.Exit(1)
+	}
+	if s.Prologue != nil {
+		e.evalStatement(s.Prologue)
+	}
+	if s.Body != nil {
+		e.evalStatement(s.Body)
 	}
 }
 
@@ -570,6 +687,14 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			}
 		}
 		return 0, e.allocID()
+	case *parser.TernaryExpression:
+		// Parenthesised conditional selector (spec/02 §3.2): evaluate the
+		// condition, then yield only the chosen branch — the untaken branch
+		// is never evaluated (short-circuit).
+		if e.evalIntExpression(expr.Condition) != 0 {
+			return e.evalIntExpressionWithID(expr.Then)
+		}
+		return e.evalIntExpressionWithID(expr.Else)
 	case *parser.PrefixExpression:
 		// D10 radical dispatch (`²√`, `³√`, …, `√`) and Decision 7 / D7
 		// logical-not dispatch (`¬`). The PrefixExpression node replaces the
@@ -597,6 +722,12 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 				return 1, e.allocID()
 			}
 			return 0, e.allocID()
+		}
+		if opLit == "-" || expr.Token.Type == token.MINUS {
+			// Unary negation: negate the operand's value. Each evaluation yields
+			// a fresh ephemeral identity (Decision 2), matching literal semantics.
+			rightVal, _ := e.evalIntExpressionWithID(expr.Right)
+			return -rightVal, e.allocID()
 		}
 		// Unknown prefix — fall back to the underlying value so a malformed
 		// expression reports a value rather than panicking.

@@ -16,7 +16,7 @@ def run_solo():
     if len(sys.argv) < 2:
         print("Usage: python test/solo.py <test_case_name_or_path>")
         sys.exit(1)
-        
+
     target = sys.argv[1]
     test_path = None
     if os.path.exists(target):
@@ -31,13 +31,13 @@ def run_solo():
             if os.path.exists(p2):
                 test_path = p2
                 break
-                
+
     if not test_path or not os.path.exists(test_path):
         print(f"Error: Test case '{target}' not found.")
         sys.exit(1)
-        
+
     print(f"=== Running test: {test_path} ===")
-    
+
     # Run subprocess with explicit utf-8 encoding for Windows/Unix compatibility
     res = subprocess.run(
         ["./bin/bee.exe", "-e", "-d", test_path],
@@ -46,41 +46,45 @@ def run_solo():
         encoding="utf-8",
         errors="replace"
     )
-    
+
     print("--- STDOUT ---")
     print(res.stdout)
     print("--- STDERR ---")
     print(res.stderr)
-    
-    status = "PASS" if res.returncode == 0 else "FAIL"
-    
-    # Extract description
+
+    # Detect a @NEGATIVE marker (expects a graceful non-zero exit) and extract
+    # the description from the header comment block.
+    negative = False
     desc = "TBD"
     try:
         with open(test_path, "r", encoding="utf-8") as tf:
             for line in tf:
+                if "@NEGATIVE" in line:
+                    negative = True
                 if "-- @DESC:" in line:
                     desc = line.split("@DESC:")[1].strip()
                     break
-    except:
+    except Exception:
         pass
-    
-    os.makedirs("test/output", exist_ok=True)
-    report_name = f"{os.path.splitext(os.path.basename(test_path))[0]}.md"
-    report_path = os.path.join("test/output", report_name)
-    status = "PASS" if res.returncode == 0 else "FAIL"
-    
+
+    # A negative test "passes" when the compiler exits non-zero (a graceful,
+    # expected failure). A normal test passes on a zero exit code.
+    if negative:
+        status = "PASS" if res.returncode != 0 else "FAIL"
+    else:
+        status = "PASS" if res.returncode == 0 else "FAIL"
+
     code_lines = []
     try:
         with open(test_path, "r", encoding="utf-8") as tf:
             code_lines = tf.readlines()
     except Exception:
         pass
-        
+
     os.makedirs("test/output", exist_ok=True)
     report_name = f"{os.path.splitext(os.path.basename(test_path))[0]}.md"
     report_path = os.path.join("test/output", report_name)
-    
+
     # Update README
     test_name = os.path.splitext(os.path.basename(test_path))[0]
     subprocess.run(["python", "scripts/update_test_readme.py", test_name, status, desc])
@@ -97,9 +101,16 @@ def run_solo():
             else:
                 f_out.write(f"{idx:4d}\t{line}")
         f_out.write("```\n\n## Conclusion\nStatus: " + status + "\n")
-        
+
     print(f"Report saved to {report_path}")
-    sys.exit(res.returncode)
+
+    # Exit zero for a passing test (including negative tests that gracefully
+    # failed), non-zero otherwise.
+    if negative:
+        exit_code = 0 if res.returncode != 0 else 1
+    else:
+        exit_code = res.returncode
+    sys.exit(exit_code)
 
 if __name__ == "__main__":
     run_solo()

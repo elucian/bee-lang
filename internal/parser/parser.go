@@ -370,43 +370,222 @@ func (p *Parser) parseReadStatement(tok token.Token) Statement {
 	return stmt
 }
 
-// parseMatchStatement is a grammar-mapped stub for spec/02-statements.md §3.3
-// `match`. Consumes to the next ';' so the trailing tokens are not silently
-// dropped and emits a soft W0901 until the full grammar is implemented.
+// parseMatchStatement implements spec/02-statements.md §3.3 / §5 EBNF:
+//
+//	match_stmt ::= "match" expression [ "all" | "one" ] ":" [ block ]
+//	                ( "when" match_targets "do" block )+ [ "other" block ]
+//	                "done" ;
+//
+// `one` / `all` are not registered keywords, so they arrive as IDENT tokens
+// and are matched by literal. An omitted mode defaults to "one" (first match).
 func (p *Parser) parseMatchStatement(tok token.Token) Statement {
-	stmt := &MatchStatement{Token: tok}
-	for {
-		peek := p.l.PeekToken()
-		if peek.Type == token.SEMICOLON {
-			p.l.NextToken()
-			break
-		}
-		if peek.Type == token.EOF || peek.Type == token.DONE {
-			break
-		}
+	stmt := &MatchStatement{Token: tok, Mode: "one"}
+
+	// Subject expression (`match <expr> ...`).
+	stmt.Subject = p.parseExpression()
+
+	// Optional mode selector: `one` | `all`.
+	if peek := p.l.PeekToken(); peek.Type == token.IDENT && (peek.Literal == "one" || peek.Literal == "all") {
+		stmt.Mode = peek.Literal
 		p.l.NextToken()
 	}
-	p.warnings = append(p.warnings, fmt.Sprintf(
-		"W0901 UnrecognizedStatement: line=%d type=MATCH (grammar stub)", tok.Pos,
-	))
+
+	// Mandatory colon after the subject/mode.
+	if peek := p.l.PeekToken(); peek.Type == token.COLON {
+		p.l.NextToken()
+	} else {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:InvalidMatchHeader: line=%d (expected `:` after match subject; got type=%s literal=%q)",
+			tok.Pos, peek.Type, peek.Literal,
+		))
+	}
+
+	// Optional prologue block (declarations) before the first `when`.
+	stmt.Prologue = p.parseMatchBlock(tok)
+
+	// `when` clauses.
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.WHEN || (peek.Type == token.IDENT && peek.Literal == "when") {
+			whenTok := p.l.NextToken()
+			stmt.Cases = append(stmt.Cases, p.parseMatchCase(whenTok))
+			continue
+		}
+		break
+	}
+
+	// `other` default fallback branch.
+	if peek := p.l.PeekToken(); peek.Type == token.OTHER || (peek.Type == token.IDENT && peek.Literal == "other") {
+		p.l.NextToken()
+		stmt.Other = p.parseMatchBlock(tok)
+	}
+
+	// `done` terminator (D14) with optional trailing `;`.
+	if peek := p.l.PeekToken(); peek.Type == token.DONE || (peek.Type == token.IDENT && peek.Literal == "done") {
+		p.l.NextToken()
+	}
+	if peek := p.l.PeekToken(); peek.Type == token.SEMICOLON {
+		p.l.NextToken()
+	}
+
 	return stmt
 }
 
-// parseScopeStatement handles `start` / `with` blocks per spec/02-statements.md §3.1.
-func (p *Parser) parseScopeStatement(tok token.Token) Statement {
-	stmt := &ScopeStatement{Token: tok, Keyword: tok.Literal}
+// parseMatchCase parses a single `when targets do block` arm.
+func (p *Parser) parseMatchCase(whenTok token.Token) MatchCase {
+	c := MatchCase{Token: whenTok}
+	// match_targets ::= expression ( "," expression )*  — terminated by `do`.
+	for {
+		c.Targets = append(c.Targets, p.parseExpression())
+		if p.l.PeekToken().Type == token.COMMA {
+			p.l.NextToken() // consume `,`
+			continue
+		}
+		break
+	}
+	p.matchDo()
+	c.Body = p.parseMatchBlock(whenTok)
+	return c
+}
+
+// parseMatchBlock collects statements until a `when`, `other`, or `done`
+// boundary (or EOF). It is used for both the optional prologue and the arm
+// bodies, since all three share the same stop-set.
+func (p *Parser) parseMatchBlock(tok token.Token) *BlockStatement {
+	block := &BlockStatement{Token: tok}
 	for {
 		peek := p.l.PeekToken()
+		if peek.Type == token.EOF {
+			break
+		}
+		if peek.Type == token.WHEN || peek.Type == token.OTHER || peek.Type == token.DONE ||
+			peek.Literal == "when" || peek.Literal == "other" || peek.Literal == "done" {
+			break
+		}
 		if peek.Type == token.SEMICOLON {
 			p.l.NextToken()
+			continue
+		}
+		nextTok := p.l.NextToken()
+		if nextTok.Type == token.EOF {
 			break
 		}
-		if peek.Type == token.EOF || peek.Type == token.DONE {
-			break
+		sub := p.parseStatement(nextTok)
+		if sub != nil {
+			block.Statements = append(block.Statements, sub)
 		}
+	}
+	return block
+}
+
+// parseScopeStatement implements spec/02-statements.md §3.1 / §5 EBNF:
+//
+//	scope_stmt ::= "start" [ label ] ":" [ block ] "do" block "done" [ label ]
+//	             | "with" expression "do" block "done" ;
+func (p *Parser) parseScopeStatement(tok token.Token) Statement {
+	stmt := &ScopeStatement{Token: tok, Keyword: tok.Literal}
+
+	if tok.Type == token.WITH {
+		// `with expression do block done;`
+		stmt.Qualifier = p.parseExpression()
+		p.matchDo()
+		stmt.Body = p.parseScopeBlock(tok)
+		// done
+		if peek := p.l.PeekToken(); peek.Type == token.DONE || peek.Literal == "done" {
+			p.l.NextToken()
+		}
+		if peek := p.l.PeekToken(); peek.Type == token.SEMICOLON {
+			p.l.NextToken()
+		}
+		return stmt
+	}
+
+	// `start [label] : [block] do block done [label];`
+	peek := p.l.PeekToken()
+	if peek.Type == token.IDENT && peek.Literal != "do" && peek.Literal != "done" && peek.Literal != "with" {
+		labelTok := p.l.NextToken()
+		stmt.Label = &Identifier{Token: labelTok, Value: labelTok.Literal}
+	}
+	// Mandatory colon.
+	if peek := p.l.PeekToken(); peek.Type == token.COLON {
+		p.l.NextToken()
+	} else {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:InvalidScopeHeader: line=%d (expected `:` after `start` label/header; got type=%s literal=%q)",
+			tok.Pos, peek.Type, peek.Literal,
+		))
+	}
+	// Optional prologue block (run before the `do` body).
+	stmt.Prologue = p.parseScopePrologue(tok)
+	// `do` body header.
+	p.matchDo()
+	stmt.Body = p.parseScopeBlock(tok)
+	// `done [label];`
+	if peek := p.l.PeekToken(); peek.Type == token.DONE || peek.Literal == "done" {
+		p.l.NextToken()
+		if p.l.PeekToken().Type == token.IDENT {
+			labelTok := p.l.NextToken()
+			stmt.DoneLabel = &Identifier{Token: labelTok, Value: labelTok.Literal}
+		}
+	}
+	if peek := p.l.PeekToken(); peek.Type == token.SEMICOLON {
 		p.l.NextToken()
 	}
 	return stmt
+}
+
+// parseScopePrologue collects `start` declarations before the `do` header.
+func (p *Parser) parseScopePrologue(tok token.Token) *BlockStatement {
+	block := &BlockStatement{Token: tok}
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.EOF {
+			break
+		}
+		if peek.Type == token.DO || peek.Literal == "do" {
+			break
+		}
+		if peek.Type == token.SEMICOLON {
+			p.l.NextToken()
+			continue
+		}
+		nextTok := p.l.NextToken()
+		if nextTok.Type == token.EOF {
+			break
+		}
+		sub := p.parseStatement(nextTok)
+		if sub != nil {
+			block.Statements = append(block.Statements, sub)
+		}
+	}
+	return block
+}
+
+// parseScopeBlock collects the `do` body until the `done` terminator.
+func (p *Parser) parseScopeBlock(tok token.Token) *BlockStatement {
+	block := &BlockStatement{Token: tok}
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.EOF {
+			break
+		}
+		if peek.Type == token.DONE || peek.Literal == "done" {
+			break
+		}
+		if peek.Type == token.SEMICOLON {
+			p.l.NextToken()
+			continue
+		}
+		nextTok := p.l.NextToken()
+		if nextTok.Type == token.EOF {
+			break
+		}
+		sub := p.parseStatement(nextTok)
+		if sub != nil {
+			block.Statements = append(block.Statements, sub)
+		}
+	}
+	return block
 }
 
 // parseCycleStatement implements spec/02-statements.md §3.4 cycle_stmt grammar
@@ -1437,6 +1616,13 @@ func (p *Parser) parsePrimary() Expression {
 		right := p.parseExpressionClimb(precLogic)
 		return &PrefixExpression{Token: tok, Operator: tok.Literal, Right: right}
 	}
+	// Unary minus: a leading `-` is a prefix negation operator. It binds looser
+	// than power (so `-2^2` ≡ `-(2^2)`) but tighter than mul/add (so
+	// `-2*3` ≡ `(-2)*3`), which the recursive climb at minPrec=precPower encodes.
+	if tok.Type == token.MINUS {
+		right := p.parseExpressionClimb(precPower)
+		return &PrefixExpression{Token: tok, Operator: tok.Literal, Right: right}
+	}
 	// Decision 12 (D12, 2026-09-13): `@` is the reference-of prefix. It yields
 	// the referenced cell's identity so that `@a = @b` ⇔ `a is b`. The operand
 	// is a single referenceable primary (identifier, index, or paren group).
@@ -1446,6 +1632,26 @@ func (p *Parser) parsePrimary() Expression {
 	}
 	if tok.Type == token.LPAREN {
 		left := p.parseExpressionClimb(precLogic)
+
+		// Conditional expression selector (ternary) per spec/02-statements.md
+		// §3.2: ( expr_true if condition else expr_false ). The `if` keyword is
+		// not a climb-able binary operator, so after parsing expr_true the
+		// parser naturally parks on `if`. When present, fold the full
+		// parenthesised ternary into a TernaryExpression node; the surrounding
+		// parentheses give it syntactic precedence, so no climbing is needed.
+		if p.l.PeekToken().Type == token.IF || p.l.PeekToken().Literal == "if" {
+			p.l.NextToken() // consume `if`
+			cond := p.parseExpressionClimb(precLogic)
+			if p.l.PeekToken().Type == token.ELSE || p.l.PeekToken().Literal == "else" {
+				p.l.NextToken() // consume `else`
+			}
+			elseExpr := p.parseExpressionClimb(precLogic)
+			if p.l.PeekToken().Type == token.RPAREN {
+				p.l.NextToken() // consume ')'
+			}
+			return &TernaryExpression{Token: tok, Condition: cond, Then: left, Else: elseExpr}
+		}
+
 		if p.l.PeekToken().Type == token.RPAREN {
 			p.l.NextToken() // consume ')'
 		}

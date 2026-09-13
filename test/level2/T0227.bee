@@ -1,0 +1,10 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC: T0227 Forall-quantified for cycle (spec/02 §3.4.3)
+-- `for ∀ i ∈ (1..4)` iterates the inclusive endpoint domain 1..4.
+rule main:
+  new total := 0;
+  for ∀ i ∈ (1..4) do
+    let total := total + i;
+  done;
+  expect total = 10;
+return;

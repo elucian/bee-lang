@@ -159,6 +159,25 @@ type PrefixExpression struct {
 func (pe *PrefixExpression) expressionNode() {}
 func (pe *PrefixExpression) Pos() token.Pos  { return pe.Token.Pos }
 
+// TernaryExpression implements the parenthesised conditional expression
+// selector per spec/02-statements.md §3.2:
+//
+//	( expr_true if condition else expr_false )
+//
+// It is always parenthesised in Bee, so the parser folds it in parsePrimary
+// at the LPAREN case once it sees the `if` keyword after the first operand.
+// Precedence is therefore syntactic (the surrounding parentheses), not part
+// of the climbing ladder.
+type TernaryExpression struct {
+	Token     token.Token
+	Condition Expression // the `if` test expression
+	Then      Expression // expr_true — evaluated when Condition is truthy (≠ 0)
+	Else      Expression // expr_false — evaluated when Condition is falsy (== 0)
+}
+
+func (te *TernaryExpression) expressionNode() {}
+func (te *TernaryExpression) Pos() token.Pos  { return te.Token.Pos }
+
 // Issue 14 — new AST nodes to back the rigid-syntax-gate dispatch table.
 // Each block maps directly to a section in spec/02-statements.md §5 EBNF / §1.
 
@@ -204,16 +223,50 @@ type ReadStatement struct {
 func (rs *ReadStatement) statementNode() {}
 func (rs *ReadStatement) Pos() token.Pos { return rs.Token.Pos }
 
+// MatchCase is a single `when targets do block` arm of a match statement.
+type MatchCase struct {
+	Token   token.Token  // the `when` keyword token
+	Targets []Expression // expression ( "," expression )* — the values/ranges to match
+	Body    *BlockStatement
+}
+
+// MatchStatement implements the `match` enumerable selector per
+// spec/02-statements.md §3.3 and §5 EBNF:
+//
+//	match_stmt ::= "match" expression [ "all" | "one" ] ":" [ block ]
+//	                ( "when" match_targets "do" block )+ [ "other" block ]
+//	                "done" ;
+//
+// Mode is "one" (first match wins) or "all" (evaluate every matching arm);
+// an omitted mode defaults to "one".
 type MatchStatement struct {
-	Token token.Token
+	Token    token.Token
+	Subject  Expression      // the value being matched against the `when` targets
+	Mode     string          // "one", "all", or "one" when omitted
+	Prologue *BlockStatement // optional declaration block between `:` and the first `when`
+	Cases    []MatchCase
+	Other    *BlockStatement // optional `other` default fallback block
 }
 
 func (ms *MatchStatement) statementNode() {}
 func (ms *MatchStatement) Pos() token.Pos { return ms.Token.Pos }
 
+// ScopeStatement implements the local-scope and qualifier-suppression blocks
+// per spec/02-statements.md §3.1 and §5 EBNF:
+//
+//	scope_stmt ::= "start" [ label ] ":" [ block ] "do" block "done" [ label ]
+//	             | "with" expression "do" block "done" ;
+//
+// For `start`, Label/Prologue capture the named scope opening; for `with`,
+// Qualifier carries the suppressed module/object prefix expression.
 type ScopeStatement struct {
-	Token   token.Token
-	Keyword string
+	Token     token.Token
+	Keyword   string          // "start" or "with"
+	Label     *Identifier     // optional label on `start`
+	Qualifier Expression      // the suppressed qualifier expression on `with`
+	Prologue  *BlockStatement // optional `start` prologue block (run before `do`)
+	Body      *BlockStatement // the `do` block
+	DoneLabel *Identifier     // optional label on `done`
 }
 
 func (ss *ScopeStatement) statementNode() {}

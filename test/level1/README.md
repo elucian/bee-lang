@@ -8,7 +8,7 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
-| T0140    | T0140 Decision 11: arity-mism... | FAIL       |
+| T0140    | T0140 Unary minus and negativ... | PASS       |
 | T0139    | T0139 Decision 11: parenthesi... | PASS       |
 | T0138    | T0138 Decision 13: postfix-st... | PASS       |
 | T0137    | T0137 Decision 13: postfix-st... | PASS       |

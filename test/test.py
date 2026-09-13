@@ -37,19 +37,21 @@ def test():
             if f.endswith(".bee"):
                 path = os.path.join(lvl_dir, f)
                 disabled = False
+                negative = False
+                desc = "TBD"
                 with open(path, "r", encoding="utf-8") as tf:
-                    if "@DISABLED" in tf.readline():
-                        disabled = True
+                    lines = tf.readlines()
+                if lines and "@DISABLED" in lines[0]:
+                    disabled = True
+                for line in lines:
+                    if "@NEGATIVE" in line:
+                        negative = True
+                    if "-- @DESC:" in line:
+                        desc = line.split("@DESC:")[1].strip()
+                        break
                 if disabled:
                     continue
                 test_name = os.path.splitext(f)[0]
-                
-                desc = "TBD"
-                with open(path, "r", encoding="utf-8") as tf:
-                    for line in tf:
-                        if "-- @DESC:" in line:
-                            desc = line.split("@DESC:")[1].strip()
-                            break
                 
                 res = subprocess.run(["./bin/bee.exe", "-e", path], capture_output=True, text=True)
                 
@@ -58,7 +60,10 @@ def test():
                 print(f"--- STDERR ({path}) ---")
                 print(res.stderr)
                 
-                status = "PASS" if res.returncode == 0 else "FAIL"
+                if negative:
+                    status = "PASS" if res.returncode != 0 else "FAIL"
+                else:
+                    status = "PASS" if res.returncode == 0 else "FAIL"
                 subprocess.run(["python", "scripts/update_test_readme.py", test_name, status, desc])
 
                 # Process report
@@ -80,19 +85,26 @@ def test():
                     f_out.writelines(code_lines)
                     f_out.write("```\n\n--- Conclusion ---\nStatus: " + status + "\n")
 
-                if res.returncode == 0:
-                    passed += 1
+                if negative:
+                    if res.returncode != 0:
+                        passed += 1
+                    else:
+                        failed += 1
+                        failed_cases.append(test_name)
                 else:
-                    failed += 1
-                    failed_cases.append(test_name)
-                    # Auto-disable
-                    try:
-                        reason = res.stderr.strip().split("\n")[0] if res.stderr else "Assertion failed"
-                        if "@DISABLED" not in code_lines[0]:
-                            code_lines.insert(0, f"-- @DISABLED: {reason}\n")
-                            with open(path, "w", encoding="utf-8") as tf:
-                                tf.writelines(code_lines)
-                    except: pass
+                    if res.returncode == 0:
+                        passed += 1
+                    else:
+                        failed += 1
+                        failed_cases.append(test_name)
+                        # Auto-disable
+                        try:
+                            reason = res.stderr.strip().split("\n")[0] if res.stderr else "Assertion failed"
+                            if code_lines and "@DISABLED" not in code_lines[0]:
+                                code_lines.insert(0, f"-- @DISABLED: {reason}\n")
+                                with open(path, "w", encoding="utf-8") as tf:
+                                    tf.writelines(code_lines)
+                        except: pass
                     
         level_results[lvl] = {"passed": passed, "failed": failed}
         total_passed += passed

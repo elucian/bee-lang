@@ -1,0 +1,15 @@
+-- @FROZEN: Generated from /spec/02-statements.md §3.3. Immutable ground truth for AI agents.
+-- @DESC:T0218 Match one selects the first matching branch only
+rule main:
+  new n := 2;
+  new result := 0;
+  match n one:
+  when 2 do
+    let result := 1;
+  when 2 do
+    let result := 2;
+  when 3 do
+    let result := 3;
+  done;
+  expect result = 1;
+return;

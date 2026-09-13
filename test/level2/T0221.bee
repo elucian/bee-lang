@@ -1,0 +1,15 @@
+-- @FROZEN: Generated from /spec/02-statements.md §3.3. Immutable ground truth for AI agents.
+-- @DESC:T0221 Match falls back to the other default branch
+rule main:
+  new n := 99;
+  new result := 0;
+  match n one:
+  when 1 do
+    let result := 1;
+  when 2 do
+    let result := 2;
+  other
+    let result := 999;
+  done;
+  expect result = 999;
+return;

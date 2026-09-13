@@ -1,0 +1,10 @@
+-- @FROZEN: Generated from /spec/02-statements.md §3.1. Immutable ground truth for AI agents.
+-- @DESC:T0222 Start scope runs its prologue then its do body
+rule main:
+  start worker:
+    new temp := 42;
+  do
+    let temp := temp + 1;
+  done worker;
+  expect temp = 43;
+return;

@@ -1,0 +1,15 @@
+-- @FROZEN: Generated from /spec/02-statements.md §3.3. Immutable ground truth for AI agents.
+-- @DESC:T0220 Match selects a range-inclusive branch
+rule main:
+  new n := 5;
+  new result := 0;
+  match n one:
+  when (1..3) do
+    let result := 1;
+  when (4..10) do
+    let result := 2;
+  other
+    let result := 9;
+  done;
+  expect result = 2;
+return;
