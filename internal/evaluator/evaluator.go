@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -35,6 +36,12 @@ type Evaluator struct {
 	symbols       map[string]int
 	stringSymbols map[string]string
 	arrayValues   map[string][]int
+	// listValues, setValues, mapValues store collection literals bound to
+	// identifiers (spec/10 §1). All values are stored as []int for the
+	// bootstrap evaluator; sets are deduplicated and sorted.
+	listValues map[string][]int
+	setValues  map[string][]int
+	mapValues  map[string]map[string]int
 	// steppedRanges stores SteppedRangeExpression ASTs by identifier name
 	// so that subsequent `(ident)[i]` indexing can materialise the i-th
 	// element. Decision 13 (D13, 2026-09-13).
@@ -77,6 +84,9 @@ func New() *Evaluator {
 		symbols:        make(map[string]int),
 		stringSymbols:  make(map[string]string),
 		arrayValues:    make(map[string][]int),
+		listValues:     make(map[string][]int),
+		setValues:      make(map[string][]int),
+		mapValues:      make(map[string]map[string]int),
 		steppedRanges:  make(map[string]*parser.SteppedRangeExpression),
 		identities:     make(map[string]int),
 		nextID:         1,
@@ -410,6 +420,28 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					}
 					e.arrayValues[name] = elems
 					e.ensureIdentity(name)
+				} else if listLit, ok := s.Values[i].(*parser.ListLiteral); ok {
+					elems := make([]int, len(listLit.Elements))
+					for j, el := range listLit.Elements {
+						elems[j] = e.evalIntExpression(el)
+					}
+					e.listValues[name] = elems
+					e.ensureIdentity(name)
+				} else if setLit, ok := s.Values[i].(*parser.SetLiteral); ok {
+					elems := make([]int, len(setLit.Elements))
+					for j, el := range setLit.Elements {
+						elems[j] = e.evalIntExpression(el)
+					}
+					e.setValues[name] = dedupSortInts(elems)
+					e.ensureIdentity(name)
+				} else if mapLit, ok := s.Values[i].(*parser.MapLiteral); ok {
+					m := make(map[string]int)
+					for _, pair := range mapLit.Pairs {
+						key := e.evalExpression(pair.Key)
+						m[key] = e.evalIntExpression(pair.Value)
+					}
+					e.mapValues[name] = m
+					e.ensureIdentity(name)
 				} else if lambdaExpr, ok := s.Values[i].(*parser.LambdaExpression); ok {
 					// First-class lambda value (spec/07 §2.3): bind in the lambda
 					// registry so CallExpression dispatch can find it.
@@ -430,6 +462,28 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 						elems[j] = e.evalIntExpression(el)
 					}
 					e.arrayValues[name] = elems
+					e.ensureIdentity(name)
+				} else if listLit, ok := s.Value.(*parser.ListLiteral); ok {
+					elems := make([]int, len(listLit.Elements))
+					for j, el := range listLit.Elements {
+						elems[j] = e.evalIntExpression(el)
+					}
+					e.listValues[name] = elems
+					e.ensureIdentity(name)
+				} else if setLit, ok := s.Value.(*parser.SetLiteral); ok {
+					elems := make([]int, len(setLit.Elements))
+					for j, el := range setLit.Elements {
+						elems[j] = e.evalIntExpression(el)
+					}
+					e.setValues[name] = dedupSortInts(elems)
+					e.ensureIdentity(name)
+				} else if mapLit, ok := s.Value.(*parser.MapLiteral); ok {
+					m := make(map[string]int)
+					for _, pair := range mapLit.Pairs {
+						key := e.evalExpression(pair.Key)
+						m[key] = e.evalIntExpression(pair.Value)
+					}
+					e.mapValues[name] = m
 					e.ensureIdentity(name)
 				} else if lambdaExpr, ok := s.Value.(*parser.LambdaExpression); ok {
 					e.lambdaValues[name] = lambdaExpr
@@ -837,6 +891,24 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			}
 			return 0, e.allocID()
 		}
+		// List member access: `.head` returns first element, `.tail` returns
+		// count of remaining elements (spec/10 §3.1 list operations).
+		if ident, isIdent := expr.Base.(*parser.Identifier); isIdent && len(expr.Parts) == 1 {
+			if lst, ok := e.listValues[ident.Value]; ok {
+				switch expr.Parts[0] {
+				case "head":
+					if len(lst) > 0 {
+						return lst[0], e.ensureIdentity(ident.Value)
+					}
+					return 0, e.allocID()
+				case "tail":
+					if len(lst) > 1 {
+						return len(lst) - 1, e.ensureIdentity(ident.Value)
+					}
+					return 0, e.allocID()
+				}
+			}
+		}
 		return 0, e.allocID()
 	case *parser.IndexExpression:
 		// Decision 13 (D13, 2026-09-13): if the indexed expression is a
@@ -1053,15 +1125,89 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 			}
 			return "[" + strings.Join(parts, ", ") + "]"
 		}
+		if lst, ok := e.listValues[expr.Value]; ok {
+			parts := make([]string, len(lst))
+			for i, v := range lst {
+				parts[i] = strconv.Itoa(v)
+			}
+			return "(" + strings.Join(parts, ", ") + ")"
+		}
+		if st, ok := e.setValues[expr.Value]; ok {
+			parts := make([]string, len(st))
+			for i, v := range st {
+				parts[i] = strconv.Itoa(v)
+			}
+			return "{" + strings.Join(parts, ", ") + "}"
+		}
+		if m, ok := e.mapValues[expr.Value]; ok {
+			keys := make([]string, 0, len(m))
+			for k := range m {
+				keys = append(keys, k)
+			}
+			sort.Strings(keys)
+			parts := make([]string, 0, len(m))
+			for _, k := range keys {
+				parts = append(parts, k+": "+strconv.Itoa(m[k]))
+			}
+			return "{" + strings.Join(parts, ", ") + "}"
+		}
 		if val, ok := e.symbols[expr.Value]; ok {
 			return strconv.Itoa(val)
 		}
 		return expr.Value
+	case *parser.SetLiteral:
+		elems := make([]int, len(expr.Elements))
+		for i, el := range expr.Elements {
+			elems[i] = e.evalIntExpression(el)
+		}
+		sorted := dedupSortInts(elems)
+		parts := make([]string, len(sorted))
+		for i, v := range sorted {
+			parts[i] = strconv.Itoa(v)
+		}
+		return "{" + strings.Join(parts, ", ") + "}"
+	case *parser.ListLiteral:
+		parts := make([]string, len(expr.Elements))
+		for i, el := range expr.Elements {
+			parts[i] = strconv.Itoa(e.evalIntExpression(el))
+		}
+		return "(" + strings.Join(parts, ", ") + ")"
+	case *parser.MapLiteral:
+		keys := make([]string, 0, len(expr.Pairs))
+		vals := make(map[string]int)
+		for _, pair := range expr.Pairs {
+			k := e.evalExpression(pair.Key)
+			vals[k] = e.evalIntExpression(pair.Value)
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		parts := make([]string, 0, len(keys))
+		for _, k := range keys {
+			parts = append(parts, k+": "+strconv.Itoa(vals[k]))
+		}
+		return "{" + strings.Join(parts, ", ") + "}"
 	case *parser.BinaryExpression:
 		return strconv.Itoa(e.evalIntExpression(expr))
 	case *parser.MemberExpression:
 		// Member access (spec/03 §5.4): leading-dot boxed field read, or an
 		// object method call `c.next()` whose int result is printed.
+		// Also handles list `.head` / `.tail` (spec/10 §3.1).
+		if ident, isIdent := expr.Base.(*parser.Identifier); isIdent && len(expr.Parts) == 1 && !expr.IsCall {
+			if lst, ok := e.listValues[ident.Value]; ok {
+				switch expr.Parts[0] {
+				case "head":
+					if len(lst) > 0 {
+						return strconv.Itoa(lst[0])
+					}
+					return "0"
+				case "tail":
+					if len(lst) > 1 {
+						return strconv.Itoa(len(lst) - 1)
+					}
+					return "0"
+				}
+			}
+		}
 		return strconv.Itoa(e.evalIntExpression(expr))
 	}
 	if il, ok := node.(*parser.IntegerLiteral); ok {
@@ -1404,6 +1550,22 @@ func (e *Evaluator) bindResultValue(name string, val interface{}) {
 // spec/03 §5.4. It resolves the receiver object, then invokes the named
 // nested rule with the object's boxed cells installed so the method shares
 // the closure's persistent state. Returns the first result value.
+// dedupSortInts returns a sorted copy of the input with duplicates removed.
+// Used for set semantics (spec/10 §1: sets are unique and unordered; the
+// bootstrap evaluator stores them sorted for deterministic output).
+func dedupSortInts(elems []int) []int {
+	seen := make(map[int]bool, len(elems))
+	var out []int
+	for _, v := range elems {
+		if !seen[v] {
+			seen[v] = true
+			out = append(out, v)
+		}
+	}
+	sort.Ints(out)
+	return out
+}
+
 func (e *Evaluator) callMember(me *parser.MemberExpression) (interface{}, bool) {
 	ident, isIdent := me.Base.(*parser.Identifier)
 	if !isIdent || len(me.Parts) == 0 {
