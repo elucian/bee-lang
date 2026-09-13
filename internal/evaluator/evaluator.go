@@ -864,9 +864,15 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 				idx = e.evalIntExpression(expr.Index)
 			}
 			if arr, ok := e.arrayValues[ident.Value]; ok {
-				if idx >= 1 && idx <= len(arr) {
-					return arr[idx-1], e.ensureIdentity(ident.Value)
+				if idx == 0 {
+					fmt.Fprintf(os.Stderr, "[ERROR] E1006 ZeroBasedIndexAttempt: index 0 at line %d\n", int(expr.Token.Pos))
+					return 0, e.allocID()
 				}
+				if idx < 1 || idx > len(arr) {
+					fmt.Fprintf(os.Stderr, "[ERROR] E1001 IndexOutOfBounds: index %d out of range 1..%d at line %d\n", idx, len(arr), int(expr.Token.Pos))
+					return 0, e.allocID()
+				}
+				return arr[idx-1], e.ensureIdentity(ident.Value)
 			}
 		}
 		return 0, e.allocID()
@@ -1024,15 +1030,28 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 				idx = e.evalIntExpression(expr.Index)
 			}
 			if arr, ok := e.arrayValues[ident.Value]; ok {
-				if idx >= 1 && idx <= len(arr) {
-					return strconv.Itoa(arr[idx-1])
+				if idx == 0 {
+					fmt.Fprintf(os.Stderr, "[ERROR] E1006 ZeroBasedIndexAttempt: index 0 at line %d\n", int(expr.Token.Pos))
+					return "0"
 				}
+				if idx < 1 || idx > len(arr) {
+					fmt.Fprintf(os.Stderr, "[ERROR] E1001 IndexOutOfBounds: index %d out of range 1..%d at line %d\n", idx, len(arr), int(expr.Token.Pos))
+					return "0"
+				}
+				return strconv.Itoa(arr[idx-1])
 			}
 		}
 		return "0"
 	case *parser.Identifier:
 		if strVal, ok := e.stringSymbols[expr.Value]; ok {
 			return strVal
+		}
+		if arr, ok := e.arrayValues[expr.Value]; ok {
+			parts := make([]string, len(arr))
+			for i, v := range arr {
+				parts[i] = strconv.Itoa(v)
+			}
+			return "[" + strings.Join(parts, ", ") + "]"
 		}
 		if val, ok := e.symbols[expr.Value]; ok {
 			return strconv.Itoa(val)
