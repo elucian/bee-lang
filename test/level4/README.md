@@ -8,6 +8,8 @@ This level covers data collections and processing pipelines as defined in:
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
+| T0432    | T0432 raw negative index a[-1... | PASS       |
+| T0431    | T0431 dollar-anchor arithmeti... | PASS       |
 | T0430    | T0430 collection assertions f... | PASS       |
 | T0401    | T0401 Complex Data Processing... | PASS       |
 | T0402    | file: contract_argument_mutat... | FAIL       |

@@ -1,0 +1,8 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @NEGATIVE
+-- @DESC:T0432 raw negative index a[-1] is rejected; use a[$-1] (spec/10 §2.1)
+rule main:
+  new a := [10, 20, 30];
+  let b := a[-1];
+  print "should not reach here";
+return;

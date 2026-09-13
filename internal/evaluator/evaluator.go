@@ -258,8 +258,11 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 						continue
 					}
 					if idx < 0 {
+						// spec/10 §2.1 + solution/06: raw negative indexing is a hard
+						// error (use `a[$-n]`). Halt with a non-zero exit so @NEGATIVE
+						// tests observe the graceful failure, mirroring expect.
 						fmt.Fprintf(os.Stderr, "[ERROR] E1001 NegativeIndex: index %d is negative; use a[$-n] for a relative end-anchor at line %d\n", idx, int(idxExpr.Token.Pos))
-						continue
+						panic(fmt.Sprintf("negative index not allowed at line %d", int(idxExpr.Token.Pos)))
 					}
 					if idx < 1 || idx > len(arr) {
 						fmt.Fprintf(os.Stderr, "[ERROR] E1001 IndexOutOfBounds: index %d out of range 1..%d at line %d\n", idx, len(arr), int(idxExpr.Token.Pos))
@@ -1000,8 +1003,11 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 					return 0, e.allocID()
 				}
 				if idx < 0 {
+					// spec/10 §2.1 + solution/06: raw negative indexing is a hard
+					// error (use `a[$-n]`). Halt with a non-zero exit so @NEGATIVE
+					// tests observe the graceful failure, mirroring expect.
 					fmt.Fprintf(os.Stderr, "[ERROR] E1001 NegativeIndex: index %d is negative; use a[$-n] for a relative end-anchor at line %d\n", idx, int(expr.Token.Pos))
-					return 0, e.allocID()
+					panic(fmt.Sprintf("negative index not allowed at line %d", int(expr.Token.Pos)))
 				}
 				if idx < 1 || idx > len(arr) {
 					fmt.Fprintf(os.Stderr, "[ERROR] E1001 IndexOutOfBounds: index %d out of range 1..%d at line %d\n", idx, len(arr), int(expr.Token.Pos))
@@ -1166,8 +1172,11 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 					return "0"
 				}
 				if idx < 0 {
+					// spec/10 §2.1 + solution/06: raw negative indexing is a hard
+					// error (use `a[$-n]`). Halt with a non-zero exit so @NEGATIVE
+					// tests observe the graceful failure, mirroring expect.
 					fmt.Fprintf(os.Stderr, "[ERROR] E1001 NegativeIndex: index %d is negative; use a[$-n] for a relative end-anchor at line %d\n", idx, int(expr.Token.Pos))
-					return "0"
+					panic(fmt.Sprintf("negative index not allowed at line %d", int(expr.Token.Pos)))
 				}
 				if idx < 1 || idx > len(arr) {
 					fmt.Fprintf(os.Stderr, "[ERROR] E1001 IndexOutOfBounds: index %d out of range 1..%d at line %d\n", idx, len(arr), int(expr.Token.Pos))
