@@ -698,22 +698,12 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 				leftVal := e.evalIntExpression(rng.Left)
 				rightVal := e.evalIntExpression(rng.Right)
 				step := 1
+				// `(a..b)` is an ascending inclusive range; per inRangePerOp it
+				// contains no members when a > b, so a degenerate range like
+				// `(1..n-1)` with n=1 yields zero iterations (must not descend or
+				// touch invalid index 0). Descending domains use step forms.
 				if leftVal <= rightVal {
 					for iter := leftVal; iter <= rightVal; iter += step {
-						e.symbols[indexName] = iter
-						e.ensureIdentity(indexName)
-						if s.Body != nil {
-							for _, stmt := range s.Body.Statements {
-								if e.exitingRule {
-									deferRestore()
-									return
-								}
-								e.evalStatement(stmt)
-							}
-						}
-					}
-				} else {
-					for iter := leftVal; iter >= rightVal; iter -= step {
 						e.symbols[indexName] = iter
 						e.ensureIdentity(indexName)
 						if s.Body != nil {
