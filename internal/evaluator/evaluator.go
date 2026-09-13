@@ -152,6 +152,15 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		fmt.Println()
 	case *parser.AssignmentStatement:
 		e.debugLog("EVALUATOR DEBUG: AssignmentStatement start, token lit=%q, type=%v\n", s.Token.Literal, s.Token.Type)
+		// Pre-evaluate all RHS integer values before mutating any symbol, so a
+		// parallel assignment (`let a, b := b, a`) reads the pre-swap values.
+		// String literals/aliases and stepped ranges live in separate maps and
+		// are resolved in the loop below, so this pre-pass only snapshots the
+		// integer `symbols` map.
+		pendingInts := make([]int, len(s.Values))
+		for i, val := range s.Values {
+			pendingInts[i] = e.evalIntExpression(val)
+		}
 		for i, name := range s.Names {
 			e.debugLog("EVALUATOR DEBUG: Assigning to %s\n", name.Value)
 			if i < len(s.Values) {
@@ -165,7 +174,14 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					if strVal, hasStr := e.stringSymbols[strIdent.Value]; hasStr {
 						e.stringSymbols[name.Value] = strVal
 						delete(e.symbols, name.Value)
-						e.ensureIdentity(name.Value)
+						// String assignment is a reference alias (immutable strings):
+						// `let n := s` shares the source cell's identity so `s is n`
+						// and `@s = @n` are true (Decision 12 reference-of).
+						if srcID, hasID := e.identities[strIdent.Value]; hasID {
+							e.identities[name.Value] = srcID
+						} else {
+							e.identities[name.Value] = e.ensureIdentity(strIdent.Value)
+						}
 						e.debugLog("EVALUATOR DEBUG: Assigned string %s = %q\n", name.Value, strVal)
 						continue
 					}
@@ -189,7 +205,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					continue
 				}
 
-				rightVal := e.evalIntExpression(s.Values[i])
+				rightVal := pendingInts[i]
 				e.debugLog("EVALUATOR DEBUG: RightVal = %d\n", rightVal)
 
 				curVal, ok := e.symbols[name.Value]
@@ -515,6 +531,12 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 		if val, ok := e.symbols[expr.Value]; ok {
 			return val, e.ensureIdentity(expr.Value)
 		}
+		// String symbols carry a stable reference identity too (Decision 12
+		// reference-of `@`): an identifier bound to a string still resolves to
+		// its cell identity so `@s = @n` / `s is n` compare references.
+		if _, ok := e.stringSymbols[expr.Value]; ok {
+			return 0, e.ensureIdentity(expr.Value)
+		}
 		return 0, e.allocID()
 	case *parser.IndexExpression:
 		// Decision 13 (D13, 2026-09-13): if the indexed expression is a
@@ -562,6 +584,12 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 				}
 			}
 			return evalSqrt(opLit, rightVal), e.allocID()
+		}
+		if opLit == "@" || expr.Token.Type == token.AT {
+			// Reference-of (Decision 12): yield the operand's stable identity ID
+			// as its value so `@a = @b` compares references (⇔ `a is b`).
+			_, id := e.evalIntExpressionWithID(expr.Right)
+			return id, e.allocID()
 		}
 		if opLit == "!" || opLit == "not" || expr.Token.Type == token.LOGICAL_NOT || expr.Token.Type == token.NOT {
 			rightVal, _ := e.evalIntExpressionWithID(expr.Right)

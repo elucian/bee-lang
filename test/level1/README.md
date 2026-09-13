@@ -20,11 +20,11 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | T0131    | T0131 Decision 13: right-excl... | PASS       |
 | T0101    | T0101 Essential arithmetic op... | PASS       |
 | T0102    | T0102 Relational and comparis... | PASS       |
-| T0103    | TBD                              | FAIL       |
+| T0103    | T0103 Logical and boolean Uni... | PASS       |
 | T0104    | T0104 Exponentiation and powe... | PASS       |
 | T0105    | T0105 Range membership with i... | PASS       |
 | T0106    | T0106 Test assignment, equali... | PASS       |
-| T0107    | T0107 Square root, cube root,... | FAIL       |
+| T0107    | T0107 Square root, cube root,... | PASS       |
 | T0108    | T0108 Compound arithmetic ass... | PASS       |
 | T0115    | T0115 Comprehensive print and... | PASS       |
 | T0116    | T0116 Line and block comments... | PASS       |
@@ -33,7 +33,7 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | T0119    | file: ending_early.bee           | PASS       |
 | T0120    | file: hello_world.bee            | PASS       |
 | T0121    | file: initial_values.bee         | PASS       |
-| T0122    | file: parallel_assignment.bee    | FAIL       |
+| T0122    | file: parallel_assignment.bee    | PASS       |
 | T0123    | file: print_write.bee            | PASS       |
 | T0124    | T0124 In-place addition mutat... | PASS       |
 | T0125    | T0125 Chained arithmetic muta... | PASS       |

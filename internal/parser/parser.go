@@ -900,6 +900,15 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 				p.l.NextToken()
 				ds.Values = append(ds.Values, p.parseExpression())
 			}
+		} else if p.l.PeekToken().Type == token.EQ {
+			// Explicit Type Initialization (spec/02 §2.1): `new xo, yo, zo ∈ Z = 10;`
+			// broadcasts the single value to every declared identifier.
+			p.l.NextToken() // consume '='
+			val := p.parseExpression()
+			ds.Value = val
+			for range ds.Names {
+				ds.Values = append(ds.Values, val)
+			}
 		}
 	} else if nextTok.Literal == ":" {
 		// D9 (ratified 2026-09-13): `:` is structural pair-up with NO type
@@ -972,7 +981,7 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 	stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent, Value: tokIdent.Literal})
 
 	// Check for more comma-separated variables
-	for p.l.PeekChar() == ',' {
+	for p.l.PeekToken().Type == token.COMMA {
 		p.l.NextToken() // comma
 		tokIdent2 := p.l.NextToken()
 		stmt.Names = append(stmt.Names, &Identifier{Token: tokIdent2, Value: tokIdent2.Literal})
@@ -1003,7 +1012,7 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 	stmt.Token = opTok
 	stmt.Values = append(stmt.Values, p.parseExpression())
 
-	for p.l.PeekChar() == ',' {
+	for p.l.PeekToken().Type == token.COMMA {
 		p.l.NextToken() // comma
 		stmt.Values = append(stmt.Values, p.parseExpression())
 	}
@@ -1352,6 +1361,23 @@ func (p *Parser) parseExpression() Expression {
 // right-associative operators (canonical power).
 func (p *Parser) parseExpressionClimb(minPrec int) Expression {
 	left := p.parsePrimary()
+	// Postfix superscript powers (², ³, …, ⁿ) bind tightest after grouping
+	// (D10 level 2). The exponent is encoded in the superscript literal
+	// itself, so `x³` ≡ x^3 has no separate right operand. We synthesize the
+	// exponent literal and reuse BinaryExpression so the evaluator's existing
+	// power dispatch (which reads the superscript literal) handles it
+	// unchanged. Bare `^` (caret) is a *binary* operator (needs a right
+	// operand) and is left for the climb loop below.
+	for {
+		supTok := p.l.PeekToken()
+		if supTok.Type != token.CARET || supTok.Literal == "^" {
+			break
+		}
+		p.l.NextToken() // consume superscript power
+		exp := parseSuperscriptIntStatic(supTok.Literal)
+		right := &IntegerLiteral{Token: supTok, Value: fmt.Sprintf("%d", exp)}
+		left = &BinaryExpression{Token: supTok, Left: left, Right: right}
+	}
 	for {
 		opTok := p.l.PeekToken()
 		prec, isRight := opPrecedence(opTok)
@@ -1409,6 +1435,13 @@ func (p *Parser) parsePrimary() Expression {
 	// type-agnostic prefix semantics.
 	if tok.Type == token.NOT {
 		right := p.parseExpressionClimb(precLogic)
+		return &PrefixExpression{Token: tok, Operator: tok.Literal, Right: right}
+	}
+	// Decision 12 (D12, 2026-09-13): `@` is the reference-of prefix. It yields
+	// the referenced cell's identity so that `@a = @b` ⇔ `a is b`. The operand
+	// is a single referenceable primary (identifier, index, or paren group).
+	if tok.Type == token.AT {
+		right := p.parsePrimary()
 		return &PrefixExpression{Token: tok, Operator: tok.Literal, Right: right}
 	}
 	if tok.Type == token.LPAREN {

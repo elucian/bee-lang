@@ -8,7 +8,7 @@ This level covers statement structures, control flow mechanisms, and modules as 
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
-| T0201    | T0201 Basic variable initiali... | FAIL       |
+| T0201    | T0201 Basic variable initiali... | PASS       |
 | T0202    | T0202 Hello World with String... | FAIL       |
 | T0204    | T0204 Complex arithmetic with... | PASS       |
 | T0205    | T0205 Test Expectation and va... | PASS       |
