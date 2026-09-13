@@ -1769,24 +1769,22 @@ func (p *Parser) parsePrimary() Expression {
 		return &MemberExpression{Token: tok, Parts: []string{"." + member}}
 	}
 	if tok.Type == token.LBRACKET {
+		// spec/10-collections.md §4: array_lit  ::= "[" expression ( "," expression )* "]" ;
+		//                           matrix_lit ::= "[" array_lit ( "," array_lit )* "]" ;
+		// Elements are full expressions (comma is not a binary operator, so
+		// the climb loop parks on ',' and ']'), which also covers nested
+		// array literals for matrices.
 		arrLit := &ArrayLiteral{Token: tok}
-		for {
-			elTok := p.l.NextToken()
-			if elTok.Type == token.RBRACKET || elTok.Type == token.EOF {
-				break
+		for p.l.PeekToken().Type != token.RBRACKET && p.l.PeekToken().Type != token.EOF {
+			arrLit.Elements = append(arrLit.Elements, p.parseExpression())
+			if p.l.PeekToken().Type == token.COMMA {
+				p.l.NextToken() // consume ','
+				continue
 			}
-			if elTok.Type == token.INT {
-				arrLit.Elements = append(arrLit.Elements, &IntegerLiteral{Token: elTok, Value: elTok.Literal})
-			} else if name, ok := p.identLiteral(elTok); ok {
-				// spec/03 §5.4 boxes a captured parameter: `[start]`. The element
-				// may lex as a keyword (START) rather than IDENT, so admit any
-				// admissible name token here.
-				arrLit.Elements = append(arrLit.Elements, &Identifier{Token: elTok, Value: name})
-			}
-			commaOrBracket := p.l.NextToken()
-			if commaOrBracket.Type == token.RBRACKET || commaOrBracket.Type == token.EOF {
-				break
-			}
+			break
+		}
+		if p.l.PeekToken().Type == token.RBRACKET {
+			p.l.NextToken() // consume ']'
 		}
 		return arrLit
 	}
@@ -1848,18 +1846,27 @@ func (p *Parser) parsePrimary() Expression {
 			return me
 		}
 		if p.l.PeekToken().Type == token.LBRACKET {
-			p.l.NextToken() // consume '['
-			bracketTok := p.l.NextToken()
-			var idxExpr Expression
-			if bracketTok.Literal == "$" {
-				idxExpr = &Identifier{Token: bracketTok, Value: "$"}
-			} else if bracketTok.Type == token.IDENT {
-				idxExpr = &Identifier{Token: bracketTok, Value: bracketTok.Literal}
-			} else {
-				idxExpr = &IntegerLiteral{Token: bracketTok, Value: bracketTok.Literal}
+			// spec/10-collections.md §4: indexing ::= expression "[" index_expr
+			// ( "," index_expr )* "]" ; with index_expr ::= expression | "$" |
+			// range_expr. The index is a full expression: the climb loop parks
+			// on ',' and ']', so parsing it here consumes exactly the index and
+			// leaves the closing bracket under our control. Supports chained
+			// indexing (`m[i][j]`) via the surrounding loop.
+			for p.l.PeekToken().Type == token.LBRACKET {
+				p.l.NextToken() // consume '['
+				bracketTok := p.l.PeekToken()
+				var idxExpr Expression
+				if bracketTok.Literal == "$" {
+					p.l.NextToken() // consume '$'
+					idxExpr = &Identifier{Token: bracketTok, Value: "$"}
+				} else {
+					idxExpr = p.parseExpression()
+				}
+				if p.l.PeekToken().Type == token.RBRACKET {
+					p.l.NextToken() // consume ']'
+				}
+				left = &IndexExpression{Token: bracketTok, Left: left, Index: idxExpr}
 			}
-			p.l.NextToken() // consume ']'
-			left = &IndexExpression{Token: bracketTok, Left: left, Index: idxExpr}
 		}
 	}
 	return left

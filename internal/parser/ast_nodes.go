@@ -126,6 +126,50 @@ type ArrayLiteral struct {
 func (al *ArrayLiteral) expressionNode() {}
 func (al *ArrayLiteral) Pos() token.Pos  { return al.Token.Pos }
 
+// ListLiteral is the `( a, b, … )` ordered-sequence literal
+// (spec/10-collections.md §1, §3.1). Backed by a doubly-linked chain in the
+// reference model; the bootstrap evaluator stores it as a dynamic slice.
+// Parentheses are overloaded in Bee (grouping, ternary, short-lambda), so the
+// parser only produces this node when a top-level comma appears inside the
+// parens or the form `( expr , )` / `( , … )` forces list reading.
+type ListLiteral struct {
+	Token    token.Token
+	Elements []Expression
+}
+
+func (ll *ListLiteral) expressionNode() {}
+func (ll *ListLiteral) Pos() token.Pos  { return ll.Token.Pos }
+
+// SetLiteral is the `{ a, b, … }` mathematical-set literal
+// (spec/10-collections.md §1, §3.4). Elements are unique and unordered;
+// membership/algebra are handled by the evaluator.
+type SetLiteral struct {
+	Token    token.Token
+	Elements []Expression
+}
+
+func (sl *SetLiteral) expressionNode() {}
+func (sl *SetLiteral) Pos() token.Pos  { return sl.Token.Pos }
+
+// MapPair is one `key: value` binding inside a map literal. The `:` is the
+// structural pair-up operator per D9 (ratified 2026-09-13).
+type MapPair struct {
+	Key   Expression
+	Value Expression
+}
+
+// MapLiteral is the `{ k: v, … }` finite-map literal
+// (spec/10-collections.md §1, §3.5). Distinguished from SetLiteral at parse
+// time by the presence of a top-level `:` pair-up after the first key
+// expression (D9).
+type MapLiteral struct {
+	Token token.Token
+	Pairs []MapPair
+}
+
+func (ml *MapLiteral) expressionNode() {}
+func (ml *MapLiteral) Pos() token.Pos  { return ml.Token.Pos }
+
 type IndexExpression struct {
 	Token token.Token
 	Left  Expression
