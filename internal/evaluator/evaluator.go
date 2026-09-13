@@ -67,6 +67,12 @@ type Evaluator struct {
 	// the spec/07 §3 purity invariants (E0701: a lambda cannot call a rule;
 	// E0704: a lambda cannot reference outer variables).
 	inLambda int
+	// dollarLen / hasDollar bind the `$` end-anchor (Decision 1) to the
+	// length of the collection currently being indexed. When hasDollar is
+	// true, evaluating the identifier `$` yields dollarLen (1-based last
+	// index), enabling arithmetic anchors like `a[$-1]` (spec/10 §3.2).
+	dollarLen int
+	hasDollar bool
 }
 
 func (e *Evaluator) SetDebug(debug bool) {
@@ -243,16 +249,16 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					continue
 				}
 				var idx int
-				if idIdent, isDollar := idxExpr.Index.(*parser.Identifier); isDollar && idIdent.Value == "$" {
-					if arr, hasArr := e.arrayValues[ident.Value]; hasArr {
-						idx = len(arr)
-					}
-				} else {
-					idx = e.evalIntExpression(idxExpr.Index)
+				if arr, hasArr := e.arrayValues[ident.Value]; hasArr {
+					idx = e.evalIndexExpr(idxExpr.Index, len(arr))
 				}
 				if arr, hasArr := e.arrayValues[ident.Value]; hasArr {
 					if idx == 0 {
 						fmt.Fprintf(os.Stderr, "[ERROR] E1006 ZeroBasedIndexAttempt: index 0 at line %d\n", int(idxExpr.Token.Pos))
+						continue
+					}
+					if idx < 0 {
+						fmt.Fprintf(os.Stderr, "[ERROR] E1001 NegativeIndex: index %d is negative; use a[$-n] for a relative end-anchor at line %d\n", idx, int(idxExpr.Token.Pos))
 						continue
 					}
 					if idx < 1 || idx > len(arr) {
@@ -876,6 +882,13 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 		return val, e.allocID()
 	case *parser.Identifier:
 		if expr.Value == "$" {
+			// Within an index expression the `$` end-anchor resolves to the
+			// current collection's length (1-based last index, Decision 1),
+			// enabling arithmetic anchors like `a[$-1]`. Outside that
+			// context it degenerates to 0 (legacy behaviour).
+			if e.hasDollar {
+				return e.dollarLen, e.allocID()
+			}
 			return 0, e.allocID()
 		}
 		if expr.Value == "True" || expr.Value == "true" {
@@ -978,16 +991,16 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 				return val, e.ensureIdentity(ident.Value)
 			}
 			var idx int
-			if idIdent, ok := expr.Index.(*parser.Identifier); ok && idIdent.Value == "$" {
-				if arr, ok := e.arrayValues[ident.Value]; ok {
-					idx = len(arr)
-				}
-			} else {
-				idx = e.evalIntExpression(expr.Index)
+			if arr, ok := e.arrayValues[ident.Value]; ok {
+				idx = e.evalIndexExpr(expr.Index, len(arr))
 			}
 			if arr, ok := e.arrayValues[ident.Value]; ok {
 				if idx == 0 {
 					fmt.Fprintf(os.Stderr, "[ERROR] E1006 ZeroBasedIndexAttempt: index 0 at line %d\n", int(expr.Token.Pos))
+					return 0, e.allocID()
+				}
+				if idx < 0 {
+					fmt.Fprintf(os.Stderr, "[ERROR] E1001 NegativeIndex: index %d is negative; use a[$-n] for a relative end-anchor at line %d\n", idx, int(expr.Token.Pos))
 					return 0, e.allocID()
 				}
 				if idx < 1 || idx > len(arr) {
@@ -1144,16 +1157,16 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 	case *parser.IndexExpression:
 		if ident, ok := expr.Left.(*parser.Identifier); ok {
 			var idx int
-			if idIdent, ok := expr.Index.(*parser.Identifier); ok && idIdent.Value == "$" {
-				if arr, ok := e.arrayValues[ident.Value]; ok {
-					idx = len(arr)
-				}
-			} else {
-				idx = e.evalIntExpression(expr.Index)
+			if arr, ok := e.arrayValues[ident.Value]; ok {
+				idx = e.evalIndexExpr(expr.Index, len(arr))
 			}
 			if arr, ok := e.arrayValues[ident.Value]; ok {
 				if idx == 0 {
 					fmt.Fprintf(os.Stderr, "[ERROR] E1006 ZeroBasedIndexAttempt: index 0 at line %d\n", int(expr.Token.Pos))
+					return "0"
+				}
+				if idx < 0 {
+					fmt.Fprintf(os.Stderr, "[ERROR] E1001 NegativeIndex: index %d is negative; use a[$-n] for a relative end-anchor at line %d\n", idx, int(expr.Token.Pos))
 					return "0"
 				}
 				if idx < 1 || idx > len(arr) {
@@ -1311,6 +1324,19 @@ func (e *Evaluator) rangeBounds(node parser.Expression) (start, end int, op toke
 	start = e.evalIntExpression(be.Left)
 	end = e.evalIntExpression(be.Right)
 	return start, end, be.Token, true
+}
+
+// evalIndexExpr evaluates an index expression with the `$` end-anchor
+// (Decision 1) bound to the collection's length. This makes arithmetic
+// anchors like `a[$-1]` (spec/10 §3.2) resolve to the last-but-one element:
+// `$` lowers to len(c) and the surrounding binary expression is evaluated in
+// the native 1-based domain. The binding is scoped to this evaluation and
+// restored afterwards so nested lookups are unaffected.
+func (e *Evaluator) evalIndexExpr(idxExpr parser.Expression, n int) int {
+	savedLen, savedHas := e.dollarLen, e.hasDollar
+	e.dollarLen, e.hasDollar = n, true
+	defer func() { e.dollarLen, e.hasDollar = savedLen, savedHas }()
+	return e.evalIntExpression(idxExpr)
 }
 
 // steppedRangeValue returns the i-th (1-based) element of sre. The

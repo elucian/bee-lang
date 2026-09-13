@@ -1937,9 +1937,22 @@ func (p *Parser) parsePrimary() Expression {
 				p.l.NextToken() // consume '['
 				bracketTok := p.l.PeekToken()
 				var idxExpr Expression
+				// The `$` anchor is only a *bare* index when the very next
+				// token is `]` (spec/10 §4 index_expr ::= "$"). When it heads
+				// a full expression (`a[$-1]`, `a[$-3]`) parse the index as an
+				// arithmetic expression rooted at the `$` identifier, so the
+				// evaluator lowers `$` to len(c) before applying arithmetic.
 				if bracketTok.Literal == "$" {
-					p.l.NextToken() // consume '$'
-					idxExpr = &Identifier{Token: bracketTok, Value: "$"}
+					snap := p.l.Snapshot()
+					p.l.NextToken() // advance past '$'
+					isBare := p.l.PeekToken().Type == token.RBRACKET
+					p.l.Restore(snap)
+					if isBare {
+						p.l.NextToken() // consume '$'
+						idxExpr = &Identifier{Token: bracketTok, Value: "$"}
+					} else {
+						idxExpr = p.parseExpression()
+					}
 				} else {
 					idxExpr = p.parseExpression()
 				}
