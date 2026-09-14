@@ -39,8 +39,9 @@ Single uppercase Latin letters are strictly reserved for primitive mathematical 
 | **`D`** | Date | $\mathbb{N}^3$ | Struct `(day, month, year)` | 8 bytes | `01/01/1970` | Gregorian calendar date |
 | **`T`** | Time | $\mathbb{N}^4$ | Struct `(h, m, s, ms)` | 8 bytes | `00:00:00` | 24-hour time representation |
 | **`G`** | Angular | $[1^\circ \dots 360^\circ]$ | Fixed 16-bit float | 2 bytes | `0.0°` | Geometric angular degree coordinate |
+| **`L`** | Lambda | $\mathcal{F}: T \to R$ | Function reference (closure pointer) | 8 bytes | `λ` | Higher-order function type — reference to a pure lambda expression. The `λ` glyph denotes the expression; the *type* is `L`. |
 
-**Named complex types (not single-letter):** `Array`, `Map`, `List`, and `Graph` are collection types; `Lambda` (`λ`) is a higher-order function type. These are identified by name, not by a reserved single letter.
+**Named complex types (not single-letter):** `Array`, `Map`, `List`, and `Graph` are collection types. These are identified by name, not by a reserved single letter.
 
 ---
 
@@ -145,7 +146,7 @@ graph TD
 type_decl         ::= "type" type_ident ":" type_descriptor [ "<:" super_type ] ";" ;
 type_descriptor   ::= primitive_type | range_expr | domain_expr | collection_type ;
 
-primitive_type    ::= "B" | "A" | "U" | "N" | "Z" | "R" | "Q" | "C" | "S" | "D" | "T" | "G"
+primitive_type    ::= "B" | "A" | "U" | "N" | "Z" | "R" | "Q" | "C" | "S" | "D" | "T" | "G" | "L"
                     | "Q" "(" integer_lit "." integer_lit ")" ;
 
 (* Ranges & Domains — Decision 13 (2026-09-13) *)

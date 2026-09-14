@@ -48,7 +48,7 @@ Bee is a functional programming language. Bee enable functional programming usin
 
 <h2 id="lambda-expressions">Lambda expressions</h2>
 
-<p>A lambda expressions can have parameters and results. Lamda expressions can be used to create functions. Lamda expressions do not have a local scope.</p>
+<p>A lambda expressions can have parameters and results. Lambda expressions can be used to create functions. Lambda expressions do not have a local scope.</p>
 
 <h4>Syntax:</h4>
 <pre><code class="language-bee">-- declaration of Lambda expressions
@@ -60,7 +60,7 @@ new name := &lambda;(p1 &isin; Type,...) =&gt; (expression) &isin; ResultType;
 new exp := &lambda;(x,y &isin; Z) =&gt; x^y &isin; Z;
 
 -- use introspection
-print type(exp); -- L
+print type(exp); -- L;
 
 -- use the lambda expression
 new z := 2 * exp(2,3);
@@ -79,23 +79,31 @@ print z;
 <li>can be used in other expressions;</li>
 <li>can be used as arguments for call-back;</li>
 <li>can be created from a rule as a result;</li>
-<li>can be assigned to variables of type: L</li>
-</ul>
-
-<p><b>restrictions:</b></p>
-<ul>
-<li>have no internal states;</li>
-<li>have deterministic result;</li>
-<li>do not have side-effects;</li>
-<li>do not modify external states;</li>
+<li>can be assigned to variables of type: L;</li>
 </ul>
 
 <p><b>result:</b></p>
 <ul>
-<li>lambda expressions can produce one single result;</li>
+<li>lambda</ul> expressions can produce one single result;</li>
 <li>result type must be specified but not the result name;</li>
 <li>result is temporary and can be used in other expressions;</li>
 </ul>
+
+<h2 id="purity-invariants">Purity invariants</h2>
+
+<p>To guarantee mathematical referential transparency, compiler SIMD vectorization,
+and thread safety, lambda expressions operate under four strict invariants:</p>
+
+<ol>
+<li><b>Statelessness:</b> Lambdas CANNOT declare local state variables (<code>new</code>,
+    <code>let</code>, <code>alter</code>) or maintain persistent static memory.</li>
+<li><b>Referential transparency:</b> Given the same arguments, a lambda MUST return the
+exact same output without relying on global mutable state or system clocks.</li>
+<li><b>Side-effect isolation:</b> Lambdas CANNOT perform I/O operations
+    (<code>print</code>, <code>write</code>, file access) or mutate outer variables.</li>
+<li><b>Rule isolation:</b> A <code>rule</code> CAN call a lambda; a lambda CANNOT call a
+    <code>rule</code>. This prevents side-effects from creeping into mathematical expressions.</li>
+</ol>
 
 <h2 id="lambda-signature">Lambda type</h2>
 
@@ -112,7 +120,7 @@ new lt := &lambda;(x, y &isin; Z) =&gt; (x &lt; y) &isin; B;
 new eq := &lambda;(x, y &isin; Z) =&gt; (x = y) &isin; B;
 
 -- define a sub-type, dictionary of rules
-type Dic: {[A]:L} &lt;: Map;
+type Dic: {[A]: L;} &lt;: Map;
 
 -- define a hash map of expressions
 new dic := {'gt':gt,'lt':lt,'eq':eq} &isin; Dic;
@@ -129,7 +137,7 @@ print dic['eq'](2,2); -- 1
 <h4>Example</h4>
 
 <pre><code class="language-bee">
-rule foo(a1, a2 &isin; N, xp: &lambda;(x,y &isin; N) =&gt; R) =&gt; (r &isin; Type):
+rule foo(a1, a2 &isin; N, xp: &lambda;(x,y &isin; N) =&gt; R) =&gt; (r &isin; R):
    -- prepare the result
    let r := xp(a1,a2);
 return;
@@ -144,6 +152,41 @@ return
 
 <p><b>Note:</b> A lambda function can't call a rule. Just a rule can call a lambda function. This prevent a lambda function to modify states and it remain pure.</p>
 
+<h2 id="simd-gpu">SIMD &amp; GPU auto-vectorization</h2>
+
+<p>Because lambdas are guaranteed pure and side-effect free, the Bee compiler
+automatically parallelizes collection map operations over vector domains:</p>
+
+<ul>
+<li><b>SIMD auto-vectorization:</b> Single Instruction Multiple Data instructions
+    (e.g. AVX-512) process array items in parallel chunks.</li>
+<li><b>GPU kernel offloading:</b> High-throughput lambda operations applied over large
+    collection domains are automatically lowered into native OpenCL / GPU compute pipelines.</li>
+</ul>
+
+<h2 id="method-call">Method-call dispatch (technical debt)</h2>
+
+<p class="text-secondary"><code>x.type()</code> is the canonical way to query a value's runtime
+type. Its grammar is identical to a function call, but the receiver is namespaced by <code>.</code>
+and the method lookup table is derived from the type's declared method descriptors
+(see <code>spec/06-objects.md</code> §5). This entry remains in technical debt until
+the <code>MethodCallExpression</code> AST node is implemented
+(test reference <code>test/debt/T0126-method-call.bee</code>).</p>
+
+<h2 id="diagnostics">Diagnostic error codes</h2>
+
+<table class="table table-bordered table-striped table-sm">
+<thead>
+<tr><th>Code</th><th>Condition</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>E0701</code></td><td><code>RuleCallInLambda</code></td><td>Lambda expression attempts to invoke a stateful <code>rule</code>.</td></tr>
+<tr><td><code>E0702</code></td><td><code>SideEffectInLambda</code></td><td>Lambda contains I/O statement or variable mutation.</td></tr>
+<tr><td><code>E0703</code></td><td><code>LambdaTypeMismatch</code></td><td>Passed lambda signature does not match expected parameter <code>L</code>.</td></tr>
+<tr><td><code>E0704</code></td><td><code>UnboundLambdaVariable</code></td><td>Lambda references outer variable that is not in scope.</td></tr>
+<tr><td><code>E0705</code></td><td><code>StateDeclarationInLambda</code></td><td>Attempt to use <code>new</code>, <code>let</code>, or <code>alter</code> inside a lambda.</td></tr>
+</tbody>
+</table>
 
 <!-- Footer -->
 

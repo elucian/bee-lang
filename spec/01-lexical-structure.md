@@ -125,10 +125,10 @@ Identifiers follow strict casing and character set conventions to preserve mathe
 - **Variable & Routine Identifiers:** Must start with a lowercase Latin letter (`a-z`), lowercase Greek letter (`α-ω`), or lowercase Cyrillic letter (`а-я`). May be followed by letters, digits (`0-9`), underscores (`_`), or subscript digits (`₀-₉`).
 - **User-Defined Type / Constant Identifiers:** Must start with an uppercase letter (`A-Z`, `Α-Ω`, `А-Я`) and contain 2 or more characters.
 - **Single-Letter Built-in Types (Strictly Reserved):**
-  `B` (Boolean), `A` (Alpha), `U` (Rune), `N` (Natural), `Z` (Integer), `R` (Real), `Q` (Rational), `C` (Complex), `S` (String), `D` (Date), `T` (Time), `G` (Angular).
-- **Named (non-letter) Types:** `Array`, `Map`, `List`, and `Graph` are collection types; `Lambda` (`λ`) is a higher-order function type. These are identified by name, not by a reserved single letter.
+  `B` (Boolean), `A` (Alpha), `U` (Rune), `N` (Natural), `Z` (Integer), `R` (Real), `Q` (Rational), `C` (Complex), `S` (String), `D` (Date), `T` (Time), `G` (Angular), `L` (Lambda).
+- **Named (non-letter) Types:** `Array`, `Map`, `List`, and `Graph` are collection types. These are identified by name, not by a reserved single letter.
 - **Math & Domain Symbols:**
-  - `λ`: Lambda expression marker.
+  - `λ`: Lambda expression marker — the glyph for a lambda *expression*; the *type* of a lambda value is `L` (see `spec/05-types.md` §2).
   - `π`: Constant pi (`3.141592653589793...`).
   - `ε`: Tolerance epsilon for floating-point comparison (`≈`).
   - `α`, `β`: Reserved for angle quantities (`∠`).
@@ -182,7 +182,7 @@ superscript    ::= [⁰-⁹ᵃ-ᶻ⁺⁻] ;
 (* Identifiers *)
 variable_ident ::= ( latin_lower | greek_lower | cyrillic_lower ) ( latin_lower | latin_upper | greek_lower | greek_upper | cyrillic_lower | cyrillic_upper | digit | "_" | subscript_digit )* ;
 type_ident     ::= ( latin_upper | greek_upper | cyrillic_upper ) ( latin_lower | latin_upper | greek_lower | greek_upper | cyrillic_lower | cyrillic_upper | digit | "_" )+ ;
-builtin_type   ::= "B" | "A" | "U" | "N" | "Z" | "R" | "Q" | "C" | "S" | "D" | "T" | "G" ;
+builtin_type   ::= "B" | "A" | "U" | "N" | "Z" | "R" | "Q" | "C" | "S" | "D" | "T" | "G" | "L" ;
 
 (* Numerics *)
 integer_lit    ::= digit+ ;

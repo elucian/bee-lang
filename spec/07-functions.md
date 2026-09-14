@@ -6,7 +6,7 @@ Bee enforces a strict separation between **`rule`** (stateful/imperative subprog
 
 - **Pure Lambda Expressions (`λ`):** Represent stateless, deterministic, side-effect free mathematical operations.
 - **Symbolic Designator:** Delimited by the Greek letter **`λ`** (`U+03BB`) or ASCII shorthand `\`.
-- **Lambda Type Descriptor (`L`):** Lambda expressions are first-class values typed as **`L`** (or `Lambda`). They can be stored in variables, passed as callback parameters, or returned from rules.
+- **Lambda Type (`L`):** Lambda expressions are first-class values typed as **`L`** (`Lambda`). The glyph **`λ`** is reserved for the expression syntax and full signature notation. Lambda values can be stored in variables, passed as callback parameters, or returned from rules.
 
 ---
 
@@ -28,8 +28,8 @@ When passed directly as arguments to rules or processing operators, lambdas perm
 new result := apply_transform(10, 20, (x, y) => x + y);
 ```
 
-### 2.3 Lambda Type Signatures (`L`)
-Variables and parameters representing functions use the `L` type descriptor:
+### 2.3 Lambda Type (`L`) and Signatures
+Variables and parameters representing functions use the `L` type descriptor. A full lambda signature `λ(params) => result` further constrains the expected parameter and result shapes:
 ```bee
 -- Parameter taking a lambda callback
 rule compute(a, b ∈ R, fn: λ(x, y ∈ R) => R) => (r ∈ R):

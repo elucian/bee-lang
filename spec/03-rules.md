@@ -36,6 +36,7 @@ return;
 - **Composite Types (`array`, `list`, `map`, `set`, `object`):** Transferred **by share** (reference-counted Region pointer).
 - **Optional Parameters:** Parameter declarations may specify default values using `:` (e.g. `param: default_val ∈ Type`).
 - **Variadic Parameters (`*varargs`):** The final parameter in a list may be prefixed with `*` to accept a variable number of arguments as an array (`*args ∈ [Z]`).
+- **Spread Operator (`*collection`):** At a call site, prefix a collection with `*` to spread its elements as individual positional arguments (e.g. `apply foo(*args);`).
 - **Named-Parameter Slot** *(Decision 6)*: A rule may declare an optional second parameter list enclosed in its own delimiters (see §2.4). Each parameter in this slot is normally require-bound by name at the call site via curried application; the slot participates in no positional binding. Parameters in the named slot may themselves specify `:` defaults to permit omission.
 
 ### 2.3 Result Declarations & Deconstruction
@@ -48,6 +49,7 @@ return;
   new s, d := compute_both(x, y);
   ```
 - **Result Wildcard (`_`):** Unwanted results can be suppressed using `_` (e.g. `new s, _ := compute_both(x, y);`).
+- **Rest Collection (`*target`):** In a multi-result deconstruction, prefix the final target with `*` to accumulate all remaining results into a collection (e.g. `new head, *tail := multi();` binds `head` to the first result and `tail` to the trailing results).
 - **Expression Restriction:** Rules returning multiple results ($> 1$) CANNOT be embedded directly within nested arithmetic expression trees; they must be evaluated via deconstruction assignment.
 
 ### 2.4 Named-Parameter Slots & Curried Signatures *(Decision 6)*
@@ -64,12 +66,12 @@ return;
 - **Slot declaration grammar:** Each entry in the named slot is a `named_parameter`, identical syntactically to a primary-list parameter except that it MUST be standalone (no `*` variadic prefix): `named_parameter ::= identifier [ ":" expression ] ( "∈" | "in" ) type_specifier`.
 - **Slot call site:** The named slot is invoked by appending `(named_arg_list)` after the primary call's closing `)`. The named-argument list consists only of named arguments (`identifier ":" expression`); positional entries are not permitted.
 - **Order independence:** Named arguments may appear in any order. The compiler resolves them by name, not position.
-- **Default fall-back:** A named parameter may declare a default expression following Decision 6 syntax (e.g. `sep: ", "  ∈  Str`). If the call site omits the name, the default binds. If the parameter declares no default and the caller omits it, the compiler emits `E0307 MissingNamedArgument` and halts resolution.
+- **Default fall-back:** A named parameter may declare a default expression following Decision 6 syntax (e.g. `sep: ", "  ∈  S`). If the call site omits the name, the default binds. If the parameter declares no default and the caller omits it, the compiler emits `E0307 MissingNamedArgument` and halts resolution.
 - **Empty slot:** Either list may be empty. `rule ping()(steady ∈ B):` and `rule ping():` are both valid forms; the named slot is reserved at compile time even when empty.
 
 ```bee
 -- Canonical named-slot rule
-rule print(*items ∈ [Any]) (sep: ", "  ∈  Str, end: "."  ∈  Str) => (void ∈ Void):
+rule print(*items ∈ [@]) (sep: ", "  ∈  S, end: "."  ∈  S) => (void ∈ Void):
   -- body: emit items joined by sep, terminated by end
 return;
 
@@ -101,7 +103,7 @@ new y := print("a", "b");     -- ERROR if slot is required and no defaults suppl
   ```
   The named-slot list contains only **named arguments** of the form `identifier ":" expression`. The positional primary list is unaffected. Named-argument naming and order are independent: any permutation is accepted, and omitted named parameters fall back to their declared `:` defaults.
 
-  > **Deprecated syntax:** The legacy `using` / `using:` postfix in `io_stmt` is **deprecated** as of Decision 6. Author-targeted forms such as `print(a, b) using " | ";` are removed from normative examples; the canonical form is `print(a, b) (sep: " | ");` where the `print` rule declares a named slot `(sep ∈ Str)`. The lexer emits a non-fatal `E0011 deprecated-symbol: 'using' — use named-argument `(name: ...)`` until Phase 7 audit task 7.2 hardens it to `E0009`.
+  > **Deprecated syntax:** The legacy `using` / `using:` postfix in `io_stmt` is **deprecated** as of Decision 6. Author-targeted forms such as `print(a, b) using " | ";` are removed from normative examples; the canonical form is `print(a, b) (sep: " | ");` where the `print` rule declares a named slot `(sep ∈ S)`. The lexer emits a non-fatal `E0011 deprecated-symbol: 'using' — use named-argument `(name: ...)`` until Phase 7 audit task 7.2 hardens it to `E0009`.
 
 ### 3.2 Terminal Directives
 - **`return` (Mandatory Block Terminator):** Closes the rule block and returns execution to the caller. Must align horizontally with the `rule` header (0 relative indentation).

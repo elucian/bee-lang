@@ -24,6 +24,9 @@
 ## Priority 0 — Blocking structural gaps
 
 ### 0.1 Create `tutorial/memory.html` (NEW FILE — highest priority)
+- [x] **Done.** `tutorial/memory.html` created and aligned with
+  `spec/00-memory-model.md` (three tiers, assignment semantics, `zap`/
+  `E0401`, region cleanup, thread boundaries, diagnostic table, E04xx collision flagged).
 - **Source:** `spec/00-memory-model.md`.
 - **Why:** This is the only spec module with no dedicated page; today it is
   reduced to a bullet in `features.html`. The memory model is load-bearing for
@@ -48,6 +51,9 @@
   it.
 
 ### 0.2 Drop the quiz / certification from `tutorial/index.html`
+- [x] **Done.** Quiz/certification artifacts removed; index reorganized into the
+  four-phase roadmap (Phase 1 Core, 2 Logic & Control, 3 Data & Collections,
+  4 Advanced Systems) with per-phase topic numbering restarting at 1.
 - Remove topic row `#15 … Certification` and the `#quiz` section + certificate
   alert + form link.
 - Re-number the roadmap to reflect only real topics.
@@ -58,7 +64,7 @@
 - [x] Add `memory.html` to `index.html` as a topic — now Phase 1 topic #6.
 - ~~Add a "Read next / previous" link.~~ Footer "Read next/previous/more"
   links were removed project-wide (navigation is sidebar-only now).
-- [ ] Add `tutorial/data/memory.json` (every other page has a sidebar/ToC
+- [x] Add `tutorial/data/memory.json` (every other page has a sidebar/ToC
   `data/*.json`; `memory.html` is missing one, so it does not appear in the
   sidebar navigation).
 
@@ -70,16 +76,16 @@ Each item below is a spec fact that is missing, stale, or under-specified in
 the matching tutorial page. Work item = reconcile tutorial with spec.
 
 ### 1.1 `functions.html`  ← `spec/07-functions.md`
-- [ ] Add formal **purity invariants** as a numbered, canonical list:
+- [x] Add formal **purity invariants** as a numbered, canonical list:
   statelessness (`no new/let/alter`), referential transparency, side-effect
   isolation (no I/O), and rule-isolation (rule→lambda OK; lambda→rule NOT).
-- [ ] Add `L` **type descriptor** section (first-class lambda values) and
+- [x] Add `L` **type descriptor** section (first-class lambda values) and
   lambda type signatures `fn: λ(x,y∈R)=>R`.
-- [ ] Add **SIMD & GPU auto-vectorization** section (currently entirely
+- [x] Add **SIMD & GPU auto-vectorization** section (currently entirely
   missing) — pure lambdas over collections auto-vectorize (AVX-512) and can
   lower to OpenCL/GPU pipelines.
-- [ ] Add diagnostic table `E0701`–`E0705`.
-- [ ] Mark `x.type()` method-call dispatch as **debt** (T0126, issue 15) rather
+- [x] Add diagnostic table `E0701`–`E0705`.
+- [x] Mark `x.type()` method-call dispatch as **debt** (T0126, issue 15) rather
   than implying it works today.
 
 ### 1.2 `types.html`  ← `spec/05-types.md`
@@ -213,11 +219,11 @@ These are prerequisites or supporting chores, not page authoring.
   depends on it.
 
 ### 3.2 Single-letter built-in type list is inconsistent
-- `spec/01` reserved types: `Z N R Q C B S A M L G`.
-- `spec/05` catalogue: `B A U N Z R Q C S D T L G` (13 types).
-- The two disagree on `A` (Array vs Alpha), `M` (Map), `D`/`T`, and the
-  membership. The tutorial cannot render a coherent type table until this is
-  settled in `spec/`.
+- [x] **Resolved.** `spec/01` now lists the canonical 13 reserved single-letter
+  types `B A U N Z R Q C S D T L G` (with `A`=Alpha, `L`=Lambda, `G`=Angular),
+  matching the `spec/05` catalogue and the `types.html` table exactly.
+- `Array`, `Map`, `List`, `Graph` are now explicitly named (non-letter) complex
+  types, identified by the `Type` column rather than a reserved letter.
 
 ### 3.3 `E04xx` diagnostic block is overloaded
 - `spec/00` (memory) uses `E0401`–`E0404`; `spec/04` (structure) uses

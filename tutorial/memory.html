@@ -5,15 +5,10 @@
   <meta name="author" content="Elucian Moise">
   <meta name="keywords" content="sage, code, bee, bee-lang, memory, ARC, arena, GC, zap, reference counting">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <!-- Website title -->
-  <title></title>Bee Memory Model</title>
-  <!-- Bootstrap CSS -->
+  <title>Bee Memory Model</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-  <!-- Icon -->
-  <link rel="icon" type="image/png"  href="/images/favicon.ico">
-  <!-- Bee Highlighter -->
+  <link rel="icon" type="image/png" href="/images/favicon.ico">
   <script src="/projects/bee/js/bee.js"></script>
-  <!-- Sage-Code CSS -->
   <link rel="stylesheet" href="/assets/css/sage-common.css">  <link rel="stylesheet" href="/assets/css/content-topic.css">    <link rel="stylesheet" href="/assets/css/content-code.css">    <link rel="stylesheet" href="/assets/css/content-sidebar.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
@@ -38,15 +33,13 @@
       <main id="main-content" class="col-lg-9 col-12 order-2 order-lg-1 p-3">
 <div class="container">
 
-<!-- header -->
-
 <h1 id="bee-memory-model">Memory Model</h1>
 <div class="alert alert-secondary shadow-sm">
   Bee uses a deterministic, <b>three-tier hybrid memory model</b> engineered for
-</b>  zero-overhead in critical paths, safe parallel execution, and low latency.
-  The three tiers are <b>Atomic</b> Reference Counting (ARC)</b> for mutable heap
-  data, <b>Region-Based</b> Arenas</b> for transient rule-local values managed with
-  <code>z</code>ap</code>, and a <b>compacting gener</b>ational GC</b> devoted solely to
+  zero-overhead in critical paths, safe parallel execution, and low latency.
+  The three tiers are <b>Atomic Reference Counting (ARC)</b> for mutable heap
+  data, <b>Region-Based Arenas</b> for transient rule-local values managed with
+  <code>zap</code>, and a <b>compacting generational GC</b> devoted solely to
   immutable strings and ropes.
 </div>
 
@@ -54,101 +47,99 @@
 
 <table class="table table-bordered table-striped table-sm">
   <thead>
-    <tr><th>#</tr></th></th><th>Tier</th><th>Owns</th></th><th>Re</th>claim strategy</th><th>Determinism</th</th>></tr>
+    <tr><th>#</th><th>Tier</th><th>Owns</th><th>Reclaim strategy</th><th>Determinism</th></tr>
   </thead>
   <tbody>
     <tr>
-      <td>1</td</td>>
-      <td>Atomic</td> Reference Counting (ARC)</td>
-      <td>Mutable heap:</td> objects, dynamic collections, OS handles</td>
-      <td>Im</td>mediate free on last reference release</td>
-      <td>Immediate</td>, synchronous</td>
+      <td>1</td>
+      <td>Atomic Reference Counting (ARC)</td>
+      <td>Mutable heap: objects, dynamic collections, OS handles</td>
+      <td>Immediate free on last reference release</td>
+      <td>Immediate, synchronous</td>
     </tr>
     <tr>
       <td>2</td>
       <td>Region-Based Arena</td>
-      <td></td>Transient rule/block locals</td>
-      <td>Single-instruction unwind on</td> scope exit or <code></td>zap</code></td>
-      <td>Immediate, scope-bounded</td></td>
+      <td>Transient rule/block locals</td>
+      <td>Single-instruction unwind on scope exit or <code>zap</code></td>
+      <td>Immediate, scope-bounded</td>
     </tr>
-</code>    <tr>
-      </td><td>3</td>
+    <tr>
+      <td>3</td>
       <td>Compacting Generational GC</td>
-      <td>Immutable</td> strings, slices, rope buffers</td></td>
-      <td>Background two-space copying</td> compaction</td>
-      </td><td>Amortized, lock-free</td>
+      <td>Immutable strings, slices, rope buffers</td>
+      <td>Background two-space copying compaction</td>
+      <td>Amortized, lock-free</td>
     </tr>
   </tbody>
 </table>
 
-<h2</td> id="arc">Tier 1 — Atomic Reference Counting (ARC)</h2>
+<h2 id="arc">Tier 1 — Atomic Reference Counting (ARC)</h2>
 
-<p>ARC is the default</p> management for <b>mutable dynamic structures</b></b>, object
+<p>ARC is the default management for <b>mutable dynamic structures</b>, object
 instances, and system resources (files, channels, sockets). It guarantees
 immediate, deterministic resource cleanup when the last reference is released.</p>
 
 <h4 id="arc-targets">Allocation scope</h4>
 <ul>
   <li>Objects (<code>object</code>)</li>
-  <li></li></code>Dynamic collections (<code>array</li></code>, <code></code></code>map</code>, <code>list</code></code>, <code>set</code>)</li>
-  <li</code>>System OS handles (files, channels, sockets)</li>
+  <li>Dynamic collections (<code>array</code>, <code>map</code>, <code>list</code>, <code>set</code>)</li>
+  <li>System OS handles (files, channels, sockets)</li>
 </ul>
 
 <h4 id="arc-header">Header layout (16 bytes)</h4>
-<p>Every ARC-allocated object carries a</p> standardized 16-byte header preceding a
+<p>Every ARC-allocated object carries a standardized 16-byte header preceding a
 variable-width payload:</p>
-<pre><code class="language-text</pre>">+-------------------+-------------------+-----------------------+
+<pre><code class="language-text">+-------------------+-------------------+-----------------------+
 |  RefCount (64bit) |   TypeID (32bit)  | Flags / Metadata(32) |
 +-------------------+-------------------+-----------------------+
 |                   Payload Data (Variable Width)               |
-+---------------------------------------------------------------+
-</code></pre>
++---------------------------------------------------------------+</code></pre>
 
 <h4 id="arc-ops">Operational semantics</h4>
 <ul>
-  <li>On</li> assignment / copy: <code>AtomicInc(RefHeader</code>.RefCount)</code></li>
-  <li>On</li> scope exit / re-assignment: <code>if Atomic</code>Dec(RefHeader.RefCount) == 0 then DestructAndFree(Object)</code></li>
+  <li>On assignment / copy: <code>AtomicInc(RefHeader.RefCount)</code></li>
+  <li>On scope exit / re-assignment: <code>if AtomicDec(RefHeader.RefCount) == 0 then DestructAndFree(Object)</code></li>
   <li>Destructor execution is immediate and synchronous, releasing backing native
-      resources (e</li>.g. file descriptors) on the calling thread.</li>
+      resources (e.g. file descriptors) on the calling thread.</li>
 </ul>
 
 <h2 id="arena">Tier 2 — Region-Based Arena &amp; <code>zap</code></h2>
 
-</code><p>Every <code>rule</code> (and nested block frame) allocates a light</p></code>, stack-bound
+<p>Every <code>rule</code> (and nested block frame) allocates a light, stack-bound
 Region Arena (2 KB initial chunk). Short-lived locals allocate directly from the
 active arena offset with no per-object heap allocation
-(<code>ptr = arena</code>.top; arena.top += size</code>).</p>
+(<code>ptr = arena.top; arena.top += size</code>).</p>
 
 <h4 id="arena-cleanup">Region cleanup</h4>
-<p></p>On block termination or an iteration jump (<code></code>return</code>, <code>done</code>,
-</code><code>next</code>), the arena offset is unw</code>ound in a single instruction
-(<code>arena.top = arena.base</code>), instantly reclaiming all region</code>-allocated memory.</p>
+<p>On block termination or an iteration jump (<code>return</code>, <code>done</code>,
+<code>next</code>), the arena offset is unwound in a single instruction
+(<code>arena.top = arena.base</code>), instantly reclaiming all region-allocated memory.</p>
 
-<h4 id="zap">Manual deallocation (<code>zap</code></code>)</h4>
-<pre><code class</pre>="language-bee">zap identifier;
-</code></pre>
-<p>In Hot Zones (performance-critical loops), <code>zap</code</p>> explicitly invalidates the
-</code>pointer and resets the target memory slot immediately.</p>
+<h4 id="zap">Manual deallocation (<code>zap</code>)</h4>
+<pre><code class="language-bee">zap identifier;</code></pre>
+<p>In Hot Zones (performance-critical loops), <code>zap</code> explicitly invalidates the
+pointer and resets the target memory slot immediately.</p>
 <ul>
   <li><b>Static analysis invariant:</b> the compiler performs lifetime tracking. Reading
-</li>      or writing an</b> identifier after <code>zap</code> in the</code> same control-flow graph is a
-      compile-time error <code>E040</code>1: AccessAfterZap</code>.</li>
-  <li><b></li></b>Runtime safety guard:</b> in non-optimized debug builds (<code>-d</code>),
-      <code>zap</code></code> zero-fills the target pointer slot, so a later dereference raises
-      <code>Panic: UseAfter</code>Zap</code>.</li>
+      or writing an identifier after <code>zap</code> in the same control-flow graph is a
+      compile-time error <code>E0401: AccessAfterZap</code>.</li>
+  <li><b>Runtime safety guard:</b> in non-optimized debug builds (<code>-d</code>),
+      <code>zap</code> zero-fills the target pointer slot, so a later dereference raises
+      <code>Panic: UseAfterZap</code>.</li>
 </ul>
 
 <h2 id="gc">Tier 3 — Compacting Generational GC (immutable strings &amp; ropes)</h2>
 
-<p>A special-purpose garbage collector is dedicated to <b>immutable</b></b> string
+<p>A special-purpose garbage collector is dedicated to <b>immutable</b> string
 literals, dynamic string concatenations, and rope nodes. It guarantees efficient
 interning, zero fragmentation, and lock-free thread-safe sharing.</p>
 
 <h4 id="gc-roots">GC roots</h4>
 <ul>
-  <li>Thread execution stacks</li</li>>
+  <li>Thread execution stacks</li>
   <li>Region Arenas</li>
-  <li</li>>ARC object payload pointers that point into the String Heap</li>
+  <li>ARC object payload pointers that point into the String Heap</li>
 </ul>
 
 <h4 id="gc-compaction">Compaction</h4>
@@ -158,70 +149,68 @@ write barriers on reader threads.</p>
 
 <h2 id="assignment">Assignment &amp; mutability semantics</h2>
 
-<p>Two</p> assignment operators govern how values are written; their behavior depends on
+<p>Two assignment operators govern how values are written; their behavior depends on
 the storage class of the target (native vs boxed vs reference).</p>
 
 <table class="table table-bordered table-striped table-sm">
   <thead>
-    <tr><th>Operator</th</tr></th>><th>Meaning</th><th>Effect</th></tr>
+    <tr><th>Operator</th><th>Meaning</th><th>Effect</th></tr>
   </thead>
   <tbody>
-   </th></th> <tr>
+    <tr>
       <td><code>:=</code></td>
-      <td>Assign</td></code></td>
-      <td>With <code>new</code>:</td> allocate a new storage</td> location. With <code></code>let</code>:
+      <td>Assign</td>
+      <td>With <code>new</code>: allocate a new storage location. With <code>let</code>:
           update the existing value in place.</td>
-    </tr</code>>
+    </tr>
     <tr>
       <td><code>::</code></td>
       <td>Clone</td>
-      <td>Boxed</td></td>/objects: deep copy (</td>structural clone) into an independent heap payload.
+      <td>Boxed/objects: deep copy (structural clone) into an independent heap payload.
           Primitive natives: equivalent to <code>:=</code>.</td>
     </tr>
-</code>  </tbody>
+  </tbody>
 </table>
 
-<h4 id="let-value-rules">Value modification rules (<code>let</code></code> with <code></code>:=</code>)</h4>
+<h4 id="let-value-rules">Value modification rules (<code>let</code> with <code>:=</code>)</h4>
 <ul>
-  <li>Native variable → value</li> mutated <b>in place</b>.</li>
-  <li>Boxed</b> variable → the <b></li></b>boxed value</b> is changed in place.</li>
-  <li>Reference on the right-hand side →</li> value is transferred by <b>deep copy</b></b>.</li>
+  <li>Native variable → value mutated <b>in place</b>.</li>
+  <li>Boxed variable → the <b>boxed value</b> is changed in place.</li>
+  <li>Reference on the right-hand side → value is transferred by <b>deep copy</b>.</li>
 </ul>
 
 <h4 id="mutability">Mutability modifiers</h4>
-<pre><code</pre> class="language-bee">new    identifier ((∈) | in) type_specifier ;   (* declare *)
+<pre><code class="language-bee">new    identifier ((&#8712;) | in) type_specifier ;   (* declare *)
 let    identifier (:= | ::) expression ;        (* mutable update *)
-alter  identifier ...                           (* modify an existing element *)
-</code></pre>
+alter  identifier ...                           (* modify an existing element *)</code></pre>
 <ul>
-  <li><code>new</li></code></code> — declare and allocate a fresh storage location.</li>
-  <li><code</li>>let</code> — update the value of an existing variable.</li>
-  <li><code>alter</li></code></code> — modify an existing variable in place (explicit mutation).</li>
+  <li><code>new</code> — declare and allocate a fresh storage location.</li>
+  <li><code>let</code> — update the value of an existing variable.</li>
+  <li><code>alter</code> — modify an existing variable in place (explicit mutation).</li>
 </ul>
 
 <h2 id="ebnf">Formal EBNF</h2>
 
-<pre><code class="language-ebnf">(*</pre> Memory Management Statements *)
+<pre><code class="language-ebnf">(* Memory Management Statements *)
 zap_statement     ::= "zap" identifier ";" ;
 new_statement     ::= "new" identifier [ ":" type_specifier ]
                       [ ( ":=" | "::" ) expression ] ";" ;
 let_statement     ::= "let" identifier ( ":=" | "::" ) expression ";" ;
 
 (* Variable Mutability Modifiers *)
-variable_decl     ::= "new" identifier ( "∈" | "in" ) type_specifier ";" ;
-mutability_prefix ::= "let" | "alter" ;
-</code></pre>
+variable_decl     ::= "new" identifier ( "&#8712;" | "in" ) type_specifier ";" ;
+mutability_prefix ::= "let" | "alter" ;</code></pre>
 
 <h2 id="concurrency">Concurrency &amp; cross-thread boundaries</h2>
 
 <ul>
-  <li><b>Thread</li></b> isolation:</b> spawned tasks (<code>begin</code>) run in isolated Region</code> Arenas.</li>
-  <li><b>Immutable sharing:</b> GC</b></li>-managed immutable strings and ropes cross thread
+  <li><b>Thread isolation:</b> spawned tasks (<code>begin</code>) run in isolated Region Arenas.</li>
+  <li><b>Immutable sharing:</b> GC-managed immutable strings and ropes cross thread
       boundaries without locks or reference copies.</li>
-  <li><b</li>>Mutable ARC transfer:</b> passing a mutable ARC object to a spawned thread
-      increments its atomic reference count (<code>LOCK</code> XADD</code>).</li>
+  <li><b>Mutable ARC transfer:</b> passing a mutable ARC object to a spawned thread
+      increments its atomic reference count (<code>LOCK XADD</code>).</li>
   <li><b>Parallel error isolation:</b> an uncaught exception or panic in a worker thread
-      freezes</li></b> that thread's local Region Arena and captures diagnostic context into the
+      freezes that thread's local Region Arena and captures diagnostic context into the
       thread-local <code>$trial</code> handle, preventing corruption of parent state.</li>
 </ul>
 
@@ -230,25 +219,23 @@ mutability_prefix ::= "let" | "alter" ;
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
-</tr></th></th></th>  </thead>
+  </thead>
   <tbody>
-    <tr></tr><td><code>E0401</code></td></td></code><td>Use of identifier after</td> <code>zap</code></code></td><td></td>Compile-time fatal error with source line location.</td></tr>
-    <tr></tr><td><code>E0402</code></td></td></code><td>Pointer escape from Region Arena to outer scope</td></td><td>Compiler automatically</td> promotes the allocation from Region to ARC Heap.</td></tr>
-    <tr><td><code>E0403</td></tr></code></code></td><td></td>Unhandled cycle in an ARC structure</td><td>Static lifetime analysis, or</td> runtime leak warning under <code>-d</code>.</td></tr>
-    <tr><td><code>E0404</code></tr></td></code></td><td>Invalid cross</td>-thread mutation of an unshared reference</td><td>Compile-time data</td>-race restriction.</td></tr>
+    <tr><td><code>E0401</code></td><td>Use of identifier after <code>zap</code> statement</td><td>Compile-time fatal error with source line location.</td></tr>
+    <tr><td><code>E0402</code></td><td>Pointer escape from Region Arena to outer scope</td><td>Compiler automatically promotes the allocation from Region to ARC Heap.</td></tr>
+    <tr><td><code>E0403</code></td><td>Unhandled cycle in an ARC structure</td><td>Static lifetime analysis, or runtime leak warning under <code>-d</code>.</td></tr>
+    <tr><td><code>E0404</code></td><td>Invalid cross-thread mutation of an unshared reference</td><td>Compile-time data-race restriction.</td></tr>
   </tbody>
 </table>
 
 <div class="alert alert-warning shadow-sm">
-  <b>Spec</b>-level defect to resolve:</b> the <code>E</code>04xx</code> block is overloaded.
-  <code>spec/00-m</code>emory-model.md</code> uses <code>E040</code>1</code>–<code>E0404</code></code> for
-  memory violations, while <code></code>spec/04-structure.md</code> reuses
-  <code>E0401</code>–<code>E0405</code></code></code> for module errors with different meanings.
+  <b>Spec-level defect to resolve:</b> the <code>E04xx</code> block is overloaded.
+  <code>spec/00-memory-model.md</code> uses <code>E0401</code>-<code>E0404</code> for
+  memory violations, while <code>spec/04-structure.md</code> reuses
+  <code>E0401</code>-<code>E0406</code> for module errors with different meanings.
   Students implementing diagnostics must treat these as distinct until the spec ratifies
   a single numbering scheme; do not invent a disambiguation here.
 </div>
-
-<!-- Footer -->
 
 </div>
       </main>
@@ -276,6 +263,6 @@ mutability_prefix ::= "let" | "alter" ;
   };
 </script>
 <script src="/assets/js/sage.js" defer></script>
-<script src</script>="/assets/js/topic-loader.js" defer></script>
+<script src="/assets/js/topic-loader.js" defer></script>
 </body>
 </html>
