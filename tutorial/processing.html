@@ -42,7 +42,7 @@
 
 
 <h1 id="data-processing">Data Processing</h1>
-<div class="alert alert-secondary shadow-sm">An important aspect in Computer Science is data processing. Bee has basic features to create collections, analize and combine data. We analyze several use-cases here but yet more features will be created over time.</div>
+<div class="alert alert-secondary shadow-sm">An important aspect in Computer Science is data processing. Bee has basic features to create collections, analyze and combine data. We analyze several use-cases here but yet more features will be created over time.</div>
 
 <h4>Topics:</h4>
 
@@ -532,7 +532,7 @@ return;
 
 <p>New map defined from a domain</p>
 <pre><code class="language-bee">-- define hash-map using a map-builder
-new mymap := { (x:x&sup2;) | x &isin; (2..<10)(2) &and; (x % 2 = 0) };
+new mymap := { (x:x&sup2;) | x &isin; (2..&lt;10)(2) &and; (x % 2 = 0) };
 rule main():
   print mymap; -- {(2:4),(4:16),(6:36),(8:64)}
 return;
@@ -1143,7 +1143,7 @@ return;
  "#(&gt;0:10,2)" -- right align European numeric style with 2 decimals
 </code></pre>
 
-<h4 id="text-rules"></a>Text rules:</h4>
+<h4 id="text-rules">Text rules:</h4>
 <ul>
 <li>format (str &isin; Text, map &isin; {S}) &isin; X;</li>
 <li>format (str &isin; Text, map &isin; {Z}) &isin; X;</li>
