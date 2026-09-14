@@ -1,0 +1,60 @@
+[
+  {
+    "title": "Bee Rules",
+    "link": "#bee-rules",
+    "children": [
+      {
+        "title": "Rule Purpose",
+        "link": "#rule-purpose"
+      },
+      {
+        "title": "Rule Anatomy",
+        "link": "#rule-anatomy"
+      },
+      {
+        "title": "Features",
+        "link": "#rule-features",
+        "children": [
+          {
+            "title": "Rule parameters",
+            "link": "#rule-params"
+          },
+          {
+            "title": "Rule results",
+            "link": "#rule-results"
+          },
+          {
+            "title": "Variadic Rule",
+            "link": "#variadic-rules"
+          },
+          {
+            "title": "Early Termination",
+            "link": "#early-termination"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Advanced Topics",
+    "link": "#advanced-topics",
+    "children": [
+      {
+        "title": "Forward declarations",
+        "link": "#forward-declarations"
+      },
+      {
+        "title": "Recursive Rules",
+        "link": "#recursive-rules"
+      },
+      {
+        "title": "External rules",
+        "link": "#external-rules"
+      },
+      {
+        "title": "Closures",
+        "link": "#closures"
+      }
+    ]
+  } 
+]

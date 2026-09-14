@@ -1,0 +1,120 @@
+[
+  {
+    "title": "Bee Types",
+    "link": "#bee-types",
+    "children": [
+      {
+        "title": "Primitive Types",
+        "link": "#primitive-types"
+      },
+      {
+        "title": "Constant Literals",
+        "link": "#constant-literals"
+      },
+      {
+        "title": "Special types",
+        "link": "#special-types"
+      },
+      {
+        "title": "Collection types",
+        "link": "#collection-types"
+      },
+      {
+        "title": "Type declaration",
+        "link": "#type-declaration"
+      },
+      {
+        "title": "Range Type",
+        "link": "#range-type"
+      },
+      {
+        "title": "Domain Type",
+        "link": "#domain-type"
+      },
+      {
+        "title": "Constant declarations",
+        "link": "#constant-declarations"
+      },
+      {
+        "title": "Variable declarations",
+        "link": "#variable-declarations"
+      },
+      {
+        "title": "Alphanumeric type",
+        "link": "#alphanumeric-type"
+      }
+    ]
+  },
+  {
+    "title": "Data processing",
+    "link": "#processing",
+    "children": [
+      {
+        "title": "Modify values",
+        "link": "#modify-values"
+      },
+      {
+        "title": "Type checking",
+        "link": "#type-checking"
+      },
+      {
+        "title": "Type conversion",
+        "link": "#type-conversion"
+      }
+    ]
+  },
+  {
+    "title": "Boolean type",
+    "link": "#boolean-type",
+    "children": [
+      {
+        "title": "Logic operations",
+        "link": "#logic-operations"
+      },
+      {
+        "title": "Logical expression",
+        "link": "#logical-expression"
+      }
+    ]
+  },
+  {
+    "title": "Type inference",
+    "link": "#type-inference-2",
+    "children": [
+      {
+        "title": "Default types",
+        "link": "#default-types"
+      },
+      {
+        "title": "Composite Types",
+        "link": "#ti-composite-types"
+      },
+      {
+        "title": "Parameter types",
+        "link": "#parameter-types"
+      }
+    ]
+  },
+  {
+    "title": "Rational numbers",
+    "link": "#rational-numbers",
+    "children": [
+      {
+        "title": "Q Notation",
+        "link": "#q-notation"
+      },
+      {
+        "title": "Typical Q numbers",
+        "link": "#typical-q-numbers"
+      },
+      {
+        "title": "Default Q number",
+        "link": "#default-q-number"
+      },
+      {
+        "title": "Approximate comparison",
+        "link": "#approximate-comparison"
+      }
+    ]
+  }
+]

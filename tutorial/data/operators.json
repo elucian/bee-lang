@@ -1,0 +1,56 @@
+[
+  {
+    "title": "Bee Syntax",
+    "link": "#bee-syntax",
+    "children": [
+      {
+        "title": "Operators",
+        "link": "#operators"
+      },
+      {
+        "title": "Delimiters",
+        "link": "#delimiters"
+      },
+      {
+        "title": "Strings",
+        "link": "#strings"
+      },
+      {
+        "title": "Single Symbols",
+        "link": "#single-symbols"
+      },
+      {
+        "title": "Numeric operators",
+        "link": "#numeric-operators"
+      },
+      {
+        "title": "Double Symbols",
+        "link": "#double-symbols"
+      },
+      {
+        "title": "Modifiers",
+        "link": "#modifiers"
+      },
+      {
+        "title": "Relation Operators",
+        "link": "#relation-operators"
+      },
+      {
+        "title": "Collection operators",
+        "link": "#collection-operators"
+      },
+      {
+        "title": "Logic Operators",
+        "link": "#logic-operators"
+      },
+      {
+        "title": "Bitwise operators",
+        "link": "#bitwise-operators"
+      },
+      {
+        "title": "String operators",
+        "link": "#string-operators"
+      }
+    ]
+  }
+]

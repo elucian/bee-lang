@@ -1,0 +1,152 @@
+[
+  {
+    "title": "Data Processing",
+    "link": "#data-processing",
+    "children": [
+      {
+        "title": "Boxed values",
+        "link": "#boxed-values"
+      },
+      {
+        "title": "Share vs copy",
+        "link": "#share-vs-copy"
+      },
+      {
+        "title": "Array Operations",
+        "link": "#array-operations"
+      },
+      {
+        "title": "Array spreading",
+        "link": "#array-spreading"
+      },
+      {
+        "title": "Array decomposition",
+        "link": "#array-decomposition"
+      },
+      {
+        "title": "Array slicing",
+        "link": "#array-slicing"
+      },
+      {
+        "title": "Matrix Operations",
+        "link": "#matrix-operations"
+      },
+      {
+        "title": "Collection Builders",
+        "link": "#collection-builders"
+      },
+      {
+        "title": "Set Builders",
+        "link": "#set-builders"
+      },
+      {
+        "title": "Hash-Map Builder",
+        "link": "#hash-builder"
+      },
+      {
+        "title": "Array Builder",
+        "link": "#array-builders"
+      },
+      {
+        "title": "Logic Qualifiers",
+        "link": "#logic-qualifiers"
+      },
+      {
+        "title": "Collection Casting",
+        "link": "#collection-casting"
+      },
+      {
+        "title": "Collection Filtering",
+        "link": "#collection-filtering"
+      },
+      {
+        "title": "Collection Mapping",
+        "link": "#collection-mapping"
+      },
+      {
+        "title": "List Operations",
+        "link": "#list-operations",
+        "children": [
+          {
+            "title": "List Concatenation",
+            "link": "#list-concatenation"
+          },
+          {
+            "title": "Join built-in",
+            "link": "#join-built-in"
+          },
+          {
+            "title": "Split built-in",
+            "link": "#split-built-in"
+          },
+          {
+            "title": "List as stack",
+            "link": "#list-as-stack"
+          },
+          {
+            "title": "List as queue",
+            "link": "#list-as-queue"
+          },
+          {
+            "title": "Other built-ins",
+            "link": "#other-built-ins"
+          },
+          {
+            "title": "Special attributes",
+            "link": "#special-attributes"
+          }
+        ]
+      },
+      {
+        "title": "Collection Iteration",
+        "link": "#collection-iteration"
+      },
+      {
+        "title": "Hash collections",
+        "link": "#hash-collections"
+      },
+      {
+        "title": "Type inference",
+        "link": "#type-inference",
+        "children": [
+          {
+            "title": "Example",
+            "link": "#example"
+          },
+          {
+            "title": "String Conversion",
+            "link": "#string-conversion"
+          },
+          {
+            "title": "String: concatenation",
+            "link": "#string-concatenation"
+          },
+          {
+            "title": "String Generator",
+            "link": "#string-generator"
+          },
+          {
+            "title": "String Pattern",
+            "link": "#string-pattern"
+          },
+          {
+            "title": "Control codes",
+            "link": "#control-codes"
+          }
+        ]
+      },
+      {
+        "title": "String Interpolation",
+        "link": "#string-interpolation"
+      },
+      {
+        "title": "Large template",
+        "link": "#large-template"
+      },
+      {
+        "title": "Numeric format",
+        "link": "#numeric-format"
+      }
+    ]
+  }
+]

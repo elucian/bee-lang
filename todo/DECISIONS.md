@@ -22,7 +22,7 @@ production.
 | D2    | Identity vs mutation (`is`/`is not`, `+=`)  | ✅ Ratified       | 2026-09-12  |
 | D3    | Operator canonicalisation (`<>` vs `≠`)     | ✅ Ratified       | 2026-09-12  |
 | D4    | Typechecker posture (postpoend)             | ✅ Ratified       | 2026-09-12  |
-| D5    | Tutorial sync (`/tutorial/` live)           | ✅ Ratified       | 2026-09-12  |
+| D5    | Tutorial sync (`/tutorial/` versioned local)| ✅ Ratified       | 2026-09-12  |
 | D6    | Curried rule signatures `(sep: ...)`        | ✅ Ratified       | 2026-09-12  |
 | D7    | Logic operator synonymy + `is not` token    | ✅ Ratified       | 2026-09-12  |
 | D8    | Rule-call result destructuring (T0127 park) | 🟢 Deferred       | 2026-09-12  |
@@ -106,14 +106,18 @@ evaluator) use 1-based semantics. The bridging pass in
 
 ---
 
-## D5 — Tutorial sync — `/tutorial/` is live
+## D5 — Tutorial sync — `/tutorial/` is a versioned local mirror
 
-**Status:** ✅ Ratified 2026-09-12. Junction renamed `/bee-tutorial/` → `/tutorial/` 2026-09-13.
+**Status:** ✅ Ratified 2026-09-12. De-linked from junction 2026-09-14.
 **Source of truth:** MANIFEST.md "Decision 5".
 
-* `/web/` is a legacy local copy (will be discarded).
-* `/tutorial/` is the canonical **live** repository target, with
-  direct git push propagation to the user's public site.
+* `/web/` has been removed; there is no legacy local copy.
+* `/tutorial/` is a **versioned local directory** in this repo — the
+  source of truth for the rendered HTML pages — *not* a symlink/junction.
+* It is mirrored one-way into the external SCL site directory
+  (`C:\Users\eluci\sage-code\scl\projects\bee`) via `sh run.sh sync`
+  (backing script `scripts/sync_tutorial.py`).
+* Push (local → SCL) is the default; `sh run.sh sync pull` reverses direction.
 * `.github/` exclusions ensure no GitHub-action workflow auto-mirrors
   the legacy copy.
 * All future documentation edits land in `/tutorial/` only.

@@ -1,0 +1,1 @@
+Help me improve Bee prep quiz. Is a quiz designed for beginners to learn about Bee not an exam. Please create meaningful questions, each with 4 possible answers. Mark every correct answer with a star like (*) at the end. Do not use a), b), c) d) or 1. 2. 3. 4. in front of the answers use a dash (-) to create a bulet list. Start with 12 questions about Bee control flow statements.

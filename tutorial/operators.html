@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="Bee specification: syntax operators.">
+  <meta name="author" content="Elucian Moise">
+  <meta name="keywords" content="bee, language, syntax, overview, expressions">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- Website title -->
+  <title>Bee Operators`</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+  <!-- Icon -->
+  <link rel="icon" type="image/png"  href="/images/favicon.ico">
+  <!-- Bee Highlighter -->
+  <script src="/projects/bee/js/bee.js"></script>
+  <!-- Sage-Code CSS -->
+  <link rel="stylesheet" href="/assets/css/sage-common.css">  <link rel="stylesheet" href="/assets/css/content-topic.css">    <link rel="stylesheet" href="/assets/css/content-code.css">    <link rel="stylesheet" href="/assets/css/content-sidebar.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body data-topic-runtime-injected="true" onload="bee_render()">
+<div class="container">
+
+  <header id="dynamic-header" class="container-fluid pb-2"></header>
+
+  <div class="container-fluid px-0">
+    <div class="row g-0">
+      <aside class="side-bar col-lg-3 col-12">
+        <div id="study-sidebar" class="sidebar-content shadow-sm p-3 sticky-top">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Lab Topics</h5>
+          </div>
+          <hr>
+          <ul id="bookmark-list" class="list-unstyled">
+          </ul>
+        </div>
+      </aside>
+
+      <main id="main-content" class="col-lg-9 col-12 order-2 order-lg-1 p-3">
+<div class="container">
+
+<!-- header -->
+
+
+
+<h1 id="bee-syntax">Bee Syntax</h1>
+
+<div class="alert alert-secondary shadow-sm">
+  Bee is not a curly bracket language. Its syntax is inspired from Ada, Ruby, Fortran and Julia. We have created an imperative programming language with original front-end.</div>
+
+
+<h2 id="operators">Operators</h2>
+
+<p>Bee operators are ASCII or Unicode symbols. One operator can be created using one or two characters. This is why Bee language is considered experimental, esoteric & disruptive.</p>
+
+<h2 id="delimiters">Delimiters</h2>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+-...-+</td>
+<td>Multi-line boxed comments</td>
+</tr>
+<tr>
+<td>#(....)</td>
+<td>String interpolation (placeholder) for operator "?"</td>
+</tr>
+<tr>
+<td>(_,_,_)</td>
+<td>Expression | List literal</td>
+</tr>
+<tr>
+<td>[_,_,_]</td>
+<td>Index | Array literals | Parameterize types</td>
+</tr>
+<tr>
+<td>{_,_,_}</td>
+<td>Enumeration type | Set of values | Hash map</td>
+</tr>
+</tbody>
+</table>
+<h2 id="strings">Strings</h2>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>symbol</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>`x`</td>
+<td>Back quoted string: regular expression.</td>
+</tr>
+<tr>
+<td>'x'</td>
+<td>Single quoted string literal or ASCII code point</td>
+</tr>
+<tr>
+<td>"y"</td>
+<td>Double quoted string literal or UTF32 code point</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="single-symbols">Single Symbols</h2>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>symbol</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>!</td>
+<td>Logical NOT (unary prefix) | Range/set modifier in !. !! !&isin;</td>
+</tr>
+<tr>
+<td>?</td>
+<td>Template modifier. Associated with string templates</td>
+</tr>
+<tr>
+<td>*</td>
+<td>String replication | Varargs prefix | Spread operator | Many something</td>
+</tr>
+<tr>
+<td>@</td>
+<td>Reference-of operator: @a yields the reference identity of a; use @a = @b to check whether a is b (same allocation)</td>
+</tr>
+<tr>
+<td>$</td>
+<td>System sigil | Las element in collection</td>
+</tr>
+<tr>
+<td>&amp;</td>
+<td>String concatenation | number concatenation</td>
+</tr>
+<tr>
+<td>#</td>
+<td>Title | String interpolation </td>
+</tr>
+<tr>
+<td>&isin;</td>
+<td>Define variable/constant/result/parameter type</td>
+</tr>
+<tr>
+<td>_</td>
+<td>Anonymous variable | Constant value = one space (_ = ' ')</td>
+</tr>
+<tr>
+<td>+</td>
+<td>Maximum upper limit for a domain | Unicode notation U+</td>
+</tr>
+<tr>
+<td>-</td>
+<td>Minimum lower limit in a domain | Unicode notation U-</td>
+</tr>
+<tr>
+<td>:</td>
+<td>Start a block or define something</td>
+</tr>
+<tr>
+<td>:</td>
+<td>Pair-up key-value in: objects, rule parameters, rule arguments, hash-map pairs</td>
+</tr>
+<tr>
+<td>;</td>
+<td>End of statement | Statement separator</td>
+</tr>
+<tr>
+<td>.</td>
+<td>Decimals for real numbers | Path string concatenation</td>
+</tr>
+<tr>
+<td>.</td>
+<td>Membership dot notation | Prefix for public member/attribute</td>
+<tr>
+<td>,</td>
+<td>Enumeration of elements | expressions</td>
+</tr>
+<tr>
+<td>|</td>
+<td>Declarative collection builder: set := { x*2 | x &isin; (0..3)}</td>
+</tr>
+<tr>
+<td>\</td>
+<td>Escape character (&nbsp;\n&nbsp;:= New Line), (&nbsp;\"&nbsp;= Double Quotes)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="numeric-operators">Numeric operators</h2>
+<p>Listed in the order of precedence top down.</p>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>symbol</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-</td>
+<td>Change sign, replace "y = -x" with "y = -1*x"</td>
+</tr>
+<tr>
+<td>/</td>
+<td>Rational number division</td>
+</tr>
+<tr>
+<td>^</td>
+<td>Power symbol used with fractions or expressions</td>
+</tr>
+<tr>
+<td>√</td>
+<td>Radical: x√n is equivalent to x^(1/n)</td>
+</tr>
+<tr>
+<td>*</td>
+<td>Multiplication alternative</td>
+</tr>
+<tr>
+<td>\</td>
+<td>Rational number division</td>
+</tr>
+<tr>
+<td>/</td>
+<td>Real number division</td>
+</tr>
+<tr>
+<td>&times;</td>
+<td>Array multiplication | Matrix multiplication</td>
+</tr>
+<tr>
+<td>%</td>
+<td>Modulo operator 5 % 2 = 2</td>
+</tr>
+<tr>
+<td>+</td>
+<td>Numeric addition | List append | Matrix addition</td>
+</tr>
+<tr>
+<td>-</td>
+<td>Numeric subtraction | Collection difference</td>
+</tr>
+<tr>
+<td>&plusmn;</td>
+<td>Numeric tolerance (use with &asymp;)</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="double-symbols">Double Symbols</h2>
+
+<p>Double symbols is a group of two ASCII symbols considered as one. Some of these symbols have an Unicode equivalent, some do not. When available, Unicode equivalent is preferred choice.</p>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>symbol</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-- </td>
+<td>Single line, end of line comments</td>
+</tr>
+<tr>
+<td>..</td>
+<td>Define range/domain/slice (n..m) | [n..m]</td>
+</tr>
+<tr>
+<td>.!</td>
+<td>Define range/domain with excluded limit (n.!m) | [n.!m]</td>
+</tr>
+<tr>
+<td>!.</td>
+<td>Define range/domain with excluded limit (n!.m) | [n.!m] </td>
+</tr>
+<tr>
+<td>!!</td>
+<td>Define range/domain with excluded limits: (n!!m) | [n.!m] </td>
+</tr>
+<tr>
+<td>-.</td>
+<td>Minus infinite domain: instead of [-&infin;..0] write: [-..0]</td>
+</tr>
+<tr>
+<td>.+</td>
+<td>Plus infinite domain: instead of [0..+&infin;] write: [0..+]</td>
+</tr>
+<tr>
+<td>=&gt;</td>
+<td>Define: rule expression | rule result</td>
+</tr>
+<tr>
+<td>&lt;-</td>
+<td>Define and generate values in a loop from range or set</td>
+</tr>
+<tr>
+<td>&lt;:</td>
+<td>Define subset from set | Specify super-type for a new type</td>
+</tr>
+<tr>
+<td>:&gt;</td>
+<td>Data cast pipeline operator / Type conversion</td>
+</tr>
+<tr>
+<td>&lt;&lt;</td>
+<td>Shift values of collection to right by removing first elements</td>
+</tr>
+<tr>
+<td>&gt;&gt;</td>
+<td>Shift values of collection to left by removing first elements</td>
+</tr>
+<tr>
+<td>::</td>
+<td>Deep copy | Clone operator</td>
+</tr>
+<tr>
+<td>++</td>
+<td>Extend an array with one or more elements</td>
+</tr>
+<tr>
+<td>-=</td>
+<td>Find and delete one element, from a collection</td>
+</tr>
+<td>+=</td>
+<td>Append an element in a set or a map but not in a list</td>
+</tr>
+<tr>
+<td>+&gt;</td>
+<td>Append element to beginning of a list</td>
+</tr>
+<tr>
+<td>&lt;+</td>
+<td>Append element to end of a list</td>
+</tr>
+<tr>
+<td>~=</td>
+<td>Relation operator: regular expression match</td>
+</tr>
+<tr>
+<td>>=</td>
+<td>Relation operator: greater then or equal to</td>
+</tr>
+<tr>
+<td>&lt;=</td>
+<td>Relation operator: less then or equal to</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="modifiers">Modifiers</h2>
+<p>Each modifier is created with pattern "x=" where x is a single symbol:</p>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>symbol</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>:=</td>
+<td>Modify | (value | reference)</td>
+</tr>
+<tr>
+<td>+=</td>
+<td>Increment value</td>
+</tr>
+<tr>
+<td>-=</td>
+<td>Decrement value</td>
+</tr>
+<tr>
+<td>*=</td>
+<td>Multiplication modifier</td>
+</tr>
+<tr>
+<td>/=</td>
+<td>Real division modifier</td>
+</tr>
+<tr>
+<td>^=</td>
+<td>Power modifier</td>
+</tr>
+<tr>
+<td>√=</td>
+<td>Radical modifier</td>
+</tr>
+<tr>
+<td>%=</td>
+<td>Modulo modifier</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="relation-operators">Relation Operators</h2>
+<p>Relation operators are used to compare expressions.</p>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>symbol</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&isin;</td>
+<td>check if element belong to collection</td>
+</tr>
+<tr>
+<td>=</td>
+<td>equal { compare values or attributes}</td>
+</tr>
+<tr>
+<td>¬</td>
+<td>different { compare values or attributes}</td>
+</tr>
+<tr>
+<td>&equiv;</td>
+<td>equivalent | { compare values / convert type }</td>
+</tr>
+<tr>
+<td>&asymp;</td>
+<td>approximating equal numbers, used with&nbsp;&plusmn;&nbsp;like: (x &asymp; 4 &plusmn; 0.25)</td>
+</tr>
+<tr>
+<td>&gt;</td>
+<td>value is greater than: (2 &gt; 1)</td>
+</tr>
+<tr>
+<td>&lt;</td>
+<td>value is less than: (1 &lt; 2)</td>
+</tr>
+<tr>
+<td>&ge;</td>
+<td>greater than or equal to</td>
+</tr>
+<tr>
+<td>&le;</td>
+<td>less than or equal to</td>
+</tr>
+<tr>
+<td>&divide;</td>
+<td>Exact divisor: 3 &division; 15 &equiv; True</td>
+</tr>
+</tbody>
+</table>
+
+<p><strong>negation:</strong></p>
+<p>Operator: "!" can be used in combination with other operators:</p>
+<pre class="language-out">
+ x ¬ y; -- equivalent to: !(x = y)
+ x !&equiv; y; -- equivalent to: !(x &equiv; y)
+ x !&isin; y; -- equivalent to: !(x &isin; y)
+ x !&asymp; y; -- equivalent to: !(x &asymp; y)
+ x !~ y; -- equivalent to: !(x ~ y)
+</pre>
+
+<p><strong>identity vs equality:</strong></p>
+<p>Operator "=" compares values. To compare <em>references</em>, use the reference-of operator "@" on both sides. A reference is never equal to a plain value.</p>
+<pre class="language-out">
+ a = b;    -- value comparison: true when a and b hold the same value
+ a ¬ b;    -- value inequality: true when a and b hold different values
+ @a = @b;  -- reference comparison: true only when a and b share one allocation
+ @a ¬ @b;  -- reference inequality: true when a and b are distinct allocations
+ @a = 1;   -- always false: @a is a reference, 1 is a constant value
+</pre>
+<h2 id="collection-operators">Collection operators</h2>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>symbol</th>
+<th>result</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&cap;</td>
+<td>Set</td>
+<td>Intersection between two collections</td>
+</tr>
+<tr>
+<td>&cup;</td>
+<td>Set</td>
+<td>Union between two collections</td>
+</tr>
+<tr>
+<td>&sub;</td>
+<td>Logic</td>
+<td>Set is included in superset: "&sub;"</td>
+</tr>
+<tr>
+<td>&sup;</td>
+<td>Logic</td>
+<td>Set contain subset: "&sup;"</td>
+</tr>
+<tr>
+<td>&Delta;</td>
+<td>Set</td>
+<td>Set symmetric difference</td>
+</tr>
+<tr>
+<td>+</td>
+<td>String</td>
+<td>Concatenation between two strings</td>
+</tr>
+<tr>
+<td>+</td>
+<td>List</td>
+<td>Concatenation between two lists</td>
+</tr>
+<tr>
+<td>+</td>
+<td>Array</td>
+<td>Concatenation between two arrays</td>
+</tr>
+<tr>
+<td>&forall;</td>
+<td>Element</td>
+<td>All: used in collection qualification</td>
+</tr>
+<tr>
+<td>&exist;</td>
+<td>Logic</td>
+<td>One: used in collection qualification</td>
+</tr>
+</tbody>
+</table>
+<h2 id="logic-operators">Logic Operators</h2>
+<p>Bee is using enumeration symbols: True = 1 and False = 0</p>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>symbol</th>
+<th>meaning</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>!</td>
+<td>NOT</td>
+<td>unary operator</td>
+</tr>
+<tr>
+<td>∧</td>
+<td>AND</td>
+<td>shortcut operator</td>
+</tr>
+<tr>
+<td>&or;</td>
+<td>OR</td>
+<td>shortcut operator</td>
+</tr>
+<tr>
+<td>&oplus;</td>
+<td>XOR</td>
+<td>exclusive OR</td>
+</tr>
+<tr>
+<td>&darr;</td>
+<td>NOR</td>
+<td>p &darr; q = &not; (p &or; q)</td>
+</tr>
+<tr>
+<td>&uarr;</td>
+<td>NAND</td>
+<td>p &uarr; q = &not; (p ∧ q)</td>
+</tr>
+</tbody>
+</table>
+
+<h4>The table of truth</h4>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>p</th>
+<th>q</th>
+<th>! p</th>
+<th>p &oplus; q</th>
+<th>p ∧ q</th>
+<th>p &or; q</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr>
+<td>0</td>
+<td>0</td>
+<td>1</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="bitwise-operators">Bitwise operators</h2>
+
+<p>Bitwise operators are processing numbers not Boolean values.</p>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>symbol</th>
+<th>meaning</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>&laquo;</td>
+<td>bit SHIFTL</td>
+<td>shift bits to left</td>
+</tr>
+<tr>
+<td>&raquo;</td>
+<td>bit SHIFTR</td>
+<td>shift bits to right</td>
+</tr>
+<tr>
+<td>~</td>
+<td>bit NOT</td>
+<td>negate all bits</td>
+</tr>
+<tr>
+<td>&amp;</td>
+<td>bit AND</td>
+<td>execute AND between each bits</td>
+</tr>
+<tr>
+<td>|</td>
+<td>bit OR</td>
+<td>execute OR between each bits</td>
+</tr>
+<tr>
+<td>&oplus;</td>
+<td>bit XOR</td>
+<td>execute XOR between each bits</td>
+</tr>
+</tbody>
+</table>
+
+<!-- todo check bit manipulation article to inject some content here
+"https://en.wikipedia.org/wiki/Bit_manipulation" rel="nofollow"-->
+
+<h4>Arity = 1</h4>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>a</th>
+<th>~ a</th>
+<th>a &laquo; 1</th>
+<th>a &raquo; 2</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>0000</td><td>1111</td><td>0000</td><td>0000</td></tr>
+<tr><td>1111</td><td>0000</td><td>1110</td><td>0011</td></tr>
+<tr><td>0111</td><td>1000</td><td>1110</td><td>0001</td></tr>
+<tr><td>0110</td><td>1001</td><td>1100</td><td>0001</td></tr>
+</tbody></table>
+
+<h4>Arity = 2</h4>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>a</th><th>b</th><th>a &amp; b</th><th>a | b</th><th>a &oplus; b</th></tr>
+</thead>
+<tbody>
+<tr><td>00</td><td>00</td><td>00</td><td>00</td><td>00</td></tr>
+<tr><td>01</td><td>00</td><td>00</td><td>01</td><td>01</td></tr>
+<tr><td>11</td><td>01</td><td>01</td><td>11</td><td>10</td></tr>
+<tr><td>10</td><td>11</td><td>10</td><td>11</td><td>01</td></tr>
+</tbody>
+</table>
+
+<h2 id="string-operators">String operators</h2>
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>Symbol</th><th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>*</td><td>string pattern repetition (right operator must be numeric)</td></tr>
+<tr><td>/</td><td>concatenate url or path using / not depending on OS</td></tr>
+<tr><td>+</td><td>concatenate two strings as they are preserving trial spaces.</td></tr>
+<tr><td>-</td><td>concatenate two strings and trim spaces to a single space.</td></tr>
+<tr><td>.</td><td>concatenate strings with "/" on Linux or "\" on Windows.</td></tr>
+<tr><td>?</td><td>string format operator, replace "#" with number.</td></tr>
+</tbody>
+</table>
+
+<!-- work in progress-->
+<hr>
+
+<p><b>Read next:</b>
+<a href="/projects/bee/structure/">Structure</a></p>
+<!-- Footer -->
+
+</div>
+      </main>
+    </div>
+  </div>
+
+  <hr>
+
+  <footer class="footer copyright">
+    <p class="x-small text-secondary mb-0">&copy; 2026 Sage-Code Laboratory</p>
+  </footer>
+</div>
+
+<button id="open-sidebar" class="btn btn-primary d-lg-none shadow-lg" type="button">
+  <span style="font-size: 24px;">&#9776;</span>
+</button>
+
+<script>
+  window.TOPIC_CONFIG = {
+    labId: 'bee',
+    topicId: 'operators',
+    homeLink: '/projects/bee/#topics',
+    labHomeLink: '/projects/bee/',
+    inlineContent: true
+  };
+</script>
+<script src="/assets/js/sage.js" defer></script>
+<script src="/assets/js/topic-loader.js" defer></script>
+</body>
+</html>

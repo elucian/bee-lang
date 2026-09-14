@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark"><head>
+  <meta charset="utf-8">
+  <meta name="description" content="High level design for Bee Library.">
+  <meta name="author" content="Elucian Moise">
+  <meta name="keywords" content="bee-lang, standard, library">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <!-- Website title -->
+  <title>Bee Library</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+  <!-- Icon -->
+  <link rel="icon" type="image/png"  href="/images/favicon.ico">
+  <!-- Bee Highlighter -->
+  <script src="/projects/bee/js/bee.js"></script>
+  <!-- Sage-Code CSS -->
+  <link rel="stylesheet" href="/assets/css/sage-common.css">  <link rel="stylesheet" href="/assets/css/content-topic.css">    <link rel="stylesheet" href="/assets/css/content-code.css">    <link rel="stylesheet" href="/assets/css/content-sidebar.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body data-topic-runtime-injected="true" onload="bee_render()">
+<div class="container">
+
+  <header id="dynamic-header" class="container-fluid pb-2"></header>
+
+  <div class="container-fluid px-0">
+    <div class="row g-0">
+      <aside class="side-bar col-lg-3 col-12">
+        <div id="study-sidebar" class="sidebar-content shadow-sm p-3 sticky-top">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="mb-0">Lab Topics</h5>
+          </div>
+          <hr>
+          <ul id="bookmark-list" class="list-unstyled">
+          </ul>
+        </div>
+      </aside>
+
+      <main id="main-content" class="col-lg-9 col-12 order-2 order-lg-1 p-3">
+<div class="container">
+
+<!-- header -->
+
+
+<h1 id="bee-standard-library">Bee Standard Library</h1>
+<div class="alert alert-secondary shadow-sm">
+Bee is a compiled language. That means you must include whatever you use in your code. We will design a small standard library to be included with any program, that will give a small footprint to any Bee executable.
+</div>
+<!-- work in progress-->
+
+<h2 id="standard-library">Standard Library</h2>
+<p>Standard library contains:</p>
+<ul>
+<li><a href="#type-system">Type system</a></li>
+<li><a href="#mathematics">Mathematics</a></li>
+<li><a href="#system-library">System library</a></li>
+</ul>
+
+<h2 id="user-content-data-rules">Data rules</h2>
+
+<p><b>Introspection Rules</b></p>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>rule</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>type</td>
+<td>type name</td>
+</tr>
+<tr>
+<td>size</td>
+<td>type size</td>
+</tr>
+</tbody>
+</table>
+
+<h2 id="type-system">Bee Type System</h2>
+
+<a>Primitive types and composite types are all included automatically in the standard library. So you do not have to import any of it to use them in your algorithms. This will make basic runtime quite large but we hope it worth it to avoid all these imports.</a>
+
+<h3 id="composite-rules">Composite Types</h3>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>rule</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>length</td>
+<td>type length</td>
+</tr>
+<tr>
+<td>capacity</td>
+<td>type capacity</td>
+</tr>
+<tr>
+<td>min</td>
+<td>type minim limit</td>
+</tr>
+<tr>
+<td>max</td>
+<td>type maxim limit</td>
+</tr>
+</tbody>
+</table>
+
+<p><b>List &amp; strings Type</b></p>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>rule</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>split</td>
+<td>Split a string into a list / array</td>
+</tr>
+<tr>
+<td>join</td>
+<td>Join a list into a string</td>
+</tr>
+<tr>
+<td>find</td>
+<td>Search one sub-string in a string</td>
+</tr>
+<tr>
+<td>replace</td>
+<td>Replace one sub-string in a string</td>
+</tr>
+<tr>
+<td>trim</td>
+<td>Remove blank spaces from string</td>
+</tr>
+<tr>
+<td>right</td>
+<td>Align string to right by adding spaces</td>
+</tr>
+<tr>
+<td>left</td>
+<td>Align string to left by adding spaces</td>
+</tr>
+<tr>
+<td>center</td>
+<td>Align string to center by adding spaces</td>
+</tr>
+</tbody>
+</table>
+
+<p><b>Numeric Type</b></p>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>rule</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>round</td>
+<td>Convert one real into an integer</td>
+</tr>
+<tr>
+<td>floor</td>
+<td>Convert one real into an integer</td>
+</tr>
+<tr>
+<td>parse</td>
+<td>Convert one string into one number</td>
+</tr>
+<tr>
+<td>random</td>
+<td>Create random numbers</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="date-time">Date Time</h3>
+<p>Modules for <em>date</em> and <em>time</em> will contain all required rules.</p>
+
+<p><b>time</b></p>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>rule</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>now</td>
+<td>get current time</td>
+</tr>
+</tbody>
+</table>
+
+<p><b>date</b></p>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>rule</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>now</td>
+<td>get current date</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="errors">Error Type</h3>
+
+<p>Bee has pre-define Error objects with codes in range (1..200):</p>
+<pre><code class="language-bee">-- global type
+type Error: {code &isin; Z, message &isin; S} &lt;: Object;
+</code></pre>
+
+<pre><code class="language-bee">-- exception objects
+$zero_division  := {100,"division by zero"}     &isin; Error;
+$null_reference := {101,"null reference usage"} &isin; Error;
+$value_overflow := {102,"value overflow"}       &isin; Error;
+$out_of_range   := {103,"value out of range"}   &isin; Error;
+$type_mismatch  := {104,"data type mismatch"}   &isin; Error;
+$user_error     := {200,"user defined error"}   &isin; Error;
+...
+-- Standard error
+$standard_error  := {1,"standard error"}    &isin; Error;
+$unexpected_error:= {2,"unexpected error"}  &isin; Error;</code></pre>
+
+
+
+<h2 id="mathematics">Mathematic Rules</h2>
+
+<p>Math library will implement extra rules that are not available until you import "math" library. These are functions you rarely use and require extra memory space to be available in your program.</p>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>rule</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>sin</td>
+<td>sinus</td>
+</tr>
+<tr>
+<td>cos</td>
+<td>cousin</td>
+</tr>
+<tr>
+<td>tan</td>
+<td>tangent</td>
+</tr>
+<tr>
+<td>pow</td>
+<td>power</td>
+</tr>
+<tr>
+<td>sqr</td>
+<td>square root</td>
+</tr>
+<tr>
+<td>fac</td>
+<td>factorial</td>
+</tr>
+<tr>
+<td>mod</td>
+<td>module rule y := |x|</td>
+</tr>
+</tbody>
+</table>
+
+<h3 id="system-library">System Library</h3>
+
+<p>Interaction with operating system require load from library.</p>
+<pre><code class="language-bee">+-------------------------
+\bee
+  |
+  |-- system
+  |     |-- io.bee
+  |
+  |-- db
+  ...
+-------------------------+
+</code></pre>
+
+
+<h3 id="file-io">File IO</h3>
+<p>To read and print into files and save to disk, we must use system.io library. This library define type "F" : file handler. It offer support for file input/output.</p>
+
+<p><b>rules</b></p>
+<p>Next is a fragment from system.io library that define rules open and close.</p>
+<pre><code class="language-bee">rule .open(name &isin; S, mode &isin; A) =&gt; (file &isin; File);
+rule .close(file &isin; File);
+rule .list(folder &isin; Folder) &isin; (S);
+rule .exist(name &isin; S) &isin; B;
+rule ,delete(name &isin; S);
+rule ,rename(name, new_name &isin; S);
+...
+</code></pre>
+
+
+<p><b>remember:</b>&nbsp;public rules start with dot: "."</p>
+
+<p><b>File IO</b></p>
+<p>System IO rules</p>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>rule</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>open</td>
+<td>Open a file</td>
+</tr>
+<tr>
+<td>close</td>
+<td>Close a file</td>
+</tr>
+<tr>
+<td>exist</td>
+<td>Check if file or folder exist on disk</td>
+</tr>
+<tr>
+<td>list</td>
+<td>Read a list of files and folders from directory</td>
+</tr>
+<tr>
+<td>tree</td>
+<td>Read tree of directory in memory</td>
+</tr>
+<tr>
+<td>delete</td>
+<td>Remove a file / directory</td>
+</tr>
+<tr>
+<td>rename</td>
+<td>Make a new directory</td>
+</tr>
+</tbody>
+</table>
+<p>Two data types must be available: File, Folder</p>
+
+<h4>File rules</h4>
+<ul>
+<li>clean -- erase all data in the file</li>
+<li>flush -- save file buffer to disk</li>
+<li>change -- modify file attributes</li>
+</ul>
+
+<h4>Folder rules</h4>
+
+<ul>
+<li>select -- select this folder as working folder</li>
+<li>purge -- remove all files from folder</li>
+<li>change -- modify folder attributes</li>
+</ul>
+
+<h4>Making files/folders</h4>
+<pre><code class="language-bee">
+new file_name   := File.open('name','w');
+new folder_name := Folder.open('name');
+</code></pre>
+
+<hr>
+
+<p><b>Go back to:</b>
+<a href="/projects/bee/index/" rel="nofollow">Bee Index</a></p>
+<!-- Footer -->
+
+</div>
+      </main>
+    </div>
+  </div>
+
+  <hr>
+
+  <footer class="footer copyright">
+    <p class="x-small text-secondary mb-0">&copy; 2026 Sage-Code Laboratory</p>
+  </footer>
+</div>
+
+<button id="open-sidebar" class="btn btn-primary d-lg-none shadow-lg" type="button">
+  <span style="font-size: 24px;">&#9776;</span>
+</button>
+
+<script>
+  window.TOPIC_CONFIG = {
+    labId: 'bee',
+    topicId: 'library',
+    homeLink: '/projects/bee/#topics',
+    labHomeLink: '/projects/bee/',
+    inlineContent: true
+  };
+</script>
+<script src="/assets/js/sage.js" defer></script>
+<script src="/assets/js/topic-loader.js" defer></script>
+</body>
+</html>

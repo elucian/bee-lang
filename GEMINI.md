@@ -26,10 +26,90 @@ For any new operator, statement, keyword, or grammar production, first consult `
 * **AI Read-Only Enforcement:** Test files in `test/levelX/*.bee` marked `@FROZEN` are strictly immutable for AI agents. AI agents must NEVER modify `.bee` test inputs, assertions, or expected outputs to force a failing compiler build to pass. (Human users retain full permission to modify or author tests).
 * **Disable, Never Delete:** If a test fails persistently across fix attempts, AI agents must NEVER delete the file. Disable it by prepending `-- @DISABLED: <reason>` on line 1 of the `.bee` file.
 
-## 6. Tutorial Edit Authorization (Decision 5)
-- **Pre-Authorized Target:** `/tutorial/` is a junction to the user's external live repository (`C:\Users\eluci\sage-code\scl\projects\bee`). The user is fully aware it lives in another repository and pushes it directly to the public site.
-- **No Confirmation Prompts:** When the user asks to modify the tutorial, AI agents MUST edit files under `bee-lang/tutorial/` directly. NEVER ask for confirmation, warn that the target is external, or treat the junction boundary as a reason to halt.
-- **Scope:** This authorization covers all files reachable through the `/tutorial/` junction (HTML pages, `js/`, `data/`, `symbols/`, `img/`). It does NOT authorize pushing, committing, or any git operations against the external repository — file edits only, unless the user explicitly asks.
+## 6. Tutorial Maintenance & Synchronization (Decision 5)
+
+### Source-of-Truth Model
+- `/spec/` is the single source of truth for **language facts** (grammar,
+  EBNF, operators, keywords, diagnostics, semantics).
+- `/tutorial/` is the single source of truth for the **rendered HTML pages**
+  served on the public SCL site.
+- The tutorial is a *derived presentation* of the spec, never the reverse.
+  A language fact is decided in `/spec/` first and then expressed in
+  `/tutorial/`; never author it in a tutorial page and treat the spec as
+  "behind".
+
+### Where to Work (local copy + one-way `sync`)
+- **Edit tutorial pages only under `bee-lang/tutorial/`.** This is a
+  *versioned, local* directory in this repository — it is the source of
+  truth for the rendered HTML, and it is **not** a symlink/junction.
+- The external SCL repository directory (`C:\Users\eluci\sage-code\scl\projects\bee`)
+  is the *live site content* target. It is kept in sync with this repo via
+  a one-way mirror (`scripts/sync_tutorial.py`), not via a filesystem link.
+- `/web/` has been removed; there is no legacy local copy.
+- **External git is user-owned:** committing and pushing the external SCL
+  repository is a separate step owned by the user. The sync script only
+  mirrors files; it never performs git operations against the SCL repo.
+
+### Running the Sync
+Mirror files between `bee-lang/tutorial/` and the SCL site directory:
+
+| Command | Effect |
+| :--- | :--- |
+| `sh run.sh sync` | Push local → SCL (publish edits). Default direction. |
+| `sh run.sh sync pull` | Pull SCL → local (adopt SCL-side edits). |
+| `sh run.sh sync --dry-run` | Preview the push without writing. |
+| `sh run.sh sync --delete` | Push *and* remove SCL files absent locally (true mirror). |
+| `sh run.sh sync --scl <PATH>` | Override the SCL directory path. |
+
+Underlying helper: `scripts/sync_tutorial.py` (plain-Python mirror; the
+environment has no `rsync`). It copies in one direction at a time, is
+default-safe (never deletes unless `--delete` is passed), and skips files
+whose size/mtime already match. Push or pull are the two supported
+operations — the sync is **not** a bidirectional merge.
+
+### Spec ↔ Tutorial Mapping
+When a spec module changes, update its mapped page(s) in the same change
+set:
+
+| Spec module | Tutorial page(s) |
+| :--- | :--- |
+| `01-lexical-structure.md` | `syntax.html`, `operators.html`, `js/bee.js` (highlighter) |
+| `02-statements.md` | `control.html`, `structure.html` |
+| `03-rules.md` | `rules.html` |
+| `04-structure.md` | `structure.html` |
+| `05-types.md` | `types.html` |
+| `06-objects.md` | `objects.html` |
+| `07-functions.md` | `functions.html` |
+| `10-collections.md` | `collections.html` |
+| `11-processing.md` | `processing.html` |
+| `12-concurrency.md` | `concurrency.html` |
+| `13-graphics.md` | `graphics.html` |
+| `14-library.md` | `library.html` |
+| `00-memory-model.md` | `features.html` (overview notes; no dedicated page) |
+
+Meta/navigation pages (`index.html`, `template.html`, `features.html`) are
+not tied to a single spec module and change only for structural reasons.
+
+### Synchronization Invariant
+Every `/spec/` change MUST be accompanied by the corresponding `/tutorial/`
+update in the **same change set**. A spec/tutorial pair that disagrees about
+the same operator, keyword, or grammar production is a defect. Before any
+language edit, ask: *"does the tutorial still agree with `/spec/` on this
+fact?"* and update both sides together.
+
+### Edit Authorization
+- **Pre-Authorized Target:** `/tutorial/` is a versioned local directory in
+  this repository. It is mirrored to the user's external live repository
+  (`C:\Users\eluci\sage-code\scl\projects\bee`) via `sh run.sh sync`.
+- **No Confirmation Prompts:** When the user asks to modify the tutorial, AI
+  agents MUST edit files under `bee-lang/tutorial/` directly. NEVER ask for
+  confirmation, warn that the target is external, or treat the sync boundary
+  as a reason to halt.
+- **Scope:** This authorization covers all files under `/tutorial/` (HTML
+  pages, `js/`, `data/`, `symbols/`, `img/`). It does NOT authorize pushing,
+  committing, or any git operations against the external SCL repository —
+  file edits and `sh run.sh sync` mirroring only, unless the user explicitly
+  asks.
 
 ## AI Agent Protocol & Anti-Loop Rules
 

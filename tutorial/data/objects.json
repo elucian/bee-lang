@@ -1,0 +1,68 @@
+[
+  {
+    "title": "Bee Objects",
+    "link": "#bee-objects",
+    "children": [
+      {
+        "title": "Root Object",
+        "link": "#root-object"
+      },
+      {
+        "title": "Object structure",
+        "link": "#object-structure"
+      },
+      {
+        "title": "Instantiation",
+        "link": "#instantiation"
+      },
+      {
+        "title": "Custom Type",
+        "link": "#custom-type"
+      },
+      {
+        "title": "Object Constructor",
+        "link": "#object-constructor"
+      },
+      {
+        "title": "Key Looping",
+        "link": "#key-looping"
+      },
+      {
+        "title": "OOP Paradigm",
+        "link": "#oop-paradigm",
+        "children": [
+          {
+            "title": "Encapsulation",
+            "link": "#encapsulation"
+          },
+          {
+            "title": "Inheritance",
+            "link": "#inheritance"
+          },
+          {
+            "title": "Abstraction",
+            "link": "#abstraction"
+          },
+          {
+            "title": "Traits",
+            "link": "#traits"
+          }
+        ]
+      },
+      {
+        "title": "Data Structures",
+        "link": "#data-structures",
+        "children": [
+          {
+            "title": "Array of Objects",
+            "link": "#array-of-objects"
+          },
+          {
+            "title": "Recursive Structures",
+            "link": "#recursive-structures"
+          }
+        ]
+      }
+    ]
+  }
+]

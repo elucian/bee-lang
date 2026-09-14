@@ -1,0 +1,66 @@
+[
+  {
+    "title": "Bee Syntax",
+    "link": "#bee-syntax",
+    "children": [
+      {
+        "title": "Comments",
+        "link": "#comments"
+      },
+      {
+        "title": "Keywords",
+        "link": "#keywords",
+        "children": [
+          {
+            "title": "Semantic keywords",
+            "link": "#semantic-keywords"
+          },
+          {
+            "title": "Statements",
+            "link": "#statements" 
+          },
+          {
+            "title": "Code blocks",
+            "link": "#code-blocks"
+          },
+          {
+            "title": "Definition statements",
+            "link": "#definition-statements"
+          },
+          {
+            "title": "Execution statements",
+            "link": "#execution-statements"
+          },
+          {
+            "title": "Control statements",
+            "link": "#control-statements"
+          },
+          {
+            "title": "Transfer statements",
+            "link": "#transfer-statements"
+          }
+        ]
+      },
+      {
+        "title": "Declarations",
+        "link": "#variables"
+      },
+      {
+        "title": "Expressions",
+        "link": "#expressions"
+      },
+      {
+        "title": "Conditional Execution",
+        "link": "#conditions"
+      },
+      {
+        "title": "Pattern Matching",
+        "link": "#pattern-matching"
+      },
+      {
+        "title": "Errors",
+        "link": "#errors"
+      }   
+    ]
+  }
+]

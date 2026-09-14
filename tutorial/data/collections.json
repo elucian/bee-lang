@@ -1,0 +1,68 @@
+[
+  {
+    "title": "Bee Collections",
+    "link": "#bee-collections",
+    "children": [
+      {
+        "title": "Usability",
+        "link": "#usability"
+      },
+      {
+        "title": "New Types",
+        "link": "#new-types"
+      },
+      {
+        "title": "Check membership",
+        "link": "#check-membership"
+      }
+    ]
+  },
+  {
+    "title": "Core Collections",
+    "link": "#core-collections",
+    "children": [    
+      {
+        "title": "Ordinal",
+        "link": "#ordinal"
+      },
+      {
+        "title": "Lists",
+        "link": "#list"
+      },
+      {
+        "title": "Arrays",
+        "link": "#array"
+      },
+      {
+        "title": "Matrix",
+        "link": "#matrix"
+      },
+      {
+        "title": "Data sets",
+        "link": "#data-set"
+      },
+      {
+        "title": "Hash Map",
+        "link": "#hash-map"
+      }
+    ]
+  },
+  {
+    "title": "Collections of Symbols",
+    "link": "#symbol-collections",
+    "children": [
+      {
+        "title": "Text",
+        "link": "#text"
+      },
+      {
+        "title": "Array of symbols",
+        "link": "#array-of-symbols"
+      },
+      {
+        "title": "String literals",
+        "link": "#string-literals"
+      }    
+    ]
+  }
+]

@@ -45,6 +45,17 @@ elif [ "$COMMAND" = "reset" ]; then
         echo "Resetting all disabled tests..."
         python test/reset.py
     fi
+elif [ "$COMMAND" = "sync" ]; then
+    # Mirror the Bee tutorial between the local repo and the SCL live site.
+    # Default is push (local -> SCL). Use `sh run.sh sync pull` to reverse.
+    # Extra flags (--dry-run, --delete, etc.) are forwarded to the script.
+    if [ "$TARGET" = "pull" ]; then
+        python scripts/sync_tutorial.py --pull $REST
+    elif [ "$TARGET" = "push" ]; then
+        python scripts/sync_tutorial.py --push $REST
+    else
+        python scripts/sync_tutorial.py $TARGET $REST
+    fi
 elif [ "$COMMAND" = "smoke" ]; then
     echo "Running intelligent self-health check..."
     python test/smoke.py
@@ -76,6 +87,6 @@ elif [ "$COMMAND" = "commit" ]; then
     GIT_EDITOR=true git commit -m "$MSG"
     git push
 else
-    echo "Usage: sh run.sh [build | test [level1] | check [level1] | solo <target> | reset [level1] | clean | smoke | commit [message]]"
+    echo "Usage: sh run.sh [build | test [level1] | check [level1] | solo <target> | reset [level1] | clean | smoke | sync [pull] [--dry-run] | commit [message]]"
     exit 1
 fi

@@ -1,0 +1,24 @@
+[
+  {
+    "title": "Bee Graphics Specification",
+    "link": "#bee-graphics-specification",
+    "children": [
+      {
+        "title": "Coordinate Systems",
+        "link": "#coordinate-systems"
+      },
+      {
+        "title": "Graphic Types",
+        "link": "#graphic-types"
+      },
+      {
+        "title": "Drawing Elements",
+        "link": "#drawing-elements"
+      },
+      {
+        "title": "Drawing Keywords",
+        "link": "#drawing-keywords"
+      }
+    ]
+  }
+]
