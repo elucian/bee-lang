@@ -28,8 +28,8 @@ Single uppercase Latin letters are strictly reserved for primitive mathematical 
 | Type Symbol | Alias | Mathematical Space | Representation | Alignment | Default Value | Description |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`B`** | Boolean | $\{0, 1\}$ | 8-bit unsigned integer | 1 byte | `0b0` (`false`) | Logic boolean: `0` = False, `1` = True |
-| **`A`** | Alpha | $\text{ASCII}[0..127]$ | 8-bit E-ASCII character | 1 byte | `'0'` | ASCII character literal (`'a'`, `'Z'`, `'0'`) |
-| **`U`** | Unicode | $\text{UTF-32}$ | 32-bit unsigned code point | 4 bytes | `U+0000` | Unicode Rune code point (`'Ω'`, `U+0041`) |
+| **`A`** | Alpha | $\text{ASCII}[32..126]$ | 8-bit printable-ASCII character | 1 byte | `'0'` | Printable ASCII character literal (`'a'`, `'Z'`, `'0'`) |
+| **`U`** | Rune | $\text{Unicode}$ | 32-bit code point | 4 bytes | `U+0000` | Unicode code point — any character incl. control/unprintable (`'Ω'`, `U+0041`) |
 | **`N`** | Natural | $\mathbb{N}_0 = [0 \dots 2^{64}-1]$ | 64-bit unsigned integer | 8 bytes | `0` | Non-negative integer |
 | **`Z`** | Integer | $\mathbb{Z} = [-2^{63} \dots 2^{63}-1]$ | 64-bit signed 2's comp | 8 bytes | `0` | Signed integer |
 | **`R`** | Real | $\mathbb{R} \approx \text{IEEE 754}$ | 64-bit double precision | 8 bytes | `0.0` | Double precision floating point |
@@ -38,8 +38,9 @@ Single uppercase Latin letters are strictly reserved for primitive mathematical 
 | **`S`** | String | $\text{UTF-8}^*$ | GC-managed immutable slice | 16 bytes | `""` | Immutable UTF-8 string |
 | **`D`** | Date | $\mathbb{N}^3$ | Struct `(day, month, year)` | 8 bytes | `01/01/1970` | Gregorian calendar date |
 | **`T`** | Time | $\mathbb{N}^4$ | Struct `(h, m, s, ms)` | 8 bytes | `00:00:00` | 24-hour time representation |
-| **`L`** | Lambda | $\mathbb{T}_1 \to \mathbb{T}_2$ | Function Descriptor | 16 bytes | `nil` | Pure lambda function closure |
 | **`G`** | Angular | $[1^\circ \dots 360^\circ]$ | Fixed 16-bit float | 2 bytes | `0.0°` | Geometric angular degree coordinate |
+
+**Named complex types (not single-letter):** `Array`, `Map`, `List`, and `Graph` are collection types; `Lambda` (`λ`) is a higher-order function type. These are identified by name, not by a reserved single letter.
 
 ---
 
@@ -144,7 +145,7 @@ graph TD
 type_decl         ::= "type" type_ident ":" type_descriptor [ "<:" super_type ] ";" ;
 type_descriptor   ::= primitive_type | range_expr | domain_expr | collection_type ;
 
-primitive_type    ::= "B" | "A" | "U" | "N" | "Z" | "R" | "Q" | "C" | "S" | "D" | "T" | "L" | "G"
+primitive_type    ::= "B" | "A" | "U" | "N" | "Z" | "R" | "Q" | "C" | "S" | "D" | "T" | "G"
                     | "Q" "(" integer_lit "." integer_lit ")" ;
 
 (* Ranges & Domains — Decision 13 (2026-09-13) *)

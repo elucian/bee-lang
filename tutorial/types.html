@@ -72,37 +72,62 @@ Data types represent a <em>domains of values</em>. In other words, data type rep
 <tr>
 <td>Boolean</td>
 <td>B</td>
-<td>Boolean or 8 bit number, 0 = False, >= 1 True</td>
+<td>Logic value: 0 = false, 1 = true. Default <code>0b0</code>.</td>
 </tr>
 <tr>
 <td>Alpha</td>
 <td>A</td>
-<td>Alpha-numeric E-ASCII ('0'..'9') ('a'..'Z')</td>
+<td>Printable 7-bit ASCII character (32..126). Default <code>'0'</code>.</td>
 </tr>
 <tr>
-<td>Unicode</td>
+<td>Rune</td>
 <td>U</td>
-<td>Unsigned 32 bit, max: U-FFFFFFFF (UTF32)</td>
-</tr>
-<tr>
-<td>Rational</td>
-<td>Q</td>
-<td>Fix point representation number: like 1/2. Notation: Q(14,17)</td>
+<td>Full Unicode code point (4 bytes), incl. control/unprintable. Default <code>U+0000</code>.</td>
 </tr>
 <tr>
 <td>Natural</td>
 <td>N</td>
-<td>Unsigned large positive integer 64 bit [0..+]</td>
+<td>Non-negative integer ℕ₀ [0 .. 2^64-1], 64-bit unsigned. Default <code>0</code>.</td>
 </tr>
 <tr>
 <td>Integer</td>
 <td>Z</td>
-<td>Signed large integer 64 bit [-..+] Z(64)</td>
+<td>Signed integer ℤ [-2^63 .. 2^63-1], 64-bit 2's complement. Default <code>0</code>.</td>
 </tr>
 <tr>
 <td>Real</td>
 <td>R</td>
-<td>Double precision float 64 bit (-..+) R(64)</td>
+<td>Double-precision IEEE 754 float (8 bytes). Default <code>0.0</code>.</td>
+</tr>
+<tr>
+<td>Rational</td>
+<td>Q</td>
+<td>Fixed-point fraction Q(m.n), e.g. <code>1\2</code>. Default <code>0\1</code>.</td>
+</tr>
+<tr>
+<td>Complex</td>
+<td>C</td>
+<td>Pair of Reals <code>a + bj</code> (16 bytes). Default <code>0.0 + 0.0j</code>.</td>
+</tr>
+<tr>
+<td>String</td>
+<td>S</td>
+<td>Immutable UTF-8 string. Default <code>""</code>.</td>
+</tr>
+<tr>
+<td>Date</td>
+<td>D</td>
+<td>Gregorian date (day, month, year). Default <code>01/01/1970</code>.</td>
+</tr>
+<tr>
+<td>Time</td>
+<td>T</td>
+<td>24-hour time (h, m, s, ms). Default <code>00:00:00</code>.</td>
+</tr>
+<tr>
+<td>Angular</td>
+<td>G</td>
+<td>Geometric angle 1°..360°, fixed 16-bit float. Default <code>0.0°</code>.</td>
 </tr>
 </tbody>
 </table>
@@ -131,7 +156,7 @@ Data types represent a <em>domains of values</em>. In other words, data type rep
 <tr>
 <td>'a'</td>
 <td>A</td>
-<td>(+-) &amp; (0..9) &amp; (a..z) &amp; (A..Z)</td>
+<td>printable ASCII (32..126)</td>
 </tr>
 <tr>
 <td>'&Omega;'</td>
@@ -161,7 +186,7 @@ Data types represent a <em>domains of values</em>. In other words, data type rep
 <tr>
 <td>'a','b'</td>
 <td>A</td>
-<td>ASCII (0x00..OxFF)</td>
+<td>printable ASCII (0x20..0x7E)</td>
 </tr>
 <tr>
 <td>U+FFFF</td>
@@ -179,9 +204,9 @@ Data types represent a <em>domains of values</em>. In other words, data type rep
 <td>(-.) &amp; (0,1,2,3,4,5,6,7,8,9)</td>
 </tr>
 <tr>
-<td>-1/2</td>
+<td>-1&#92;2</td>
 <td>Q</td>
-<td>(-/) &amp; (0,1,2,3,4,5,6,7,8,9)</td>
+<td>(-&#92;) &amp; (0,1,2,3,4,5,6,7,8,9)</td>
 </tr>
 <tr>
 <td>1E10</td>
@@ -204,47 +229,27 @@ Data types represent a <em>domains of values</em>. In other words, data type rep
 <li>primitive types can be used to define subtypes or composite types</li>
 </ul>
 
-<h2 id="special-types">Special types</h2>
-<p>Special types have an alias starting with capital letter. These types are embedded in the language and contribute to language coherence. All these types are actually references to memory structures:</p>
+<h2 id="special-types">Named Complex Types</h2>
+<p>Complex types are identified by name, not by a reserved single uppercase letter. The collection types (<code>Array</code>, <code>Map</code>, <code>List</code>) are listed below; the remaining named complex types are:</p>
 
 <table class="table table-bordered table-striped">
 <thead>
 <tr>
-<th>Alias</th>
 <th>Type</th>
+<th>Symbol</th>
 <th>Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Complex</td>
-<td>C</td>
-<td>Double precision pair of double float numbers (9r+9j)</td>
+<td>Graph</td>
+<td>Graph</td>
+<td>Named collection of vertices and edges.</td>
 </tr>
 <tr>
-<td>String</td>
-<td>S</td>
-<td>UTF8 encoded double quoted string "&alpha; &beta; ɣ &epsilon; &delta; &mu; &omega;"</td>
-</tr>
-<tr>
-<td>Date</td>
-<td>D</td>
-<td>"DD/MM/YYYY"</td>
-</tr>
-<tr>
-<td>Time</td>
-<td>T</td>
-<td>"hh:mm,ms"</td>
-</tr>
-<tr>
-  <td>Lambda</td>
-  <td>L</td>
-  <td>Lambda expression or function.</td>
-</tr>
-<tr>
-  <td>Angular</td>
-  <td>G</td>
-  <td>Range 1..360 degree</td>
+<td>Lambda</td>
+<td>&lambda;</td>
+<td>Higher-order function type (lambda expression or function).</td>
 </tr>
 </tbody>
 </table>

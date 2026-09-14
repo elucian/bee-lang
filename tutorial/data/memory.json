@@ -1,0 +1,84 @@
+[
+  {
+    "title": "Memory Model",
+    "link": "#bee-memory-model",
+    "children": [
+      {
+        "title": "Overview of the three tiers",
+        "link": "#tiers"
+      },
+      {
+        "title": "Tier 1 — Atomic Reference Counting (ARC)",
+        "link": "#arc",
+        "children": [
+          {
+            "title": "Allocation scope",
+            "link": "#arc-targets"
+          },
+          {
+            "title": "Header layout (16 bytes)",
+            "link": "#arc-header"
+          },
+          {
+            "title": "Operational semantics",
+            "link": "#arc-ops"
+          }
+        ]
+      },
+      {
+        "title": "Tier 2 — Region-Based Arena & zap",
+        "link": "#arena",
+        "children": [
+          {
+            "title": "Region cleanup",
+            "link": "#arena-cleanup"
+          },
+          {
+            "title": "Manual deallocation (zap)",
+            "link": "#zap"
+          }
+        ]
+      },
+      {
+        "title": "Tier 3 — Compacting Generational GC",
+        "link": "#gc",
+        "children": [
+          {
+            "title": "GC roots",
+            "link": "#gc-roots"
+          },
+          {
+            "title": "Compaction",
+            "link": "#gc-compaction"
+          }
+        ]
+      },
+      {
+        "title": "Assignment & mutability semantics",
+        "link": "#assignment",
+        "children": [
+          {
+            "title": "Value modification rules",
+            "link": "#let-value-rules"
+          },
+          {
+            "title": "Mutability modifiers",
+            "link": "#mutability"
+          }
+        ]
+      },
+      {
+        "title": "Formal EBNF",
+        "link": "#ebnf"
+      },
+      {
+        "title": "Concurrency & cross-thread boundaries",
+        "link": "#concurrency"
+      },
+      {
+        "title": "Diagnostics & safety protocols",
+        "link": "#diagnostics"
+      }
+    ]
+  }
+]
