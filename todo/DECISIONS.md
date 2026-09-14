@@ -27,11 +27,13 @@ production.
 | D7    | Logic operator synonymy + `is not` token    | ✅ Ratified       | 2026-09-12  |
 | D8    | Rule-call result destructuring (T0127 park) | 🟢 Deferred       | 2026-09-12  |
 | D9    | Colon `:` pair-up semantics                 | ✅ Ratified       | 2026-09-13  |
-| D10   | Radical (`²√`, `³√`) precedence table      | ✅ Ratified       | 2026-09-12 |
-| D11   | Parallel colon-init `new (a,b):(1,2)`     | 🟡 Pending ratification (revised) | 2026-09-13 |
+| D10   | Radical (`²√`, `³√`) precedence table      | 🟡 Pending ratification | 2026-09-12 |
+| D11   | Parallel colon-init `new (a,b):(1,2)`      | 🟡 Pending ratification | 2026-09-13 |
 | D12   | Inequality/NOT operator refactoring        | ✅ Ratified       | 2026-09-13  |
 | D13   | Range operator + postfix-step refactor     | ✅ Ratified       | 2026-09-13  |
 | D14   | Uniform `done` terminator + `repeat` jump  | ✅ Ratified       | 2026-09-13  |
+| D15   | `next` canonical loop-jump; `repeat` deprecated | ✅ Ratified   | 2026-09-13  |
+| D16   | Diagnostic code registry (`registry/diagnostics.json`) + `E04xx` de-collision | ✅ Ratified | 2026-09-14 |
 
 ---
 
@@ -767,6 +769,45 @@ are now 100% harmonized with D14. The next implementation phase must:
   `tutorial/syntax.html`, `tutorial/js/bee.js`, `MANIFEST.md`,
   `issues/20-next-canonical-jump.md`, `solution/20-next-canonical-jump.md`.
 
+## D16 — Central diagnostic-code registry (JSON) + `E04xx` de-collision
+
+### User directive (verbatim, 2026-09-14)
+
+> *"create a special file registry in spec with all error codes in a json
+> file. Then if the error code collide, bump the error code, register new
+> codes."* (operator clarification in the same session: `=` is the only equal
+> operator — value equality; `@a = @b` compares two references; `≡` is
+> reserved strictly for geometric congruence.)
+
+### Ratified semantics
+
+1. **`registry/diagnostics.json` is the single source of truth** for every
+   `E`/`W` diagnostic code referenced in `/spec` and `/tutorial`.
+2. **Register first, then use.** No diagnostic table is injected into a spec
+   module or tutorial page before its codes are registered.
+3. **Collision policy.** If a proposed code would collide with a registered
+   one, bump the newer / less-canonical use to the next free slot in its
+   module block and re-register. Never silently reuse an occupied code with a
+   different meaning.
+4. **`E04xx` de-collision (applied).** `spec/04-structure.md` retains the
+   canonical `E04xx` block. `spec/00-memory-model.md` (module `00`, which has
+   no natural `E00xx` block) was bumped from `E0401`–`E0404` to the free
+   `E08xx` block (`E0801`–`E0804`).
+5. **Operator taxonomy (reaffirmed).** `=` is the single value-equality
+   operator; `@a = @b` is reference/pointer identity; `≡` is geometric
+   congruence only and never value equality.
+
+### Implementation consequence (registry created 2026-09-14)
+
+* Created `registry/diagnostics.json` capturing all global codes (`E0009`,
+  `E0010`, `E0011`, `W0901`) and every module block `E01xx`–`E14xx` (with
+  memory on `E08xx`), plus `registry/README.md` documenting the allocation
+  table and collision policy.
+* Updated `spec/00-memory-model.md` (§2.2 in-text `E0801`; §5 table) and
+  `tutorial/memory.html` (diagnostic table + resolved-note replacing the
+  former "E04xx overloaded" warning).
+* Audit trail in `todo/TUTORIAL_TODO.md` §3.3.
+
 ---
 
 ## Resolution Workflow
@@ -787,6 +828,6 @@ downstream decisions.
 
 ---
 
-*Last updated: 2026-09-13 — D1–D7, D9, D10, D12, D13, D14, D15 ratified
+*Last updated: 2026-09-14 — D1–D7, D9, D12, D13, D14, D15, D16 ratified
 (D3 superseded by D12; D14 items 2–3 superseded by D15), D8 deferred,
-D11 revised and pending user ratification.*
+D10, D11 pending user ratification.*

@@ -312,32 +312,36 @@ new var_name, var_name ... &isin; Type_Identifier;
 
 <h2 id="range-type">Range Type</h2>
 
-<p>A <em>range</em> is a notation that designate a sub-set of consecutive  integer numbers between two limits: lower limit and upper limit included in round parenthesis and separated by two dots (..) or (!).</p>
+<p>A <em>range</em> denotes a sub-set of consecutive numeric (or character) values between two limits. Endpoint inclusion is expressed by the range operator (Decision 13). Canonical operators are <code>..</code> (both inclusive), <code>..&lt;</code> (exclude upper), <code>&gt;..</code> (exclude lower), and <code>&gt;..&lt;</code> (exclude both). A postfix step <code>(min..max)(step)</code> produces a stepped domain.</p>
 
 <h4>Syntax:</h4>
 
 <pre class="language-our">
-range ::= (min..max);
-range ::= (min.!max); -- exclude upper limit
-range ::= (min!.max); -- exclude lower limit
+range ::= (min..max);      -- both limits inclusive  [min, max]
+range ::= (min..&lt;max);    -- exclude upper limit      [min, max)
+range ::= (min&gt;..max);     -- exclude lower limit      (min, max]
+range ::= (min&gt;..&lt;max);   -- exclude both limits     (min, max)
+range ::= (min..max)(step); -- stepped domain, 1-based indexing (Decision 1)
 </pre>
 
 
 <h4>Notes:</h4>
 <ul>
-<li>Both limits are included in range by default</li>
-<li>Upper or lower limits can be excluded using "!"</li>
+<li>Both limits are included by default (<code>..</code>)</li>
+<li>Upper / lower / both limits are excluded with <code>..&lt;</code> / <code>&gt;..</code> / <code>&gt;..&lt;</code></li>
 <li>Range notation can be open at one end or both ends</li>
 <li>Open lower limit is symbolic (-) with no number</li>
 <li>Open upper limit is symbolic (+) with no number</li>
+<li>Legacy forms <code>.!</code>, <code>!.</code>, <code>!!</code> and the colon-step <code>(min..max : step)</code> are deprecated (Decision 13)</li>
 </ul>
 
 <h4>Example:</h4>
 <pre><code class="language-bee">-- integer domain
 rule main:
-  print (0..5); -- 0,1,2,3,4,5
-  print (0.!5); -- 0,1,2,3,4
-  print (0!.5); -- 1,2,3,4,5
+  print (0..5);   -- 0,1,2,3,4,5
+  print (0..&lt;5);  -- 0,1,2,3,4
+  print (0&gt;..5);  -- 1,2,3,4,5
+  print (0&gt;..&lt;5); -- 1,2,3,4
 
   pass if  32667 &isin; (0..+); -- expect to pass
   pass if -32668 &isin; (-..0); -- expect to pass

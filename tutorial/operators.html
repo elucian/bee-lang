@@ -119,7 +119,7 @@
 <tbody>
 <tr>
 <td>!</td>
-<td>Logical NOT (unary prefix) | Range/set modifier in !. !! !&isin;</td>
+<td>Logical NOT (unary prefix) — Decision 12. Prefix-negates any relation operator: x !&isin; y &equiv; !(x &isin; y)</td>
 </tr>
 <tr>
 <td>?</td>
@@ -135,7 +135,7 @@
 </tr>
 <tr>
 <td>$</td>
-<td>System sigil | Las element in collection</td>
+<td>System sigil | Dynamic end anchor: index of the last element in a collection (1-based, Decision 1)</td>
 </tr>
 <tr>
 <td>&amp;</td>
@@ -273,19 +273,19 @@
 </tr>
 <tr>
 <td>..</td>
-<td>Define range/domain/slice (n..m) | [n..m]</td>
+<td>Range/domain/slice, both limits inclusive (n..m) | [n, m]</td>
 </tr>
 <tr>
-<td>.!</td>
-<td>Define range/domain with excluded limit (n.!m) | [n.!m]</td>
+<td>..&lt;</td>
+<td>Range with excluded upper limit (n..&lt;m) — left-inclusive, right-exclusive | [n, m)</td>
 </tr>
 <tr>
-<td>!.</td>
-<td>Define range/domain with excluded limit (n!.m) | [n.!m] </td>
+<td>&gt;..</td>
+<td>Range with excluded lower limit (n&gt;..m) — left-exclusive, right-inclusive | (n, m]</td>
 </tr>
 <tr>
-<td>!!</td>
-<td>Define range/domain with excluded limits: (n!!m) | [n.!m] </td>
+<td>&gt;..&lt;</td>
+<td>Range with both limits excluded (n&gt;..&lt;m) — fully exclusive | (n, m)</td>
 </tr>
 <tr>
 <td>-.</td>
@@ -474,6 +474,24 @@
  @a ¬ @b;  -- reference inequality: true when a and b are distinct allocations
  @a = 1;   -- always false: @a is a reference, 1 is a constant value
 </pre>
+
+<h2 id="deprecated-forms">Deprecated operator forms</h2>
+<p>Legacy spellings still lex but emit a non-fatal <code>E0010 DeprecatedSymbol</code>
+warning and map to their canonical equivalents (Decisions 12 &amp; 13):</p>
+<table class="table table-bordered table-striped">
+<thead>
+<tr><th>Deprecated</th><th>Canonical</th><th>Meaning</th></tr>
+</thead>
+<tbody>
+<tr><td>&ne;   &lt;&gt;   !=</td><td>&not;</td><td>value inequality (D12)</td></tr>
+<tr><td>==</td><td>=</td><td>value equality (D12)</td></tr>
+<tr><td>.!</td><td>..&lt;</td><td>range — exclude upper endpoint (D13)</td></tr>
+<tr><td>!.</td><td>&gt;..</td><td>range — exclude lower endpoint (D13)</td></tr>
+<tr><td>!!</td><td>&gt;..&lt;</td><td>range — fully exclusive (D13)</td></tr>
+<tr><td>(min..max : step)</td><td>(min..max)(step)</td><td>postfix step (D13)</td></tr>
+</tbody>
+</table>
+
 <h2 id="collection-operators">Collection operators</h2>
 <table class="table table-bordered table-striped">
 <thead>

@@ -34,7 +34,7 @@ Bee utilizes a deterministic, three-tier hybrid memory management model engineer
 - **Manual Deallocation (`zap`):**
   - Syntax: `zap identifier;`
   - In Hot Zones (performance-critical loops), `zap` explicitly invalidates the pointer and resets the target memory slot immediately.
-  - **Static Analysis Invariant:** The compiler performs lifetime tracking. Reading or writing an identifier post-`zap` within the same control flow graph triggers a compile-time error `E0401: AccessAfterZap`.
+  - **Static Analysis Invariant:** The compiler performs lifetime tracking. Reading or writing an identifier post-`zap` within the same control flow graph triggers a compile-time error `E0801: AccessAfterZap`.
   - **Runtime Safety Guard:** In non-optimized debug builds (`-d`), `zap` zero-fills the target pointer slot; subsequent dereference triggers a runtime `Panic: UseAfterZap`.
 
 ### 2.3 Tier 3: Compacting Generational GC (Immutable Strings & Ropes)
@@ -81,12 +81,18 @@ mutability_prefix ::= "let" | "alter" ;
 
 ## 5. Diagnostics & Safety Protocols
 
+> **Diagnostic block:** The memory model was reassigned on 2026-09-14 from the
+> overloaded `E04xx` block (occupied by `spec/04-structure.md`) to the free
+> `E08xx` block. All memory codes are registered centrally in
+> `registry/diagnostics.json`; per the collision policy, never reuse an occupied
+> code without bumping and re-registering.
+
 | Error Code | Violation Description | Mitigation / Diagnostic Action |
 | :--- | :--- | :--- |
-| `E0401` | Use of identifier after `zap` statement | Compile-time fatal error with source line location |
-| `E0402` | Pointer escape from Region Arena to outer scope | Compiler automatic promotion from Region to ARC Heap |
-| `E0403` | Unhandled cycle in ARC structure | Static lifetime analysis or runtime leak warning under `-d` flag |
-| `E0404` | Invalid cross-thread mutation of unshared reference | Compile-time data race restriction |
+| `E0801` | Use of identifier after `zap` statement (`AccessAfterZap`) | Compile-time fatal error with source line location |
+| `E0802` | Pointer escape from Region Arena to outer scope (`RegionEscape`) | Compiler automatic promotion from Region to ARC Heap |
+| `E0803` | Unhandled cycle in ARC structure (`ArcCycleLeak`) | Static lifetime analysis or runtime leak warning under `-d` flag |
+| `E0804` | Invalid cross-thread mutation of unshared reference (`CrossThreadUnsharedMutation`) | Compile-time data race restriction |
 
 ---
 

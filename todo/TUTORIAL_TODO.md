@@ -26,7 +26,7 @@
 ### 0.1 Create `tutorial/memory.html` (NEW FILE — highest priority)
 - [x] **Done.** `tutorial/memory.html` created and aligned with
   `spec/00-memory-model.md` (three tiers, assignment semantics, `zap`/
-  `E0401`, region cleanup, thread boundaries, diagnostic table, E04xx collision flagged).
+  `E0801`, region cleanup, thread boundaries, diagnostic table, E08xx block; see §3.3).
 - **Source:** `spec/00-memory-model.md`.
 - **Why:** This is the only spec module with no dedicated page; today it is
   reduced to a bullet in `features.html`. The memory model is load-bearing for
@@ -38,17 +38,13 @@
     (structural clone), `:` (structural binding — NOT mutation).
   - `new`, `let`, `alter` mutability modifiers and how `:=`/`::` differ per
     primitive vs boxed vs reference.
-  - `zap identifier;` and the `E0401 AccessAfterZap` invariant + debug
+  - `zap identifier;` and the `E0801 AccessAfterZap` invariant + debug
     `UseAfterZap` panic.
   - Region cleanup triggers (`return`, `done`, `next`).
   - Thread boundaries: immutable sharing, ARC transfer (`LOCK XADD`), worker
     error isolation.
-  - Diagnostic table `E0401`–`E0404` (cross-ref with `structure.html` which
-    uses the same E04xx block for module errors — flag and disambiguate).
-- **Note:** `spec/00` reuses `E0401`–`E0404` for memory while `spec/04` reuses
-  `E0401`–`E0405` for modules. This collision is a spec-level defect to
-  surface (see §3 runtime-item 3.5); the tutorial must not silently paper over
-  it.
+  - Diagnostic table `E0801`–`E0804` — memory block moved to `E08xx` on
+    2026-09-14 to resolve the collision with `spec/04-structure.md` (see §3.3).
 
 ### 0.2 Drop the quiz / certification from `tutorial/index.html`
 - [x] **Done.** Quiz/certification artifacts removed; index reorganized into the
@@ -225,10 +221,15 @@ These are prerequisites or supporting chores, not page authoring.
 - `Array`, `Map`, `List`, `Graph` are now explicitly named (non-letter) complex
   types, identified by the `Type` column rather than a reserved letter.
 
-### 3.3 `E04xx` diagnostic block is overloaded
-- `spec/00` (memory) uses `E0401`–`E0404`; `spec/04` (structure) uses
-  `E0401`–`E0405` with different meanings. Needs a spec-level decision; the
-  tutorial must not invent a disambiguation.
+### 3.3 `E04xx` diagnostic block was overloaded — **RESOLVED 2026-09-14**
+- [x] Created `registry/diagnostics.json` as the single source of truth for all
+  `E`/`W` codes (per user directive).
+- [x] Bumped and re-registered `spec/00` (memory) from the colliding `E0401`–`E0404`
+  to the free `E08xx` block (`E0801`–`E0804`). `spec/04` retains the canonical
+  `E04xx` block. Updated `spec/00-memory-model.md` and `tutorial/memory.html`;
+  removed the "E04xx overloaded" warning alert. See `registry/README.md`.
+- Remaining: audit structure/collections/processing/concurrency/graphics/library
+  pages and inject their diagnostic tables now that registration is in place.
 
 ### 3.4 `features.html` overloaded + link drift
 - `features.html` currently carries memory-model notes that belong in the new
@@ -252,7 +253,8 @@ A page is "precise" when:
    `spec/` fact verbatim in intent.
 2. It cites decision ids (D1, D6, D7, D12, D13, D14, D15) where a choice rides
    on a ratified decision.
-3. It includes the module's diagnostic-code table.
+3. It includes the module's diagnostic-code table, with every code first
+   registered in `registry/diagnostics.json`.
 4. It uses canonical operator forms (`¬`, `is`, `is not`, `=` for value
    equality, `≡` only for geometry) — no deprecated glyphs except in an
    explicit deprecation note.

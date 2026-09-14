@@ -123,7 +123,7 @@ pointer and resets the target memory slot immediately.</p>
 <ul>
   <li><b>Static analysis invariant:</b> the compiler performs lifetime tracking. Reading
       or writing an identifier after <code>zap</code> in the same control-flow graph is a
-      compile-time error <code>E0401: AccessAfterZap</code>.</li>
+      compile-time error <code>E0801: AccessAfterZap</code>.</li>
   <li><b>Runtime safety guard:</b> in non-optimized debug builds (<code>-d</code>),
       <code>zap</code> zero-fills the target pointer slot, so a later dereference raises
       <code>Panic: UseAfterZap</code>.</li>
@@ -221,20 +221,18 @@ mutability_prefix ::= "let" | "alter" ;</code></pre>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0401</code></td><td>Use of identifier after <code>zap</code> statement</td><td>Compile-time fatal error with source line location.</td></tr>
-    <tr><td><code>E0402</code></td><td>Pointer escape from Region Arena to outer scope</td><td>Compiler automatically promotes the allocation from Region to ARC Heap.</td></tr>
-    <tr><td><code>E0403</code></td><td>Unhandled cycle in an ARC structure</td><td>Static lifetime analysis, or runtime leak warning under <code>-d</code>.</td></tr>
-    <tr><td><code>E0404</code></td><td>Invalid cross-thread mutation of an unshared reference</td><td>Compile-time data-race restriction.</td></tr>
+    <tr><td><code>E0801</code></td><td><code>AccessAfterZap</code>: use of identifier after <code>zap</code></td><td>Compile-time fatal error with source line location; runtime <code>Panic: UseAfterZap</code> under <code>-d</code>.</td></tr>
+    <tr><td><code>E0802</code></td><td><code>RegionEscape</code>: pointer escapes Region Arena to outer scope</td><td>Compiler automatically promotes the allocation from Region to ARC Heap.</td></tr>
+    <tr><td><code>E0803</code></td><td><code>ArcCycleLeak</code>: unhandled cycle in an ARC structure</td><td>Static lifetime analysis, or runtime leak warning under <code>-d</code>.</td></tr>
+    <tr><td><code>E0804</code></td><td><code>CrossThreadUnsharedMutation</code>: invalid cross-thread mutation of an unshared reference</td><td>Compile-time data-race restriction.</td></tr>
   </tbody>
 </table>
 
-<div class="alert alert-warning shadow-sm">
-  <b>Spec-level defect to resolve:</b> the <code>E04xx</code> block is overloaded.
-  <code>spec/00-memory-model.md</code> uses <code>E0401</code>-<code>E0404</code> for
-  memory violations, while <code>spec/04-structure.md</code> reuses
-  <code>E0401</code>-<code>E0406</code> for module errors with different meanings.
-  Students implementing diagnostics must treat these as distinct until the spec ratifies
-  a single numbering scheme; do not invent a disambiguation here.
+<div class="alert alert-success shadow-sm">
+  <b>Resolved (2026-09-14):</b> the memory block moved out of the overloaded
+  <code>E04xx</code> range (owned by <code>spec/04-structure.md</code>). The memory
+  model now uses the dedicated <code>E08xx</code> block (<code>E0801</code>&ndash;<code>E0804</code>),
+  and every code is registered centrally in <code>registry/diagnostics.json</code>.
 </div>
 
 </div>

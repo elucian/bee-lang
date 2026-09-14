@@ -1,0 +1,182 @@
+{
+  "format": 1,
+  "description": "Central registry of every Bee diagnostic code. Single source of truth for all E/W codes across /spec and /tutorial. Register a new code here before using it; if a code collides with a registered one, bump the new code to the next free slot in its module block and re-register.",
+  "updated": "2026-09-14",
+  "updated_by": "D15 / E04xx collision resolution",
+  "conventions": {
+    "E": "hard error (fatal; halts the build or traps at runtime unless handled)",
+    "W": "soft warning (non-fatal; logged to stderr, does not change exit status)",
+    "block_rule": "module <dd> → E<dd>xx, where <dd> is the module's leading digit (01→E01, 02→E02, ... 14→E14).",
+    "memory_block": "module 00 (memory model) has no natural E00xx block (E00xx is reserved for global/deprecation codes), so memory uses E08xx, the first free block (modules skip 08/09 between 07 and 10).",
+    "collision_policy": "If a proposed code already exists in this registry, the newer/less-canonical use must be bumped to the next free code in its module block and registered here. Never silently reuse an occupied code with different semantics.",
+    "register_first": "Never inject a diagnostic table into /spec or /tutorial before the codes are registered here."
+  },
+  "global": {
+    "note": "Cross-cutting codes shared by every module. Up-scope targets for Phase 7.2 deprecation hardening."
+  },
+  "modules": {
+    "global": {
+      "source": "spec/00,01,02,03 + decisions D12/D14/D15",
+      "codes": {
+        "E0009": { "name": "HardSyntaxError", "severity": "E", "condition": "Upscope target for deprecated symbols/keywords once Phase 7.2 migration completes (replaces E0010/E0011 as hard).", "resolution": "Rewrite using the canonical ratified form." },
+        "E0010": { "name": "DeprecatedSymbol/DeprecatedKeyword", "severity": "E", "condition": "Legacy form encountered: 'repeat' (use 'next', D15), '≠'/'=='/'!='/'<>' (use '¬'/'='/¬, D12), '.!'/'!.'/'!!' range glyphs (use '..<'/'>..'/'>..<', D13).", "resolution": "Replace with the canonical form; non-fatal until Phase 7.2 hardens to E0009." },
+        "E0011": { "name": "DeprecatedSymbol 'using'", "severity": "E", "condition": "Legacy 'using' / 'using:' postfix on io_stmt or rule call (D6).", "resolution": "Use curried named-argument call form (sep: ...); non-fatal until hardened to E0009." },
+        "W0901": { "name": "UnrecognizedStatement", "severity": "W", "condition": "Parser reached a token stream with no statements produced; soft warning attached to parser error surface.", "resolution": "Author statements that the rigid syntax gate recognizes." }
+      }
+    },
+    "00-memory-model": {
+      "source": "spec/00-memory-model.md §5",
+      "block": "E08xx",
+      "collision_note": "Bumped from E04xx to E08xx on 2026-09-14 to resolve the E04xx block overload with spec/04-structure (which retains E0401-E0406).",
+      "codes": {
+        "E0801": { "name": "AccessAfterZap", "severity": "E", "condition": "Read or write of an identifier after a 'zap' statement in the same control-flow graph.", "resolution": "Compile-time fatal error with source line location; runtime 'Panic: UseAfterZap' under -d." },
+        "E0802": { "name": "RegionEscape", "severity": "E", "condition": "Pointer escapes a Region Arena into an outer scope.", "resolution": "Compiler automatically promotes the allocation from Region to ARC Heap." },
+        "E0803": { "name": "ArcCycleLeak", "severity": "E", "condition": "Unhandled cycle in an ARC structure.", "resolution": "Static lifetime analysis, or runtime leak warning under -d." },
+        "E0804": { "name": "CrossThreadUnsharedMutation", "severity": "E", "condition": "Cross-thread mutation of an unshared reference.", "resolution": "Compile-time data-race restriction." }
+      }
+    },
+    "01-lexical-structure": {
+      "source": "spec/01-lexical-structure.md §6",
+      "block": "E01xx",
+      "codes": {
+        "E0101": { "name": "UTF8BomMarker", "severity": "E", "condition": "Unexpected UTF-8 BOM marker at source start.", "resolution": "Strip the BOM from the source header." },
+        "E0102": { "name": "UnterminatedBlockComment", "severity": "E", "condition": "Block comment ('+-') without a closing '-+'.", "resolution": "Ensure closing '-+' exists." },
+        "E0103": { "name": "InvalidEscapeSequence", "severity": "E", "condition": "Invalid escape sequence in a string literal.", "resolution": "Use valid \\n, \\t, \\uXXXX escapes." },
+        "E0104": { "name": "SingleLetterUppercaseIdentifier", "severity": "E", "condition": "Single-letter uppercase variable identifier.", "resolution": "Use a lowercase start or a multi-letter type identifier." },
+        "E0105": { "name": "UnterminatedStringOrMarkup", "severity": "E", "condition": "Unterminated string literal or markup block.", "resolution": "Check closing quotes or the matching markup tag." }
+      }
+    },
+    "02-statements": {
+      "source": "spec/02-statements.md §7",
+      "block": "E02xx",
+      "codes": {
+        "E0201": { "name": "IndentationMismatch", "severity": "E", "condition": "Statement not aligned to the 2-space offset boundary.", "resolution": "Re-indent to the canonical 2-space block depth." },
+        "E0202": { "name": "UnboundVariable", "severity": "E", "condition": "Mutation of a variable without a prior 'new' declaration.", "resolution": "Declare the variable first." },
+        "E0203": { "name": "UnterminatedBlock", "severity": "E", "condition": "Missing 'done' or 'return' terminator.", "resolution": "Terminate the block with 'done [label];' (D14) or 'return;'." },
+        "E0204": { "name": "InvalidCloneOperation", "severity": "E", "condition": "Using the '::' clone operator on a non-clonable primitive.", "resolution": "Use ':=' or restrict '::' to boxed/object targets." },
+        "E0205": { "name": "LabelMismatch", "severity": "E", "condition": "Closing label on 'done' does not match the opening header label.", "resolution": "Align 'done' label with the block header label." },
+        "E0206": { "name": "InvalidJumpContext", "severity": "E", "condition": "'next', 'stop', or 'redo' used outside a loop body.", "resolution": "Move the jump inside a loop (D14/D15)." }
+      }
+    },
+    "03-rules": {
+      "source": "spec/03-rules.md §7",
+      "block": "E03xx",
+      "codes": {
+        "E0301": { "name": "UndeclaredRule", "severity": "E", "condition": "Rule invoked prior to definition or forward declaration.", "resolution": "Define or forward-declare the rule first." },
+        "W0301": { "name": "AssertionWarning", "severity": "W", "condition": "Assertion failed in an 'assert' contract clause.", "resolution": "Logged to stderr; review the asserted invariant." },
+        "E0303": { "name": "ExpectationFailed", "severity": "E", "condition": "Expectation failed in an 'expect' contract clause or body statement.", "resolution": "Fatal runtime error if unhandled." },
+        "E0304": { "name": "MultiResultInExpression", "severity": "E", "condition": "Multi-result rule used inside an arithmetic expression tree.", "resolution": "Call the rule at statement level and deconstruct its results." },
+        "E0305": { "name": "MissingReturnTerminator", "severity": "E", "condition": "Rule block does not end with an aligned 'return;'.", "resolution": "Append 'return;' at the rule end." },
+        "E0306": { "name": "SignatureMismatch", "severity": "E", "condition": "Forward declaration does not match the rule implementation signature.", "resolution": "Align the two signatures." },
+        "E0307": { "name": "MissingNamedArgument", "severity": "E", "condition": "Call site omits a required named-parameter slot binding with no default (D6).", "resolution": "Supply the named argument at the call site." },
+        "W0308": { "name": "NamedSlotIgnored", "severity": "W", "condition": "Curried '(...)' list appended where the rule declares no named slot (D6).", "resolution": "Remove the extraneous named-argument list." },
+        "E0309": { "name": "UnknownNamedArgument", "severity": "E", "condition": "Call site names an identifier not present in the rule's declared named slot (D6).", "resolution": "Use only declared named-slot identifiers." }
+      }
+    },
+    "04-structure": {
+      "source": "spec/04-structure.md §7",
+      "block": "E04xx",
+      "retains": "Retains the canonical E04xx block after memory was bumped to E08xx on 2026-09-14.",
+      "codes": {
+        "E0401": { "name": "MainModuleRedefinition", "severity": "E", "condition": "Secondary or library module contains 'rule main'.", "resolution": "Remove 'rule main' from non-entry modules." },
+        "E0402": { "name": "PrivateMemberAccess", "severity": "E", "condition": "Access to an unexported member (missing '.' prefix).", "resolution": "Export the member with a '.' prefix or access within module." },
+        "E0403": { "name": "ModuleNotFound", "severity": "E", "condition": "Module file missing from the search path ($pro_mod, $pro_lib, $bee_lib).", "resolution": "Place the module in a configured search path." },
+        "E0404": { "name": "CyclicImportError", "severity": "E", "condition": "Circular dependency between imported modules.", "resolution": "Break the import cycle." },
+        "E0405": { "name": "MainImportForbidden", "severity": "E", "condition": "Attempt to load 'main.bee' via a 'use' directive.", "resolution": "Do not import the entry module." },
+        "E0406": { "name": "UnsynchronizedWorker", "severity": "E", "condition": "Scope exited with pending 'begin' threads prior to a 'wait' barrier.", "resolution": "Add a 'wait' barrier before scope exit. (Semantic twin of E1201 in concurrency; retained here for module-level structure completeness.)" }
+      }
+    },
+    "05-types": {
+      "source": "spec/05-types.md §7",
+      "block": "E05xx",
+      "codes": {
+        "E0501": { "name": "TypeMismatch", "severity": "E", "condition": "Assigned value violates the static type boundary.", "resolution": "Cast or fix the value to the declared type." },
+        "E0502": { "name": "InvalidTypeCast", "severity": "E", "condition": "Incompatible explicit cast with the ':>' operator.", "resolution": "Use a lossless cast between compatible types." },
+        "E0503": { "name": "DomainOutOfBounds", "severity": "E", "condition": "Assigned literal falls outside a constrained range/domain.", "resolution": "Constrain the value to the declared domain." },
+        "E0504": { "name": "RationalOverflow", "severity": "E", "condition": "Value exceeds the maximum capacity of a Q(m.n) container.", "resolution": "Widen the fixed-point precision." },
+        "E0505": { "name": "SingleLetterTypeReserved", "severity": "E", "condition": "User type identifier uses a reserved single uppercase Latin letter.", "resolution": "Choose a non-reserved name or a multi-letter type." },
+        "E0506": { "name": "PrecisionUndefined", "severity": "E", "condition": "Approximate comparison '≈' executed with uninitialized $max_precision.", "resolution": "Initialize $max_precision before using '≈'." }
+      }
+    },
+    "06-objects": {
+      "source": "spec/06-objects.md §7",
+      "block": "E06xx",
+      "codes": {
+        "E0601": { "name": "AbstractMethodUnimplemented", "severity": "E", "condition": "Concrete class fails to supply a body for an inherited abstract method.", "resolution": "Implement the abstract method in the concrete class." },
+        "E0602": { "name": "PrivatePropertyAccess", "severity": "E", "condition": "Access to a property without the '.' or 'self.' export prefix.", "resolution": "Export the property or access via 'self.'." },
+        "E0603": { "name": "SuperConstructorMissing", "severity": "E", "condition": "Derived constructor fails to execute a 'super(...)' call.", "resolution": "Chain the parent constructor." },
+        "E0604": { "name": "CyclicInheritance", "severity": "E", "condition": "Class hierarchy contains a circular inheritance loop.", "resolution": "Break the inheritance cycle." },
+        "E0605": { "name": "UnknownMemberKey", "severity": "E", "condition": "Accessing a dynamic key that does not exist in an object dictionary.", "resolution": "Guard the key with a membership check." },
+        "E0606": { "name": "InvalidTraitApplication", "severity": "E", "condition": "Trait applied to an incompatible target type.", "resolution": "Apply the trait only to compatible types." }
+      }
+    },
+    "07-functions": {
+      "source": "spec/07-functions.md §7",
+      "block": "E07xx",
+      "codes": {
+        "E0701": { "name": "RuleCallInLambda", "severity": "E", "condition": "Lambda attempts to invoke a stateful rule.", "resolution": "Use only pure lambdas inside a lambda; hoist the rule call out." },
+        "E0702": { "name": "SideEffectInLambda", "severity": "E", "condition": "Lambda contains I/O or variable mutation.", "resolution": "Keep lambdas side-effect-free." },
+        "E0703": { "name": "LambdaTypeMismatch", "severity": "E", "condition": "Passed lambda signature does not match the expected 'L' parameter.", "resolution": "Align the lambda signature with the 'L' type descriptor." },
+        "E0704": { "name": "UnboundLambdaVariable", "severity": "E", "condition": "Lambda references an outer variable not in scope inside the lambda frame.", "resolution": "Pass needed values as lambda parameters." },
+        "E0705": { "name": "StateDeclarationInLambda", "severity": "E", "condition": "Use of 'new', 'let', or 'alter' inside a lambda.", "resolution": "Move state declarations outside the lambda." }
+      }
+    },
+    "10-collections": {
+      "source": "spec/10-collections.md §5",
+      "block": "E10xx",
+      "codes": {
+        "E1001": { "name": "IndexOutOfBounds", "severity": "E", "condition": "Index less than 1 or greater than the collection length '$'.", "resolution": "Use 1-based indexing; '$-k' for end-relative." },
+        "E1002": { "name": "DuplicateSetKey", "severity": "E", "condition": "Insertion of a duplicate key/element into Set/Map.", "resolution": "Check membership or allow overwrite." },
+        "E1003": { "name": "MatrixDimensionMismatch", "severity": "E", "condition": "Incompatible row/column dimension during assignment.", "resolution": "Align matrix dimensions." },
+        "E1004": { "name": "TypeIncompatibleCollection", "severity": "E", "condition": "Value type does not match the declared collection element type.", "resolution": "Cast the value or change the element type." },
+        "E1005": { "name": "InvalidSetAlgebra", "severity": "E", "condition": "Set operator ('∩','∪') applied to a non-set type.", "resolution": "Use set operators only on sets." },
+        "E1006": { "name": "ZeroBasedIndexAttempt", "severity": "E", "condition": "Use of index 0 (Bee is 1-based, Decision 1).", "resolution": "Rewrite the index starting from 1." }
+      }
+    },
+    "11-processing": {
+      "source": "spec/11-processing.md §7",
+      "block": "E11xx",
+      "codes": {
+        "E1101": { "name": "UnboxingTypeMismatch", "severity": "E", "condition": "Unboxing a reference into an incompatible scalar type.", "resolution": "Unbox with the correct 'Type(boxed)' target." },
+        "E1102": { "name": "InvalidQuantifierDomain", "severity": "E", "condition": "Quantifier applied to a non-collection operand.", "resolution": "Apply quantifiers to collections only." },
+        "E1103": { "name": "PipelineStepIncompatible", "severity": "E", "condition": "Output type of a pipeline step does not match the next step's input.", "resolution": "Insert an adapting step into the pipeline." },
+        "E1104": { "name": "DeconstructionMismatch", "severity": "E", "condition": "Number of targets exceeds collection elements without a '*' tail.", "resolution": "Add a '*' tail or reduce targets." },
+        "E1105": { "name": "InvalidMatrixSlice", "severity": "E", "condition": "Dimension wildcard '*' used on a non-matrix or invalid rank.", "resolution": "Use '*' only on valid matrix ranks." },
+        "E1106": { "name": "NonBoxedAssignment", "severity": "E", "condition": "Reference assignment ':=' on an unboxed value.", "resolution": "Box the value first with '[x]'." }
+      }
+    },
+    "12-concurrency": {
+      "source": "spec/12-concurrency.md §7",
+      "block": "E12xx",
+      "codes": {
+        "E1201": { "name": "UnsynchronizedWorker", "severity": "E", "condition": "Scope exited with pending 'begin' threads prior to a 'wait' barrier.", "resolution": "Add a 'wait' barrier before scope exit. (Canonical working code; twin of E0406 in structure.)" },
+        "E1202": { "name": "DataRaceAttempt", "severity": "E", "condition": "Direct cross-thread mutation without a '+>' reduction channel.", "resolution": "Use the '+>' reduction channel." },
+        "E1203": { "name": "CoroutinesChannelClosed", "severity": "E", "condition": "'yield var << task' on a closed or finished coroutine.", "resolution": "Re-open the channel or check coroutine state." },
+        "E1204": { "name": "WorkerPanicReRaised", "severity": "E", "condition": "Unhandled exception in a worker thread surfaced at the 'wait' barrier.", "resolution": "Inspect the '$trial' handle and handle the re-raise." },
+        "E1205": { "name": "YieldOutsideCoroutine", "severity": "E", "condition": "'yield' used inside a non-coroutine static rule.", "resolution": "Declare the rule as a coroutine or remove 'yield'." }
+      }
+    },
+    "13-graphics": {
+      "source": "spec/13-graphics.md §7",
+      "block": "E13xx",
+      "codes": {
+        "E1301": { "name": "InvalidAngleFormat", "severity": "E", "condition": "Malformed degree/minute/second ('° ′ ″') angular syntax.", "resolution": "Correct the angular literal." },
+        "E1302": { "name": "LayerNotFound", "severity": "E", "condition": "'draw' on an unattached or non-existent layer.", "resolution": "Attach the layer to the canvas first." },
+        "E1303": { "name": "NegativeRadius", "severity": "E", "condition": "Circle or polar point constructed with a negative radius r.", "resolution": "Use a non-negative radius." },
+        "E1304": { "name": "PolygonVertexUnderflow", "severity": "E", "condition": "Polygon constructed with fewer than 3 vertex points.", "resolution": "Supply at least 3 vertices." },
+        "E1305": { "name": "CanvasRenderError", "severity": "E", "condition": "Target canvas hardware context unavailable.", "resolution": "Retry with a valid canvas context." }
+      }
+    },
+    "14-library": {
+      "source": "spec/14-library.md §7",
+      "block": "E14xx",
+      "codes": {
+        "E1401": { "name": "FileNotFound", "severity": "E", "condition": "Target file path missing during an open operation.", "resolution": "Create the file or correct the path." },
+        "E1402": { "name": "FileAccessDenied", "severity": "E", "condition": "Insufficient OS permissions to open or write a file handle.", "resolution": "Fix the permissions." },
+        "E1403": { "name": "UnclosedFileHandle", "severity": "E", "condition": "Scope exited with an unclosed 'F' file handle.", "resolution": "Close the handle before scope exit." },
+        "E1404": { "name": "LibraryNotFound", "severity": "E", "condition": "Requested '$bee.sys' submodule not available in the runtime build.", "resolution": "Build with the required submodule." },
+        "E1405": { "name": "InvalidFileMode", "severity": "E", "condition": "File open mode is not 'r', 'w', 'a', or 'rw'.", "resolution": "Use one of the four accepted modes." }
+      }
+    }
+  }
+}
