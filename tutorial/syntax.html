@@ -93,7 +93,10 @@ return;
 </ul>
 
 <h4>Block comment</h4>
-<p>Bee has a specific notation for block comments not used in any other language so far. It is a multi-line comment starting with "+-" and end with "-+". The upper right corner is missing in a box comment. I guess you will notice this defect later.</p>
+<p>Bee has a specific notation for block comments not used in any other language so far. It is a multi-line comment starting with "+-" and end with "-+". The upper right corner is missing in a box comment. I guess you will notice this defect later. Nested block comments are supported (<code>+- ... +- ... -+ ... -+</code>).</p>
+
+<h4>Expression comment</h4>
+<p>The <code>(: ... :)</code> expression comment is delimited by <code>(:</code> and <code>:)</code> and can be placed <em>inside</em> an expression or span a region containing other comments. It supports nesting (spec/01 &sect;4).</p>
 
 <h4>Notes:</h4>
 <ul>
@@ -488,7 +491,7 @@ yₐ yₑ yₕ yᵢ yⱼ yₖ yₗ yₘ yₙ yₒ yₚ yᵣ yₛ yₜ yᵤ yᵥ 
 
 <h3 id="superscript">Superscript:</h3>
 
-<p>Bee has support for exponent using superscript. You can make any integer exponent including negative numbers but you can not use dot or fraction in the exponent.<p>
+<p>Bee has support for exponent using superscript. You can make any integer exponent including negative numbers but you can not use dot or fraction in the exponent.</p>
 
 <pre class="language-out">
 x⁺ x⁻ x¹ x² x³ x⁴ x⁵ x⁶ x⁷ x⁸ x⁹ x¹⁰
@@ -497,6 +500,24 @@ x⁺ x⁻ x¹ x² x³ x⁴ x⁵ x⁶ x⁷ x⁸ x⁹ x¹⁰
 <p><b>Note: </b>
 Symbol (^) is exponent operator and is not required when you use superscript simple exponent. You can use it with complex expressions, constants or rational numbers to resolve the complex cases. Complex exponent expression must use x^() pattern, the parenthesis are mandatory only for expressions. Variables or constant literals do not need () for example x^y is valid notation.</p>
 
+<h2 id="string-literals">String Literals</h2>
+
+<p>Bee recognises three string literal forms plus embedded markup blocks (spec/01 &sect;4.1 &amp; &sect;4.3):</p>
+
+<table class="table table-bordered table-striped">
+  <thead><tr><th>Literal</th><th>Meaning</th><th>Example</th></tr></thead>
+  <tbody>
+    <tr><td><code>'...'</code></td><td>Single-quoted; standard backslash escapes; no interpolation; cannot span a physical line</td><td><code>c := 'A'</code></td></tr>
+    <tr><td><code>"..."</code></td><td>Double-quoted; interpolated with <code>#(expr)</code> placeholders</td><td><code>"val = #(a + b)"</code></td></tr>
+    <tr><td><code>`...`</code></td><td>Raw multi-line; preserves newlines and characters verbatim, no escapes</td><td><code>s := `raw span`</code></td></tr>
+  </tbody>
+</table>
+
+<h4>Standard escape sequences</h4>
+<p>Escape sequences usable inside quoted strings: <code>\n</code>, <code>\r</code>, <code>\t</code>, <code>\\</code>, <code>\'</code>, <code>\"</code>, <code>\0</code>, <code>\uXXXX</code> (16-bit), <code>\UXXXXXXXX</code> (32-bit).</p>
+
+<h4>Embedded markup blocks</h4>
+<p>Domain-specific text blocks are delimited by opening <code>&lt;tag&gt;</code> and closing <code>&lt;/tag&gt;</code>. Supported tags: <code>&lt;text&gt;</code>, <code>&lt;sql&gt;</code>, <code>&lt;html&gt;</code>, <code>&lt;xml&gt;</code>, <code>&lt;json&gt;</code>, <code>&lt;code&gt;</code>. The payload is preserved verbatim as a raw multi-line string.</p>
 
 <h2 id="expressions">Expressions</h2>
 

@@ -550,10 +550,10 @@ new array  := [ x | x &isin; (1..10)(2) ]; -- [1,3,5,7,9]
 
 <p><b>symbols:</b></p>
 <ul>
-<li>Universal quantifier "all" is &forall;, a rotated letter A</li>
-<li>Existential quantifier "exists" is &exist;, a rotated letter E</li>
+<li>Universal quantifier "all" is &forall; (ASCII keyword synonym: <code>forall</code>)</li>
+<li>Existential quantifier "exists" is &exist; (ASCII keyword synonym: <code>exists</code>)</li>
 </ul>
-<p>Qualifiers can be used as logical expressions in conditional expressions.</p>
+<p>The Unicode glyphs &forall;/&exist; and their ASCII keyword synonyms <code>forall</code>/<code>exists</code> lex to a single token each (Decision 7 synonymy) and are interchangeable in source. (spec/11 §3). Qualifiers can be used as logical expressions in conditional expressions.</p>
 
 <h4>Syntax:</h4>
 <pre><code class="language-bee">&exist; (x &isin; DS) ∧ condition(x);
@@ -611,6 +611,33 @@ return;
 </code></pre>
 
 
+<h2 id="pipelines-mapreduce">Pipelines &amp; Map-Reduce</h2>
+<p>Data transformations can be chained with the pipeline operator <code>&gt;&gt;</code>, threading a collection from one step into the next (spec/11 §4). A pipeline step is either a built-in collection method or a pure lambda.</p>
+
+<pre><code class="language-bee">-- filter even numbers, square them, then sum the result
+new data := [1,2,3,4,5,6,7,8,9,10];
+rule main:
+  new result := data &gt;&gt; filter(&lambda;(x) =&gt; x % 2 = 0)
+                     &gt;&gt; map(&lambda;(x) =&gt; x ^ 2)
+                     &gt;&gt; sum();
+  print result; -- 220 = 4 + 16 + 36 + 64 + 100
+return;
+</code></pre>
+
+<h4>Map-Reduce operations</h4>
+<ul>
+<li><code>.map(&lambda;)</code> &mdash; transforms every element into a new representation.</li>
+<li><code>.filter(&lambda;)</code> &mdash; retains elements matching a boolean predicate lambda.</li>
+<li><code>.reduce(init, &lambda;)</code> &mdash; folds elements into a single aggregate using an accumulator lambda.</li>
+</ul>
+
+<h4>Built-in aggregates</h4>
+<ul>
+<li><code>.count()</code>, <code>.sum()</code>, <code>.avg()</code>, <code>.min()</code>, <code>.max()</code>.</li>
+</ul>
+
+<p>The output type of a pipeline step must match the next step's input; a mismatch is reported as <code>E1103 PipelineStepIncompatible</code>.</p>
+
 <h2 id="list-operations">List Operations</h2>
 <p>We can add elements to a list or remove elements from the list very fast:</p>
 <ul>
@@ -618,9 +645,8 @@ return;
 <li>operator +&gt; append one element to beginning of list</li>
 <li>operator += append one element in a set</li>
 <li>operator -= delete one element from a set</li>
-<li>operator &lt;&lt; shift left a list (remove first element or more)</li>
-<li>operator &gt;&gt; shift right a list (remove last element or more)</li>
 </ul>
+<p>Note: the <code>&gt;&gt;</code> glyph is <b>not</b> a list-shift here — it is the <b>pipeline</b> operator (<code>spec/11</code> §4, EBNF <code>pipeline_expr</code>). Bee has no dedicated list-shift operator; shifting is expressed via list slicing or the <code>&lt;+</code> / <code>+&gt;</code> append operations.</p>
 
 <h3 id="list-concatenation">List Concatenation</h3>
 <p>List concatenation is ready using operator &ldquo;+&rdquo;. This operator represent union. Therefore union act very similar to append, except we add multiple elements at the end of first list and we create a new list as result.</p>
@@ -1162,7 +1188,7 @@ return;
 
 <h4>THE END:</h4>
 
-<p>This was the Bee draft design for basic concepts. Thank you for reading it all. Our effort has merely begun. There is a lot of testing and developing ahead of us. Next chapter are advanced research topics, just some ideas. Don't read yet.<p>
+<p>This was the Bee draft design for basic concepts. Thank you for reading it all. Our effort has merely begun. There is a lot of testing and developing ahead of us.</p>
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
@@ -1181,7 +1207,7 @@ return;
   </tbody>
 </table>
 
-<</p>!-- Footer -->
+<!-- Footer -->
 
 </div>
       </main>

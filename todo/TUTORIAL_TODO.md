@@ -105,27 +105,36 @@ the matching tutorial page. Work item = reconcile tutorial with spec.
   as value equality; the identity/value taxonomy lives in `operators.html`.
 
 ### 1.3 `rules.html`  ← `spec/03-rules.md`
-- [ ] Add **curried / named-parameter slots** (Decision 6): signature
-  `rule f(a)(sep: ", " ∈ Str)`, call site `f(a)(sep: "|")`, order
+- [x] **Done 2026-09-14.** Curried/named slots, assert/expect, forward decls,
+  TCO, closures, result deconstruction, and the E03xx table were all already
+  present. Added the missing **Companion & Singleton Rules** section (spec §5.1)
+  and linked it from Advanced Topics.
+- [x] Add **curried / named-parameter slots** (Decision 6): signature
+  `rule f(a)(sep: ", " ∈ S)`, call site `f(a)(sep: "|")`, order
   independence, defaults, and deprecation of `using`.
-- [ ] Add `assert` vs `expect` contract semantics (warning vs fatal).
-- [ ] Add forward declarations (no hoisting) + mutual recursion.
-- [ ] Add tail-call optimization (TCO) note.
-- [ ] Add closures / state generators (boxed `[start]` capture).
-- [ ] Add companion & singleton rules.
-- [ ] Add result deconstruction `new s, d := f(...)`, wildcard `_`, and the
+- [x] Add `assert` vs `expect` contract semantics (warning vs fatal).
+- [x] Add forward declarations (no hoisting) + mutual recursion.
+- [x] Add tail-call optimization (TCO) note.
+- [x] Add closures / state generators (boxed `[start]` capture).
+- [x] Add companion & singleton rules.
+- [x] Add result deconstruction `new s, d := f(...)`, wildcard `_`, and the
   multi-result-in-expression restriction.
-- [ ] Add diagnostic table (`E0301`–`E0309`, `W0301`, `W0308`, `E0010`, `E0011`).
+- [x] Add diagnostic table (`E0301`–`E0309`, `W0301`, `W0308`, `E0010`, `E0011`).
 
 ### 1.4 `control.html`  ← `spec/02-statements.md` (+ D14/D15)
-- [ ] Add uniform `done [label];` terminator for all blocks (D14).
-- [ ] Add `next [label] [if cond]` canonical continue jump (D15) and mark
-  `repeat` as deprecated synonym (E0010).
-- [ ] Confirm `stop`/`redo` semantics unchanged and documented.
-- [ ] Add `start`/`with` scope blocks; `match` value-matching; `trial` error
-  handling; `then` post-loop epilogue.
-- [ ] Add ternary/conditional selector syntax.
-- [ ] Add statement diagnostic table.
+- [x] **Done 2026-09-14.** Add uniform `done [label];` terminator for all
+  blocks (D14) — reinforced in the page intro with the full terminated-block
+  list + `E0205 LabelMismatch` cross-ref.
+- [x] **Done.** `next [label] [if cond]` canonical continue jump (D15) and
+  `repeat` deprecated synonym (E0010) — in notes, nested/for cycles, and the
+  diagnostic table.
+- [x] **Done.** `stop`/`redo` semantics confirmed unchanged and documented.
+- [x] **Done.** `start`/`with` scope blocks; `match` value-matching; `trial`
+  error handling; `then` post-loop epilogue.
+- [x] **Done 2026-09-14.** Add ternary/conditional expression selector `(expr_true
+  if condition else expr_false)` — new section under Conditional Selector; parser
+  + `test/level2/T0225.bee` already implement it.
+- [x] **Done.** Statement diagnostic table (E0201–E0206, E0010, E0011).
 
 ### 1.5 `operators.html`  ← `spec/01-lexical-structure.md` §3 (+ D2/D7/D12/D13)
 - [x] Enforce the identity/value taxonomy table: `=` value equality, `¬` value
@@ -143,54 +152,80 @@ the matching tutorial page. Work item = reconcile tutorial with spec.
   `ⁿ√` and the rule that power inside the operand resolves first (`³√ 2³ = 2`).
 
 ### 1.6 `collections.html`  ← `spec/10-collections.md`
-- [ ] Verify **Ordinal** type `(start){ id, id, … }` (commonly under-covered).
-- [ ] Verify `$` end-anchor, 1-based indexing, and `$ - k` negative-relative.
-- [ ] Verify set algebra `∩ ∪ \ Δ ⊂ ⊃ Σ` and `∈` membership.
-- [ ] Verify matrix row-major + 2D indexing.
-- [ ] Add diagnostic table `E1001`–`E1006`.
+- [x] **Done 2026-09-14.** Verify **Ordinal** type `(start){ id, id, … }` — present (with `(n){…}` start specifier and public `.name` elements).
+- [x] **Done.** Verify `$` end-anchor, 1-based indexing, and `$ - k` negative-relative — added a dedicated **1-Based Indexing & the `$` End Anchor** section (`list[$]`, `list[$ - 1]`, slicing `list[2..$ - 1]`, `E1006 ZeroBasedIndexAttempt`).
+- [x] **Done.** Verify set algebra `∩ ∪ \ Δ ⊂ ⊃ Σ` and `∈` membership — added the missing `Σ` summation operator to the data-set example.
+- [x] Verify matrix row-major + 2D indexing — already present.
+- [x] Add diagnostic table `E1001`–`E1006` — already present and registry-aligned.
 
 ### 1.7 `processing.html`  ← `spec/11-processing.md`
-- [ ] Verify boxing `[x]` and unboxing `Type(boxed)`.
-- [ ] Verify quantifiers `∀`/`exists` and `∃`/`exists`.
-- [ ] Verify pipelines `>>`, `.map/.filter/.reduce`, aggregates.
-- [ ] Verify deconstruction `*tail` and matrix row/col slice `M[1,*]`, `M[*,2]`.
-- [ ] Add diagnostic table `E1101`–`E1106`.
+- [x] **Done 2026-09-14.** Verify boxing `[x]` and unboxing `Type(boxed)` — present (&sect;Boxed values).
+- [x] **Done 2026-09-14.** Quantifiers present; added ASCII synonyms `forall`/`exists` (D7 synonymy) to &sect;Logic Qualifiers.
+- [x] **Done 2026-09-14.** Added &sect;Pipelines &amp; Map-Reduce: `>>` chaining, `.map/.filter/.reduce`, aggregates `.count/.sum/.avg/.min/.max`, and `E1103` cross-ref. Also corrected the stale &sect;List Operations claim that `>>` is a list-shift (it is the pipeline operator, spec/11 §4).
+- [x] **Done.** Verify deconstruction `*tail` and matrix row/col slice `M[1,*]`, `M[*,2]` — present (&sect;Array decomposition, &sect;Matrix operations).
+- [x] **Done.** Add diagnostic table `E1101`–`E1106` — present and registry-aligned.
 
 ### 1.8 `concurrency.html`  ← `spec/12-concurrency.md`
-- [ ] Verify `begin`/`wait`, thread-safe reduction `+>`, coroutines `yield`,
-  channel extraction `yield var << task`.
-- [ ] Verify worker exception isolation + `$trial` handle re-raise at `wait`.
-- [ ] Add diagnostic table `E1201`–`E1205`.
+- [x] **Done 2026-09-14.** Verify `begin`/`wait`, thread-safe reduction `+>`,
+  coroutines `yield`, channel extraction — present. Corrected the stale `wait`
+  definition (it is a synchronization barrier, not a sleep timer), fixed the
+  channel-extract glyph from `<-` to canonical `<<` (spec §4.2 / E1203),
+  and replaced deprecated range `(1.!100:25)` with canonical D13
+  `(1..<101)(25)`.
+- [x] **Done 2026-09-14.** Added &sect;Worker Exception Isolation — `$trial`
+  handle, barrier re-raise, `E1204` cross-ref.
+- [x] **Done.** Add diagnostic table `E1201`–`E1205` — present and registry-aligned.
 
 ### 1.9 `graphics.html`  ← `spec/13-graphics.md`
-- [ ] Verify angular `G` type and `° ′ ″` literals.
-- [ ] Verify `CRT/POL/VEC/CRC/SQR/PLG` primitives and `Canvas/Layer/Shape/Label`.
-- [ ] Verify `draw/wipe/show/hide` and affine transforms.
-- [ ] Verify `≡` congruence semantics live here (not as value equality).
-- [ ] Add diagnostic table `E1301`–`E1305`.
+- [x] **Done 2026-09-14.** Verify angular `G` type and `° ′ ″` literals — present.
+- [x] **Done 2026-09-14.** Verify `CRT/POL/VEC/CRC/SQR/PLG` primitives and
+  `Canvas/Layer/Shape/Label` — present. Corrected primitive signatures to the
+  spec/13 §3 catalogue (POL `{r ∈ R,θ∈G}`, CRC `{o∈CRT,r∈R}`, SQR `{b∈R}`, PLG
+  `{v∈[CRT]}`) and removed the un-ratified ARC/TRG/REG rows (additive violation).
+- [x] **Done 2026-09-14.** Verify `draw/wipe/show/hide` and affine transforms —
+  added a &sect;drawing-API code example and an &sect;Affine Transformations
+  (rotate/translate/scale) section.
+- [x] **Done 2026-09-14.** Added &sect;Geometric Congruence — `≡` congruence-only
+  semantics (spec §5.1), never value equality.
+- [x] **Done.** Add diagnostic table `E1301`–`E1305` — present and registry-aligned.
 
 ### 1.10 `library.html`  ← `spec/14-library.md`
-- [ ] Verify `$bee.sys` namespaces, `F` file handles, and tree-shaking linkage.
-- [ ] Verify `entity.type()`, `size`, `length`, `capacity`.
-- [ ] Verify `$error` code ranges (`1..199` system, `200+` user, `≤ -1` panic).
-- [ ] Add diagnostic table `E1401`–`E1405`.
+- [x] **Done 2026-09-14.** Added the canonical <code>$bee.sys.io</code> namespace
+  import (<code>use $bee.sys.io as IO;</code>) and <code>IO.File.open/write/close</code> +
+  <code>IO.Folder.exist/create/list</code> API to &sect;File IO (replacing the
+  un-ratified flat <code>File.open()</code> form); noted the <code>$bee.sys</code>
+  sibling namespaces (math/string/time/env) per spec §1.
+- [x] **Done.** Verify <code>entity.type()</code>, <code>size</code>, <code>length</code>,
+  <code>capacity</code> — present as introspection rules.
+- [x] **Done 2026-09-14.** Verified <code>$error</code> allocation — updated &sect;Error
+  Type to the spec/14 §5 ranges (<code>1..199</code> system, <code>200..9999</code> user,
+  <code>≤ -1</code> panic) and tied it to the <code>$error</code> system variable.
+- [x] **Done.** Add diagnostic table `E1401`–`E1405` — present and registry-aligned.
 
 ### 1.11 `structure.html`  ← `spec/04-structure.md`
-- [ ] Verify `$` sigil system-variable table (`$bee_home`, `$pro_home`,
-  `$max_precision`, …) is complete.
-- [ ] Verify export prefix `.`, `with … do … done`, `alias`.
-- [ ] Add diagnostic table (`E0401`–`E0405`).
+- [x] **Done 2026-09-14.** Verify `$` sigil system-variable table — added
+  &sect;System Path Sigils table (<code>$bee_home $bee_lib $pro_home $pro_lib
+  $pro_mod $pro_log $pro_src</code>) per spec/04 §3.
+- [x] **Done.** Verify export prefix `.`, <code>with … do … done</code>, <code>alias</code> —
+  present (&sect;Name space, &sect;Global scope).
+- [x] **Done.** Add diagnostic table (`E0401`–`E0406`) — present, includes the
+  spec/04 §7 <code>E0406 UnsynchronizedWorker</code> row, registry-aligned.
 
 ### 1.12 `syntax.html`  ← `spec/01-lexical-structure.md`
-- [ ] Verify UTF-8/rune handling description, BOM rejection (`E0101`).
-- [ ] Verify identifier casing rules (lower variable vs upper type, single
-  letter reserved types) — note the `spec/01` reserved-letter list (`A M L G`)
-  conflicts with the `spec/05` catalogue (`A`=Alpha, `L`=Lambda, `G`=Angular);
-  flag for reconciliation (see §3.5).
-- [ ] Verify comment forms (`--`, `+- -+`, `(: :)`).
-- [ ] Verify string literals (`'…'`, `"…"` interpolated `#(...)`, backtick raw)
-  and markup blocks (`<text> <sql> <html> …`).
-- [ ] Add lexical diagnostic table `E0101`–`E0105`.
+- [x] **Done.** Verify UTF-8/rune handling description, BOM rejection (`E0101`) —
+  BOM covered via `E0101 UTF8BomMarker` row in the diagnostic table.
+- [x] **Done.** Verify identifier casing rules — present (&sect;Identifiers).
+  Reserved single-letter type list conflict resolved in §3.2 (13 canonical
+  types `B A U N Z R Q C S D T L G` in both spec/01 and spec/05).
+- [x] **Done 2026-09-14.** Verify comment forms — added the missing
+  <code>(: ... :)</code> expression comment to &sect;Comments (spec §2.1.3);
+  <code>--</code> and <code>+- -+</code> already present.
+- [x] **Done 2026-09-14.** Added &sect;String Literals &amp; Markup — the
+  <code>'…'</code> / <code>"…"</code> interpolated <code>#(...)</code> / backtick
+  raw forms, escape-sequence list, and markup blocks
+  (<code>&lt;text&gt; &lt;sql&gt; &lt;html&gt; &lt;xml&gt; &lt;json&gt; &lt;code&gt;</code>).
+- [x] **Done.** Add lexical diagnostic table `E0101`–`E0105` — present and
+  registry-aligned (descriptor references spec/01 §6).
 
 ---
 
@@ -200,10 +235,15 @@ These are additive, high-value pages for the "hundreds of students building
 compilers" audience. Treat as proposals; confirm scope before authoring.
 
 ### 2.1 `diagnostics.html` (NEW)
-- Consolidated, cross-referenced table of **every** diagnostic code
-  (`E01xx`→`E14xx`, `W03xx`) grouped by module, with condition + resolution.
-- Value: a compiler-builder's single source of truth for error surfaces.
-- Requires resolving the E04xx collision first (§0.1 note, §3.5).
+- [x] **Done 2026-09-14.** Consolidated, cross-referenced table of **every**
+  diagnostic code (`E00xx` global + `E01xx`→`E14xx`, `Wxx`) grouped by module,
+  with condition + resolution.
+- [x] **Done.** Generated directly from `registry/diagnostics.json` via
+  `scripts/gen_diagnostics_page.py` (single source of truth; re-runnable), wired
+  into the `index.html` roadmap as Phase 4 topic #4, with sidebar ToC
+  `data/diagnostics.json`.
+- [x] E04xx collision resolved (§3.3); page documents the `E08xx` memory block
+  and the collision policy.
 
 ### 2.2 `grammar.html` (NEW, optional)
 - Consolidated EBNF grammar reference drawn from every spec module.
@@ -243,23 +283,42 @@ These are prerequisites or supporting chores, not page authoring.
 - [x] **Completed 2026-09-14:** All per-module diagnostic tables are present and
   section-referenced. Verified every `<em>…</em> module (<code>spec/NN</code> §N)`
   intro against the registry `source` fields; corrected `operators.html` (§3→§6),
+  `operators.html` (§3→§6),
   `syntax.html` (§1→§6, + stripped stray `</p>` from the table header row), and
   `rules.html` (no § → §7). Added the missing `<em>Functions</em> module`
   descriptor paragraph in `functions.html`. Repaired one mangled `E0102` row in
   `operators.html` and an orphaned `<p>` in `structure.html`.
+- [x] **2026-09-14 — HTML tag-balance repair (1.7–1.12 pass):** Fixed the
+  recurring corruption that breaks tag nesting — the mangled
+  `<</p>!-- Footer -->` footers in `processing.html`, `structure.html`, and
+  `objects.html` (restored to `<!-- Footer -->`); a missing `</li>` in
+  `structure.html` (§Secondary modules); a reversed `</pre></code>` close-order
+  in `structure.html` (§Name space aliases); and unclosed `<p>` tags in
+  `processing.html` (§THE END), `objects.html` (§Array of Objects), and
+  `syntax.html` (§Superscript). All seven tutorial pages now balance to the
+  wrapper under an HTML5 parser (verified via Python `html.parser`).
 
 ### 3.4 `features.html` overloaded + link drift
-- `features.html` currently carries memory-model notes that belong in the new
-  `memory.html`; trim and cross-link.
+- [x] `features.html` no longer carries memory-model notes (verified 2026-09-14:
+  grep for memory/zap/ARC/three-tier is empty), so the trim-to-`memory.html`
+  subtask is moot. Features now cross-links via the roadmap/index.
 - [x] ~~Audit/remove the "Read next"/"previous" footer links.~~ Done: all
   `Read next/previous/more` footer blocks removed from `tutorial/*.html`.
 
 ### 3.5 Confirm source-of-truth framing
-- The project rule (`GEMINI.md` §6) says `spec/` is the single source of truth
-  and `tutorial/` is derived. The user now frames `tutorial/` as the design
-  source-of-truth for students. Reconcile this framing explicitly so future
-  agents know which direction facts flow (spec→tutorial) while the tutorial is
-  still *complete enough* to stand alone for teaching.
+- **Discovery, not documents.** Neither `/spec` nor `/tutorial` is the source of
+  truth. The language truth is *discovered* through a design loop: a feature is
+  proposed from needs / other languages, then adapted, tuned, simplified, and
+  combined to stay consistent with the rest of the design (trial and error
+  happens here). Only once its shape is stable do we express it in **both** the
+  tutorial (usecases + rationale for students) and the spec (formal facts) as
+  twin outputs of the same decision.
+- **Implication for agents:** both files are *snapshots of the current design*,
+  not immutable axioms. They must agree with each other and remain open to
+  revision as discovery continues. When a design changes, update the matched
+  spec ↦ tutorial pair together (see §6 mapping and the sync invariant).
+- **DoD note:** using a feature in the tutorial is not ratification; ratification
+  is the design decision itself, recorded in `todo/DECISIONS.md` (D1–D16).
 
 ---
 

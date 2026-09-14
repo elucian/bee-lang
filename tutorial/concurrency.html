@@ -54,9 +54,9 @@ In Bee we have special statements to start a process asynchronously and run in p
 <table class="table table-bordered table-striped">
 <thead>
 <tr><th>keyword</th><th>description</th></tr></thead><tbody>
-<tr><td>begin  </td><td>call a rule asynchronously and create a new thread</td></tr>
-<tr><td>wait   </td><td>suspend a thread for specific number of seconds</td></tr>
-<tr><td>yield  </td><td>suspend current thread and give priority to other threads</td></tr>
+<tr><td>begin  </td><td>call a rule asynchronously and create a new thread in a private Region Arena</td></tr>
+<tr><td>wait   </td><td>synchronization barrier &mdash; block the parent thread until all active <code>begin</code> workers complete</td></tr>
+<tr><td>yield  </td><td>suspend a coroutine task and return control (and optionally a value) to the consumer</td></tr>
 </tbody>
 </table>
 
@@ -66,17 +66,17 @@ In Bee we have special statements to start a process asynchronously and run in p
 <p>Asynchronous call can be done using a control cycle and keyword <em> "begin"</em>. This is significant because a rule need parameters. By using keyword "begin" we initiate one rule "test" 4 times but this rule does absolutely nothing, just wait about 30 seconds.
 </p>
 
-<pre><code class="language-bee">-- suspend n seconds
-rule test:
-    wait 10 + i*5;
+<pre><code class="language-bee">-- a worker rule that returns its argument
+rule test(n &isin; Z) =&gt; (r &isin; Z):
+    let r := n * 2;
 return;
 
--- prepare for execution 4 threads
+-- spawn 4 concurrent workers, then synchronize
 rule main:
     for &forall; i &isin; (1..4) do
-       begin test(i);
+       begin test(i);  -- each call runs on its own thread
     done;
-    wait; -- wait for other threads to finish;
+    wait; -- synchronization barrier: block until all workers finish
 return;
 </code></pre>
 
@@ -91,7 +91,7 @@ return;
 </div>
 
 
-<pre><code class="language-bee">-- suspend n seconds
+<pre><code class="language-bee">-- sum the integers in a range (runs on one worker thread)
 rule sum(a, b &isin; Z) => (r &isin; Z):
   cycle:
     new i := 0
@@ -106,8 +106,8 @@ rule main:
     -- use a mapping technigue to split data in 4 equal batches
     cycle:
         new i &isin; N;
-    for &forall; i &isin; (1.!100:25) do
-        begin test(i,i+25) +&gt; results;
+    for &forall; i &isin; (1..&lt;101)(25) do  -- stepped range: 1, 26, 51, 76 (D13)
+        begin sum(i,i+24) +&gt; results;  -- dispatch disjoint batches into the reduction queue
     done;
     wait; -- wait for other threads to finish;
     new output &isin; Z;
@@ -160,7 +160,7 @@ rule main:
     cycle:
       new  r := 1 &isin; N;  -- result reference (seeded to enter loop)
     while r &gt; 0 do
-      yield r &lt;- test;  -- capture next result
+      yield r &lt;&lt; test;  -- extract next yielded value from the 'test' coroutine
       write (r, ",");
     done;
 
@@ -196,6 +196,12 @@ return
 
 <div class="alert alert-warning"><span style="color:brown">Info:&nbsp;</span>This example is complex so we have chosen to keep it on GitHub with the Bee project. If you want to visualize it you need Notepad++ and color syntax highlighter. Go back to index page and follow the instructions at the bottom of the page.</div>
 
+
+<h2 id="worker-exceptions">Worker Exception Isolation</h2>
+
+<p>An uncaught exception or panic inside a worker thread does not corrupt the parent or sibling Region Arenas (spec/12 §5). The failure is captured in the worker's thread-local <code>$trial</code> handle.</p>
+
+<p>When the parent executes <code>wait;</code>, any captured worker exceptions are aggregated and <b>re-raised at the barrier call site</b>, so a surrounding <code>trial</code> block can handle them. This surfaces as <code>E1204 WorkerPanicReRaised</code>.</p>
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 

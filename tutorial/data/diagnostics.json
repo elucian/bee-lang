@@ -1,0 +1,72 @@
+[
+  {
+    "title": "Diagnostics Reference",
+    "link": "#diagnostics-reference",
+    "children": [
+      {
+        "title": "Severity legend",
+        "link": "#legend"
+      },
+      {
+        "title": "Coding convention",
+        "link": "#conventions"
+      },
+      {
+        "title": "Global codes",
+        "link": "#global"
+      },
+      {
+        "title": "E00 / E08 — Memory model",
+        "link": "#e00-memory"
+      },
+      {
+        "title": "E01 — Lexical structure",
+        "link": "#e01-lexical"
+      },
+      {
+        "title": "E02 — Statements",
+        "link": "#e02-statements"
+      },
+      {
+        "title": "E03 — Rules",
+        "link": "#e03-rules"
+      },
+      {
+        "title": "E04 — Structure",
+        "link": "#e04-structure"
+      },
+      {
+        "title": "E05 — Types",
+        "link": "#e05-types"
+      },
+      {
+        "title": "E06 — Objects",
+        "link": "#e06-objects"
+      },
+      {
+        "title": "E07 — Functions",
+        "link": "#e07-functions"
+      },
+      {
+        "title": "E10 — Collections",
+        "link": "#e10-collections"
+      },
+      {
+        "title": "E11 — Processing",
+        "link": "#e11-processing"
+      },
+      {
+        "title": "E12 — Concurrency",
+        "link": "#e12-concurrency"
+      },
+      {
+        "title": "E13 — Graphics",
+        "link": "#e13-graphics"
+      },
+      {
+        "title": "E14 — Library",
+        "link": "#e14-library"
+      }
+    ]
+  }
+]

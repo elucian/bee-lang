@@ -43,7 +43,7 @@
 
 <h1 id="control-flow">Control Flow</h1>
 <div class="alert alert-secondary shadow-sm">
-Control flow statements are used to modify the linear program workflow. In Bee each control statement start with a different keyword and ends with <em>done</em>. Control blocks can be anonymous or can carry an optional label.</div>
+Control flow statements are used to modify the linear program workflow. In Bee each control statement starts with a different keyword and ends with a uniform <em>done [label];</em> terminator (Decision 14). This single terminator closes every block &mdash; <code>if</code>, <code>match</code>, <code>start</code>, <code>with</code>, <code>trial</code>, <code>cycle</code>, and <code>for</code>. The closing label, when present, must match the opening header label (<code>E0205 LabelMismatch</code>). Control blocks can be anonymous or can carry an optional label.</div>
 
 <h4>Page bookmarks</h4>
 
@@ -200,6 +200,26 @@ else
   -- default block
   print "unexpected:" + a;
 done test;
+</code></pre>
+
+<h3 id="pattern-3-conditional-expression-selector">Conditional expression selector (ternary)</h3>
+
+<p>If the decision picks between two <em>values</em> (rather than two statement blocks), use the conditional expression selector &mdash; also called the ternary. It is an expression, so it can appear wherever a value is expected (assignment, argument, return).</p>
+
+<pre><code class="language-bee">
+new value := (expr_true if condition else expr_false);
+</code></pre>
+
+<p>The parenthesised form is <b>required</b>: the test is the <code>if</code> clause between <code>(</code> and <code>else</code>, and the <code>do/else/done</code> block keywords are <b>not</b> used here &mdash; this is an expression, not a fork. <code>done;</code> is not required because the selector does not open a block.</p>
+
+<h4>Example:</h4>
+
+<pre><code class="language-bee">
+new sign := ("positive" if x &gt; 0 else "non-positive");
+print sign;
+
+-- usable inside a statement, e.g. a write directive
+write ("yes" if flag = true else "no");
 </code></pre>
 
 <h2 id="cycle">Repetitive Statements</h2>

@@ -224,9 +224,15 @@ Bee is a compiled language. That means you must include whatever you use in your
 
 <h3 id="errors">Error Type</h3>
 
-<p>Bee has pre-define Error objects with codes in range (1..200):</p>
+<p>Bee has pre-defined Error objects. Code allocation follows the system standard (spec/14 &sect;5):</p>
+<ul>
+  <li><strong>1 .. 199</strong> : System Reserved Standard Error Codes (I/O, network, allocation).</li>
+  <li><strong>200 .. 9999</strong> : User / Application business-domain error codes.</li>
+  <li><strong>&le; -1</strong> : Unrecoverable hard hardware / memory-security panic.</li>
+</ul>
+<p>Errors are surfaced through the global system variable <code>$error</code>:</p>
 <pre><code class="language-bee">-- global type
-type Error: {code &isin; Z, message &isin; S} &lt;: Object;
+type SystemError: {code &isin; Z, message &isin; S} &lt;: Object;
 </code></pre>
 
 <pre><code class="language-bee">-- exception objects
@@ -302,7 +308,23 @@ $unexpected_error:= {2,"unexpected error"}  &isin; Error;</code></pre>
 
 
 <h3 id="file-io">File IO</h3>
-<p>To read and print into files and save to disk, we must use system.io library. This library define type "F" : file handler. It offer support for file input/output.</p>
+<p>To read and write files and save to disk, we import the <code>$bee.sys.io</code> namespace (spec/14 &sect;4). This namespace defines the opaque file-handle type <code>F</code> and directory operations:</p>
+
+<pre><code class="language-bee">use $bee.sys.io as IO;
+
+-- check existence, then create a folder
+if IO.Folder.exist("data") = false then
+  apply IO.Folder.create("data");
+done;
+
+-- open a file handle in write mode ("r", "w", "a", "rw")
+new file_handle := IO.File.open("data/output.txt", "w");
+apply IO.File.write(file_handle, "Hello, Bee Compiler!");
+apply IO.File.close(file_handle);
+
+-- list a directory into a List of string paths
+new file_list := IO.Folder.list("data/");
+</code></pre>
 
 <p><b>rules</b></p>
 <p>Next is a fragment from system.io library that define rules open and close.</p>
@@ -378,9 +400,11 @@ rule ,rename(name, new_name &isin; S);
 
 <h4>Making files/folders</h4>
 <pre><code class="language-bee">
-new file_name   := File.open('name','w');
-new folder_name := Folder.open('name');
+new file_name   := IO.File.open("name", "w");
+new folder_name := IO.Folder.create("name");
 </code></pre>
+
+<p>The system namespace hierarchy also exposes <code>$bee.sys.math</code>, <code>$bee.sys.string</code>, <code>$bee.sys.time</code>, and <code>$bee.sys.env</code> (spec/14 &sect;1).</p>
 
 <hr>
 

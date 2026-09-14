@@ -95,6 +95,23 @@ return;
 
 <p>Bee predefined collections are implemented in the language kernel. While these collections cover most use-cases, they also represent the base for inheritance. Core collections are so called "battery included" features.</p>
 
+<h3 id="indexing\-anchor">1-Based Indexing &amp; the <code>$</code> End Anchor</h3>
+<p>Every indexed collection (List, Array, Matrix, String, Slice) is <b>1-based</b>: the first element is <code>[1]</code> and indices run from 1 to the collection length. Index <code>0</code> is not a valid element position — it raises <code>E1006 ZeroBasedIndexAttempt</code>.</p>
+
+<p>The <code>$</code> token is the dynamic <b>end anchor</b>: it yields the collection length (<code>$[L] = |L|</code>), so it addresses the last element. Combined with arithmetic it becomes position-relative to the end:</p>
+
+<pre><code class="language-bee">new list := (10, 20, 30, 40);
+
+print list[1];     -- First element: 10
+print list[$];     -- Last element: 40
+print list[$ - 1]; -- Second-to-last element: 30 (relative to the end)
+</code></pre>
+
+<p><code>$</code> also composes with the range operators to slice from a dynamic endpoint:</p>
+
+<pre><code class="language-bee">new slice := list[2..$ - 1]; -- from index 2 to second-to-last item
+</code></pre>
+
 <h3 id="ordinal">Ordinal Type</h3>
 <p>Ordinal is an ordered small set of identifiers. Each identifier represents an integer value starting from a specified number with interval of one. It can be used for ranking, selection or codification.</p>
 
@@ -378,6 +395,9 @@ rule main:
    new d1 := s1 - s2; -- {1}        :difference 1
    new d2 := s2 - s1; -- {4}        :difference 2
    new d  := s2 &Delta; s1; -- {1,4}      :symmetric difference
+
+   -- sum all members of a collection
+   new sum := &Sigma; (1, 2, 3, 4); -- 10
 
    -- verify expectation
    expect d = d1 &cup; d2;

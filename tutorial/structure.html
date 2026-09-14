@@ -208,6 +208,22 @@ Bee has a modular architecture. A source file represents a module. A project can
 <li>Precision is controlling only rational numbers.;</li>
 </ul>
 
+<h3 id="system-path-sigils">System Path Sigils (&sect;spec/04 §3)</h3>
+<p>Bee protects system paths and runtime configuration under the <code>$</code> sigil. The canonical path sigils are:</p>
+
+<table class="table table-bordered table-sm table-striped">
+  <thead><tr><th>Sigil</th><th>Default resolution</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>$bee_home</td><td>OS installation path</td><td>Bee compiler runtime installation directory</td></tr>
+    <tr><td>$bee_lib</td><td>$bee_home/lib/</td><td>Global system library root directory</td></tr>
+    <tr><td>$pro_home</td><td>location of main.bee</td><td>Current application project root directory</td></tr>
+    <tr><td>$pro_lib</td><td>$pro_home/lib/</td><td>Project-local library directory</td></tr>
+    <tr><td>$pro_mod</td><td>$pro_home/src/</td><td>Secondary module search path list</td></tr>
+    <tr><td>$pro_log</td><td>$pro_home/log/</td><td>Diagnostic and execution log folder</td></tr>
+    <tr><td>$pro_src</td><td>$pro_home/src/</td><td>Secondary modules import prefix (used in examples)</td></tr>
+  </tbody>
+</table>
+
 <h3 id="global-variables">Global Variables</h3>
 <p>Global variables are defined usually at the beginning of a module outside of any rule. </p>
 
@@ -261,7 +277,7 @@ Bee has a modular architecture. A source file represents a module. A project can
 <ul>
 <li>Secondary modules are specific to a project;</li>
 <li>Secondary modules should be loaded in other modules;</li>
-<li>Secondary modules usually do not have rule main()
+<li>Secondary modules usually do not have rule main()</li>
 <li>Secondary modules usually have public members;</li>
 </ul>
 
@@ -404,7 +420,7 @@ use library as qualifier
 
 -- create alias for a particular member
 alias new_name: qualifier.member_name;
-</pre></code>
+</code></pre>
 
 
 <h4>Example:</h4>
@@ -526,7 +542,7 @@ return;</code></pre>
   </tbody>
 </table>
 
-<</p></em>!-- Footer -->
+<!-- Footer -->
 
 </div>
       </main>

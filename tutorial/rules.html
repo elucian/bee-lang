@@ -268,6 +268,7 @@ return;
 <li><a href="#forward-declarations">forward declarations</a></li>
 <li><a href="#recursive-rules">recursive rules</a></li>
 <li><a href="#external-rules">external rules</a></li>
+<li><a href="#companion-singleton">companion &amp; singleton rules</a></li>
 <li><a href="#closures">closures</a></li>
 </ul>
 
@@ -407,18 +408,18 @@ rule main:
     -- verify internal states
     expect foo.count = 10;
     expect foo.step  = 5;
-    
+
     -- generate some numbers
     cycle:
        new x := 0;
     while x <= 30 do
        let x := foo.next();
-       print "x = " + x; 
+       print "x = " + x;
     done;
 return;
 </code></pre>
 
-<p><b>Notes: </b>We use "set" to create foo() properties. These properties are allocated on the heap when foo() is first called. The heap is used to hold data for a long period of time. We box these variables using [] to be mutable, otherwise would be constant.<p>
+<p><b>Notes: </b>We use "set" to create foo() properties. These properties are allocated on the heap when foo() is first called. The heap is used to hold data for a long period of time. We box these variables using [] to be mutable, otherwise would be constant.>
 
 <div class="alert alert-warning"><b>Warning:</b> If you do not initialize the states before use, you may end-up with a run-time error when the state is used: "Uninitialized state x in line #."</div>
 
@@ -438,6 +439,17 @@ x = 30
 <li>Usually the attributes have default values; </li>
 <li>There are other ways to create generators;</li>
 </ol>
+
+<h3 id="companion-singleton">Companion &amp; Singleton Rules</h3>
+
+<p>Two architectural patterns bind state to existing program entities:</p>
+
+<ul>
+<li><b>Companion rule</b> &mdash; binds state and helper logic to an existing module or data type. It reads as the &ldquo;extension surface&rdquo; of that module or type, so its helper rules and public states belong alongside the entity they serve rather than in a detached top-level scope.</li>
+<li><b>Singleton rule</b> &mdash; encapsulates globally isolated state within a single-instance generator. It guarantees exactly one shared instance of the state across the program, so concurrent callers all observe the same isolated store.</li>
+</ul>
+
+<div class="alert alert-secondary">The <b>companion</b> pattern mirrors a static utility/extension surface: pure helper logic glued to a type or module. The <b>singleton</b> pattern mirrors a global instance: one heap-allocated store with rule-protected access, safe to share across threads.</div>
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 

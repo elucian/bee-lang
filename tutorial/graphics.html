@@ -94,16 +94,35 @@ new β ∈ G := 0°0′0″;
   </thead>
   <tbody>
     <tr><td>CRT</td><td>{x, y ∈ Q}</td><td>Cartesian Point</td></tr>
-    <tr><td>POL</td><td>{r ∈ P, θ ∈ G}</td><td>Polar Point</td></tr>
+    <tr><td>POL</td><td>{r ∈ R, θ ∈ G}</td><td>Polar Point</td></tr>
     <tr><td>VEC</td><td>{o, p ∈ CRT}</td><td>Vector</td></tr>
-    <tr><td>CRC</td><td>{o ∈ CRT, r ∈ P}</td><td>Circle</td></tr>
-    <tr><td>ARC</td><td>{o ∈ CRT, r ∈ P, θ₁, θ₂ ∈ G}</td><td>Arc</td></tr>
-    <tr><td>SQR</td><td>{o ∈ CRT, b ∈ P, θ ∈ G}</td><td>Square with rotation</td></tr>
-    <tr><td>TRG</td><td>{a, b, c ∈ CRT, θ₁, θ₂, θ₃ ∈ G}</td><td>Triangle</td></tr>
-    <tr><td>REG</td><td>{o ∈ CRT, n, r ∈ P, θ ∈ G}</td><td>Regular Shape</td></tr>
-    <tr><td>PLG</td><td>{v ∈ [VEC]}</td><td>Polygon Shape</td></tr>
+    <tr><td>CRC</td><td>{o ∈ CRT, r ∈ R}</td><td>Circle</td></tr>
+    <tr><td>SQR</td><td>{o ∈ CRT, b ∈ R, θ ∈ G}</td><td>Square with rotation</td></tr>
+    <tr><td>PLG</td><td>{v ∈ [CRT]}</td><td>Polygon Shape</td></tr>
   </tbody>
 </table>
+
+<h2 id="congruence" class="anchor">Geometric Congruence (&equiv;)</h2>
+
+<p>The operator <code>&equiv;</code> (U+2261) is reserved for <b>geometric congruence only</b> &mdash; it never expresses value equality (use <code>=</code>) or reference identity (use <code>is</code> / <code>@a = @b</code>). (spec/13 &sect;5.1, Decision 2.)</p>
+
+<p>Two shapes are <code>&equiv;</code>-congruent when they share identical interior/exterior angles, the same number of sides, and the same shape class, regardless of relative scale or position:</p>
+
+<pre><code class="language-bee">-- congruence test for polygons
+rule main:
+  expect poly_a &equiv; poly_b;
+return;
+</code></pre>
+
+<h2 id="affine-transforms" class="anchor">Affine Transformations</h2>
+
+<p>Shapes respond to in-place affine transforms (spec/13 &sect;5):</p>
+
+<ul>
+  <li><code>shape.rotate(&theta; &isin; G)</code> &mdash; rotate around the local origin by angle &theta;.</li>
+  <li><code>shape.translate(dx, dy &isin; Q)</code> &mdash; shift the origin by (dx, dy).</li>
+  <li><code>shape.scale(factor &isin; R)</code> &mdash; scale the shape dimensions.</li>
+</ul>
 
 <h2 id="drawing-keywords" class="anchor">Drawing Keywords</h2>
 
@@ -121,6 +140,25 @@ new β ∈ G := 0°0′0″;
     <tr><td>hide</td><td>Hide canvas</td></tr>
   </tbody>
 </table>
+
+<h4>Drawing API example</h4>
+
+<pre><code class="language-bee">-- create a 800x600 drawing canvas and a foreground layer
+rule main:
+  new main_canvas := Canvas(o: {x: 0, y: 0}, w: 800, h: 600);
+  new foreground  := Layer(id: "fg", visible: true);
+  apply main_canvas.add_layer(foreground);
+
+  -- build a circle marker and render it onto the layer
+  new circle_marker := CRC(o: {x: 10, y: 20}, r: 5);
+  draw circle_marker on foreground;
+
+  -- manage visibility
+  hide foreground;
+  show foreground;
+  wipe foreground; -- clear the layer
+return;
+</code></pre>
 
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
