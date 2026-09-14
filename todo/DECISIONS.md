@@ -27,8 +27,8 @@ production.
 | D7    | Logic operator synonymy + `is not` token    | ✅ Ratified       | 2026-09-12  |
 | D8    | Rule-call result destructuring (T0127 park) | 🟢 Deferred       | 2026-09-12  |
 | D9    | Colon `:` pair-up semantics                 | ✅ Ratified       | 2026-09-13  |
-| D10   | Radical (`²√`, `³√`) precedence table      | 🟡 Pending ratification | 2026-09-12 |
-| D11   | Parallel colon-init `new (a,b):(1,2)`      | 🟡 Pending ratification | 2026-09-13 |
+| D10   | Radical (`²√`, `³√`) precedence table      | ✅ Ratified       | 2026-09-14  |
+| D11   | Parallel colon-init `new (a,b):(1,2)`      | ✅ Ratified       | 2026-09-14  |
 | D12   | Inequality/NOT operator refactoring        | ✅ Ratified       | 2026-09-13  |
 | D13   | Range operator + postfix-step refactor     | ✅ Ratified       | 2026-09-13  |
 | D14   | Uniform `done` terminator + `repeat` jump  | ✅ Ratified       | 2026-09-13  |
@@ -241,9 +241,9 @@ to `:=`.
 
 ---
 
-## D10 — Radical operator precedence (USER-CLARIFIED 2026-09-12)
+## D10 — Radical operator precedence (USER-CLARIFIED 2026-09-12, ratified 2026-09-14)
 
-**Status:** ✅ Ratified 2026-09-12.
+**Status:** ✅ Ratified 2026-09-14.
 **Affects tests:** T0107 (was disabled, now enabled and passing).
 
 > **User statement (verbatim pivot):** *"Radical has high precedence
@@ -317,26 +317,28 @@ When ratified:
   assertions in the current disabled file must evaluate under the
   new precedence rules.
 
-### Why we are NOT implementing now
+### Implementation consequence (✅ COMPLETED 2026-09-14)
 
-The user is in the middle of clarifying D10. We capture the
-clarification above, then yield back. When the user replies with
-"`D10 ratified`" — or words to that effect — the implementation
-team will:
-
-1. Add a `PrefixExpression` node to `internal/ast/ast.go` (or
-   `internal/parser/ast_nodes.go`).
-2. Refactor `parseExpression` to a precedence-climbing loop using
-   the table above.
-3. Update the evaluator to dispatch `PrefixExpression`.
-4. Enable T0107 and verify green via `sh run.sh solo T0107`.
-5. Run `sh run.sh smoke` for system-wide health check.
+* **AST:** `PrefixExpression` node (`Token`, `Operator`, `Right`)
+  added — the canonical nullary-prefix form for radicals (`√`, `ⁿ√`)
+  and logical NOT (`¬`, `not`). The old `BinaryExpression{Left:
+  &Identifier{"0"}, …}` hack is gone.
+* **Parser:** `parseExpression` rewritten as a precedence-climbing
+  loop (`parseExpressionClimb`) with the level table above; the
+  bare `√` / suffix `²√` `³√` `ⁿ√` are consumed in `parsePrimary` at
+  `minPrec=precPower`, so `³√ 2³ ≡ ³√(2³)` yields
+  `Prefix(radical, Binary(2,^,3))`.
+* **Evaluator:** `evalIntExpressionWithID` dispatches radical
+  operators to `pow(operand, 1/n)`.
+* **Test:** T0107 enabled and PASS (all eight radical assertions,
+  including `³√ 2³ = 2`).
+* **Verification:** `sh run.sh solo T0107` green; smoke PASS.
 
 ---
 
 ## D11 — Parallel colon-initialisation
 
-**Status:** 🟡 Pending ratification (revised 2026-09-13).
+**Status:** ✅ Ratified 2026-09-14.
 **Affects tests:** T0122 (currently disabled).
 
 ### User directive (verbatim, 2026-09-13)
@@ -391,9 +393,15 @@ When ratified:
   `(` token enters the parallel form — parse `ident_list`, expect
   `)`, `:`, `(`, `expr_list`, `)`, then `∈` / `in` + type identifier.
 * A static arity check (E0009-class diagnostic) enforces N = M.
-* T0122 has a separate string-literal typo requiring user-side
-  correction (the frozen test source has unterminated quotes) before
-  it can be promoted.
+
+### Implementation consequence (✅ COMPLETED 2026-09-14)
+
+* Parallel colon-initialisation `new (a, b) : (1, 2) ∈ Z;`
+  implemented; acceptance test T0139 ("Decision 11: parenthesised
+  parallel form") enabled and PASS in level1.
+* The D9 repeated pair-up form `new a: 1, b: 2 ∈ Z;` (T0121) and the
+  parallel-assignment form `let a, b := b, a` (T0122) are separate,
+  already-active PASS cases and are unaffected by D11.
 
 ---
 
@@ -828,6 +836,6 @@ downstream decisions.
 
 ---
 
-*Last updated: 2026-09-14 — D1–D7, D9, D12, D13, D14, D15, D16 ratified
-(D3 superseded by D12; D14 items 2–3 superseded by D15), D8 deferred,
-D10, D11 pending user ratification.*
+*Last updated: 2026-09-14 — D1–D7, D9, D10, D11, D12, D13, D14, D15, D16
+ratified (D3 superseded by D12; D14 items 2–3 superseded by D15); D8
+is the sole deferred decision.*

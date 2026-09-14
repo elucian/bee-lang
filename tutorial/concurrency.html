@@ -197,6 +197,21 @@ return
 <div class="alert alert-warning"><span style="color:brown">Info:&nbsp;</span>This example is complex so we have chosen to keep it on GitHub with the Bee project. If you want to visualize it you need Notepad++ and color syntax highlighter. Go back to index page and follow the instructions at the bottom of the page.</div>
 
 
+<h2 id="diagnostics">Diagnostic error codes</h2>
+
+<p>Diagnostic codes raised by the <em>Concurrency</em> module (<code>spec/12</code> §7):</p>
+<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>E1201</code></td><td><code>UnsynchronizedWorker</code>: Scope exited with pending <code>begin</code> threads prior to a <code>wait</code> barrier.</td><td>Add a <code>wait</code> barrier before scope exit. (Canonical working code; twin of E0406 in structure.)</td></tr>
+    <tr><td><code>E1202</code></td><td><code>DataRaceAttempt</code>: Direct cross-thread mutation without a <code>+&gt;</code> reduction channel.</td><td>Use the <code>+&gt;</code> reduction channel.</td></tr>
+    <tr><td><code>E1203</code></td><td><code>CoroutinesChannelClosed</code>: <code>yield var &lt;&lt; task</code> on a closed or finished coroutine.</td><td>Re-open the channel or check coroutine state.</td></tr>
+    <tr><td><code>E1204</code></td><td><code>WorkerPanicReRaised</code>: Unhandled exception in a worker thread surfaced at the <code>wait</code> barrier.</td><td>Inspect the <code>$trial</code> handle and handle the re-raise.</td></tr>
+    <tr><td><code>E1205</code></td><td><code>YieldOutsideCoroutine</code>: <code>yield</code> used inside a non-coroutine static rule.</td><td>Declare the rule as a coroutine or remove <code>yield</code>.</td></tr>
+  </tbody>
+</table>
 <!-- Footer -->
 
 </div>

@@ -85,17 +85,24 @@ the matching tutorial page. Work item = reconcile tutorial with spec.
   than implying it works today.
 
 ### 1.2 `types.html`  ← `spec/05-types.md`
-- [ ] Verify the full primitive catalogue (13 types: `B A U N Z R Q C S D T L G`)
-  is present and correct; add any missing (`D` Date, `T` Time, `G` Angular).
-- [ ] Add promotion-hierarchy diagram (mermaid) from `spec/05` §5.
-- [ ] Add subtypes (`<:`), range/domain notation (`..`, `..<`, `>..`, `>..<`),
-  and domain step ratio — aligned to D13.
-- [ ] Add rational fixed-point `Q(m.n)` notation and `p\q` literal.
-- [ ] Add approximate equality `≈` and tolerance `±`.
-- [ ] Add explicit cast `:>` (Float→Rational example) and `∈`/`in` type check.
-- [ ] Add diagnostic table `E0501`–`E0506`.
-- [ ] Confirm `≡` appears **only** as geometric congruence (Phase 8.7),
-  never as value equality.
+- [x] **Done 2026-09-14.** Verified the full primitive catalogue (13 types:
+  `B A U N Z R Q C S D T L G`) — all present and correct in the table.
+- [x] **Done 2026-09-14.** Type promotion hierarchy added. The public site
+  does **not** render mermaid, so the `spec/05` §5 DAG is presented as the
+  canonical chain `B → N → Z → R → Q → C` plus the widening branches
+  (`N→A`, `Z→U`), in a table with explicit-vs-implicit rules.
+- [x] **Done 2026-09-14.** Subtypes (`<:`), range/domain notation
+  (`..`, `..<`, `>..`, `>..<`), and domain step ratio present. **Corrected** the
+  Domain Type section from the deprecated colon-step `(min..max:ratio)` to the
+  canonical D13 postfix `(min..max)(step)` and repaired a `&\4` backslash
+  mangling.
+- [x] **Done.** Rational fixed-point `Q(m.n)` notation and `p\q` literal present.
+- [x] **Done.** Approximate equality `≈` and tolerance `±` present.
+- [x] **Done.** Explicit cast `:>` (incl. Float→Rational example) and `∈`/`in`
+  type check present.
+- [x] **Done.** Diagnostic table `E0501`–`E0506` present.
+- [x] **Done.** `≡` confirmed as geometric congruence only — it never appears
+  as value equality; the identity/value taxonomy lives in `operators.html`.
 
 ### 1.3 `rules.html`  ← `spec/03-rules.md`
 - [ ] Add **curried / named-parameter slots** (Decision 6): signature
@@ -121,15 +128,19 @@ the matching tutorial page. Work item = reconcile tutorial with spec.
 - [ ] Add statement diagnostic table.
 
 ### 1.5 `operators.html`  ← `spec/01-lexical-structure.md` §3 (+ D2/D7/D12/D13)
-- [ ] Enforce the identity/value taxonomy table: `=` value equality, `¬` value
+- [x] Enforce the identity/value taxonomy table: `=` value equality, `¬` value
   inequality, `is` / `is not` / `@a = @b` reference identity, `!` logical NOT.
-- [ ] Confirm logical synonymy `and/or/xor/not` ↔ `∧/∨/⊕/¬` (D7) and that the
+  (verified 2026-09-14)
+- [x] Confirm logical synonymy `and/or/xor/not` ↔ `∧/∨/⊕/¬` (D7) and that the
   lexer emits one token per pair.
-- [ ] Confirm `is not` is one token (Maximal-Munch).
-- [ ] Range operators `..`, `..<`, `>..`, `>..<` (D13); legacy `.!`, `!.`, `!!`
+- [x] Confirm `is not` is one token (Maximal-Munch).
+- [x] Range operators `..`, `..<`, `>..`, `>..<` (D13); legacy `.!`, `!.`, `!!`
   deprecated.
-- [ ] `≡` reserved for **geometric congruence only**.
-- [ ] List deprecated forms (`≠`, `==`, `!=`, `<>`) with E0010 notes.
+- [x] `≡` reserved for **geometric congruence only**.
+- [x] List deprecated forms (`≠`, `==`, `!=`, `<>`) with E0010 notes.
+- [x] **D10 radicals (2026-09-14):** numeric-operators table fixed — `√` is a
+  **prefix** radical (was wrongly written `x√n`), with degree forms `²√`/`³√`/
+  `ⁿ√` and the rule that power inside the operand resolves first (`³√ 2³ = 2`).
 
 ### 1.6 `collections.html`  ← `spec/10-collections.md`
 - [ ] Verify **Ordinal** type `(start){ id, id, … }` (commonly under-covered).
@@ -209,10 +220,11 @@ compilers" audience. Treat as proposals; confirm scope before authoring.
 These are prerequisites or supporting chores, not page authoring.
 
 ### 3.1 `todo/DECISIONS.md` index is stale
-- The index table (lines ~16–34) marks D10 as "✅ Ratified" but the body and
-  `MANIFEST.md` mark it "🟡 pending"; D11 status likewise drifts. It also omits
-  D15. Reconcile the index with the body before any signature/automation
-  depends on it.
+- [x] **Done 2026-09-14.** D10 and D11 ratified; the body and index now agree
+  (`✅ Ratified` in both) and `MANIFEST.md` mirrors the ratification. D10's
+  MANIFEST entry was also corrected to drop the stale `¬`-as-unary claim (that
+  belongs to D12) and D11's summary captured the accepted parenthesised form
+  `new (a, b):(1,2) ∈ Z` and the rejected bare list. Index also includes D15.
 
 ### 3.2 Single-letter built-in type list is inconsistent
 - [x] **Resolved.** `spec/01` now lists the canonical 13 reserved single-letter
@@ -228,8 +240,13 @@ These are prerequisites or supporting chores, not page authoring.
   to the free `E08xx` block (`E0801`–`E0804`). `spec/04` retains the canonical
   `E04xx` block. Updated `spec/00-memory-model.md` and `tutorial/memory.html`;
   removed the "E04xx overloaded" warning alert. See `registry/README.md`.
-- Remaining: audit structure/collections/processing/concurrency/graphics/library
-  pages and inject their diagnostic tables now that registration is in place.
+- [x] **Completed 2026-09-14:** All per-module diagnostic tables are present and
+  section-referenced. Verified every `<em>…</em> module (<code>spec/NN</code> §N)`
+  intro against the registry `source` fields; corrected `operators.html` (§3→§6),
+  `syntax.html` (§1→§6, + stripped stray `</p>` from the table header row), and
+  `rules.html` (no § → §7). Added the missing `<em>Functions</em> module`
+  descriptor paragraph in `functions.html`. Repaired one mangled `E0102` row in
+  `operators.html` and an orphaned `<p>` in `structure.html`.
 
 ### 3.4 `features.html` overloaded + link drift
 - `features.html` currently carries memory-model notes that belong in the new

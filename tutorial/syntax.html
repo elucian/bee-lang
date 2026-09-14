@@ -708,6 +708,23 @@ return;
 panic 2; -- end program and error code = 2</code></pre>
 
 
+<h2 id="diagnostics">Diagnostic error codes</h2>
+
+<p>Diagnostic codes raised by the <em>lexical structure</em> module (<code>spec/01</code> §6):</p>
+<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>E0101</code></td><td><code>UTF8BomMarker</code>: Unexpected UTF-8 BOM marker at source start.</td><td>Strip the BOM from the source header.</td></tr>
+    <tr><td><code>E0102</code></td><td><code>UnterminatedBlockComment</code>: Block comment (<code>+-</code>) without a closing <code>-+</code>.</td><td>Ensure closing <code>-+</code> exists.</td></tr>
+    <tr><td><code>E0103</code></td><td><code>InvalidEscapeSequence</code>: Invalid escape sequence in a string literal.</td><td>Use valid <code>\n</code>, <code>\t</code>, <code>\uXXXX</code> escapes.</td></tr>
+    <tr><td><code>E0104</code></td><td><code>SingleLetterUppercaseIdentifier</code>: Single-letter uppercase variable identifier.</td><td>Use a lowercase start or a multi-letter type identifier.</td></tr>
+    <tr><td><code>E0105</code></td><td><code>UnterminatedStringOrMarkup</code>: Unterminated string literal or markup block.</td><td>Check closing quotes or the matching markup tag.</td></tr>
+  </tbody>
+</table>
+
+
 <!-- Footer -->
 
 </div>

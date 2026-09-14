@@ -583,6 +583,22 @@ return;
 <li><a href="https://en.wikipedia.org/wiki/Set-builder_notation" rel="nofollow">Set Builder Notation</a></li>
 <li><a href="https://en.wikipedia.org/wiki/Quantifier_(logic)" rel="nofollow">Qualifier Notation</a></li>
 </ul>
+<h2 id="diagnostics">Diagnostic error codes</h2>
+
+<p>Diagnostic codes raised by the <em>Collections</em> module (<code>spec/10</code> §5):</p>
+<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>E1001</code></td><td><code>IndexOutOfBounds</code>: Index less than 1 or greater than the collection length <code>$</code>.</td><td>Use 1-based indexing; <code>$-k</code> for end-relative.</td></tr>
+    <tr><td><code>E1002</code></td><td><code>DuplicateSetKey</code>: Insertion of a duplicate key/element into Set/Map.</td><td>Check membership or allow overwrite.</td></tr>
+    <tr><td><code>E1003</code></td><td><code>MatrixDimensionMismatch</code>: Incompatible row/column dimension during assignment.</td><td>Align matrix dimensions.</td></tr>
+    <tr><td><code>E1004</code></td><td><code>TypeIncompatibleCollection</code>: Value type does not match the declared collection element type.</td><td>Cast the value or change the element type.</td></tr>
+    <tr><td><code>E1005</code></td><td><code>InvalidSetAlgebra</code>: Set operator (<code>&cap;</code>, <code>&cup;</code>) applied to a non-set type.</td><td>Use set operators only on sets.</td></tr>
+    <tr><td><code>E1006</code></td><td><code>ZeroBasedIndexAttempt</code>: Use of index 0 (Bee is 1-based, Decision 1).</td><td>Rewrite the index starting from 1.</td></tr>
+  </tbody>
+</table>
 <!-- Footer -->
 
 </div>

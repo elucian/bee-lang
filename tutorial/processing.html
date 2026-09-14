@@ -1164,7 +1164,24 @@ return;
 
 <p>This was the Bee draft design for basic concepts. Thank you for reading it all. Our effort has merely begun. There is a lot of testing and developing ahead of us. Next chapter are advanced research topics, just some ideas. Don't read yet.<p>
 
-<!-- Footer -->
+<h2 id="diagnostics">Diagnostic error codes</h2>
+
+<p>Diagnostic codes raised by the <em>Processing</em> module (<code>spec/11</code> §7):</p>
+<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>E1101</code></td><td><code>UnboxingTypeMismatch</code>: Unboxing a reference into an incompatible scalar type.</td><td>Unbox with the correct <code>Type(boxed)</code> target.</td></tr>
+    <tr><td><code>E1102</code></td><td><code>InvalidQuantifierDomain</code>: Quantifier applied to a non-collection operand.</td><td>Apply quantifiers to collections only.</td></tr>
+    <tr><td><code>E1103</code></td><td><code>PipelineStepIncompatible</code>: Output type of a pipeline step does not match the next step's input.</td><td>Insert an adapting step into the pipeline.</td></tr>
+    <tr><td><code>E1104</code></td><td><code>DeconstructionMismatch</code>: Number of targets exceeds collection elements without a <code>*</code> tail.</td><td>Add a <code>*</code> tail or reduce targets.</td></tr>
+    <tr><td><code>E1105</code></td><td><code>InvalidMatrixSlice</code>: Dimension wildcard <code>*</code> used on a non-matrix or invalid rank.</td><td>Use <code>*</code> only on valid matrix ranks.</td></tr>
+    <tr><td><code>E1106</code></td><td><code>NonBoxedAssignment</code>: Reference assignment <code>:=</code> on an unboxed value.</td><td>Box the value first with <code>[x]</code>.</td></tr>
+  </tbody>
+</table>
+
+<</p>!-- Footer -->
 
 </div>
       </main>

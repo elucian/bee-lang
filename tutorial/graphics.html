@@ -123,6 +123,21 @@ new β ∈ G := 0°0′0″;
 </table>
 
 
+<h2 id="diagnostics">Diagnostic error codes</h2>
+
+<p>Diagnostic codes raised by the <em>Graphics</em> module (<code>spec/13</code> §7):</p>
+<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>E1301</code></td><td><code>InvalidAngleFormat</code>: Malformed degree/minute/second (<code>° ′ ″</code>) angular syntax.</td><td>Correct the angular literal.</td></tr>
+    <tr><td><code>E1302</code></td><td><code>LayerNotFound</code>: <code>draw</code> on an unattached or non-existent layer.</td><td>Attach the layer to the canvas first.</td></tr>
+    <tr><td><code>E1303</code></td><td><code>NegativeRadius</code>: Circle or polar point constructed with a negative radius r.</td><td>Use a non-negative radius.</td></tr>
+    <tr><td><code>E1304</code></td><td><code>PolygonVertexUnderflow</code>: Polygon constructed with fewer than 3 vertex points.</td><td>Supply at least 3 vertices.</td></tr>
+    <tr><td><code>E1305</code></td><td><code>CanvasRenderError</code>: Target canvas hardware context unavailable.</td><td>Retry with a valid canvas context.</td></tr>
+  </tbody>
+</table>
 <!-- Footer -->
 
 </div>

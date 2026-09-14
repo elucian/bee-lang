@@ -370,19 +370,19 @@ return;
 
 <h2 id="domain-type">Domain Type</h2>
 
-<p>Domain is very similar to range except a domain has a ratio. This is the difference, the numbers are not integers, can be fractional or Q umber.</p>
+<p>Domain is very similar to range except a domain has a ratio — the numbers are not integers, they can be fractional or Q numbers. The step ratio is appended as a postfix extension <code>(step)</code> to the range (canonical form per Decision 13).</p>
 
 <pre><code class="language-bee">
-type Domain: (min..max:ratio)  &lt;: Super_Type;
+type Domain: (min..max)(step)  &lt;: Super_Type;
 </code></pre>
 
 <h4>Examples:</h4>
 
 <pre><code class="language-bee">-- generate rational numbers
-print (0..1:1&\4); -- 0&\4, 1&\4, 2&\4, 3&\4, 1
+print (0..1)(1\4); -- 0\4, 1\4, 2\4, 3\4, 1\1
 
--- generate float numbers
-print (0..1:0.25); -- 0.00, 0.25, 0.50, 0.75, 1.00
+-- generate float numbers (float step 0.25)
+print (0..1)(0.25); -- 0.00, 0.25, 0.50, 0.75, 1.00
 </code></pre>
 
 <h2 id="constant-declarations">Constant declarations</h2>
@@ -593,6 +593,65 @@ return;
 <li>making conversion will copy value not reference</li>
 <li>conversion to same data type is equivalent to copy "::"</li>
 </ul>
+
+<h3 id="type-promotion">Type promotion hierarchy</h3>
+
+<p>Bee defines a canonical <em>implicit promotion</em> chain (spec/05 §4.3/§5). A value may widen toward a larger mathematical space without an explicit cast; narrowing back (e.g. Float to Rational) always requires the explicit <code>:&gt;</code> operator.</p>
+
+<pre>
+B → N → Z → R → Q → C
+</pre>
+
+<p>with two widening branches off that chain: Alpha (<code>A</code>) is promoted from Natural (<code>N</code>), and Unicode (<code>U</code>) from Integer (<code>Z</code>):</p>
+
+<table class="table table-bordered table-striped">
+<thead>
+<tr>
+<th>Promoted from</th>
+<th>to</th>
+<th>Widening rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>B</code> Boolean</td>
+<td><code>N</code> Natural</td>
+<td>implicit</td>
+</tr>
+<tr>
+<td><code>N</code> Natural</td>
+<td><code>A</code> Alpha</td>
+<td>implicit</td>
+</tr>
+<tr>
+<td><code>N</code> Natural</td>
+<td><code>Z</code> Integer</td>
+<td>implicit</td>
+</tr>
+<tr>
+<td><code>Z</code> Integer</td>
+<td><code>U</code> Unicode</td>
+<td>implicit</td>
+</tr>
+<tr>
+<td><code>Z</code> Integer</td>
+<td><code>R</code> Real</td>
+<td>implicit</td>
+</tr>
+<tr>
+<td><code>R</code> Real</td>
+<td><code>Q</code> Rational</td>
+<td><strong>explicit</strong> <code>:&gt;</code> only</td>
+</tr>
+<tr>
+<td><code>Q</code> Rational</td>
+<td><code>C</code> Complex</td>
+<td>implicit</td>
+</tr>
+</tbody>
+</table>
+
+<p>Rational numbers convert to Real <em>implicitly</em>; Real to Rational requires an explicit cast <code>:&gt; Q</code> (spec §4.3).</p>
 
 <h2 id="boolean-type">Boolean type</h2>
 <p>Boolean type is Bee is native numeric of type B. However we also implement native two constants True, False that are publicly available in core library</p>
@@ -868,8 +927,8 @@ return;  </code></pre>
 
 <p><b>Note:</b>&nbsp;Q numbers are approximated numbers.</p>
 <ul>
-<li>Default precision for Q numbers is $precision: 10⁻⁵ = 0.00001</li>
-<li>Default precision can be set using: $precision:x; global constant</li>
+<li>Default precision for Q numbers is $max_precision: 10⁻⁵ = 0.00001</li>
+<li>Default precision can be set using: $max_precision:x; global constant</li>
 <li>Operator "&asymp;" is using the precision if the operator "&plusmn;" is not used;</li>
 </ul>
 <p>Other precision constants:</p>
@@ -1053,7 +1112,7 @@ let v := 31.75; -- maxim value
 <h4>Example:</h4>
 <p>In next example b = 0.33(3), delta = (b - a) = 0.083</p>
 <pre><code class="language-bee">-- override default precision
-set $precision := 0.01;
+set $max_precision := 0.01;
 
 rule main:
     new a := 0.25; -- real
@@ -1101,6 +1160,24 @@ rule main:
     expect c = 0.25;
 return
 </code></pre>
+
+
+<h2 id="diagnostics">Diagnostic error codes</h2>
+
+<p>Diagnostic codes raised by the <em>Types</em> module (<code>spec/05</code> §7):</p>
+<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>E0501</code></td><td><code>TypeMismatch</code>: Assigned value violates the static type boundary.</td><td>Cast or fix the value to the declared type.</td></tr>
+    <tr><td><code>E0502</code></td><td><code>InvalidTypeCast</code>: Incompatible explicit cast with the <code>:&gt;</code> operator.</td><td>Use a lossless cast between compatible types.</td></tr>
+    <tr><td><code>E0503</code></td><td><code>DomainOutOfBounds</code>: Assigned literal falls outside a constrained range/domain.</td><td>Constrain the value to the declared domain.</td></tr>
+    <tr><td><code>E0504</code></td><td><code>RationalOverflow</code>: Value exceeds the maximum capacity of a <code>Q(m.n)</code> container.</td><td>Widen the fixed-point precision.</td></tr>
+    <tr><td><code>E0505</code></td><td><code>SingleLetterTypeReserved</code>: User type identifier uses a reserved single uppercase Latin letter.</td><td>Choose a non-reserved name or a multi-letter type.</td></tr>
+    <tr><td><code>E0506</code></td><td><code>PrecisionUndefined</code>: Approximate comparison <code>≈</code> executed with uninitialized <code>$max_precision</code>.</td><td>Initialize <code>$max_precision</code> before using <code>≈</code>.</td></tr>
+  </tbody>
+</table>
 
 
 <!-- Footer -->

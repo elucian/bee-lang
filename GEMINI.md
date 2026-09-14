@@ -17,7 +17,7 @@ When generating, modifying, or debugging Go code for the Bee programming languag
 6. **`is not` is one token (Decision 7):** Maximal-Munch collapsing is mandatory: when `is` is followed by ASCII whitespace and `not`, the lexer emits a single `IS_NOT` token. Both literal `is not` and parenthetical `(a is not b)` patterns MUST bind this way.
 
 ## 5. Decisions Backlog — Reference
-For any new operator, statement, keyword, or grammar production, first consult `todo/DECISIONS.md`. D1–D7 are ratified and mirrored in `MANIFEST.md`. D8 is deferred. D9, D10, D11 are pending the user's ratification before any implementation begins.
+For any new operator, statement, keyword, or grammar production, first consult `todo/DECISIONS.md`. D1–D7 and D9–D16 are ratified and mirrored in `MANIFEST.md`. D8 (rule-call result destructuring) is deferred. All ratified decisions (including D10 radical precedence and D11 parallel colon-initialisation, both ratified 2026-09-14) are ready for implementation.
 
 ## 3. Test Lifecycle & Freeze Protocol (.bee Test Cases)
 * **Spec-Driven Generation:** Generate new test files (`.bee`) strictly under `test/levelX/` derived directly from `/spec/`.

@@ -439,7 +439,27 @@ x = 30
 <li>There are other ways to create generators;</li>
 </ol>
 
+<h2 id="diagnostics">Diagnostic error codes</h2>
 
+<p>Diagnostic codes raised by the <em>rules</em> module (<code>spec/03</code> §7), plus the shared global deprecation codes relevant to rules:</p>
+<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>E0301</code></td><td><code>UndeclaredRule</code>: Rule invoked prior to definition or forward declaration.</td><td>Define or forward-declare the rule first.</td></tr>
+    <tr><td><code>W0301</code></td><td><code>AssertionWarning</code>: Assertion failed in an <code>assert</code> contract clause.</td><td>Logged to stderr; review the asserted invariant.</td></tr>
+    <tr><td><code>E0303</code></td><td><code>ExpectationFailed</code>: Expectation failed in an <code>expect</code> contract clause or body statement.</td><td>Fatal runtime error if unhandled.</td></tr>
+    <tr><td><code>E0304</code></td><td><code>MultiResultInExpression</code>: Multi-result rule used inside an arithmetic expression tree.</td><td>Call the rule at statement level and deconstruct its results.</td></tr>
+    <tr><td><code>E0305</code></td><td><code>MissingReturnTerminator</code>: Rule block does not end with an aligned <code>return;</code>.</td><td>Append <code>return;</code> at the rule end.</td></tr>
+    <tr><td><code>E0306</code></td><td><code>SignatureMismatch</code>: Forward declaration does not match the rule implementation signature.</td><td>Align the two signatures.</td></tr>
+    <tr><td><code>E0307</code></td><td><code>MissingNamedArgument</code>: Call site omits a required named-parameter slot binding with no default (D6).</td><td>Supply the named argument at the call site.</td></tr>
+    <tr><td><code>W0308</code></td><td><code>NamedSlotIgnored</code>: Curried <code>(...)</code> list appended where the rule declares no named slot (D6).</td><td>Remove the extraneous named-argument list.</td></tr>
+    <tr><td><code>E0309</code></td><td><code>UnknownNamedArgument</code>: Call site names an identifier not present in the rule's declared named slot (D6).</td><td>Use only declared named-slot identifiers.</td></tr>
+    <tr><td><code>E0010</code></td><td><code>DeprecatedKeyword</code> <code>repeat</code>: Legacy loop-jump keyword; canonical is <code>next</code> (Decision 15). Non-fatal; still maps to NEXT.</td><td>Replace with <code>next</code>.</td></tr>
+    <tr><td><code>E0011</code></td><td><code>DeprecatedKeyword</code> <code>using</code>: Legacy <code>using</code> postfix; canonical is curried <code>(name: ...)</code> (Decision 6). Non-fatal.</td><td>Use the curried named-argument form.</td></tr>
+  </tbody>
+</table>
 
 <!-- Footer -->
 

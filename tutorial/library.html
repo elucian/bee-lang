@@ -386,6 +386,23 @@ new folder_name := Folder.open('name');
 
 <p><b>Go back to:</b>
 <a href="/projects/bee/index/" rel="nofollow">Bee Index</a></p>
+
+<h2 id="diagnostics">Diagnostic error codes</h2>
+
+<p>Diagnostic codes raised by the <em>Library</em> module (<code>spec/14</code> §7):</p>
+<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>E1401</code></td><td><code>FileNotFound</code>: Target file path missing during an open operation.</td><td>Create the file or correct the path.</td></tr>
+    <tr><td><code>E1402</code></td><td><code>FileAccessDenied</code>: Insufficient OS permissions to open or write a file handle.</td><td>Fix the permissions.</td></tr>
+    <tr><td><code>E1403</code></td><td><code>UnclosedFileHandle</code>: Scope exited with an unclosed <code>F</code> file handle.</td><td>Close the handle before scope exit.</td></tr>
+    <tr><td><code>E1404</code></td><td><code>LibraryNotFound</code>: Requested <code>$bee.sys</code> submodule not available in the runtime build.</td><td>Build with the required submodule.</td></tr>
+    <tr><td><code>E1405</code></td><td><code>InvalidFileMode</code>: File open mode is not <code>r</code>, <code>w</code>, <code>a</code>, or <code>rw</code>.</td><td>Use one of the four accepted modes.</td></tr>
+  </tbody>
+</table>
+
 <!-- Footer -->
 
 </div>

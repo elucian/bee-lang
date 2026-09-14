@@ -507,10 +507,26 @@ rule main:
    print collect; -- (10,20,30,40)
 return;</code></pre>
 
-<p><b>Note:&nbsp;</b>By using begin and wait you can create multi-session applications. Each aspect is executed on a different core, and the application runs them in parallel. The main thread is waiting using resolve keyword for the threads to finish.
-<p>
+<p><b>Note:&nbsp;</b>By using begin and wait you can create multi-session applications. Each aspect is executed on a different core, and the application runs them in parallel. The main thread is waiting using resolve keyword for the threads to finish.</p>
 
-<!-- Footer -->
+<h2 id="diagnostics">Diagnostic error codes</h2>
+
+<p>Diagnostic codes raised by the <em>Structure</em> module (<code>spec/04</code> §7):</p>
+<table class="table table-bordered table-striped table-sm">
+  <thead>
+    <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>E0401</code></td><td><code>MainModuleRedefinition</code>: Secondary or library module contains <code>rule main</code>.</td><td>Remove <code>rule main</code> from non-entry modules.</td></tr>
+    <tr><td><code>E0402</code></td><td><code>PrivateMemberAccess</code>: Access to an unexported member (missing <code>.</code> prefix).</td><td>Export the member with a <code>.</code> prefix or access within module.</td></tr>
+    <tr><td><code>E0403</code></td><td><code>ModuleNotFound</code>: Module file missing from the search path (<code>$pro_mod</code>, <code>$pro_lib</code>, <code>$bee_lib</code>).</td><td>Place the module in a configured search path.</td></tr>
+    <tr><td><code>E0404</code></td><td><code>CyclicImportError</code>: Circular dependency between imported modules.</td><td>Break the import cycle.</td></tr>
+    <tr><td><code>E0405</code></td><td><code>MainImportForbidden</code>: Attempt to load <code>main.bee</code> via a <code>use</code> directive.</td><td>Do not import the entry module.</td></tr>
+    <tr><td><code>E0406</code></td><td><code>UnsynchronizedWorker</code>: Scope exited with pending <code>begin</code> threads prior to a <code>wait</code> barrier.</td><td>Add a <code>wait</code> barrier before scope exit. (Semantic twin of E1201 in concurrency.)</td></tr>
+  </tbody>
+</table>
+
+<</p></em>!-- Footer -->
 
 </div>
       </main>
