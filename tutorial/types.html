@@ -636,11 +636,11 @@ print 6 &gt;&gt; 2;  -- out:1 is because: 110 &gt;&gt; 2   = 001 = 1;
 
 <h4>Other operators</h4>
 
-<p>Comparison operators will create a Boolean response: 1 = True or 0 = False. Also, the equivalent and belonging operators will create a Boolean response. You can combine them to create Boolean expressions.</p>
+<p>Comparison operators will create a Boolean response: 1 = True or 0 = False. Also, the equality and belonging operators will create a Boolean response. You can combine them to create Boolean expressions.</p>
 
 <ul>
-<li>comparison ( &asymp;, =, ¬, &equiv;, !&equiv;,  &gt;, &lt;, &le;, &ge;)</li>
-<li>equivalents (=, ¬, &lt;=, >=)</li>
+<li>comparison ( &asymp;, =, ¬, &gt;, &lt;, &le;, &ge;)</li>
+<li>equality (=, ¬)</li>
 <li>belonging ( &isin;, !&isin; )</li>
 </ul>
 
@@ -650,11 +650,8 @@ rule main:
   new (x, y):4 &isin;  Z; -- primitive integer
   -- value comparison
   print x = 4;  -- 1 (equal)
-  print x &equiv; 4;  -- 1 (identical)
   print x = y;  -- 1 (equal)
-  print x &equiv; y;  -- 1
   print x ¬ 5;  -- 1 (different)
-  print x!&equiv; 5;  -- 1 (not identical)
 
   -- reference ordering
   print x &ge; y;  -- 1: x and a are actually equal
@@ -666,19 +663,14 @@ rule main:
 
   -- arithmetic expressions have primitive results
   print x - 4 = 0; -- 1
-  print x - 4 &equiv; 0; -- 1
 return;
 </code></pre>
 
 
 <p><b>singleton</b></p>
-<p>Primitive types are unique. That means they are equivalent. A literal or constant is equivalent to another literal having the same value.</p>
+<p>Primitive types are unique. That means they are equal. A literal or constant is equal to another literal having the same value.</p>
 
 <pre><code class="language-bee">-- primitive values are singleton
-print  1  &equiv;  1;  -- 1
-print "s" &equiv; "s"; -- 1
-
--- canonical value-equality operator
 print  1  = 1;  -- 1
 print "s" = "s"; -- 1
 </code></pre>
@@ -700,7 +692,6 @@ rule main:
 
   -- expressions with two operands
   print (f = t); -- 0
-  print (f &equiv; t); -- 0
   print (f ¬ t); -- 1
   print (f &lt; t); -- 1
   print (f &gt; t); -- 0
@@ -741,17 +732,17 @@ return;
 
 <p><b>design</b></p>
 <pre><code class="language-bee">-- logical values are numeric
-print True  &equiv; 1;  -- 1
-print False &equiv; 0;  -- 1
+print True  = 1;  -- 1
+print False = 0;  -- 1
 
 -- logical values do not compute
 print False - True; -- Error
 print True  + True; -- Error
 
 -- Null value is not True
-print Null  &equiv; True   -- 0
+print Null  = True   -- 0
 -- Null value is not False
-print Null  &equiv; False  -- 0
+print Null  = False  -- 0
 </code></pre>
 
 
@@ -1091,12 +1082,10 @@ rule main:
     -- explicit conversion R :&gt; Q
     expect a ¬ b; -- not equal, type mismatch
     expect a &asymp; b; -- values match, approximation
-    expect a &equiv; b; -- implicit conversion, match
 
     -- explicit conversion R :&gt; Q
     new c := a :&gt; Q; 
     expect c = b; -- type & value match
-    expect c &equiv; b; -- type & value match
 
     -- implicit conversion Q :&gt; R
     new r := c &isin; R;

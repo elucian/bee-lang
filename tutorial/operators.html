@@ -426,7 +426,7 @@
 </tr>
 <tr>
 <td>&equiv;</td>
-<td>equivalent | { compare values / convert type }</td>
+<td>geometric congruence (same shape, any scale) — see Graphics</td>
 </tr>
 <tr>
 <td>&asymp;</td>
@@ -450,7 +450,7 @@
 </tr>
 <tr>
 <td>&divide;</td>
-<td>Exact divisor: 3 &division; 15 &equiv; True</td>
+<td>Exact divisor: 3 &divide; 15 = True</td>
 </tr>
 </tbody>
 </table>
@@ -459,7 +459,6 @@
 <p>Operator: "!" can be used in combination with other operators:</p>
 <pre class="language-out">
  x ¬ y; -- equivalent to: !(x = y)
- x !&equiv; y; -- equivalent to: !(x &equiv; y)
  x !&isin; y; -- equivalent to: !(x &isin; y)
  x !&asymp; y; -- equivalent to: !(x &asymp; y)
  x !~ y; -- equivalent to: !(x ~ y)
@@ -470,6 +469,7 @@
 <pre class="language-out">
  a = b;    -- value comparison: true when a and b hold the same value
  a ¬ b;    -- value inequality: true when a and b hold different values
+ a is b;   -- pointer identity: true when a and b name the same allocation (same as @a = @b)
  @a = @b;  -- reference comparison: true only when a and b share one allocation
  @a ¬ @b;  -- reference inequality: true when a and b are distinct allocations
  @a = 1;   -- always false: @a is a reference, 1 is a constant value

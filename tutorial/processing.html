@@ -90,7 +90,7 @@ rule main:
   -- comparison
   print n = 0; -- 1 (true, initial value)
   print n = k; -- 1 (true, same values)
-  print n &equiv; k; -- 0 (false, different types)
+  print @n = @k; -- 0 (false, distinct references)
   print n is k; -- 0 (false, not the same reference)
 
   -- consequence
@@ -114,7 +114,7 @@ rule main:
   let n := r :&gt; Z  -- explicit unboxing (alternative notation)
   -- verify value identity
   print n = r; -- 1 (true:  same values)
-  print n &equiv; r; -- 0 (false: different types)
+  print @n = @r; -- 0 (false: distinct references)
   -- consequence: variables are unbound
   let n += 2;  -- n = 12 (modified)
   print r; -- r = 10 (unmodified)
@@ -135,13 +135,13 @@ new b :=  b;  -- share a reference
 rule main:
   -- variable c is bound to a
   pass if b = a; -- 1 (same values)
-  pass if b &equiv; a; -- 1 (same location, same data type)
+  pass if b is a; -- 1 (same reference)
   -- consequence of sharing:
   let a := 2;    -- [2] (modify denoted value)
   print a;       -- [2] (new value is boxed)
   print b;       -- [2] (shared reference is modified)
   expect b = a; -- will pass
-  expect b &equiv; a; -- references are bound
+  expect @b = @a; -- references are bound
 return;
 </code></pre>
 
