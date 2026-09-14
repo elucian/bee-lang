@@ -115,7 +115,7 @@ return;
 
 <p><b>Notes:</b>
 <ul>
-  <li>before "with" you can use "start"</li> 
+  <li>before "with" you can use "start"</li>
   <li>you can use "with" for any "do" block</li>
   <li>any "do" block has a local scope</li>
 </ul>
@@ -178,7 +178,7 @@ done;
 <p>By using keywords "if" and "else" you can create a cascade of branches called "decision ladder". It has several conditional branches plus one optional branch that is executed when no other condition is fulfilled.</p>
 
 <div class="text-center">
-  <img src="/images/ladder.svg" alt="decision" 
+  <img src="/images/ladder.svg" alt="decision"
   width="640" class="img-fluid protect rounded shadow border" >
   <p>decision ladder</p>
 </div>
@@ -484,13 +484,13 @@ try [code2]: -- description
     ...
     -- skip the rest (no error) and jump to final
     pass if condition;
-   
+
     -- optional create error and jump to final
     fail {code, message} if condition;
-    ...  
+    ...
     -- create error and jump to cases
     raise {code, message} if condition;
-    ...  
+    ...
 case $error.code = code do
     -- handler1
     ...
@@ -542,7 +542,7 @@ raise {code,"message"} if condition; -- create instant custom error with code
 
 <p>A trial can have several optional jobs. Each jon start with keyword try() that has 2 optional arguments: try(code, message). Every try can pass or fail with a code and a message.</p>
 
-<p>You can use raise or abort inside a try() block. The raise will mark the try as failed and will record the code and message in the $trial report.</p> 
+<p>You can use raise or abort inside a try() block. The raise will mark the try as failed and will record the code and message in the $trial report.</p>
 
 <h4>case</h4>
 
@@ -688,11 +688,6 @@ done [name];
 <li>Trials can be on single level, can't be nested.</li>
 </ul>
 
-<hr>
-
-
-<p><b>Read next:</b>
-<a href="/projects/bee/rules/">Rules</a></p>
 <!-- Footer -->
 
 </div>
