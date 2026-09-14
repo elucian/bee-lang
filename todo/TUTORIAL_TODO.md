@@ -246,12 +246,14 @@ compilers" audience. Treat as proposals; confirm scope before authoring.
   and the collision policy.
 
 ### 2.2 `grammar.html` (NEW, optional)
-- Consolidated EBNF grammar reference drawn from every spec module.
-- Value: a single machine/mind-readable grammar the student can implement from.
+- [x] **No need (2026-09-14).** Students do not need further tutorial pages. The
+  detailed grammar reference stays in `/spec` (per-module EBNF), which is the
+  authoritative machine/mind-readable grammar for the compiler-builder audience.
 
 ### 2.3 `roadmap.html` / design-rationale (NEW, optional)
-- A narrative of *why* Bee's design choices exist (rule-vs-function split,
-  1-based indexing rationale, memory tiers) — currently scattered across pages.
+- [x] **No need (2026-09-14).** Design rationale (rule-vs-function split, 1-based
+  indexing, memory tiers) is covered across the existing tutorial pages; a
+  dedicated page would duplicate it. Tutorial file set is considered complete.
 
 ---
 
