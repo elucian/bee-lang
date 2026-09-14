@@ -91,7 +91,7 @@ rule main:
   print n = 0; -- 1 (true, initial value)
   print n = k; -- 1 (true, same values)
   print n &equiv; k; -- 0 (false, different types)
-  print n == k; -- 0 (false, not the same)
+  print n is k; -- 0 (false, not the same reference)
 
   -- consequence
   let n := 2; -- n = 2 (modify n)

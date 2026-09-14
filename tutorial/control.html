@@ -107,7 +107,7 @@ rule main:
   new x := 2;
   with test do
     -- call external routine .test
-    expect x == 3;
+    expect x = 3;
     print inc(x);
   done;
 return;
@@ -626,7 +626,7 @@ trial:
   new my_error:{200, "custom error"} &lt;: Error;
 try()
   raise my_error; -- issue user error
-case $error.code == 200 do
+case $error.code = 200 do
   -- we catch the the error and do something
   print $error.message;
   print $error.line;

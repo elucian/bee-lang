@@ -518,9 +518,9 @@ rule main:
   new (q,p):0 &isin; B; -- Boolean
 
   -- using modifiers
-  let a := 10; -- modify value of: a == 10
-  let a += 1;  -- increment value of: a == 11
-  let a -= 1;  -- decrement value of: a == 10
+  let a := 10; -- modify value of: a = 10
+  let a += 1;  -- increment value of: a = 11
+  let a -= 1;  -- decrement value of: a = 10
 
   -- modify two variables using one single constant
   let x, y := 10.5;
@@ -678,9 +678,9 @@ return;
 print  1  &equiv;  1;  -- 1
 print "s" &equiv; "s"; -- 1
 
--- alternative operator have the same significance
-print  1  == 1;  -- 1
-print "s" == "s"; -- 1
+-- canonical value-equality operator
+print  1  = 1;  -- 1
+print "s" = "s"; -- 1
 </code></pre>
 
 <p><b>Precedence:</b></p>

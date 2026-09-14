@@ -181,7 +181,7 @@ print("a", "b")                      ();                   -- empty named slot: 
 rule foo(*bar &isin; [Z]) =&gt; (x &isin; Z):
     new c := bar.count();
     -- precondition
-    if (c == 0) do
+    if (c = 0) do
         let x := 0;
         exit;
     done;
