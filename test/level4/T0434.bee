@@ -1,0 +1,18 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0434 range endpoint variants with $ anchor guards (spec/01 §5, spec/05 §3)
+rule main:
+  -- stepped range indexing is 1-based (D13, D1)
+  new s :: (1..5)(1);
+  expect s[1] = 1;
+  expect s[2] = 2;
+  expect s[3] = 3;
+  expect s[$] = 5;
+
+  -- integer-stepped range replaces legacy colon-postfix (1..5:2)
+  new e :: (1..5)(2);
+  expect e[1] = 1;
+  expect e[2] = 3;
+  expect e[$] = 5;
+
+  print "T0434 stepped-range assertions passed";
+return;

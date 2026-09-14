@@ -1,0 +1,25 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0433 array slicing with $ anchor and 1-based indexing (spec/10 §2, §3)
+rule main:
+  new a := [0,1,2,3,4,5,6,7,8,9];
+  expect a[1] = 0;
+  expect a[$] = 9;
+  expect a[$-1] = 8;
+  expect a[$-2] = 7;
+
+  -- slice views followed 1-based/$ semantics
+  new first :: a[1..$];
+  expect first[1] = 0;
+  expect first[$] = 9;
+
+  new tail :: a[$-2..$];
+  expect tail[1] = 7;
+  expect tail[2] = 8;
+  expect tail[3] = 9;
+
+  -- single-element slice preserves value
+  new one :: a[1..1];
+  expect one[1] = 0;
+
+  print "T0433 slicing assertions passed";
+return;

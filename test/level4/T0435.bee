@@ -1,0 +1,19 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0435 set builder with filter over new range syntax (spec/10 §3, spec/11 processing)
+rule main:
+  -- set builder without mapping, 1-based domain (1..6)
+  new evens := { x | x ∈ (1..6) ∧ (x % 2 = 0) };
+  expect 2 ∈ evens;
+  expect 4 ∈ evens;
+  expect 6 ∈ evens;
+  expect 3 !∈ evens;
+
+  -- set builder with mapping rule x^2 over 1..4
+  new squares := { x² | x ∈ (1..4) };
+  expect 1 ∈ squares;
+  expect 4 ∈ squares;
+  expect 9 ∈ squares;
+  expect 16 ∈ squares;
+
+  print "T0435 set-builder assertions passed";
+return;

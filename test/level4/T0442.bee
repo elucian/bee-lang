@@ -1,0 +1,18 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0442 quantifiers forall/exists over a collection (spec/11 §3)
+rule main:
+  new nums := {2,4,6,8};
+  -- every element is even
+  new all_even := (∀ x ∈ nums : x % 2 = 0);
+  expect all_even = 1;
+
+  -- exists an element equal to 6
+  new has_six := (∃ x ∈ nums : x = 6);
+  expect has_six = 1;
+
+  -- no element is odd
+  new any_odd := (∃ x ∈ nums : x % 2 = 1);
+  expect any_odd = 0;
+
+  print "T0442 quantifier assertions passed";
+return;

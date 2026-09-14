@@ -1,0 +1,28 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0437 collection iteration with $ anchor and control flow (spec/11 §1)
+rule main:
+  new a := [10, 20, 30, 40, 50];
+  new total := 0;
+  new n := 5;
+  for i ∈ (1..n) do
+    let total := total + a[i];
+  done;
+  expect total = 150;
+
+  -- reverse traversal using $ - j + 1
+  new rev := 0;
+  for j ∈ (1..n) do
+    let rev := rev + a[$ - j + 1];
+  done;
+  expect rev = 150;
+
+  -- foreach element visit over a list (spec: List supports visitor)
+  new l := (1,2,3,4,5);
+  new acc := 0;
+  for e ∈ l do
+    let acc := acc + e;
+  done;
+  expect acc = 15;
+
+  print "T0437 collection iteration assertions passed";
+return;

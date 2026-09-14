@@ -8,6 +8,18 @@ This level covers data collections and processing pipelines as defined in:
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
+| T0444    | T0444 list as queue FIFO usin... | FAIL       |
+| T0443    | T0443 collection casting betw... | FAIL       |
+| T0442    | T0442 quantifiers forall/exis... | FAIL       |
+| T0441    | T0441 set algebra intersectio... | FAIL       |
+| T0440    | T0440 matrix row/column slice... | FAIL       |
+| T0439    | T0439 array decomposition, sp... | FAIL       |
+| T0438    | T0438 list concatenation and ... | FAIL       |
+| T0437    | T0437 collection iteration wi... | FAIL       |
+| T0436    | T0436 array and hash-map buil... | FAIL       |
+| T0435    | T0435 set builder with filter... | FAIL       |
+| T0434    | T0434 range endpoint variants... | FAIL       |
+| T0433    | T0433 array slicing with $ an... | FAIL       |
 | T0432    | T0432 raw negative index a[-1... | PASS       |
 | T0431    | T0431 dollar-anchor arithmeti... | PASS       |
 | T0430    | T0430 collection assertions f... | PASS       |

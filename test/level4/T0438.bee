@@ -1,0 +1,26 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0438 list concatenation and append/shift operators (spec/10 §3.1, spec/11 list ops)
+rule main:
+  -- list concatenation with `+` creates a new list
+  new a := ('a','b','c');
+  new b := ('1','2','3');
+  new c :: a + b;
+  expect c[1] = 'a';
+  expect c[2] = 'b';
+  expect c[3] = 'c';
+  expect c[4] = '1';
+  expect c[5] = '2';
+  expect c[6] = '3';
+  expect c[$] = '3';
+
+  -- append one element to end of list with `<+`
+  new q := (1,2,3);
+  put q <+ 4;
+  expect q[1] = 1;
+  expect q[2] = 2;
+  expect q[3] = 3;
+  expect q[4] = 4;
+  expect q[$] = 4;
+
+  print "T0438 list operation assertions passed";
+return;

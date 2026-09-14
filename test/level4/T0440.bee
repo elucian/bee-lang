@@ -1,0 +1,21 @@
+-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DESC:T0440 matrix row/column slice mutation and broadcast (spec/11 §5.2)
+rule main:
+  new M ∈ [Z](2,2);
+  -- broadcast assignment to all elements via [*]
+  let M[*] := 100;
+  expect M[1,1] = 100;
+  expect M[1,2] = 100;
+  expect M[2,1] = 100;
+  expect M[2,2] = 100;
+
+  -- modify an entire row
+  let M[1,*] := 0;
+  let M[2,*] := 1;
+  expect M[1,1] = 0;
+  expect M[1,2] = 0;
+  expect M[2,1] = 1;
+  expect M[2,2] = 1;
+
+  print "T0440 matrix slice assertions passed";
+return;
