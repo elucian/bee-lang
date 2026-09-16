@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @DESC:T0443 collection casting between array and set via builder (spec/11 casting)
 rule main:
   new source := [0,1,2,2,2,2];

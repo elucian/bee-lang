@@ -12,6 +12,8 @@ rule clamp(v, lo, hi ∈ Z) => (r ∈ Z):
 return;
 
 rule main:
-  print (clamp(-5,0,10), clamp(5,0,10), clamp(99,0,10));
+  expect clamp(-5,0,10) = 0;
+  expect clamp(5,0,10) = 5;
+  expect clamp(99,0,10) = 10;
 return;
 

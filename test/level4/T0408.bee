@@ -6,6 +6,6 @@ rule half(n ∈ Z) => (r ∈ Z):
 return;
 
 rule main:
-  print half(8);
+  expect half(8) = 4;
 return;
 

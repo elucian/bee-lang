@@ -1090,6 +1090,35 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 				}
 				return 0, 0
 			}
+			// Collection membership (spec/10 §3): x ∈ coll for arrays, lists,
+			// and sets bound by name. The right-hand side is an identifier;
+			// linear scan over the value store (bootstrap evaluator).
+			if id, ok := expr.Right.(*parser.Identifier); ok {
+				if arr, isArr := e.arrayValues[id.Value]; isArr {
+					for _, v := range arr {
+						if v == leftVal {
+							return 1, 0
+						}
+					}
+					return 0, 0
+				}
+				if lst, isLst := e.listValues[id.Value]; isLst {
+					for _, v := range lst {
+						if v == leftVal {
+							return 1, 0
+						}
+					}
+					return 0, 0
+				}
+				if st, isSet := e.setValues[id.Value]; isSet {
+					for _, v := range st {
+						if v == leftVal {
+							return 1, 0
+						}
+					}
+					return 0, 0
+				}
+			}
 		}
 
 		// <!-- EVAL: RADICAL_OPERATOR_EVALUATION -->

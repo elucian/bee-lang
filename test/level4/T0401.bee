@@ -5,6 +5,6 @@ rule main:
   for i ∈ (1..5) do
     let sum := sum + i;
   done;
-  print sum;
+  expect sum = 15;
 return;
 

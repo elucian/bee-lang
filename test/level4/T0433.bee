@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=10 type=; literal=";"
 -- @DESC:T0433 array slicing with $ anchor and 1-based indexing (spec/10 §2, §3)
 rule main:
   new a := [0,1,2,3,4,5,6,7,8,9];

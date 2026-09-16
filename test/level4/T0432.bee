@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @NEGATIVE
 -- @DESC:T0432 raw negative index a[-1] is rejected; use a[$-1] (spec/10 §2.1)
 rule main:

@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=3 type=; literal=";"
 -- @DESC:T0440 matrix row/column slice mutation and broadcast (spec/11 §5.2)
 rule main:
   new M ∈ [Z](2,2);

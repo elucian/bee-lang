@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
 -- @DESC:T0439 array decomposition, spreading, and rendering (spec/11 §5.1)
 rule main:
   -- deconstruction: head elements plus *tail

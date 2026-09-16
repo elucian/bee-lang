@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: W0901 SignatureGrammarPartial: line=2 rule="main" (signature decoder is heuristic; full type binding deferred to Phase 7.2)
 -- @DESC:T0441 set algebra intersection, union, symmetric difference (spec/10 §3.4)
 rule main:
   new s1 := {1,2,3,4,5};

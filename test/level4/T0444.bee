@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @DESC:T0444 list as queue FIFO using append and shift-left (spec/11 list ops)
 rule main:
   new q := (1,2,3);

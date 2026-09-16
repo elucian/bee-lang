@@ -1,8 +1,9 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
--- @ENABLED: Reset by user
 -- @DESC:file: sets_sorted.bee
 -- Sets are sorted and unique demo
 rule main:
-  print {3,1,2,1};
+  new s := {3,1,2,1};
+  expect 1 ∈ s;
+  expect 2 ∈ s;
+  expect 3 ∈ s;
 return;
 

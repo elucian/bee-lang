@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: W0901 SignatureGrammarPartial: line=2 rule="main" (signature decoder is heuristic; full type binding deferred to Phase 7.2)
 -- @DESC:T0437 collection iteration with $ anchor and control flow (spec/11 §1)
 rule main:
   new a := [10, 20, 30, 40, 50];

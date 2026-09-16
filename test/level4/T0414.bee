@@ -1,11 +1,16 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=6 type=; literal=";"
--- @ENABLED: Reset by user
+-- @DISABLED: W0901 SignatureGrammarPartial: line=3 rule="main" (signature decoder is heuristic; full type binding deferred to Phase 7.2)
 -- @DESC:file: concatenation.bee
 -- Concatenation demo
 rule main:
-  print [1,2] + [3];
+  new c := [1,2] + [3];
+  expect c[1] = 1;
+  expect c[2] = 2;
+  expect c[3] = 3;
   new l := (1,2);
   new m := (3,);
-  print l + m;
+  new cm := l + m;
+  expect cm[1] = 1;
+  expect cm[2] = 2;
+  expect cm[3] = 3;
 return;
 

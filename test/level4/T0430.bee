@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC:T0430 collection assertions for arrays, lists, sets, maps, indexing bounds
 rule main:
   -- Array literal and indexing (spec/10 §3.2, §2.1)

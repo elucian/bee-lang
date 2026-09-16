@@ -2,6 +2,10 @@
 
 This directory contains the machine-parsable grammar and operational semantics.
 
+## Error Code Registry
+
+- `errors.json`: Machine-parsable registry of every diagnostic error code (all modules). It is the single source of truth for code uniqueness. **When adding a new error code to any spec module, register it in `errors.json` (bumping to an unused code on collision) in the same change set.**
+
 ## Module Map
 - `00-memory-model.md`: Region-based management, `zap` usage, thread-safety boundaries.
 - `01-lexical-structure.md`: Maximal Munch rules, Unicode ranges, operator tokenization, markup literals.

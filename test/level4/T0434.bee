@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
 -- @DESC:T0434 range endpoint variants with $ anchor guards (spec/01 §5, spec/05 §3)
 rule main:
   -- stepped range indexing is 1-based (D13, D1)

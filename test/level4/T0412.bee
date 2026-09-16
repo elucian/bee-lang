@@ -15,6 +15,10 @@ rule main:
       done;
       let n -= 1;
   done sort;
-  print a;
+  expect a[1] = 1;
+  expect a[2] = 2;
+  expect a[3] = 3;
+  expect a[4] = 4;
+  expect a[5] = 5;
 return;
 

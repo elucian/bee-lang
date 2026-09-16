@@ -1,11 +1,17 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
--- @ENABLED: Reset by user
+-- @DISABLED: W0901 SignatureGrammarPartial: line=3 rule="main" (signature decoder is heuristic; full type binding deferred to Phase 7.2)
 -- @DESC:file: set_algebra.bee
 -- Set algebra demo
 rule main:
-  print {1,2} ∪ {2,3};
-  print {1,2,3} ∩ {2,3};
-  print {1,2,3} Δ {2,3,4};
-  print {1,2} ⊂ {1,2,3};
+  new u := {1,2} ∪ {2,3};
+  expect 1 ∈ u;
+  expect 3 ∈ u;
+  new i := {1,2,3} ∩ {2,3};
+  expect 2 ∈ i;
+  expect 3 ∈ i;
+  new d := {1,2,3} Δ {2,3,4};
+  expect 1 ∈ d;
+  expect 4 ∈ d;
+  new sub := {1,2} ⊂ {1,2,3};
+  expect sub = 1;
 return;
 

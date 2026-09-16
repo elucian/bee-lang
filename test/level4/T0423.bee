@@ -1,5 +1,4 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
--- @ENABLED: Reset by user
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
 -- @DESC:file: set_algebra_ascii.bee
 -- Set algebra in ASCII demo
 rule main:

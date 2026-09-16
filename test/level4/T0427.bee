@@ -1,4 +1,4 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
+-- @DISABLED: E0009 SyntaxError:InvalidCycleHeader: line=5 (expected `âˆˆ` or `in` after for-index identifier; got type=, literal=",")
 -- @DESC:T0319 walking a map with done terminator (D14)
 -- D14: for loop terminates with done;.
 rule main:

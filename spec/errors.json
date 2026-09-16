@@ -1,0 +1,459 @@
+{
+  "format": "bee-error-registry",
+  "version": 1,
+  "description": "Central registry of Bee diagnostic error codes. Single source of truth for code uniqueness. New codes MUST bump an unused code; collisions are resolved by bumping and re-registering.",
+  "codes": {
+    "E0009": {
+      "name": "SyntaxError",
+      "module": "core",
+      "description": "Generic hard syntax error (also the hardened target of all deprecated forms once Phase 7.2 completes)",
+      "severity": "error"
+    },
+    "E0010": {
+      "name": "DeprecatedSymbol",
+      "module": "lexical",
+      "description": "Legacy symbol or keyword (≠, ==, !=, repeat, legacy ranges) used; canonical replacement available",
+      "severity": "warning",
+      "notes": "Phase 7.2 hardens to E0009"
+    },
+    "E0011": {
+      "name": "DeprecatedSymbolUsing",
+      "module": "lexical",
+      "description": "Legacy 'using' / 'using:' postfix on io_stmt; canonical is curried named-argument (name: ...) per Decision 6",
+      "severity": "warning",
+      "notes": "Phase 7.2 hardens to E0009"
+    },
+    "E0101": {
+      "name": "UnexpectedBOM",
+      "module": "01-lexical-structure",
+      "description": "Unexpected UTF-8 BOM marker",
+      "severity": "error"
+    },
+    "E0102": {
+      "name": "UnterminatedBlockComment",
+      "module": "01-lexical-structure",
+      "description": "Unterminated block comment (+- without closing -+)",
+      "severity": "error"
+    },
+    "E0103": {
+      "name": "InvalidEscapeSequence",
+      "module": "01-lexical-structure",
+      "description": "Invalid escape sequence in string literal",
+      "severity": "error"
+    },
+    "E0104": {
+      "name": "SingleLetterUppercaseIdentifier",
+      "module": "01-lexical-structure",
+      "description": "Single-letter uppercase variable identifier",
+      "severity": "error"
+    },
+    "E0105": {
+      "name": "UnterminatedStringOrMarkup",
+      "module": "01-lexical-structure",
+      "description": "Unterminated string or markup block",
+      "severity": "error"
+    },
+    "E0201": {
+      "name": "IndentationMismatch",
+      "module": "02-statements",
+      "description": "Statement not aligned to 2-space offset boundary",
+      "severity": "error"
+    },
+    "E0202": {
+      "name": "UnboundVariable",
+      "module": "02-statements",
+      "description": "Attempt to mutate variable without prior 'new' declaration",
+      "severity": "error"
+    },
+    "E0203": {
+      "name": "UnterminatedBlock",
+      "module": "02-statements",
+      "description": "Missing 'done' or 'return' terminator",
+      "severity": "error"
+    },
+    "E0204": {
+      "name": "InvalidCloneOperation",
+      "module": "02-statements",
+      "description": "Using '::' clone operator on non-clonable primitive",
+      "severity": "error"
+    },
+    "E0205": {
+      "name": "LabelMismatch",
+      "module": "02-statements",
+      "description": "Closing label on 'done' does not match opening header label",
+      "severity": "error"
+    },
+    "E0206": {
+      "name": "InvalidJumpContext",
+      "module": "02-statements",
+      "description": "'next', 'stop', or 'redo' used outside a loop body",
+      "severity": "error"
+    },
+    "E0301": {
+      "name": "UndeclaredRule",
+      "module": "03-rules",
+      "description": "Rule invoked prior to definition or forward declaration",
+      "severity": "error"
+    },
+    "E0303": {
+      "name": "ExpectationFailed",
+      "module": "03-rules",
+      "description": "Expectation failed in 'expect' contract clause or body statement (fatal runtime error if unhandled)",
+      "severity": "error"
+    },
+    "E0304": {
+      "name": "MultiResultInExpression",
+      "module": "03-rules",
+      "description": "Multi-result rule used inside arithmetic expression tree",
+      "severity": "error"
+    },
+    "E0305": {
+      "name": "MissingReturnTerminator",
+      "module": "03-rules",
+      "description": "Rule block does not end with aligned 'return;'",
+      "severity": "error"
+    },
+    "E0306": {
+      "name": "SignatureMismatch",
+      "module": "03-rules",
+      "description": "Forward declaration does not match rule implementation signature",
+      "severity": "error"
+    },
+    "E0307": {
+      "name": "MissingNamedArgument",
+      "module": "03-rules",
+      "description": "Call site omits a required named-parameter slot binding (no default) per Decision 6",
+      "severity": "error"
+    },
+    "E0309": {
+      "name": "UnknownNamedArgument",
+      "module": "03-rules",
+      "description": "Curried call site names an identifier not present in the rule's declared named slot",
+      "severity": "error"
+    },
+    "E0401": {
+      "name": "MainModuleRedefinition",
+      "module": "04-structure",
+      "description": "Secondary or library module contains 'rule main'",
+      "severity": "error"
+    },
+    "E0402": {
+      "name": "PrivateMemberAccess",
+      "module": "04-structure",
+      "description": "Attempt to access unexported member (missing '.' prefix)",
+      "severity": "error"
+    },
+    "E0403": {
+      "name": "ModuleNotFound",
+      "module": "04-structure",
+      "description": "Module file missing from search path",
+      "severity": "error"
+    },
+    "E0404": {
+      "name": "CyclicImportError",
+      "module": "04-structure",
+      "description": "Circular dependency detected between imported modules",
+      "severity": "error"
+    },
+    "E0405": {
+      "name": "MainImportForbidden",
+      "module": "04-structure",
+      "description": "Attempt to load main.bee via 'use' directive",
+      "severity": "error"
+    },
+    "E0406": {
+      "name": "UnsynchronizedWorker",
+      "module": "04-structure",
+      "description": "Scope exited with pending 'begin' threads prior to 'wait' barrier",
+      "severity": "error"
+    },
+    "E0501": {
+      "name": "TypeMismatch",
+      "module": "05-types",
+      "description": "Assigned value violates static type boundary",
+      "severity": "error"
+    },
+    "E0502": {
+      "name": "InvalidTypeCast",
+      "module": "05-types",
+      "description": "Incompatible explicit cast with ':>' operator",
+      "severity": "error"
+    },
+    "E0503": {
+      "name": "DomainOutOfBounds",
+      "module": "05-types",
+      "description": "Assigned literal falls outside constrained range/domain",
+      "severity": "error"
+    },
+    "E0504": {
+      "name": "RationalOverflow",
+      "module": "05-types",
+      "description": "Value exceeds maximum capacity of specified Qm.n container",
+      "severity": "error"
+    },
+    "E0505": {
+      "name": "SingleLetterTypeReserved",
+      "module": "05-types",
+      "description": "User type identifier uses reserved single uppercase Latin letter",
+      "severity": "error"
+    },
+    "E0506": {
+      "name": "PrecisionUndefined",
+      "module": "05-types",
+      "description": "Approximate comparison '≈' executed with uninitialized '$max_precision'",
+      "severity": "error"
+    },
+    "E0601": {
+      "name": "AbstractMethodUnimplemented",
+      "module": "06-objects",
+      "description": "Concrete class fails to supply body for inherited abstract method",
+      "severity": "error"
+    },
+    "E0602": {
+      "name": "PrivatePropertyAccess",
+      "module": "06-objects",
+      "description": "Attempt to access property without '.' or 'self.' export prefix",
+      "severity": "error"
+    },
+    "E0603": {
+      "name": "SuperConstructorMissing",
+      "module": "06-objects",
+      "description": "Derived constructor fails to execute super(...) call",
+      "severity": "error"
+    },
+    "E0604": {
+      "name": "CyclicInheritance",
+      "module": "06-objects",
+      "description": "Class hierarchy contains circular inheritance loop",
+      "severity": "error"
+    },
+    "E0605": {
+      "name": "UnknownMemberKey",
+      "module": "06-objects",
+      "description": "Accessing dynamic key that does not exist in object dictionary",
+      "severity": "error"
+    },
+    "E0606": {
+      "name": "InvalidTraitApplication",
+      "module": "06-objects",
+      "description": "Trait applied to incompatible target type",
+      "severity": "error"
+    },
+    "E0701": {
+      "name": "RuleCallInLambda",
+      "module": "07-functions",
+      "description": "Lambda expression attempts to invoke a stateful rule",
+      "severity": "error"
+    },
+    "E0702": {
+      "name": "SideEffectInLambda",
+      "module": "07-functions",
+      "description": "Lambda contains I/O statement or variable mutation",
+      "severity": "error"
+    },
+    "E0703": {
+      "name": "LambdaTypeMismatch",
+      "module": "07-functions",
+      "description": "Passed lambda signature does not match expected parameter L",
+      "severity": "error"
+    },
+    "E0704": {
+      "name": "UnboundLambdaVariable",
+      "module": "07-functions",
+      "description": "Lambda references outer variable that is not in scope",
+      "severity": "error"
+    },
+    "E0705": {
+      "name": "StateDeclarationInLambda",
+      "module": "07-functions",
+      "description": "Attempt to use 'new', 'let', or 'alter' inside a lambda",
+      "severity": "error"
+    },
+    "E0801": {
+      "name": "AccessAfterZap",
+      "module": "00-memory-model",
+      "description": "Use of identifier after 'zap' statement",
+      "severity": "error"
+    },
+    "E0802": {
+      "name": "RegionEscape",
+      "module": "00-memory-model",
+      "description": "Pointer escape from Region Arena to outer scope",
+      "severity": "error"
+    },
+    "E0803": {
+      "name": "ArcCycleLeak",
+      "module": "00-memory-model",
+      "description": "Unhandled cycle in ARC structure",
+      "severity": "warning"
+    },
+    "E0804": {
+      "name": "CrossThreadUnsharedMutation",
+      "module": "00-memory-model",
+      "description": "Invalid cross-thread mutation of unshared reference",
+      "severity": "error"
+    },
+    "E1001": {
+      "name": "IndexOutOfBounds",
+      "module": "10-collections",
+      "description": "Index is less than 1 or exceeds collection length $ (also covers raw negative index; use a[$-n])",
+      "severity": "error"
+    },
+    "E1002": {
+      "name": "DuplicateSetKey",
+      "module": "10-collections",
+      "description": "Attempt to insert duplicate key/element into Set/Map",
+      "severity": "error"
+    },
+    "E1003": {
+      "name": "MatrixDimensionMismatch",
+      "module": "10-collections",
+      "description": "Incompatible row/column dimension during assignment",
+      "severity": "error"
+    },
+    "E1004": {
+      "name": "TypeIncompatibleCollection",
+      "module": "10-collections",
+      "description": "Value type does not match declared collection element type",
+      "severity": "error"
+    },
+    "E1005": {
+      "name": "InvalidSetAlgebra",
+      "module": "10-collections",
+      "description": "Set operator (∩, ∪) applied to non-set types",
+      "severity": "error"
+    },
+    "E1006": {
+      "name": "ZeroBasedIndexAttempt",
+      "module": "10-collections",
+      "description": "Attempting to use index 0 in Bee 1-based indexing",
+      "severity": "error"
+    },
+    "E1101": {
+      "name": "UnboxingTypeMismatch",
+      "module": "11-processing",
+      "description": "Attempting to unbox a reference into an incompatible scalar type",
+      "severity": "error"
+    },
+    "E1102": {
+      "name": "InvalidQuantifierDomain",
+      "module": "11-processing",
+      "description": "Quantifier applied to a non-collection operand",
+      "severity": "error"
+    },
+    "E1103": {
+      "name": "PipelineStepIncompatible",
+      "module": "11-processing",
+      "description": "Output type of pipeline step does not match input of next step",
+      "severity": "error"
+    },
+    "E1104": {
+      "name": "DeconstructionMismatch",
+      "module": "11-processing",
+      "description": "Number of targets exceeds collection elements without '*' tail",
+      "severity": "error"
+    },
+    "E1105": {
+      "name": "InvalidMatrixSlice",
+      "module": "11-processing",
+      "description": "Dimension wildcard '*' used on non-matrix or invalid rank",
+      "severity": "error"
+    },
+    "E1106": {
+      "name": "NonBoxedAssignment",
+      "module": "11-processing",
+      "description": "Attempting reference assignment ':=' on unboxed value",
+      "severity": "error"
+    },
+    "E1201": {
+      "name": "UnsynchronizedWorker",
+      "module": "12-concurrency",
+      "description": "Scope exited with pending 'begin' threads prior to 'wait' barrier",
+      "severity": "error"
+    },
+    "E1202": {
+      "name": "DataRaceAttempt",
+      "module": "12-concurrency",
+      "description": "Direct cross-thread mutation without '+>' reduction channel",
+      "severity": "error"
+    },
+    "E1203": {
+      "name": "CoroutinesChannelClosed",
+      "module": "12-concurrency",
+      "description": "Attempting 'yield var << task' on a closed or finished coroutine",
+      "severity": "error"
+    },
+    "E1204": {
+      "name": "WorkerPanicReRaised",
+      "module": "12-concurrency",
+      "description": "Unhandled exception in worker thread surfaced at 'wait' barrier",
+      "severity": "error"
+    },
+    "E1205": {
+      "name": "YieldOutsideCoroutine",
+      "module": "12-concurrency",
+      "description": "Using 'yield' inside a non-coroutine static rule",
+      "severity": "error"
+    },
+    "E1301": {
+      "name": "InvalidAngleFormat",
+      "module": "13-graphics",
+      "description": "Malformed degree/minute/second angular syntax",
+      "severity": "error"
+    },
+    "E1302": {
+      "name": "LayerNotFound",
+      "module": "13-graphics",
+      "description": "Attempting to 'draw' on unattached or non-existent layer",
+      "severity": "error"
+    },
+    "E1303": {
+      "name": "NegativeRadius",
+      "module": "13-graphics",
+      "description": "Circle or polar point constructed with negative radius r",
+      "severity": "error"
+    },
+    "E1304": {
+      "name": "PolygonVertexUnderflow",
+      "module": "13-graphics",
+      "description": "Polygon constructed with fewer than 3 vertex points",
+      "severity": "error"
+    },
+    "E1305": {
+      "name": "CanvasRenderError",
+      "module": "13-graphics",
+      "description": "Target canvas hardware context unavailable",
+      "severity": "error"
+    },
+    "E1401": {
+      "name": "FileNotFound",
+      "module": "14-library",
+      "description": "Target file path missing during open operation",
+      "severity": "error"
+    },
+    "E1402": {
+      "name": "FileAccessDenied",
+      "module": "14-library",
+      "description": "Insufficient OS permissions to open or write file handle",
+      "severity": "error"
+    },
+    "E1403": {
+      "name": "UnclosedFileHandle",
+      "module": "14-library",
+      "description": "Scope exited with unclosed file handle F",
+      "severity": "error"
+    },
+    "E1404": {
+      "name": "LibraryNotFound",
+      "module": "14-library",
+      "description": "Requested $bee.sys submodule not available in runtime build",
+      "severity": "error"
+    },
+    "E1405": {
+      "name": "InvalidFileMode",
+      "module": "14-library",
+      "description": "File open mode parameter is not one of r, w, a, rw",
+      "severity": "error"
+    }
+  }
+}

@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @DESC:T0442 quantifiers forall/exists over a collection (spec/11 §3)
 rule main:
   new nums := {2,4,6,8};

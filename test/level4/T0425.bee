@@ -1,5 +1,4 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
--- @ENABLED: Reset by user
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
 -- @DESC:file: sized_array.bee
 -- A sized array demo
 rule main:

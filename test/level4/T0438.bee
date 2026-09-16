@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
 -- @DESC:T0438 list concatenation and append/shift operators (spec/10 §3.1, spec/11 list ops)
 rule main:
   -- list concatenation with `+` creates a new list

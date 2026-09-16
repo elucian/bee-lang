@@ -36,3 +36,47 @@ Located in `test/` or `scripts/`:
 
 - **`test/status/`**: Stores detailed syntax check reports and execution status summaries.
 - **`test/output/`**: Detailed Markdown execution reports for each individual test run.
+---
+
+## 4. Authoring Assert-Driven Test Cases
+
+Every `.bee` case in `test/levelX/` is a **self-verifying program**: it must
+*pass or fail on its own* after execution, never require a human (or agent) to
+eyeball printed output. Verify program truth with **`expect <cond>;`**
+assertions inside `rule main`; the evaluator fails (non-zero exit) the moment
+an `expect` is false.
+
+### Verification rules
+
+- **Assert, don't print.** Replace `print value;` with `expect value = <expected>;`
+  (or a bare boolean `expect 2 ∈ coll;`). `print` is for *debugging only* and
+  never constitutes a pass.
+- **A test "PASSES" iff `bee -e <file>` exits 0.** The harness
+  (`test/test.py`) runs each non-disabled case and records that exit status.
+  Unimplemented features must therefore **fail** the test (a genuine signal),
+  not silently print `0`.
+- **Membership** uses `expect x ∈ coll;` (arrays, lists, sets). Positive
+  membership is supported; there is no `!∈` spelling — assert positives only.
+- **Boolean literals** are `1`/`0` (integers), so `expect sub = 1;` checks a
+  true-valued result. Comparisons (`=`, `<`, `≤`, `¬`) evaluate to `1`/`0`.
+
+### Header tags (line 1, in order)
+
+| Tag | Meaning |
+| :--- | :--- |
+| `-- @DESC:<name> <purpose>` | Required. Human + harness description of the test's purpose (shown in the level `README.md` table). |
+| `-- @NEGATIVE` | The test supplies a *negative* program: it **passes** on a non-zero exit and **fails** on exit 0 (e.g. a rejected `a[-1]` index). |
+| `-- @DISABLED: <reason>` | Skipped by the harness. Inserted automatically when a case fails; the reason is the first stderr diagnostic. Powerful, honest positive signal: disabled == feature not yet implemented. |
+| `-- @FROZEN` / `@ENABLED` | Legacy lifecycle markers (spec-protocol). `@FROZEN` marks immutable ground truth; `@ENABLED` manual re-activation. |
+
+### Lifecycle & automatic testing
+
+1. Author the case with `-- @DESC:` and `expect` assertions for the intended
+   (spec) behaviour.
+2. Run `python test/solo.py <name>` to execute it and refresh the level
+   `README.md` status row.
+3. Run `python test/test.py <level>` for the full orchestrated sweep: it
+   auto-disables every failing case with a fresh `@DISABLED` reason and updates
+   the status table. A case that fails on an unimplemented feature is
+   *honestly* recorded as `FAIL`/`@DISABLED` until that feature lands — never
+   paper over it with `print`.

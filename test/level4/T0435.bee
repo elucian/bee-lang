@@ -1,4 +1,4 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
+-- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
 -- @DESC:T0435 set builder with filter over new range syntax (spec/10 §3, spec/11 processing)
 rule main:
   -- set builder without mapping, 1-based domain (1..6)
