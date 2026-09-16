@@ -113,14 +113,38 @@ fact?"* and update both sides together.
 
 ## AI Agent Protocol & Anti-Loop Rules
 
-1.  **Strict Anti-Loop Protocol:** 
-    - NEVER attempt more than one edit pass per user prompt.
-    - If a test fails after one fix attempt, halt immediately, write error analysis to `os.Stderr`, and yield back without modifying files.
-    - NEVER "guess" fixes. Analyze the implementation against the `/spec` first.
-    - Before applying an edit, explain the root cause identified by comparing the implementation against the relevant `/spec`.
-    - If you are stuck, stop. Do not loop.
+1.  **Edit Discipline (diff-first, chunked):**
+    - **Existing files → diffs.** Modify with targeted, minimal edits (`edit_file`).
+      Never rewrite a whole file for a small change; never re-read a file after
+      your own edit (the tool confirms success).
+    - **New files → chunked appends.** Create small, self-contained chunks
+      (a section, a function, a table) and append them incrementally rather than
+      emitting one enormous file. Every chunk should be independently reviewable.
+    - **Spec ↔ tutorial pairs** must ship together in the same change set (§6
+      synchronization invariant).
+    - Keep changes surgical: no unrelated refactors, no drifted formatting, no
+      logic-touching edits beyond the task.
 
-2.  **Implementation Invariants:**
+2.  **Stop-Loop Protocol:**
+    - **One fix attempt per prompt.** If a test fails after one targeted fix,
+      halt immediately: explain the failure to `os.Stderr`, yield back, and do
+      **not** modify more files.
+    - **Never guess.** Diagnose the root cause by comparing the implementation
+      against the relevant `/spec`/EBNF before editing; state that root cause.
+    - **Ask when blocked or in doubt.** If you cannot identify the root cause,
+      the fix risks a collision, or you are unsure of intent, **stop and ask the
+      user** with the specific question and options — do not re-attempt the same
+      error in a loop.
+
+3.  **Efficient Communication:**
+    - Lead each work unit with a one-to-two sentence preamble; skip narration
+      for trivial reads.
+    - Report decisions/state in concise bullets. Reference files by
+      project-relative path.
+    - When you finish, summarize: what changed, files touched, and exactly what
+      validation you ran (commands + pass/fail).
+
+4.  **Implementation Invariants:**
     - Always verify the parser and evaluator against the EBNF grammar in `spec/02-statements.md` for mutation operators.
     - Use absolute or relative paths starting from project root (`bee-lang/`) for all file operations.
     - Check the authoritative keyword list in `internal/token/token.go` before introducing or modifying language keywords.

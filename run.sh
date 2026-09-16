@@ -59,6 +59,17 @@ elif [ "$COMMAND" = "sync" ]; then
 elif [ "$COMMAND" = "smoke" ]; then
     echo "Running intelligent self-health check..."
     python test/smoke.py
+elif [ "$COMMAND" = "ed" ]; then
+    # bee-ed: native file-maintenance CLI for AI agents and humans.
+    # Build on demand from the repo root, then forwards all remaining args
+    # to the binary (which runs from the caller's current directory).
+    ROOT="$(cd "$(dirname "$0")" && pwd)"
+    CALLER="$(pwd)"
+    cd "$ROOT"
+    go build -o bin/bee-ed ./cmd/ed/ || { echo "bee-ed: build failed"; cd "$CALLER"; exit 1; }
+    cd "$CALLER"
+    # TARGET holds the bee-ed subcommand (e.g. edit); REST holds its flags.
+    "$ROOT/bin/bee-ed" $TARGET $REST
 elif [ "$COMMAND" = "commit" ]; then
     # Stage everything, synthesize a message from the diff (or use args), commit, push.
     git add -A
@@ -87,6 +98,6 @@ elif [ "$COMMAND" = "commit" ]; then
     GIT_EDITOR=true git commit -m "$MSG"
     git push
 else
-    echo "Usage: sh run.sh [build | test [level1] | check [level1] | solo <target> | reset [level1] | clean | smoke | sync [pull] [--dry-run] | commit [message]]"
+    echo "Usage: sh run.sh [build | test [level1] | check [level1] | solo <target> | reset [level1] | clean | smoke | sync [pull] [--dry-run] | ed <cmd...> | commit [message]]"
     exit 1
 fi

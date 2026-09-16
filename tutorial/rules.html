@@ -419,7 +419,7 @@ rule main:
 return;
 </code></pre>
 
-<p><b>Notes: </b>We use "set" to create foo() properties. These properties are allocated on the heap when foo() is first called. The heap is used to hold data for a long period of time. We box these variables using [] to be mutable, otherwise would be constant.>
+<p><b>Notes: </b>We use "set" to create foo() properties. These properties are allocated on the heap when foo() is first called. The heap is used to hold data for a long period of time. We box these variables using [] to be mutable, otherwise would be constant.</p>
 
 <div class="alert alert-warning"><b>Warning:</b> If you do not initialize the states before use, you may end-up with a run-time error when the state is used: "Uninitialized state x in line #."</div>
 
