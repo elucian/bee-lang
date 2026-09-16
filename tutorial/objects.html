@@ -421,18 +421,18 @@ type Node: {
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>Objects</em> module (<code>spec/06</code> §7):</p>
+<p>Diagnostic codes raised by the <em>Objects</em> module (spec/06 §7):</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0601</code></td><td><code>AbstractMethodUnimplemented</code>: Concrete class fails to supply a body for an inherited abstract method.</td><td>Implement the abstract method in the concrete class.</td></tr>
-    <tr><td><code>E0602</code></td><td><code>PrivatePropertyAccess</code>: Access to a property without the <code>.</code> or <code>self.</code> export prefix.</td><td>Export the property or access via <code>self.</code>.</td></tr>
-    <tr><td><code>E0603</code></td><td><code>SuperConstructorMissing</code>: Derived constructor fails to execute a <code>super(...)</code> call.</td><td>Chain the parent constructor.</td></tr>
-    <tr><td><code>E0604</code></td><td><code>CyclicInheritance</code>: Class hierarchy contains a circular inheritance loop.</td><td>Break the inheritance cycle.</td></tr>
-    <tr><td><code>E0605</code></td><td><code>UnknownMemberKey</code>: Accessing a dynamic key that does not exist in an object dictionary.</td><td>Guard the key with a membership check.</td></tr>
-    <tr><td><code>E0606</code></td><td><code>InvalidTraitApplication</code>: Trait applied to an incompatible target type.</td><td>Apply the trait only to compatible types.</td></tr>
+    <tr><td>E0601</td><td>AbstractMethodUnimplemented: Concrete class fails to supply a body for an inherited abstract method.</td><td>Implement the abstract method in the concrete class.</td></tr>
+    <tr><td>E0602</td><td>PrivatePropertyAccess: Access to a property without the . or self. export prefix.</td><td>Export the property or access via self..</td></tr>
+    <tr><td>E0603</td><td>SuperConstructorMissing: Derived constructor fails to execute a super(...) call.</td><td>Chain the parent constructor.</td></tr>
+    <tr><td>E0604</td><td>CyclicInheritance: Class hierarchy contains a circular inheritance loop.</td><td>Break the inheritance cycle.</td></tr>
+    <tr><td>E0605</td><td>UnknownMemberKey: Accessing a dynamic key that does not exist in an object dictionary.</td><td>Guard the key with a membership check.</td></tr>
+    <tr><td>E0606</td><td>InvalidTraitApplication: Trait applied to an incompatible target type.</td><td>Apply the trait only to compatible types.</td></tr>
   </tbody>
 </table>
 

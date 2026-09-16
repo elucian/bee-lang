@@ -148,6 +148,10 @@ fact?"* and update both sides together.
     - Always verify the parser and evaluator against the EBNF grammar in `spec/02-statements.md` for mutation operators.
     - Use absolute or relative paths starting from project root (`bee-lang/`) for all file operations.
     - Check the authoritative keyword list in `internal/token/token.go` before introducing or modifying language keywords.
+    - **Bulk/semantic refactors use `bee-ed sed`:** for regex find-and-replace across
+      many files (e.g. renaming an operator, keyword, or symbol), run
+      `sh run.sh ed sed '<re>' '<sub>' '<glob...>' --dry-run` FIRST to confirm
+      specificity, then drop `--dry-run` to rewrite atomically in parallel.
     - All language documentation and specification changes MUST occur in the `/spec` directory.
     - **TDD Integration:** Every feature or fix must maintain test parity:
         1. Audit `/spec/` and update EBNF.
@@ -156,4 +160,4 @@ fact?"* and update both sides together.
         4. Run `sh run.sh smoke` for system-wide health check before yielding.
 
 ## Final message
-When you finish send this message: "Task Completed in <runtime>"
+When you finish send this message: `"Task Completed in <runtime>"`

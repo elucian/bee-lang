@@ -15,11 +15,13 @@ USAGE:
       Apply a unified-diff <patch> to <file>. Atomic; refuses on mismatch.
   bee-ed edit <file> <old> <new> [--dry-run]
       Replace a UNIQUE occurrence of <old> with <new>. Fails on 0 or >1 matches.
-  bee-ed append <file> [chunk|@chunk.txt] [--new]
-      Append a chunk (arg, @file, or stdin) to <file>. --new requires creation.
-  bee-ed balance <file>
-      Validate HTML/Markdown tag balance (void, self-closing, comments, code).
-  bee-ed apply --help | edit --help | append --help | balance --help
+  	bee-ed append <file> [chunk|@chunk.txt] [--new]
+  	    Append a chunk (arg, @file, or stdin) to <file>. --new requires creation.
+    bee-ed balance <file>
+        Validate HTML/Markdown tag balance (void, self-closing, comments, code).
+    bee-ed sed <pattern> <replacement> <glob...> [--dry-run]
+        Regex find-and-replace across a file tree (RE2, parallel worker pool).
+    bee-ed apply --help | edit --help | append --help | balance --help | sed --help
 
 FLAGS:
   --dry-run   Show what would change without writing.
@@ -44,6 +46,8 @@ func main() {
 		err = runAppend(rest)
 	case "balance":
 		err = runBalance(rest)
+	case "sed":
+		err = runSed(rest)
 	case "--help", "-h", "help":
 		fmt.Fprint(os.Stdout, usage)
 		return

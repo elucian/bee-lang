@@ -72,67 +72,67 @@ Data types represent a <em>domains of values</em>. In other words, data type rep
 <tr>
 <td>Boolean</td>
 <td>B</td>
-<td>Logic value: 0 = false, 1 = true. Default <code>0b0</code>.</td>
+<td>Logic value: 0 = false, 1 = true. Default 0b0.</td>
 </tr>
 <tr>
 <td>Alpha</td>
 <td>A</td>
-<td>Printable 7-bit ASCII character (32..126). Default <code>'0'</code>.</td>
+<td>Printable 7-bit ASCII character (32..126). Default '0'.</td>
 </tr>
 <tr>
 <td>Rune</td>
 <td>U</td>
-<td>Full Unicode code point (4 bytes), incl. control/unprintable. Default <code>U+0000</code>.</td>
+<td>Full Unicode code point (4 bytes), incl. control/unprintable. Default U+0000.</td>
 </tr>
 <tr>
 <td>Natural</td>
 <td>N</td>
-<td>Non-negative integer ℕ₀ [0 .. 2^64-1], 64-bit unsigned. Default <code>0</code>.</td>
+<td>Non-negative integer ℕ₀ [0 .. 2^64-1], 64-bit unsigned. Default 0.</td>
 </tr>
 <tr>
 <td>Integer</td>
 <td>Z</td>
-<td>Signed integer ℤ [-2^63 .. 2^63-1], 64-bit 2's complement. Default <code>0</code>.</td>
+<td>Signed integer ℤ [-2^63 .. 2^63-1], 64-bit 2's complement. Default 0.</td>
 </tr>
 <tr>
 <td>Real</td>
 <td>R</td>
-<td>Double-precision IEEE 754 float (8 bytes). Default <code>0.0</code>.</td>
+<td>Double-precision IEEE 754 float (8 bytes). Default 0.0.</td>
 </tr>
 <tr>
 <td>Rational</td>
 <td>Q</td>
-<td>Fixed-point fraction Q(m.n), e.g. <code>1\2</code>. Default <code>0\1</code>.</td>
+<td>Fixed-point fraction Q(m.n), e.g. 1\2. Default 0\1.</td>
 </tr>
 <tr>
 <td>Complex</td>
 <td>C</td>
-<td>Pair of Reals <code>a + bj</code> (16 bytes). Default <code>0.0 + 0.0j</code>.</td>
+<td>Pair of Reals a + bj (16 bytes). Default 0.0 + 0.0j.</td>
 </tr>
 <tr>
 <td>String</td>
 <td>S</td>
-<td>Immutable UTF-8 string. Default <code>""</code>.</td>
+<td>Immutable UTF-8 string. Default "".</td>
 </tr>
 <tr>
 <td>Date</td>
 <td>D</td>
-<td>Gregorian date (day, month, year). Default <code>01/01/1970</code>.</td>
+<td>Gregorian date (day, month, year). Default 01/01/1970.</td>
 </tr>
 <tr>
 <td>Time</td>
 <td>T</td>
-<td>24-hour time (h, m, s, ms). Default <code>00:00:00</code>.</td>
+<td>24-hour time (h, m, s, ms). Default 00:00:00.</td>
 </tr>
 <tr>
 <td>Angular</td>
 <td>G</td>
-<td>Geometric angle 1°..360°, fixed 16-bit float. Default <code>0.0°</code>.</td>
+<td>Geometric angle 1°..360°, fixed 16-bit float. Default 0.0°.</td>
 </tr>
 <tr>
 <td>Lambda</td>
 <td>L</td>
-<td>Higher-order function type, a reference to a pure lambda expression. Default <code>λ</code>.</td>
+<td>Higher-order function type, a reference to a pure lambda expression. Default λ.</td>
 </tr>
 </tbody>
 </table>
@@ -235,7 +235,7 @@ Data types represent a <em>domains of values</em>. In other words, data type rep
 </ul>
 
 <h2 id="special-types">Named Complex Types</h2>
-<p>Complex types are identified by name, not by a reserved single uppercase letter. The collection types (<code>Array</code>, <code>Map</code>, <code>List</code>) are listed below; the remaining named complex types are:</p>
+<p>Complex types are identified by name, not by a reserved single uppercase letter. The collection types (Array, Map, List) are listed below; the remaining named complex types are:</p>
 
 <table class="table table-bordered table-striped">
 <thead>
@@ -312,7 +312,7 @@ new var_name, var_name ... &isin; Type_Identifier;
 
 <h2 id="range-type">Range Type</h2>
 
-<p>A <em>range</em> denotes a sub-set of consecutive numeric (or character) values between two limits. Endpoint inclusion is expressed by the range operator (Decision 13). Canonical operators are <code>..</code> (both inclusive), <code>..&lt;</code> (exclude upper), <code>&gt;..</code> (exclude lower), and <code>&gt;..&lt;</code> (exclude both). A postfix step <code>(min..max)(step)</code> produces a stepped domain.</p>
+<p>A <em>range</em> denotes a sub-set of consecutive numeric (or character) values between two limits. Endpoint inclusion is expressed by the range operator (Decision 13). Canonical operators are .. (both inclusive), ..&lt; (exclude upper), &gt;.. (exclude lower), and &gt;..&lt; (exclude both). A postfix step (min..max)(step) produces a stepped domain.</p>
 
 <h4>Syntax:</h4>
 
@@ -327,12 +327,12 @@ range ::= (min..max)(step); -- stepped domain, 1-based indexing (Decision 1)
 
 <h4>Notes:</h4>
 <ul>
-<li>Both limits are included by default (<code>..</code>)</li>
-<li>Upper / lower / both limits are excluded with <code>..&lt;</code> / <code>&gt;..</code> / <code>&gt;..&lt;</code></li>
+<li>Both limits are included by default (..)</li>
+<li>Upper / lower / both limits are excluded with ..&lt; / &gt;.. / &gt;..&lt;</li>
 <li>Range notation can be open at one end or both ends</li>
 <li>Open lower limit is symbolic (-) with no number</li>
 <li>Open upper limit is symbolic (+) with no number</li>
-<li>Legacy forms <code>.!</code>, <code>!.</code>, <code>!!</code> and the colon-step <code>(min..max : step)</code> are deprecated (Decision 13)</li>
+<li>Legacy forms .!, !., !! and the colon-step (min..max : step) are deprecated (Decision 13)</li>
 </ul>
 
 <h4>Example:</h4>
@@ -370,7 +370,7 @@ return;
 
 <h2 id="domain-type">Domain Type</h2>
 
-<p>Domain is very similar to range except a domain has a ratio — the numbers are not integers, they can be fractional or Q numbers. The step ratio is appended as a postfix extension <code>(step)</code> to the range (canonical form per Decision 13).</p>
+<p>Domain is very similar to range except a domain has a ratio — the numbers are not integers, they can be fractional or Q numbers. The step ratio is appended as a postfix extension (step) to the range (canonical form per Decision 13).</p>
 
 <pre><code class="language-bee">
 type Domain: (min..max)(step)  &lt;: Super_Type;
@@ -596,13 +596,13 @@ return;
 
 <h3 id="type-promotion">Type promotion hierarchy</h3>
 
-<p>Bee defines a canonical <em>implicit promotion</em> chain (spec/05 §4.3/§5). A value may widen toward a larger mathematical space without an explicit cast; narrowing back (e.g. Float to Rational) always requires the explicit <code>:&gt;</code> operator.</p>
+<p>Bee defines a canonical <em>implicit promotion</em> chain (spec/05 §4.3/§5). A value may widen toward a larger mathematical space without an explicit cast; narrowing back (e.g. Float to Rational) always requires the explicit :&gt; operator.</p>
 
 <pre>
 B → N → Z → R → Q → C
 </pre>
 
-<p>with two widening branches off that chain: Alpha (<code>A</code>) is promoted from Natural (<code>N</code>), and Unicode (<code>U</code>) from Integer (<code>Z</code>):</p>
+<p>with two widening branches off that chain: Alpha (A) is promoted from Natural (N), and Unicode (U) from Integer (Z):</p>
 
 <table class="table table-bordered table-striped">
 <thead>
@@ -614,44 +614,44 @@ B → N → Z → R → Q → C
 </thead>
 <tbody>
 <tr>
-<td><code>B</code> Boolean</td>
-<td><code>N</code> Natural</td>
+<td>B Boolean</td>
+<td>N Natural</td>
 <td>implicit</td>
 </tr>
 <tr>
-<td><code>N</code> Natural</td>
-<td><code>A</code> Alpha</td>
+<td>N Natural</td>
+<td>A Alpha</td>
 <td>implicit</td>
 </tr>
 <tr>
-<td><code>N</code> Natural</td>
-<td><code>Z</code> Integer</td>
+<td>N Natural</td>
+<td>Z Integer</td>
 <td>implicit</td>
 </tr>
 <tr>
-<td><code>Z</code> Integer</td>
-<td><code>U</code> Unicode</td>
+<td>Z Integer</td>
+<td>U Unicode</td>
 <td>implicit</td>
 </tr>
 <tr>
-<td><code>Z</code> Integer</td>
-<td><code>R</code> Real</td>
+<td>Z Integer</td>
+<td>R Real</td>
 <td>implicit</td>
 </tr>
 <tr>
-<td><code>R</code> Real</td>
-<td><code>Q</code> Rational</td>
-<td><strong>explicit</strong> <code>:&gt;</code> only</td>
+<td>R Real</td>
+<td>Q Rational</td>
+<td><strong>explicit</strong> :&gt; only</td>
 </tr>
 <tr>
-<td><code>Q</code> Rational</td>
-<td><code>C</code> Complex</td>
+<td>Q Rational</td>
+<td>C Complex</td>
 <td>implicit</td>
 </tr>
 </tbody>
 </table>
 
-<p>Rational numbers convert to Real <em>implicitly</em>; Real to Rational requires an explicit cast <code>:&gt; Q</code> (spec §4.3).</p>
+<p>Rational numbers convert to Real <em>implicitly</em>; Real to Rational requires an explicit cast :&gt; Q (spec §4.3).</p>
 
 <h2 id="boolean-type">Boolean type</h2>
 <p>Boolean type is Bee is native numeric of type B. However we also implement native two constants True, False that are publicly available in core library</p>
@@ -671,7 +671,7 @@ rule main:
 return;
 </code></pre>
 
-<p>You can convert B to a number, safely. You can convert a number to B explicit using cast operator: <code>number :&gt; B. </code>The number will loose all it's significance and become 0b1 or 0b0.</p> 
+<p>You can convert B to a number, safely. You can convert a number to B explicit using cast operator: number :&gt; B. The number will loose all it's significance and become 0b1 or 0b0.</p> 
 
 
 <h3 id="logic-operations">Logic operations</h3>
@@ -1164,18 +1164,18 @@ return
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>Types</em> module (<code>spec/05</code> §7):</p>
+<p>Diagnostic codes raised by the <em>Types</em> module (spec/05 §7):</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0501</code></td><td><code>TypeMismatch</code>: Assigned value violates the static type boundary.</td><td>Cast or fix the value to the declared type.</td></tr>
-    <tr><td><code>E0502</code></td><td><code>InvalidTypeCast</code>: Incompatible explicit cast with the <code>:&gt;</code> operator.</td><td>Use a lossless cast between compatible types.</td></tr>
-    <tr><td><code>E0503</code></td><td><code>DomainOutOfBounds</code>: Assigned literal falls outside a constrained range/domain.</td><td>Constrain the value to the declared domain.</td></tr>
-    <tr><td><code>E0504</code></td><td><code>RationalOverflow</code>: Value exceeds the maximum capacity of a <code>Q(m.n)</code> container.</td><td>Widen the fixed-point precision.</td></tr>
-    <tr><td><code>E0505</code></td><td><code>SingleLetterTypeReserved</code>: User type identifier uses a reserved single uppercase Latin letter.</td><td>Choose a non-reserved name or a multi-letter type.</td></tr>
-    <tr><td><code>E0506</code></td><td><code>PrecisionUndefined</code>: Approximate comparison <code>≈</code> executed with uninitialized <code>$max_precision</code>.</td><td>Initialize <code>$max_precision</code> before using <code>≈</code>.</td></tr>
+    <tr><td>E0501</td><td>TypeMismatch: Assigned value violates the static type boundary.</td><td>Cast or fix the value to the declared type.</td></tr>
+    <tr><td>E0502</td><td>InvalidTypeCast: Incompatible explicit cast with the :&gt; operator.</td><td>Use a lossless cast between compatible types.</td></tr>
+    <tr><td>E0503</td><td>DomainOutOfBounds: Assigned literal falls outside a constrained range/domain.</td><td>Constrain the value to the declared domain.</td></tr>
+    <tr><td>E0504</td><td>RationalOverflow: Value exceeds the maximum capacity of a Q(m.n) container.</td><td>Widen the fixed-point precision.</td></tr>
+    <tr><td>E0505</td><td>SingleLetterTypeReserved: User type identifier uses a reserved single uppercase Latin letter.</td><td>Choose a non-reserved name or a multi-letter type.</td></tr>
+    <tr><td>E0506</td><td>PrecisionUndefined: Approximate comparison ≈ executed with uninitialized $max_precision.</td><td>Initialize $max_precision before using ≈.</td></tr>
   </tbody>
 </table>
 

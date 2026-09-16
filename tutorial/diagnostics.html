@@ -34,9 +34,8 @@
 <div class="alert alert-secondary shadow-sm">
   Every Bee diagnostic code, grouped by module. This is a compiler-builder's single
   source of truth for the error surface: each code is first registered in
-  <code>registry/diagnostics.json</code> before it may appear in any
-  <code>/spec</code> or <code>/tutorial</code> table. The tables below are generated
-  faithfully to that registry.
+  registry/diagnostics.json before it may appear in any /spec or /tutorial table.
+  The tables below are generated faithfully to that registry.
 </div>
 
 <h2 id="legend">Severity legend</h2>
@@ -45,229 +44,229 @@
     <tr><th>Severity</th><th>Meaning</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E</code></td><td>Hard error &mdash; fatal; halts the build or traps at runtime unless handled.</td></tr>
-    <tr><td><code>W</code></td><td>Soft warning &mdash; non-fatal; logged to <code>stderr</code> and does not change the exit status.</td></tr>
+    <tr><td>E</td><td>Hard error &mdash; fatal; halts the build or traps at runtime unless handled.</td></tr>
+    <tr><td>W</td><td>Soft warning &mdash; non-fatal; logged to stderr and does not change the exit status.</td></tr>
   </tbody>
 </table>
 
 <h2 id="conventions">Coding convention</h2>
 <ul>
-  <li><b>Block rule:</b> module <code>&lt;dd&gt;</code> owns block <code>E&lt;dd&gt;xx</code>, where <code>&lt;dd&gt;</code> is the module's leading digit (<code>01</code> &rarr; <code>E01</code>, <code>02</code> &rarr; <code>E02</code>, &hellip; <code>14</code> &rarr; <code>E14</code>).</li>
-  <li><b>Memory block:</b> module <code>00</code> (memory model) has no natural <code>E00xx</code> range (<code>E00xx</code> is reserved for global/deprecation codes), so memory uses the first free block <code>E08xx</code>.</li>
+  <li><b>Block rule:</b> module &lt;dd&gt; owns block E&lt;dd&gt;xx, where &lt;dd&gt; is the module's leading digit (01 &rarr; E01, 02 &rarr; E02, &hellip; 14 &rarr; E14).</li>
+  <li><b>Memory block:</b> module 00 (memory model) has no natural E00xx range (E00xx is reserved for global/deprecation codes), so memory uses the first free block E08xx.</li>
   <li><b>Collision policy:</b> if a proposed code already exists with different semantics, the newer use is bumped to the next free slot in its module block and re-registered. A skipped slot within a block is therefore intentional.</li>
 </ul>
 
 <h2 id="global">Global codes</h2>
 <p>Cross-cutting codes shared by every module. Up-scope targets for Phase 7.2
-deprecation hardening. Source: <code>spec/00,01,02,03</code> + decisions D12/D14/D15.</p>
+deprecation hardening. Source: spec/00,01,02,03 + decisions D12/D14/D15.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0009</code></td><td><code>E</code></td><td>Upscope target for deprecated symbols/keywords once Phase 7.2 migration completes (replaces E0010/E0011 as hard).</td><td>Rewrite using the canonical ratified form.</td></tr>
-    <tr><td><code>E0010</code></td><td><code>E</code></td><td>Legacy form encountered: 'repeat' (use 'next', D15), '≠'/'=='/'!='/'&lt;&gt;' (use '¬'/'='/¬, D12), '.!'/'!.'/'!!' range glyphs (use '..&lt;'/'&gt;..'/'&gt;..&lt;', D13).</td><td>Replace with the canonical form; non-fatal until Phase 7.2 hardens to E0009.</td></tr>
-    <tr><td><code>E0011</code></td><td><code>E</code></td><td>Legacy 'using' / 'using:' postfix on io_stmt or rule call (D6).</td><td>Use curried named-argument call form (sep: ...); non-fatal until hardened to E0009.</td></tr>
-    <tr><td><code>W0901</code></td><td><code>W</code></td><td>Parser reached a token stream with no statements produced; soft warning attached to parser error surface.</td><td>Author statements that the rigid syntax gate recognizes.</td></tr>  </tbody>
+    <tr><td>E0009</td><td>E</td><td>Upscope target for deprecated symbols/keywords once Phase 7.2 migration completes (replaces E0010/E0011 as hard).</td><td>Rewrite using the canonical ratified form.</td></tr>
+    <tr><td>E0010</td><td>E</td><td>Legacy form encountered: 'repeat' (use 'next', D15), '≠'/'=='/'!='/'&lt;&gt;' (use '¬'/'='/¬, D12), '.!'/'!.'/'!!' range glyphs (use '..&lt;'/'&gt;..'/'&gt;..&lt;', D13).</td><td>Replace with the canonical form; non-fatal until Phase 7.2 hardens to E0009.</td></tr>
+    <tr><td>E0011</td><td>E</td><td>Legacy 'using' / 'using:' postfix on io_stmt or rule call (D6).</td><td>Use curried named-argument call form (sep: ...); non-fatal until hardened to E0009.</td></tr>
+    <tr><td>W0901</td><td>W</td><td>Parser reached a token stream with no statements produced; soft warning attached to parser error surface.</td><td>Author statements that the rigid syntax gate recognizes.</td></tr>  </tbody>
 </table>
 
 <h2 id="e00-memory">E00 / E08 — Memory model</h2>
-<p><em>Memory</em> module <code>spec/00-memory-model.md</code> &sect;5. Block moved from the overloaded <code>E04xx</code> range to the free <code>E08xx</code> on 2026-09-14 (spec/04 retains <code>E0401</code>&ndash;<code>E0406</code>). Related page: <code>memory.html</code>.</p>
+<p><em>Memory</em> module spec/00-memory-model.md &sect;5. Block moved from the overloaded E04xx range to the free E08xx on 2026-09-14 (spec/04 retains E0401&ndash;E0406). Related page: memory.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0801</code></td><td><code>E</code></td><td>Read or write of an identifier after a 'zap' statement in the same control-flow graph.</td><td>Compile-time fatal error with source line location; runtime 'Panic: UseAfterZap' under -d.</td></tr>
-    <tr><td><code>E0802</code></td><td><code>E</code></td><td>Pointer escapes a Region Arena into an outer scope.</td><td>Compiler automatically promotes the allocation from Region to ARC Heap.</td></tr>
-    <tr><td><code>E0803</code></td><td><code>E</code></td><td>Unhandled cycle in an ARC structure.</td><td>Static lifetime analysis, or runtime leak warning under -d.</td></tr>
-    <tr><td><code>E0804</code></td><td><code>E</code></td><td>Cross-thread mutation of an unshared reference.</td><td>Compile-time data-race restriction.</td></tr>
+    <tr><td>E0801</td><td>E</td><td>Read or write of an identifier after a 'zap' statement in the same control-flow graph.</td><td>Compile-time fatal error with source line location; runtime 'Panic: UseAfterZap' under -d.</td></tr>
+    <tr><td>E0802</td><td>E</td><td>Pointer escapes a Region Arena into an outer scope.</td><td>Compiler automatically promotes the allocation from Region to ARC Heap.</td></tr>
+    <tr><td>E0803</td><td>E</td><td>Unhandled cycle in an ARC structure.</td><td>Static lifetime analysis, or runtime leak warning under -d.</td></tr>
+    <tr><td>E0804</td><td>E</td><td>Cross-thread mutation of an unshared reference.</td><td>Compile-time data-race restriction.</td></tr>
   </tbody></table>
 
 <h2 id="e01-lexical">E01 — Lexical structure</h2>
-<p><em>Lexical structure</em> module <code>spec/01-lexical-structure.md</code> &sect;6. Related page: <code>syntax.html</code>.</p>
+<p><em>Lexical structure</em> module spec/01-lexical-structure.md &sect;6. Related page: syntax.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0101</code></td><td><code>E</code></td><td>Unexpected UTF-8 BOM marker at source start.</td><td>Strip the BOM from the source header.</td></tr>
-    <tr><td><code>E0102</code></td><td><code>E</code></td><td>Block comment ('+-') without a closing '-+'.</td><td>Ensure closing '-+' exists.</td></tr>
-    <tr><td><code>E0103</code></td><td><code>E</code></td><td>Invalid escape sequence in a string literal.</td><td>Use valid \n, \t, \uXXXX escapes.</td></tr>
-    <tr><td><code>E0104</code></td><td><code>E</code></td><td>Single-letter uppercase variable identifier.</td><td>Use a lowercase start or a multi-letter type identifier.</td></tr>
-    <tr><td><code>E0105</code></td><td><code>E</code></td><td>Unterminated string literal or markup block.</td><td>Check closing quotes or the matching markup tag.</td></tr>
+    <tr><td>E0101</td><td>E</td><td>Unexpected UTF-8 BOM marker at source start.</td><td>Strip the BOM from the source header.</td></tr>
+    <tr><td>E0102</td><td>E</td><td>Block comment ('+-') without a closing '-+'.</td><td>Ensure closing '-+' exists.</td></tr>
+    <tr><td>E0103</td><td>E</td><td>Invalid escape sequence in a string literal.</td><td>Use valid \n, \t, \uXXXX escapes.</td></tr>
+    <tr><td>E0104</td><td>E</td><td>Single-letter uppercase variable identifier.</td><td>Use a lowercase start or a multi-letter type identifier.</td></tr>
+    <tr><td>E0105</td><td>E</td><td>Unterminated string literal or markup block.</td><td>Check closing quotes or the matching markup tag.</td></tr>
   </tbody></table>
 
 <h2 id="e02-statements">E02 — Statements</h2>
-<p><em>Statements</em> module <code>spec/02-statements.md</code> &sect;7 (+ D14/D15). Related page: <code>control.html</code>.</p>
+<p><em>Statements</em> module spec/02-statements.md &sect;7 (+ D14/D15). Related page: control.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0201</code></td><td><code>E</code></td><td>Statement not aligned to the 2-space offset boundary.</td><td>Re-indent to the canonical 2-space block depth.</td></tr>
-    <tr><td><code>E0202</code></td><td><code>E</code></td><td>Mutation of a variable without a prior 'new' declaration.</td><td>Declare the variable first.</td></tr>
-    <tr><td><code>E0203</code></td><td><code>E</code></td><td>Missing 'done' or 'return' terminator.</td><td>Terminate the block with 'done [label];' (D14) or 'return;'.</td></tr>
-    <tr><td><code>E0204</code></td><td><code>E</code></td><td>Using the '::' clone operator on a non-clonable primitive.</td><td>Use ':=' or restrict '::' to boxed/object targets.</td></tr>
-    <tr><td><code>E0205</code></td><td><code>E</code></td><td>Closing label on 'done' does not match the opening header label.</td><td>Align 'done' label with the block header label.</td></tr>
-    <tr><td><code>E0206</code></td><td><code>E</code></td><td>'next', 'stop', or 'redo' used outside a loop body.</td><td>Move the jump inside a loop (D14/D15).</td></tr>
+    <tr><td>E0201</td><td>E</td><td>Statement not aligned to the 2-space offset boundary.</td><td>Re-indent to the canonical 2-space block depth.</td></tr>
+    <tr><td>E0202</td><td>E</td><td>Mutation of a variable without a prior 'new' declaration.</td><td>Declare the variable first.</td></tr>
+    <tr><td>E0203</td><td>E</td><td>Missing 'done' or 'return' terminator.</td><td>Terminate the block with 'done [label];' (D14) or 'return;'.</td></tr>
+    <tr><td>E0204</td><td>E</td><td>Using the '::' clone operator on a non-clonable primitive.</td><td>Use ':=' or restrict '::' to boxed/object targets.</td></tr>
+    <tr><td>E0205</td><td>E</td><td>Closing label on 'done' does not match the opening header label.</td><td>Align 'done' label with the block header label.</td></tr>
+    <tr><td>E0206</td><td>E</td><td>'next', 'stop', or 'redo' used outside a loop body.</td><td>Move the jump inside a loop (D14/D15).</td></tr>
   </tbody></table>
 
 <h2 id="e03-rules">E03 — Rules</h2>
-<p><em>Rules</em> module <code>spec/03-rules.md</code> &sect;7 (+ D6). Related page: <code>rules.html</code>.</p>
+<p><em>Rules</em> module spec/03-rules.md &sect;7 (+ D6). Related page: rules.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0301</code></td><td><code>E</code></td><td>Rule invoked prior to definition or forward declaration.</td><td>Define or forward-declare the rule first.</td></tr>
-    <tr><td><code>W0301</code></td><td><code>W</code></td><td>Assertion failed in an 'assert' contract clause.</td><td>Logged to stderr; review the asserted invariant.</td></tr>
-    <tr><td><code>E0303</code></td><td><code>E</code></td><td>Expectation failed in an 'expect' contract clause or body statement.</td><td>Fatal runtime error if unhandled.</td></tr>
-    <tr><td><code>E0304</code></td><td><code>E</code></td><td>Multi-result rule used inside an arithmetic expression tree.</td><td>Call the rule at statement level and deconstruct its results.</td></tr>
-    <tr><td><code>E0305</code></td><td><code>E</code></td><td>Rule block does not end with an aligned 'return;'.</td><td>Append 'return;' at the rule end.</td></tr>
-    <tr><td><code>E0306</code></td><td><code>E</code></td><td>Forward declaration does not match the rule implementation signature.</td><td>Align the two signatures.</td></tr>
-    <tr><td><code>E0307</code></td><td><code>E</code></td><td>Call site omits a required named-parameter slot binding with no default (D6).</td><td>Supply the named argument at the call site.</td></tr>
-    <tr><td><code>W0308</code></td><td><code>W</code></td><td>Curried '(...)' list appended where the rule declares no named slot (D6).</td><td>Remove the extraneous named-argument list.</td></tr>
-    <tr><td><code>E0309</code></td><td><code>E</code></td><td>Call site names an identifier not present in the rule's declared named slot (D6).</td><td>Use only declared named-slot identifiers.</td></tr>
+    <tr><td>E0301</td><td>E</td><td>Rule invoked prior to definition or forward declaration.</td><td>Define or forward-declare the rule first.</td></tr>
+    <tr><td>W0301</td><td>W</td><td>Assertion failed in an 'assert' contract clause.</td><td>Logged to stderr; review the asserted invariant.</td></tr>
+    <tr><td>E0303</td><td>E</td><td>Expectation failed in an 'expect' contract clause or body statement.</td><td>Fatal runtime error if unhandled.</td></tr>
+    <tr><td>E0304</td><td>E</td><td>Multi-result rule used inside an arithmetic expression tree.</td><td>Call the rule at statement level and deconstruct its results.</td></tr>
+    <tr><td>E0305</td><td>E</td><td>Rule block does not end with an aligned 'return;'.</td><td>Append 'return;' at the rule end.</td></tr>
+    <tr><td>E0306</td><td>E</td><td>Forward declaration does not match the rule implementation signature.</td><td>Align the two signatures.</td></tr>
+    <tr><td>E0307</td><td>E</td><td>Call site omits a required named-parameter slot binding with no default (D6).</td><td>Supply the named argument at the call site.</td></tr>
+    <tr><td>W0308</td><td>W</td><td>Curried '(...)' list appended where the rule declares no named slot (D6).</td><td>Remove the extraneous named-argument list.</td></tr>
+    <tr><td>E0309</td><td>E</td><td>Call site names an identifier not present in the rule's declared named slot (D6).</td><td>Use only declared named-slot identifiers.</td></tr>
   </tbody></table>
 
 <h2 id="e04-structure">E04 — Structure</h2>
-<p><em>Structure</em> module <code>spec/04-structure.md</code> &sect;7. Retains the canonical <code>E04xx</code> block after memory was bumped to <code>E08xx</code>. Related page: <code>structure.html</code>.</p>
+<p><em>Structure</em> module spec/04-structure.md &sect;7. Retains the canonical E04xx block after memory was bumped to E08xx. Related page: structure.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0401</code></td><td><code>E</code></td><td>Secondary or library module contains 'rule main'.</td><td>Remove 'rule main' from non-entry modules.</td></tr>
-    <tr><td><code>E0402</code></td><td><code>E</code></td><td>Access to an unexported member (missing '.' prefix).</td><td>Export the member with a '.' prefix or access within module.</td></tr>
-    <tr><td><code>E0403</code></td><td><code>E</code></td><td>Module file missing from the search path ($pro_mod, $pro_lib, $bee_lib).</td><td>Place the module in a configured search path.</td></tr>
-    <tr><td><code>E0404</code></td><td><code>E</code></td><td>Circular dependency between imported modules.</td><td>Break the import cycle.</td></tr>
-    <tr><td><code>E0405</code></td><td><code>E</code></td><td>Attempt to load 'main.bee' via a 'use' directive.</td><td>Do not import the entry module.</td></tr>
-    <tr><td><code>E0406</code></td><td><code>E</code></td><td>Scope exited with pending 'begin' threads prior to a 'wait' barrier.</td><td>Add a 'wait' barrier before scope exit. (Semantic twin of E1201 in concurrency; retained here for module-level structure completeness.)</td></tr>
+    <tr><td>E0401</td><td>E</td><td>Secondary or library module contains 'rule main'.</td><td>Remove 'rule main' from non-entry modules.</td></tr>
+    <tr><td>E0402</td><td>E</td><td>Access to an unexported member (missing '.' prefix).</td><td>Export the member with a '.' prefix or access within module.</td></tr>
+    <tr><td>E0403</td><td>E</td><td>Module file missing from the search path ($pro_mod, $pro_lib, $bee_lib).</td><td>Place the module in a configured search path.</td></tr>
+    <tr><td>E0404</td><td>E</td><td>Circular dependency between imported modules.</td><td>Break the import cycle.</td></tr>
+    <tr><td>E0405</td><td>E</td><td>Attempt to load 'main.bee' via a 'use' directive.</td><td>Do not import the entry module.</td></tr>
+    <tr><td>E0406</td><td>E</td><td>Scope exited with pending 'begin' threads prior to a 'wait' barrier.</td><td>Add a 'wait' barrier before scope exit. (Semantic twin of E1201 in concurrency; retained here for module-level structure completeness.)</td></tr>
   </tbody></table>
 
 <h2 id="e05-types">E05 — Types</h2>
-<p><em>Types</em> module <code>spec/05-types.md</code> &sect;7. Related page: <code>types.html</code>.</p>
+<p><em>Types</em> module spec/05-types.md &sect;7. Related page: types.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0501</code></td><td><code>E</code></td><td>Assigned value violates the static type boundary.</td><td>Cast or fix the value to the declared type.</td></tr>
-    <tr><td><code>E0502</code></td><td><code>E</code></td><td>Incompatible explicit cast with the ':&gt;' operator.</td><td>Use a lossless cast between compatible types.</td></tr>
-    <tr><td><code>E0503</code></td><td><code>E</code></td><td>Assigned literal falls outside a constrained range/domain.</td><td>Constrain the value to the declared domain.</td></tr>
-    <tr><td><code>E0504</code></td><td><code>E</code></td><td>Value exceeds the maximum capacity of a Q(m.n) container.</td><td>Widen the fixed-point precision.</td></tr>
-    <tr><td><code>E0505</code></td><td><code>E</code></td><td>User type identifier uses a reserved single uppercase Latin letter.</td><td>Choose a non-reserved name or a multi-letter type.</td></tr>
-    <tr><td><code>E0506</code></td><td><code>E</code></td><td>Approximate comparison '≈' executed with uninitialized $max_precision.</td><td>Initialize $max_precision before using '≈'.</td></tr>
+    <tr><td>E0501</td><td>E</td><td>Assigned value violates the static type boundary.</td><td>Cast or fix the value to the declared type.</td></tr>
+    <tr><td>E0502</td><td>E</td><td>Incompatible explicit cast with the ':&gt;' operator.</td><td>Use a lossless cast between compatible types.</td></tr>
+    <tr><td>E0503</td><td>E</td><td>Assigned literal falls outside a constrained range/domain.</td><td>Constrain the value to the declared domain.</td></tr>
+    <tr><td>E0504</td><td>E</td><td>Value exceeds the maximum capacity of a Q(m.n) container.</td><td>Widen the fixed-point precision.</td></tr>
+    <tr><td>E0505</td><td>E</td><td>User type identifier uses a reserved single uppercase Latin letter.</td><td>Choose a non-reserved name or a multi-letter type.</td></tr>
+    <tr><td>E0506</td><td>E</td><td>Approximate comparison '≈' executed with uninitialized $max_precision.</td><td>Initialize $max_precision before using '≈'.</td></tr>
   </tbody></table>
 
 <h2 id="e06-objects">E06 — Objects</h2>
-<p><em>Objects</em> module <code>spec/06-objects.md</code> &sect;7. Related page: <code>objects.html</code>.</p>
+<p><em>Objects</em> module spec/06-objects.md &sect;7. Related page: objects.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0601</code></td><td><code>E</code></td><td>Concrete class fails to supply a body for an inherited abstract method.</td><td>Implement the abstract method in the concrete class.</td></tr>
-    <tr><td><code>E0602</code></td><td><code>E</code></td><td>Access to a property without the '.' or 'self.' export prefix.</td><td>Export the property or access via 'self.'.</td></tr>
-    <tr><td><code>E0603</code></td><td><code>E</code></td><td>Derived constructor fails to execute a 'super(...)' call.</td><td>Chain the parent constructor.</td></tr>
-    <tr><td><code>E0604</code></td><td><code>E</code></td><td>Class hierarchy contains a circular inheritance loop.</td><td>Break the inheritance cycle.</td></tr>
-    <tr><td><code>E0605</code></td><td><code>E</code></td><td>Accessing a dynamic key that does not exist in an object dictionary.</td><td>Guard the key with a membership check.</td></tr>
-    <tr><td><code>E0606</code></td><td><code>E</code></td><td>Trait applied to an incompatible target type.</td><td>Apply the trait only to compatible types.</td></tr>
+    <tr><td>E0601</td><td>E</td><td>Concrete class fails to supply a body for an inherited abstract method.</td><td>Implement the abstract method in the concrete class.</td></tr>
+    <tr><td>E0602</td><td>E</td><td>Access to a property without the '.' or 'self.' export prefix.</td><td>Export the property or access via 'self.'.</td></tr>
+    <tr><td>E0603</td><td>E</td><td>Derived constructor fails to execute a 'super(...)' call.</td><td>Chain the parent constructor.</td></tr>
+    <tr><td>E0604</td><td>E</td><td>Class hierarchy contains a circular inheritance loop.</td><td>Break the inheritance cycle.</td></tr>
+    <tr><td>E0605</td><td>E</td><td>Accessing a dynamic key that does not exist in an object dictionary.</td><td>Guard the key with a membership check.</td></tr>
+    <tr><td>E0606</td><td>E</td><td>Trait applied to an incompatible target type.</td><td>Apply the trait only to compatible types.</td></tr>
   </tbody></table>
 
 <h2 id="e07-functions">E07 — Functions</h2>
-<p><em>Functions</em> module <code>spec/07-functions.md</code> &sect;7. Related page: <code>functions.html</code>.</p>
+<p><em>Functions</em> module spec/07-functions.md &sect;7. Related page: functions.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0701</code></td><td><code>E</code></td><td>Lambda attempts to invoke a stateful rule.</td><td>Use only pure lambdas inside a lambda; hoist the rule call out.</td></tr>
-    <tr><td><code>E0702</code></td><td><code>E</code></td><td>Lambda contains I/O or variable mutation.</td><td>Keep lambdas side-effect-free.</td></tr>
-    <tr><td><code>E0703</code></td><td><code>E</code></td><td>Passed lambda signature does not match the expected 'L' parameter.</td><td>Align the lambda signature with the 'L' type descriptor.</td></tr>
-    <tr><td><code>E0704</code></td><td><code>E</code></td><td>Lambda references an outer variable not in scope inside the lambda frame.</td><td>Pass needed values as lambda parameters.</td></tr>
-    <tr><td><code>E0705</code></td><td><code>E</code></td><td>Use of 'new', 'let', or 'alter' inside a lambda.</td><td>Move state declarations outside the lambda.</td></tr>
+    <tr><td>E0701</td><td>E</td><td>Lambda attempts to invoke a stateful rule.</td><td>Use only pure lambdas inside a lambda; hoist the rule call out.</td></tr>
+    <tr><td>E0702</td><td>E</td><td>Lambda contains I/O or variable mutation.</td><td>Keep lambdas side-effect-free.</td></tr>
+    <tr><td>E0703</td><td>E</td><td>Passed lambda signature does not match the expected 'L' parameter.</td><td>Align the lambda signature with the 'L' type descriptor.</td></tr>
+    <tr><td>E0704</td><td>E</td><td>Lambda references an outer variable not in scope inside the lambda frame.</td><td>Pass needed values as lambda parameters.</td></tr>
+    <tr><td>E0705</td><td>E</td><td>Use of 'new', 'let', or 'alter' inside a lambda.</td><td>Move state declarations outside the lambda.</td></tr>
   </tbody></table>
 
 <h2 id="e10-collections">E10 — Collections</h2>
-<p><em>Collections</em> module <code>spec/10-collections.md</code> &sect;5. Related page: <code>collections.html</code>.</p>
+<p><em>Collections</em> module spec/10-collections.md &sect;5. Related page: collections.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E1001</code></td><td><code>E</code></td><td>Index less than 1 or greater than the collection length '$'.</td><td>Use 1-based indexing; '$-k' for end-relative.</td></tr>
-    <tr><td><code>E1002</code></td><td><code>E</code></td><td>Insertion of a duplicate key/element into Set/Map.</td><td>Check membership or allow overwrite.</td></tr>
-    <tr><td><code>E1003</code></td><td><code>E</code></td><td>Incompatible row/column dimension during assignment.</td><td>Align matrix dimensions.</td></tr>
-    <tr><td><code>E1004</code></td><td><code>E</code></td><td>Value type does not match the declared collection element type.</td><td>Cast the value or change the element type.</td></tr>
-    <tr><td><code>E1005</code></td><td><code>E</code></td><td>Set operator ('∩','∪') applied to a non-set type.</td><td>Use set operators only on sets.</td></tr>
-    <tr><td><code>E1006</code></td><td><code>E</code></td><td>Use of index 0 (Bee is 1-based, Decision 1).</td><td>Rewrite the index starting from 1.</td></tr>
+    <tr><td>E1001</td><td>E</td><td>Index less than 1 or greater than the collection length '$'.</td><td>Use 1-based indexing; '$-k' for end-relative.</td></tr>
+    <tr><td>E1002</td><td>E</td><td>Insertion of a duplicate key/element into Set/Map.</td><td>Check membership or allow overwrite.</td></tr>
+    <tr><td>E1003</td><td>E</td><td>Incompatible row/column dimension during assignment.</td><td>Align matrix dimensions.</td></tr>
+    <tr><td>E1004</td><td>E</td><td>Value type does not match the declared collection element type.</td><td>Cast the value or change the element type.</td></tr>
+    <tr><td>E1005</td><td>E</td><td>Set operator ('∩','∪') applied to a non-set type.</td><td>Use set operators only on sets.</td></tr>
+    <tr><td>E1006</td><td>E</td><td>Use of index 0 (Bee is 1-based, Decision 1).</td><td>Rewrite the index starting from 1.</td></tr>
   </tbody></table>
 
 <h2 id="e11-processing">E11 — Processing</h2>
-<p><em>Processing</em> module <code>spec/11-processing.md</code> &sect;7. Related page: <code>processing.html</code>.</p>
+<p><em>Processing</em> module spec/11-processing.md &sect;7. Related page: processing.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E1101</code></td><td><code>E</code></td><td>Unboxing a reference into an incompatible scalar type.</td><td>Unbox with the correct 'Type(boxed)' target.</td></tr>
-    <tr><td><code>E1102</code></td><td><code>E</code></td><td>Quantifier applied to a non-collection operand.</td><td>Apply quantifiers to collections only.</td></tr>
-    <tr><td><code>E1103</code></td><td><code>E</code></td><td>Output type of a pipeline step does not match the next step's input.</td><td>Insert an adapting step into the pipeline.</td></tr>
-    <tr><td><code>E1104</code></td><td><code>E</code></td><td>Number of targets exceeds collection elements without a '*' tail.</td><td>Add a '*' tail or reduce targets.</td></tr>
-    <tr><td><code>E1105</code></td><td><code>E</code></td><td>Dimension wildcard '*' used on a non-matrix or invalid rank.</td><td>Use '*' only on valid matrix ranks.</td></tr>
-    <tr><td><code>E1106</code></td><td><code>E</code></td><td>Reference assignment ':=' on an unboxed value.</td><td>Box the value first with '[x]'.</td></tr>
+    <tr><td>E1101</td><td>E</td><td>Unboxing a reference into an incompatible scalar type.</td><td>Unbox with the correct 'Type(boxed)' target.</td></tr>
+    <tr><td>E1102</td><td>E</td><td>Quantifier applied to a non-collection operand.</td><td>Apply quantifiers to collections only.</td></tr>
+    <tr><td>E1103</td><td>E</td><td>Output type of a pipeline step does not match the next step's input.</td><td>Insert an adapting step into the pipeline.</td></tr>
+    <tr><td>E1104</td><td>E</td><td>Number of targets exceeds collection elements without a '*' tail.</td><td>Add a '*' tail or reduce targets.</td></tr>
+    <tr><td>E1105</td><td>E</td><td>Dimension wildcard '*' used on a non-matrix or invalid rank.</td><td>Use '*' only on valid matrix ranks.</td></tr>
+    <tr><td>E1106</td><td>E</td><td>Reference assignment ':=' on an unboxed value.</td><td>Box the value first with '[x]'.</td></tr>
   </tbody></table>
 
 <h2 id="e12-concurrency">E12 — Concurrency</h2>
-<p><em>Concurrency</em> module <code>spec/12-concurrency.md</code> &sect;7. Related page: <code>concurrency.html</code>.</p>
+<p><em>Concurrency</em> module spec/12-concurrency.md &sect;7. Related page: concurrency.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E1201</code></td><td><code>E</code></td><td>Scope exited with pending 'begin' threads prior to a 'wait' barrier.</td><td>Add a 'wait' barrier before scope exit. (Canonical working code; twin of E0406 in structure.)</td></tr>
-    <tr><td><code>E1202</code></td><td><code>E</code></td><td>Direct cross-thread mutation without a '+&gt;' reduction channel.</td><td>Use the '+&gt;' reduction channel.</td></tr>
-    <tr><td><code>E1203</code></td><td><code>E</code></td><td>'yield var &lt;&lt; task' on a closed or finished coroutine.</td><td>Re-open the channel or check coroutine state.</td></tr>
-    <tr><td><code>E1204</code></td><td><code>E</code></td><td>Unhandled exception in a worker thread surfaced at the 'wait' barrier.</td><td>Inspect the '$trial' handle and handle the re-raise.</td></tr>
-    <tr><td><code>E1205</code></td><td><code>E</code></td><td>'yield' used inside a non-coroutine static rule.</td><td>Declare the rule as a coroutine or remove 'yield'.</td></tr>
+    <tr><td>E1201</td><td>E</td><td>Scope exited with pending 'begin' threads prior to a 'wait' barrier.</td><td>Add a 'wait' barrier before scope exit. (Canonical working code; twin of E0406 in structure.)</td></tr>
+    <tr><td>E1202</td><td>E</td><td>Direct cross-thread mutation without a '+&gt;' reduction channel.</td><td>Use the '+&gt;' reduction channel.</td></tr>
+    <tr><td>E1203</td><td>E</td><td>'yield var &lt;&lt; task' on a closed or finished coroutine.</td><td>Re-open the channel or check coroutine state.</td></tr>
+    <tr><td>E1204</td><td>E</td><td>Unhandled exception in a worker thread surfaced at the 'wait' barrier.</td><td>Inspect the '$trial' handle and handle the re-raise.</td></tr>
+    <tr><td>E1205</td><td>E</td><td>'yield' used inside a non-coroutine static rule.</td><td>Declare the rule as a coroutine or remove 'yield'.</td></tr>
   </tbody></table>
 
 <h2 id="e13-graphics">E13 — Graphics</h2>
-<p><em>Graphics</em> module <code>spec/13-graphics.md</code> &sect;7. Related page: <code>graphics.html</code>.</p>
+<p><em>Graphics</em> module spec/13-graphics.md &sect;7. Related page: graphics.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E1301</code></td><td><code>E</code></td><td>Malformed degree/minute/second ('° ′ ″') angular syntax.</td><td>Correct the angular literal.</td></tr>
-    <tr><td><code>E1302</code></td><td><code>E</code></td><td>'draw' on an unattached or non-existent layer.</td><td>Attach the layer to the canvas first.</td></tr>
-    <tr><td><code>E1303</code></td><td><code>E</code></td><td>Circle or polar point constructed with a negative radius r.</td><td>Use a non-negative radius.</td></tr>
-    <tr><td><code>E1304</code></td><td><code>E</code></td><td>Polygon constructed with fewer than 3 vertex points.</td><td>Supply at least 3 vertices.</td></tr>
-    <tr><td><code>E1305</code></td><td><code>E</code></td><td>Target canvas hardware context unavailable.</td><td>Retry with a valid canvas context.</td></tr>
+    <tr><td>E1301</td><td>E</td><td>Malformed degree/minute/second ('° ′ ″') angular syntax.</td><td>Correct the angular literal.</td></tr>
+    <tr><td>E1302</td><td>E</td><td>'draw' on an unattached or non-existent layer.</td><td>Attach the layer to the canvas first.</td></tr>
+    <tr><td>E1303</td><td>E</td><td>Circle or polar point constructed with a negative radius r.</td><td>Use a non-negative radius.</td></tr>
+    <tr><td>E1304</td><td>E</td><td>Polygon constructed with fewer than 3 vertex points.</td><td>Supply at least 3 vertices.</td></tr>
+    <tr><td>E1305</td><td>E</td><td>Target canvas hardware context unavailable.</td><td>Retry with a valid canvas context.</td></tr>
   </tbody></table>
 
 <h2 id="e14-library">E14 — Library</h2>
-<p><em>Library</em> module <code>spec/14-library.md</code> &sect;7. Related page: <code>library.html</code>.</p>
+<p><em>Library</em> module spec/14-library.md &sect;7. Related page: library.html.</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Severity</th><th>Condition</th><th>Resolution</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E1401</code></td><td><code>E</code></td><td>Target file path missing during an open operation.</td><td>Create the file or correct the path.</td></tr>
-    <tr><td><code>E1402</code></td><td><code>E</code></td><td>Insufficient OS permissions to open or write a file handle.</td><td>Fix the permissions.</td></tr>
-    <tr><td><code>E1403</code></td><td><code>E</code></td><td>Scope exited with an unclosed 'F' file handle.</td><td>Close the handle before scope exit.</td></tr>
-    <tr><td><code>E1404</code></td><td><code>E</code></td><td>Requested '$bee.sys' submodule not available in the runtime build.</td><td>Build with the required submodule.</td></tr>
-    <tr><td><code>E1405</code></td><td><code>E</code></td><td>File open mode is not 'r', 'w', 'a', or 'rw'.</td><td>Use one of the four accepted modes.</td></tr>
+    <tr><td>E1401</td><td>E</td><td>Target file path missing during an open operation.</td><td>Create the file or correct the path.</td></tr>
+    <tr><td>E1402</td><td>E</td><td>Insufficient OS permissions to open or write a file handle.</td><td>Fix the permissions.</td></tr>
+    <tr><td>E1403</td><td>E</td><td>Scope exited with an unclosed 'F' file handle.</td><td>Close the handle before scope exit.</td></tr>
+    <tr><td>E1404</td><td>E</td><td>Requested '$bee.sys' submodule not available in the runtime build.</td><td>Build with the required submodule.</td></tr>
+    <tr><td>E1405</td><td>E</td><td>File open mode is not 'r', 'w', 'a', or 'rw'.</td><td>Use one of the four accepted modes.</td></tr>
   </tbody></table>
 
 <div class="alert alert-success shadow-sm">
   <b>Registry contract:</b> when a diagnostic is added, register it first in
-  <code>registry/diagnostics.json</code> in the free slot of its module block. If it
-  collides with an existing code, bump the newer use to the next free slot and
-  re-register &mdash; never silently reuse an occupied code with different semantics.
-  Keep this page and every per-module diagnostic table in mirror agreement.
+  registry/diagnostics.json in the free slot of its module block. If it collides
+  with an existing code, bump the newer use to the next free slot and re-register
+  &mdash; never silently reuse an occupied code with different semantics. Keep this
+  page and every per-module diagnostic table in mirror agreement.
 </div>
 </div>
       </main>

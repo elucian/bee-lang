@@ -13,48 +13,48 @@ OUT_JSON = os.path.join(ROOT, "tutorial", "data", "diagnostics.json")
 
 MODULES = [
     ("00-memory-model", "E00 / E08", "Memory model",
-     "<em>Memory</em> module <code>spec/00-memory-model.md</code> &sect;5. "
-     "Block moved from the overloaded <code>E04xx</code> range to the free "
-     "<code>E08xx</code> on 2026-09-14 (spec/04 retains "
-     "<code>E0401</code>&ndash;<code>E0406</code>). Related page: "
-     "<code>memory.html</code>."),
+     "<em>Memory</em> module spec/00-memory-model.md &sect;5. "
+     "Block moved from the overloaded E04xx range to the free "
+     "E08xx on 2026-09-14 (spec/04 retains "
+     "E0401&ndash;E0406). Related page: "
+     "memory.html."),
     ("01-lexical-structure", "E01", "Lexical structure",
-     "<em>Lexical structure</em> module <code>spec/01-lexical-structure.md</code> "
-     "&sect;6. Related page: <code>syntax.html</code>."),
+     "<em>Lexical structure</em> module spec/01-lexical-structure.md "
+     "&sect;6. Related page: syntax.html."),
     ("02-statements", "E02", "Statements",
-     "<em>Statements</em> module <code>spec/02-statements.md</code> &sect;7 "
-     "(+ D14/D15). Related page: <code>control.html</code>."),
+     "<em>Statements</em> module spec/02-statements.md &sect;7 "
+     "(+ D14/D15). Related page: control.html."),
     ("03-rules", "E03", "Rules",
-     "<em>Rules</em> module <code>spec/03-rules.md</code> &sect;7 (+ D6). "
-     "Related page: <code>rules.html</code>."),
+     "<em>Rules</em> module spec/03-rules.md &sect;7 (+ D6). "
+     "Related page: rules.html."),
     ("04-structure", "E04", "Structure",
-     "<em>Structure</em> module <code>spec/04-structure.md</code> &sect;7. "
-     "Retains the canonical <code>E04xx</code> block after memory was bumped to "
-     "<code>E08xx</code>. Related page: <code>structure.html</code>."),
+     "<em>Structure</em> module spec/04-structure.md &sect;7. "
+     "Retains the canonical E04xx block after memory was bumped to "
+     "E08xx. Related page: structure.html."),
     ("05-types", "E05", "Types",
-     "<em>Types</em> module <code>spec/05-types.md</code> &sect;7. "
-     "Related page: <code>types.html</code>."),
+     "<em>Types</em> module spec/05-types.md &sect;7. "
+     "Related page: types.html."),
     ("06-objects", "E06", "Objects",
-     "<em>Objects</em> module <code>spec/06-objects.md</code> &sect;7. "
-     "Related page: <code>objects.html</code>."),
+     "<em>Objects</em> module spec/06-objects.md &sect;7. "
+     "Related page: objects.html."),
     ("07-functions", "E07", "Functions",
-     "<em>Functions</em> module <code>spec/07-functions.md</code> &sect;7. "
-     "Related page: <code>functions.html</code>."),
+     "<em>Functions</em> module spec/07-functions.md &sect;7. "
+     "Related page: functions.html."),
     ("10-collections", "E10", "Collections",
-     "<em>Collections</em> module <code>spec/10-collections.md</code> &sect;5. "
-     "Related page: <code>collections.html</code>."),
+     "<em>Collections</em> module spec/10-collections.md &sect;5. "
+     "Related page: collections.html."),
     ("11-processing", "E11", "Processing",
-     "<em>Processing</em> module <code>spec/11-processing.md</code> &sect;7. "
-     "Related page: <code>processing.html</code>."),
+     "<em>Processing</em> module spec/11-processing.md &sect;7. "
+     "Related page: processing.html."),
     ("12-concurrency", "E12", "Concurrency",
-     "<em>Concurrency</em> module <code>spec/12-concurrency.md</code> &sect;7. "
-     "Related page: <code>concurrency.html</code>."),
+     "<em>Concurrency</em> module spec/12-concurrency.md &sect;7. "
+     "Related page: concurrency.html."),
     ("13-graphics", "E13", "Graphics",
-     "<em>Graphics</em> module <code>spec/13-graphics.md</code> &sect;7. "
-     "Related page: <code>graphics.html</code>."),
+     "<em>Graphics</em> module spec/13-graphics.md &sect;7. "
+     "Related page: graphics.html."),
     ("14-library", "E14", "Library",
-     "<em>Library</em> module <code>spec/14-library.md</code> &sect;7. "
-     "Related page: <code>library.html</code>."),
+     "<em>Library</em> module spec/14-library.md &sect;7. "
+     "Related page: library.html."),
 ]
 
 HEAD = """<!DOCTYPE html>
@@ -95,9 +95,8 @@ MID = """
 <div class="alert alert-secondary shadow-sm">
   Every Bee diagnostic code, grouped by module. This is a compiler-builder's single
   source of truth for the error surface: each code is first registered in
-  <code>registry/diagnostics.json</code> before it may appear in any
-  <code>/spec</code> or <code>/tutorial</code> table. The tables below are generated
-  faithfully to that registry.
+  registry/diagnostics.json before it may appear in any /spec or /tutorial table.
+  The tables below are generated faithfully to that registry.
 </div>
 
 <h2 id="legend">Severity legend</h2>
@@ -106,21 +105,21 @@ MID = """
     <tr><th>Severity</th><th>Meaning</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E</code></td><td>Hard error &mdash; fatal; halts the build or traps at runtime unless handled.</td></tr>
-    <tr><td><code>W</code></td><td>Soft warning &mdash; non-fatal; logged to <code>stderr</code> and does not change the exit status.</td></tr>
+    <tr><td>E</td><td>Hard error &mdash; fatal; halts the build or traps at runtime unless handled.</td></tr>
+    <tr><td>W</td><td>Soft warning &mdash; non-fatal; logged to stderr and does not change the exit status.</td></tr>
   </tbody>
 </table>
 
 <h2 id="conventions">Coding convention</h2>
 <ul>
-  <li><b>Block rule:</b> module <code>&lt;dd&gt;</code> owns block <code>E&lt;dd&gt;xx</code>, where <code>&lt;dd&gt;</code> is the module's leading digit (<code>01</code> &rarr; <code>E01</code>, <code>02</code> &rarr; <code>E02</code>, &hellip; <code>14</code> &rarr; <code>E14</code>).</li>
-  <li><b>Memory block:</b> module <code>00</code> (memory model) has no natural <code>E00xx</code> range (<code>E00xx</code> is reserved for global/deprecation codes), so memory uses the first free block <code>E08xx</code>.</li>
+  <li><b>Block rule:</b> module &lt;dd&gt; owns block E&lt;dd&gt;xx, where &lt;dd&gt; is the module's leading digit (01 &rarr; E01, 02 &rarr; E02, &hellip; 14 &rarr; E14).</li>
+  <li><b>Memory block:</b> module 00 (memory model) has no natural E00xx range (E00xx is reserved for global/deprecation codes), so memory uses the first free block E08xx.</li>
   <li><b>Collision policy:</b> if a proposed code already exists with different semantics, the newer use is bumped to the next free slot in its module block and re-registered. A skipped slot within a block is therefore intentional.</li>
 </ul>
 
 <h2 id="global">Global codes</h2>
 <p>Cross-cutting codes shared by every module. Up-scope targets for Phase 7.2
-deprecation hardening. Source: <code>spec/00,01,02,03</code> + decisions D12/D14/D15.</p>
+deprecation hardening. Source: spec/00,01,02,03 + decisions D12/D14/D15.</p>
 """
 
 TABLE_HEAD = """<table class="table table-bordered table-striped table-sm">
@@ -144,9 +143,13 @@ def build_rows(codes):
         c = codes[code]
         cond = esc(c["condition"])
         res = esc(c["resolution"])
+        # Table cells use plain (already HTML-escaped) text, never <code>/
+        # <pre>, per the tutorial markup rule: only standalone code examples
+        # use the <pre><code> pair.
         out.append(
-            "    <tr><td><code>{}</code></td><td><code>{}</code></td>"
-            "<td>{}</td><td>{}</td></tr>".format(code, c["severity"], cond, res)
+            "    <tr><td>{}</td><td>{}</td><td>{}</td><td>{}</td></tr>".format(
+                code, c["severity"], cond, res
+            )
         )
     return "\n".join(out)
 
@@ -193,10 +196,10 @@ def main():
     body += """
 <div class="alert alert-success shadow-sm">
   <b>Registry contract:</b> when a diagnostic is added, register it first in
-  <code>registry/diagnostics.json</code> in the free slot of its module block. If it
-  collides with an existing code, bump the newer use to the next free slot and
-  re-register &mdash; never silently reuse an occupied code with different semantics.
-  Keep this page and every per-module diagnostic table in mirror agreement.
+  registry/diagnostics.json in the free slot of its module block. If it collides
+  with an existing code, bump the newer use to the next free slot and re-register
+  &mdash; never silently reuse an occupied code with different semantics. Keep this
+  page and every per-module diagnostic table in mirror agreement.
 </div>
 """
 

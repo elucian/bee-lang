@@ -68,8 +68,13 @@ elif [ "$COMMAND" = "ed" ]; then
     cd "$ROOT"
     go build -o bin/bee-ed ./cmd/ed/ || { echo "bee-ed: build failed"; cd "$CALLER"; exit 1; }
     cd "$CALLER"
-    # TARGET holds the bee-ed subcommand (e.g. edit); REST holds its flags.
-    "$ROOT/bin/bee-ed" $TARGET $REST
+    # Forward the bee-ed args verbatim. The initial `shift 2` removed this
+    # script's own (COMMAND, TARGET); TARGET still holds the bee-ed subcommand
+    # and the remaining positionals are its flags. Each must stay one quoted
+    # argv element, and MSYS2 path/arg conversion must be off, otherwise the
+    # shell re-globs/converts patterns like `<code class` or `/`-containing
+    # replacements (`</code></pre>`) and corrupts them before bee-ed sees them.
+    MSYS2_ARG_CONV_EXCL='*' MSYS_NO_PATHCONV=1 "$ROOT/bin/bee-ed" "$TARGET" "$@"
 elif [ "$COMMAND" = "commit" ]; then
     # Stage everything, synthesize a message from the diff (or use args), commit, push.
     git add -A

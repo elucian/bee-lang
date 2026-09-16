@@ -43,7 +43,7 @@
 
 <h1 id="control-flow">Control Flow</h1>
 <div class="alert alert-secondary shadow-sm">
-Control flow statements are used to modify the linear program workflow. In Bee each control statement starts with a different keyword and ends with a uniform <em>done [label];</em> terminator (Decision 14). This single terminator closes every block &mdash; <code>if</code>, <code>match</code>, <code>start</code>, <code>with</code>, <code>trial</code>, <code>cycle</code>, and <code>for</code>. The closing label, when present, must match the opening header label (<code>E0205 LabelMismatch</code>). Control blocks can be anonymous or can carry an optional label.</div>
+Control flow statements are used to modify the linear program workflow. In Bee each control statement starts with a different keyword and ends with a uniform <em>done [label];</em> terminator (Decision 14). This single terminator closes every block &mdash; if, match, start, with, trial, cycle, and for. The closing label, when present, must match the opening header label (E0205 LabelMismatch). Control blocks can be anonymous or can carry an optional label.</div>
 
 <h4>Page bookmarks</h4>
 
@@ -210,7 +210,7 @@ done test;
 new value := (expr_true if condition else expr_false);
 </code></pre>
 
-<p>The parenthesised form is <b>required</b>: the test is the <code>if</code> clause between <code>(</code> and <code>else</code>, and the <code>do/else/done</code> block keywords are <b>not</b> used here &mdash; this is an expression, not a fork. <code>done;</code> is not required because the selector does not open a block.</p>
+<p>The parenthesised form is <b>required</b>: the test is the if clause between ( and else, and the do/else/done block keywords are <b>not</b> used here &mdash; this is an expression, not a fork. done; is not required because the selector does not open a block.</p>
 
 <h4>Example:</h4>
 
@@ -224,7 +224,7 @@ write ("yes" if flag = true else "no");
 
 <h2 id="cycle">Repetitive Statements</h2>
 
-<p>You can use "cycle" to start a repetitive block. The header admits two <b>independent</b> options &mdash; an optional label and an optional colon: <code>cycle [label] [:]</code>. The <b>colon is the scope marker</b>: whenever it is present, with a label (<code>cycle name:</code>) or without (<code>cycle:</code>), it opens a local-declaration prologue (stable outer scope) before the loop body. An anonymous cycle without colon (<code>cycle do</code>, <code>cycle while &hellip; do</code>) has no prologue &mdash; the body header follows immediately. The label alone creates no scope; it only names the cycle as a jump target. "do" will repeat all statements in the block until a condition ends the cycle. If no condition exists, the cycle is infinite.</p>
+<p>You can use "cycle" to start a repetitive block. The header admits two <b>independent</b> options &mdash; an optional label and an optional colon: cycle [label] [:]. The <b>colon is the scope marker</b>: whenever it is present, with a label (cycle name:) or without (cycle:), it opens a local-declaration prologue (stable outer scope) before the loop body. An anonymous cycle without colon (cycle do, cycle while &hellip; do) has no prologue &mdash; the body header follows immediately. The label alone creates no scope; it only names the cycle as a jump target. "do" will repeat all statements in the block until a condition ends the cycle. If no condition exists, the cycle is infinite.</p>
 
 <h3 id="pattern-1-infinite-cycle">Infinite cycle</h3>
 
@@ -294,7 +294,7 @@ done [label];
 
 <p><b>Note 1:&nbsp;</b>The "then" epilogue block runs one single time, that is when the loop exits normally (condition becomes false or "stop" is executed). It does NOT execute between iterations — it is a post-loop epilogue, not a per-iteration block.</p>
 
-<p><b>Note 2:&nbsp;</b>Keyword: "stop" is similar to "break" in Java and "next" similar to "continue" &mdash; it is an inline jump statement that skips to the next iteration (<code>next [label] [if condition];</code>). "redo" restarts the cycle from the beginning. These are optional interruption statements. Occasional you can use these statements to improve code performance or readability. (Legacy keyword "repeat" is a deprecated synonym of "next".)</p>
+<p><b>Note 2:&nbsp;</b>Keyword: "stop" is similar to "break" in Java and "next" similar to "continue" &mdash; it is an inline jump statement that skips to the next iteration (next [label] [if condition];). "redo" restarts the cycle from the beginning. These are optional interruption statements. Occasional you can use these statements to improve code performance or readability. (Legacy keyword "repeat" is a deprecated synonym of "next".)</p>
 
 <h3 id="label">Nested cycles</h3>
 
@@ -323,8 +323,8 @@ done 42;
 
 <ul>
 <li>Block names can be numeric and are optional; a label alone creates no scope,</li>
-<li>The colon opens the declaration scope &mdash; <code>cycle [label] [:]</code> &mdash; on labeled cycles (<code>cycle name:</code>) and on anonymous cycles alike (<code>cycle:</code>),</li>
-<li>Cycles without colon (<code>cycle do</code>, <code>cycle name do</code>) have no stable outer scope; the body header follows immediately,</li>
+<li>The colon opens the declaration scope &mdash; cycle [label] [:] &mdash; on labeled cycles (cycle name:) and on anonymous cycles alike (cycle:),</li>
+<li>Cycles without colon (cycle do, cycle name do) have no stable outer scope; the body header follows immediately,</li>
 <li>Keywords "next", "redo" and "stop" can be used with labels,</li>
 <li>Flat code is better. Do not nest too deep.</li>
 </ul>
@@ -358,7 +358,7 @@ done [label];
 <h4>Notes:</h4>
 <ul>
 <li>Cycle blocks can be named using a label identifier (optional);</li>
-<li>The colon is independent of the label: <code>cycle [label] [:]</code> &mdash; with colon, a prologue scope is created;</li>
+<li>The colon is independent of the label: cycle [label] [:] &mdash; with colon, a prologue scope is created;</li>
 <li>If used, the colon (not the label) enables creation of local variables in the prologue scope;</li>
 <li>Control variable: "i" is in local scope, even if label or colon are missing;</li>
 <li>Interruptions (next, stop) are optional and most of the time not needed;</li>
@@ -400,7 +400,7 @@ print;
 <ul>
 <li>Don''t use <em> "make"</em> inside a repetitive block,</li>
 <li>Don''t use <em> "set"</em> inside a repetitive block,</li>
-<li>Avoid <em>"new"</em> inside a repetitive block: the <code>do</code> scope is volatile, so every iteration creates fresh variables. Carried state belongs in the stable prologue scope of a colon cycle (<code>cycle:</code> or <code>cycle name:</code>), or in the enclosing scope,</li>
+<li>Avoid <em>"new"</em> inside a repetitive block: the do scope is volatile, so every iteration creates fresh variables. Carried state belongs in the stable prologue scope of a colon cycle (cycle: or cycle name:), or in the enclosing scope,</li>
 <li>Bee has a limit on how many repetitions before give up: $max_iterations.</li>
 </ul>
 
@@ -709,23 +709,23 @@ done [name];
 </ul>
 
 <h2 id="diagnostics">Statement diagnostics</h2>
-<p>Diagnostic codes raised by the statement/control-flow module (<code>spec/02</code> §7):</p>
+<p>Diagnostic codes raised by the statement/control-flow module (spec/02 §7):</p>
 <table class="table table-bordered table-striped">
 <thead>
 <tr><th>Code</th><th>Violation</th><th>Condition / resolution</th></tr>
 </thead>
 <tbody>
-<tr><td><code>E0201</code></td><td>IndentationMismatch</td><td>Statement is not aligned to a 2-space offset boundary</td></tr>
-<tr><td><code>E0202</code></td><td>UnboundVariable</td><td>Attempt to mutate a variable without a prior <code>new</code> declaration</td></tr>
-<tr><td><code>E0203</code></td><td>UnterminatedBlock</td><td>Missing <code>done</code> or <code>return</code> terminator</td></tr>
-<tr><td><code>E0204</code></td><td>InvalidCloneOperation</td><td>Using <code>::</code> clone on a non-clonable primitive</td></tr>
-<tr><td><code>E0205</code></td><td>LabelMismatch</td><td>Closing label on <code>done</code> does not match the opening header label</td></tr>
-<tr><td><code>E0206</code></td><td>InvalidJumpContext</td><td><code>next</code>, <code>stop</code>, or <code>redo</code> used outside a loop body</td></tr>
-<tr><td><code>E0010</code></td><td>DeprecatedKeyword <code>repeat</code></td><td>Legacy loop-jump keyword; canonical is <code>next</code> (Decision 15). Non-fatal; still maps to <code>NEXT</code></td></tr>
-<tr><td><code>E0011</code></td><td>DeprecatedKeyword <code>using</code></td><td>Legacy <code>using</code> postfix; canonical is curried <code>(name: …)</code> (Decision 6). Non-fatal</td></tr>
+<tr><td>E0201</td><td>IndentationMismatch</td><td>Statement is not aligned to a 2-space offset boundary</td></tr>
+<tr><td>E0202</td><td>UnboundVariable</td><td>Attempt to mutate a variable without a prior new declaration</td></tr>
+<tr><td>E0203</td><td>UnterminatedBlock</td><td>Missing done or return terminator</td></tr>
+<tr><td>E0204</td><td>InvalidCloneOperation</td><td>Using :: clone on a non-clonable primitive</td></tr>
+<tr><td>E0205</td><td>LabelMismatch</td><td>Closing label on done does not match the opening header label</td></tr>
+<tr><td>E0206</td><td>InvalidJumpContext</td><td>next, stop, or redo used outside a loop body</td></tr>
+<tr><td>E0010</td><td>DeprecatedKeyword repeat</td><td>Legacy loop-jump keyword; canonical is next (Decision 15). Non-fatal; still maps to NEXT</td></tr>
+<tr><td>E0011</td><td>DeprecatedKeyword using</td><td>Legacy using postfix; canonical is curried (name: …) (Decision 6). Non-fatal</td></tr>
 </tbody>
 </table>
-<p>The assertion/expectation and curried-argument codes raised inside a block whose canonical home is the rules module (<code>W0301</code>, <code>E0303</code>, <code>E0307</code>, <code>W0308</code>, <code>E0309</code>) are listed in the <a href="rules.html">rules</a> page.</p>
+<p>The assertion/expectation and curried-argument codes raised inside a block whose canonical home is the rules module (W0301, E0303, E0307, W0308, E0309) are listed in the <a href="rules.html">rules</a> page.</p>
 
 <!-- Footer -->
 

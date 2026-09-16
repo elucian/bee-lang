@@ -155,9 +155,11 @@ func checkBalance(content string) ([]string, []string) {
 	body = reDoctype.ReplaceAllString(body, "")
 	body = reCDATA.ReplaceAllString(body, "")
 	// Ignore tags inside raw-text/HTML-content elements (documentation data).
-	body = maskRawText(body)
-	// Detect code fences + markdown inline code to skip tags inside them.
 	body = maskCodeFences(body)
+	// Skip tags inside markdown code fences + inline code spans BEFORE scanning
+	// raw-text HTML, so documented tags inside `code` (e.g. sample <pre>) do not
+	// masquerade as real raw-text elements.
+	body = maskRawText(body)
 
 	var stack []string
 	var problems []string

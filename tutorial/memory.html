@@ -39,7 +39,7 @@
   zero-overhead in critical paths, safe parallel execution, and low latency.
   The three tiers are <b>Atomic Reference Counting (ARC)</b> for mutable heap
   data, <b>Region-Based Arenas</b> for transient rule-local values managed with
-  <code>zap</code>, and a <b>compacting generational GC</b> devoted solely to
+  zap, and a <b>compacting generational GC</b> devoted solely to
   immutable strings and ropes.
 </div>
 
@@ -61,7 +61,7 @@
       <td>2</td>
       <td>Region-Based Arena</td>
       <td>Transient rule/block locals</td>
-      <td>Single-instruction unwind on scope exit or <code>zap</code></td>
+      <td>Single-instruction unwind on scope exit or zap</td>
       <td>Immediate, scope-bounded</td>
     </tr>
     <tr>
@@ -82,8 +82,8 @@ immediate, deterministic resource cleanup when the last reference is released.</
 
 <h4 id="arc-targets">Allocation scope</h4>
 <ul>
-  <li>Objects (<code>object</code>)</li>
-  <li>Dynamic collections (<code>array</code>, <code>map</code>, <code>list</code>, <code>set</code>)</li>
+  <li>Objects (object)</li>
+  <li>Dynamic collections (array, map, list, set)</li>
   <li>System OS handles (files, channels, sockets)</li>
 </ul>
 
@@ -98,35 +98,35 @@ variable-width payload:</p>
 
 <h4 id="arc-ops">Operational semantics</h4>
 <ul>
-  <li>On assignment / copy: <code>AtomicInc(RefHeader.RefCount)</code></li>
-  <li>On scope exit / re-assignment: <code>if AtomicDec(RefHeader.RefCount) == 0 then DestructAndFree(Object)</code></li>
+  <li>On assignment / copy: AtomicInc(RefHeader.RefCount)</li>
+  <li>On scope exit / re-assignment: if AtomicDec(RefHeader.RefCount) == 0 then DestructAndFree(Object)</li>
   <li>Destructor execution is immediate and synchronous, releasing backing native
       resources (e.g. file descriptors) on the calling thread.</li>
 </ul>
 
-<h2 id="arena">Tier 2 — Region-Based Arena &amp; <code>zap</code></h2>
+<h2 id="arena">Tier 2 — Region-Based Arena &amp; zap</h2>
 
-<p>Every <code>rule</code> (and nested block frame) allocates a light, stack-bound
+<p>Every rule (and nested block frame) allocates a light, stack-bound
 Region Arena (2 KB initial chunk). Short-lived locals allocate directly from the
 active arena offset with no per-object heap allocation
-(<code>ptr = arena.top; arena.top += size</code>).</p>
+(ptr = arena.top; arena.top += size).</p>
 
 <h4 id="arena-cleanup">Region cleanup</h4>
-<p>On block termination or an iteration jump (<code>return</code>, <code>done</code>,
-<code>next</code>), the arena offset is unwound in a single instruction
-(<code>arena.top = arena.base</code>), instantly reclaiming all region-allocated memory.</p>
+<p>On block termination or an iteration jump (return, done,
+next), the arena offset is unwound in a single instruction
+(arena.top = arena.base), instantly reclaiming all region-allocated memory.</p>
 
-<h4 id="zap">Manual deallocation (<code>zap</code>)</h4>
+<h4 id="zap">Manual deallocation (zap)</h4>
 <pre><code class="language-bee">zap identifier;</code></pre>
-<p>In Hot Zones (performance-critical loops), <code>zap</code> explicitly invalidates the
+<p>In Hot Zones (performance-critical loops), zap explicitly invalidates the
 pointer and resets the target memory slot immediately.</p>
 <ul>
   <li><b>Static analysis invariant:</b> the compiler performs lifetime tracking. Reading
-      or writing an identifier after <code>zap</code> in the same control-flow graph is a
-      compile-time error <code>E0801: AccessAfterZap</code>.</li>
-  <li><b>Runtime safety guard:</b> in non-optimized debug builds (<code>-d</code>),
-      <code>zap</code> zero-fills the target pointer slot, so a later dereference raises
-      <code>Panic: UseAfterZap</code>.</li>
+      or writing an identifier after zap in the same control-flow graph is a
+      compile-time error E0801: AccessAfterZap.</li>
+  <li><b>Runtime safety guard:</b> in non-optimized debug builds (-d),
+      zap zero-fills the target pointer slot, so a later dereference raises
+      Panic: UseAfterZap.</li>
 </ul>
 
 <h2 id="gc">Tier 3 — Compacting Generational GC (immutable strings &amp; ropes)</h2>
@@ -158,21 +158,21 @@ the storage class of the target (native vs boxed vs reference).</p>
   </thead>
   <tbody>
     <tr>
-      <td><code>:=</code></td>
+      <td>:=</td>
       <td>Assign</td>
-      <td>With <code>new</code>: allocate a new storage location. With <code>let</code>:
+      <td>With new: allocate a new storage location. With let:
           update the existing value in place.</td>
     </tr>
     <tr>
-      <td><code>::</code></td>
+      <td>::</td>
       <td>Clone</td>
       <td>Boxed/objects: deep copy (structural clone) into an independent heap payload.
-          Primitive natives: equivalent to <code>:=</code>.</td>
+          Primitive natives: equivalent to :=.</td>
     </tr>
   </tbody>
 </table>
 
-<h4 id="let-value-rules">Value modification rules (<code>let</code> with <code>:=</code>)</h4>
+<h4 id="let-value-rules">Value modification rules (let with :=)</h4>
 <ul>
   <li>Native variable → value mutated <b>in place</b>.</li>
   <li>Boxed variable → the <b>boxed value</b> is changed in place.</li>
@@ -184,9 +184,9 @@ the storage class of the target (native vs boxed vs reference).</p>
 let    identifier (:= | ::) expression ;        (* mutable update *)
 alter  identifier ...                           (* modify an existing element *)</code></pre>
 <ul>
-  <li><code>new</code> — declare and allocate a fresh storage location.</li>
-  <li><code>let</code> — update the value of an existing variable.</li>
-  <li><code>alter</code> — modify an existing variable in place (explicit mutation).</li>
+  <li>new — declare and allocate a fresh storage location.</li>
+  <li>let — update the value of an existing variable.</li>
+  <li>alter — modify an existing variable in place (explicit mutation).</li>
 </ul>
 
 <h2 id="ebnf">Formal EBNF</h2>
@@ -204,14 +204,14 @@ mutability_prefix ::= "let" | "alter" ;</code></pre>
 <h2 id="concurrency">Concurrency &amp; cross-thread boundaries</h2>
 
 <ul>
-  <li><b>Thread isolation:</b> spawned tasks (<code>begin</code>) run in isolated Region Arenas.</li>
+  <li><b>Thread isolation:</b> spawned tasks (begin) run in isolated Region Arenas.</li>
   <li><b>Immutable sharing:</b> GC-managed immutable strings and ropes cross thread
       boundaries without locks or reference copies.</li>
   <li><b>Mutable ARC transfer:</b> passing a mutable ARC object to a spawned thread
-      increments its atomic reference count (<code>LOCK XADD</code>).</li>
+      increments its atomic reference count (LOCK XADD).</li>
   <li><b>Parallel error isolation:</b> an uncaught exception or panic in a worker thread
       freezes that thread's local Region Arena and captures diagnostic context into the
-      thread-local <code>$trial</code> handle, preventing corruption of parent state.</li>
+      thread-local $trial handle, preventing corruption of parent state.</li>
 </ul>
 
 <h2 id="diagnostics">Diagnostics &amp; safety protocols</h2>
@@ -221,18 +221,18 @@ mutability_prefix ::= "let" | "alter" ;</code></pre>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0801</code></td><td><code>AccessAfterZap</code>: use of identifier after <code>zap</code></td><td>Compile-time fatal error with source line location; runtime <code>Panic: UseAfterZap</code> under <code>-d</code>.</td></tr>
-    <tr><td><code>E0802</code></td><td><code>RegionEscape</code>: pointer escapes Region Arena to outer scope</td><td>Compiler automatically promotes the allocation from Region to ARC Heap.</td></tr>
-    <tr><td><code>E0803</code></td><td><code>ArcCycleLeak</code>: unhandled cycle in an ARC structure</td><td>Static lifetime analysis, or runtime leak warning under <code>-d</code>.</td></tr>
-    <tr><td><code>E0804</code></td><td><code>CrossThreadUnsharedMutation</code>: invalid cross-thread mutation of an unshared reference</td><td>Compile-time data-race restriction.</td></tr>
+    <tr><td>E0801</td><td>AccessAfterZap: use of identifier after zap</td><td>Compile-time fatal error with source line location; runtime Panic: UseAfterZap under -d.</td></tr>
+    <tr><td>E0802</td><td>RegionEscape: pointer escapes Region Arena to outer scope</td><td>Compiler automatically promotes the allocation from Region to ARC Heap.</td></tr>
+    <tr><td>E0803</td><td>ArcCycleLeak: unhandled cycle in an ARC structure</td><td>Static lifetime analysis, or runtime leak warning under -d.</td></tr>
+    <tr><td>E0804</td><td>CrossThreadUnsharedMutation: invalid cross-thread mutation of an unshared reference</td><td>Compile-time data-race restriction.</td></tr>
   </tbody>
 </table>
 
 <div class="alert alert-success shadow-sm">
   <b>Resolved (2026-09-14):</b> the memory block moved out of the overloaded
-  <code>E04xx</code> range (owned by <code>spec/04-structure.md</code>). The memory
-  model now uses the dedicated <code>E08xx</code> block (<code>E0801</code>&ndash;<code>E0804</code>),
-  and every code is registered centrally in <code>registry/diagnostics.json</code>.
+  E04xx range (owned by spec/04-structure.md). The memory
+  model now uses the dedicated E08xx block (E0801&ndash;E0804),
+  and every code is registered centrally in registry/diagnostics.json.
 </div>
 
 </div>

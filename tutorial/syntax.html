@@ -57,9 +57,9 @@
 
 <ul>
   <li>Suggestive descriptors represent language elements.</li>
-  <li><code>...</code> denotes repetitive symbol sequences.</li>
+  <li>... denotes repetitive symbol sequences.</li>
   <li>Notes and comments define semantic behavior.</li>
-  <li>Optional keywords are enclosed in square brackets <code>[]</code>.</li>
+  <li>Optional keywords are enclosed in square brackets [].</li>
 </ul>
 
 <h2 id="comments">Comments</h2>
@@ -93,10 +93,10 @@ return;
 </ul>
 
 <h4>Block comment</h4>
-<p>Bee has a specific notation for block comments not used in any other language so far. It is a multi-line comment starting with "+-" and end with "-+". The upper right corner is missing in a box comment. I guess you will notice this defect later. Nested block comments are supported (<code>+- ... +- ... -+ ... -+</code>).</p>
+<p>Bee has a specific notation for block comments not used in any other language so far. It is a multi-line comment starting with "+-" and end with "-+". The upper right corner is missing in a box comment. I guess you will notice this defect later. Nested block comments are supported (+- ... +- ... -+ ... -+).</p>
 
 <h4>Expression comment</h4>
-<p>The <code>(: ... :)</code> expression comment is delimited by <code>(:</code> and <code>:)</code> and can be placed <em>inside</em> an expression or span a region containing other comments. It supports nesting (spec/01 &sect;4).</p>
+<p>The (: ... :) expression comment is delimited by (: and :) and can be placed <em>inside</em> an expression or span a region containing other comments. It supports nesting (spec/01 &sect;4).</p>
 
 <h4>Notes:</h4>
 <ul>
@@ -507,17 +507,17 @@ Symbol (^) is exponent operator and is not required when you use superscript sim
 <table class="table table-bordered table-striped">
   <thead><tr><th>Literal</th><th>Meaning</th><th>Example</th></tr></thead>
   <tbody>
-    <tr><td><code>'...'</code></td><td>Single-quoted; standard backslash escapes; no interpolation; cannot span a physical line</td><td><code>c := 'A'</code></td></tr>
-    <tr><td><code>"..."</code></td><td>Double-quoted; interpolated with <code>#(expr)</code> placeholders</td><td><code>"val = #(a + b)"</code></td></tr>
-    <tr><td><code>`...`</code></td><td>Raw multi-line; preserves newlines and characters verbatim, no escapes</td><td><code>s := `raw span`</code></td></tr>
+    <tr><td>'...'</td><td>Single-quoted; standard backslash escapes; no interpolation; cannot span a physical line</td><td>c := 'A'</td></tr>
+    <tr><td>"..."</td><td>Double-quoted; interpolated with #(expr) placeholders</td><td>"val = #(a + b)"</td></tr>
+    <tr><td>`...`</td><td>Raw multi-line; preserves newlines and characters verbatim, no escapes</td><td>s := `raw span`</td></tr>
   </tbody>
 </table>
 
 <h4>Standard escape sequences</h4>
-<p>Escape sequences usable inside quoted strings: <code>\n</code>, <code>\r</code>, <code>\t</code>, <code>\\</code>, <code>\'</code>, <code>\"</code>, <code>\0</code>, <code>\uXXXX</code> (16-bit), <code>\UXXXXXXXX</code> (32-bit).</p>
+<p>Escape sequences usable inside quoted strings: \n, \r, \t, \\, \', \", \0, \uXXXX (16-bit), \UXXXXXXXX (32-bit).</p>
 
 <h4>Embedded markup blocks</h4>
-<p>Domain-specific text blocks are delimited by opening <code>&lt;tag&gt;</code> and closing <code>&lt;/tag&gt;</code>. Supported tags: <code>&lt;text&gt;</code>, <code>&lt;sql&gt;</code>, <code>&lt;html&gt;</code>, <code>&lt;xml&gt;</code>, <code>&lt;json&gt;</code>, <code>&lt;code&gt;</code>. The payload is preserved verbatim as a raw multi-line string.</p>
+<p>Domain-specific text blocks are delimited by opening &lt;tag&gt; and closing &lt;/tag&gt;. Supported tags: &lt;text&gt;, &lt;sql&gt;, &lt;html&gt;, &lt;xml&gt;, &lt;json&gt;, &lt;code&gt;. The payload is preserved verbatim as a raw multi-line string.</p>
 
 <h2 id="expressions">Expressions</h2>
 
@@ -731,17 +731,17 @@ panic 2; -- end program and error code = 2</code></pre>
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>lexical structure</em> module (<code>spec/01</code> §6):</p>
+<p>Diagnostic codes raised by the <em>lexical structure</em> module (spec/01 §6):</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0101</code></td><td><code>UTF8BomMarker</code>: Unexpected UTF-8 BOM marker at source start.</td><td>Strip the BOM from the source header.</td></tr>
-    <tr><td><code>E0102</code></td><td><code>UnterminatedBlockComment</code>: Block comment (<code>+-</code>) without a closing <code>-+</code>.</td><td>Ensure closing <code>-+</code> exists.</td></tr>
-    <tr><td><code>E0103</code></td><td><code>InvalidEscapeSequence</code>: Invalid escape sequence in a string literal.</td><td>Use valid <code>\n</code>, <code>\t</code>, <code>\uXXXX</code> escapes.</td></tr>
-    <tr><td><code>E0104</code></td><td><code>SingleLetterUppercaseIdentifier</code>: Single-letter uppercase variable identifier.</td><td>Use a lowercase start or a multi-letter type identifier.</td></tr>
-    <tr><td><code>E0105</code></td><td><code>UnterminatedStringOrMarkup</code>: Unterminated string literal or markup block.</td><td>Check closing quotes or the matching markup tag.</td></tr>
+    <tr><td>E0101</td><td>UTF8BomMarker: Unexpected UTF-8 BOM marker at source start.</td><td>Strip the BOM from the source header.</td></tr>
+    <tr><td>E0102</td><td>UnterminatedBlockComment: Block comment (+-) without a closing -+.</td><td>Ensure closing -+ exists.</td></tr>
+    <tr><td>E0103</td><td>InvalidEscapeSequence: Invalid escape sequence in a string literal.</td><td>Use valid \n, \t, \uXXXX escapes.</td></tr>
+    <tr><td>E0104</td><td>SingleLetterUppercaseIdentifier: Single-letter uppercase variable identifier.</td><td>Use a lowercase start or a multi-letter type identifier.</td></tr>
+    <tr><td>E0105</td><td>UnterminatedStringOrMarkup: Unterminated string literal or markup block.</td><td>Check closing quotes or the matching markup tag.</td></tr>
   </tbody>
 </table>
 

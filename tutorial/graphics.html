@@ -104,9 +104,9 @@ new β ∈ G := 0°0′0″;
 
 <h2 id="congruence" class="anchor">Geometric Congruence (&equiv;)</h2>
 
-<p>The operator <code>&equiv;</code> (U+2261) is reserved for <b>geometric congruence only</b> &mdash; it never expresses value equality (use <code>=</code>) or reference identity (use <code>is</code> / <code>@a = @b</code>). (spec/13 &sect;5.1, Decision 2.)</p>
+<p>The operator &equiv; (U+2261) is reserved for <b>geometric congruence only</b> &mdash; it never expresses value equality (use =) or reference identity (use is / @a = @b). (spec/13 &sect;5.1, Decision 2.)</p>
 
-<p>Two shapes are <code>&equiv;</code>-congruent when they share identical interior/exterior angles, the same number of sides, and the same shape class, regardless of relative scale or position:</p>
+<p>Two shapes are &equiv;-congruent when they share identical interior/exterior angles, the same number of sides, and the same shape class, regardless of relative scale or position:</p>
 
 <pre><code class="language-bee">-- congruence test for polygons
 rule main:
@@ -119,9 +119,9 @@ return;
 <p>Shapes respond to in-place affine transforms (spec/13 &sect;5):</p>
 
 <ul>
-  <li><code>shape.rotate(&theta; &isin; G)</code> &mdash; rotate around the local origin by angle &theta;.</li>
-  <li><code>shape.translate(dx, dy &isin; Q)</code> &mdash; shift the origin by (dx, dy).</li>
-  <li><code>shape.scale(factor &isin; R)</code> &mdash; scale the shape dimensions.</li>
+  <li>shape.rotate(&theta; &isin; G) &mdash; rotate around the local origin by angle &theta;.</li>
+  <li>shape.translate(dx, dy &isin; Q) &mdash; shift the origin by (dx, dy).</li>
+  <li>shape.scale(factor &isin; R) &mdash; scale the shape dimensions.</li>
 </ul>
 
 <h2 id="drawing-keywords" class="anchor">Drawing Keywords</h2>
@@ -163,17 +163,17 @@ return;
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>Graphics</em> module (<code>spec/13</code> §7):</p>
+<p>Diagnostic codes raised by the <em>Graphics</em> module (spec/13 §7):</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E1301</code></td><td><code>InvalidAngleFormat</code>: Malformed degree/minute/second (<code>° ′ ″</code>) angular syntax.</td><td>Correct the angular literal.</td></tr>
-    <tr><td><code>E1302</code></td><td><code>LayerNotFound</code>: <code>draw</code> on an unattached or non-existent layer.</td><td>Attach the layer to the canvas first.</td></tr>
-    <tr><td><code>E1303</code></td><td><code>NegativeRadius</code>: Circle or polar point constructed with a negative radius r.</td><td>Use a non-negative radius.</td></tr>
-    <tr><td><code>E1304</code></td><td><code>PolygonVertexUnderflow</code>: Polygon constructed with fewer than 3 vertex points.</td><td>Supply at least 3 vertices.</td></tr>
-    <tr><td><code>E1305</code></td><td><code>CanvasRenderError</code>: Target canvas hardware context unavailable.</td><td>Retry with a valid canvas context.</td></tr>
+    <tr><td>E1301</td><td>InvalidAngleFormat: Malformed degree/minute/second (° ′ ″) angular syntax.</td><td>Correct the angular literal.</td></tr>
+    <tr><td>E1302</td><td>LayerNotFound: draw on an unattached or non-existent layer.</td><td>Attach the layer to the canvas first.</td></tr>
+    <tr><td>E1303</td><td>NegativeRadius: Circle or polar point constructed with a negative radius r.</td><td>Use a non-negative radius.</td></tr>
+    <tr><td>E1304</td><td>PolygonVertexUnderflow: Polygon constructed with fewer than 3 vertex points.</td><td>Supply at least 3 vertices.</td></tr>
+    <tr><td>E1305</td><td>CanvasRenderError: Target canvas hardware context unavailable.</td><td>Retry with a valid canvas context.</td></tr>
   </tbody>
 </table>
 <!-- Footer -->

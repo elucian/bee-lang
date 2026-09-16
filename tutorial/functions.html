@@ -95,14 +95,14 @@ print z;
 and thread safety, lambda expressions operate under four strict invariants:</p>
 
 <ol>
-<li><b>Statelessness:</b> Lambdas CANNOT declare local state variables (<code>new</code>,
-    <code>let</code>, <code>alter</code>) or maintain persistent static memory.</li>
+<li><b>Statelessness:</b> Lambdas CANNOT declare local state variables (new,
+    let, alter) or maintain persistent static memory.</li>
 <li><b>Referential transparency:</b> Given the same arguments, a lambda MUST return the
 exact same output without relying on global mutable state or system clocks.</li>
 <li><b>Side-effect isolation:</b> Lambdas CANNOT perform I/O operations
-    (<code>print</code>, <code>write</code>, file access) or mutate outer variables.</li>
-<li><b>Rule isolation:</b> A <code>rule</code> CAN call a lambda; a lambda CANNOT call a
-    <code>rule</code>. This prevents side-effects from creeping into mathematical expressions.</li>
+    (print, write, file access) or mutate outer variables.</li>
+<li><b>Rule isolation:</b> A rule CAN call a lambda; a lambda CANNOT call a
+    rule. This prevents side-effects from creeping into mathematical expressions.</li>
 </ol>
 
 <h2 id="lambda-signature">Lambda type</h2>
@@ -166,27 +166,27 @@ automatically parallelizes collection map operations over vector domains:</p>
 
 <h2 id="method-call">Method-call dispatch (technical debt)</h2>
 
-<p class="text-secondary"><code>x.type()</code> is the canonical way to query a value's runtime
-type. Its grammar is identical to a function call, but the receiver is namespaced by <code>.</code>
+<p class="text-secondary">x.type() is the canonical way to query a value's runtime
+type. Its grammar is identical to a function call, but the receiver is namespaced by .
 and the method lookup table is derived from the type's declared method descriptors
-(see <code>spec/06-objects.md</code> §5). This entry remains in technical debt until
-the <code>MethodCallExpression</code> AST node is implemented
-(test reference <code>test/debt/T0126-method-call.bee</code>).</p>
+(see spec/06-objects.md §5). This entry remains in technical debt until
+the MethodCallExpression AST node is implemented
+(test reference test/debt/T0126-method-call.bee).</p>
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>Functions</em> module (<code>spec/07</code> §7):</p>
+<p>Diagnostic codes raised by the <em>Functions</em> module (spec/07 §7):</p>
 
 <table class="table table-bordered table-striped table-sm">
 <thead>
 <tr><th>Code</th><th>Condition</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>E0701</code></td><td><code>RuleCallInLambda</code></td><td>Lambda expression attempts to invoke a stateful <code>rule</code>.</td></tr>
-<tr><td><code>E0702</code></td><td><code>SideEffectInLambda</code></td><td>Lambda contains I/O statement or variable mutation.</td></tr>
-<tr><td><code>E0703</code></td><td><code>LambdaTypeMismatch</code></td><td>Passed lambda signature does not match expected parameter <code>L</code>.</td></tr>
-<tr><td><code>E0704</code></td><td><code>UnboundLambdaVariable</code></td><td>Lambda references outer variable that is not in scope.</td></tr>
-<tr><td><code>E0705</code></td><td><code>StateDeclarationInLambda</code></td><td>Attempt to use <code>new</code>, <code>let</code>, or <code>alter</code> inside a lambda.</td></tr>
+<tr><td>E0701</td><td>RuleCallInLambda</td><td>Lambda expression attempts to invoke a stateful rule.</td></tr>
+<tr><td>E0702</td><td>SideEffectInLambda</td><td>Lambda contains I/O statement or variable mutation.</td></tr>
+<tr><td>E0703</td><td>LambdaTypeMismatch</td><td>Passed lambda signature does not match expected parameter L.</td></tr>
+<tr><td>E0704</td><td>UnboundLambdaVariable</td><td>Lambda references outer variable that is not in scope.</td></tr>
+<tr><td>E0705</td><td>StateDeclarationInLambda</td><td>Attempt to use new, let, or alter inside a lambda.</td></tr>
 </tbody>
 </table>
 

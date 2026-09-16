@@ -140,8 +140,8 @@ return;
 <h4>Notes:</h4>
 <ul>
 <li>Multiple results are declared with name and can also have initial value;</li>
-<li>Spread a collection into arguments with <code>*</code> (e.g. <code>apply foo(*args);</code>);</li>
-<li>Collect the trailing results into a collection by prefixing the last target with <code>*</code> (e.g. <code>new head, *tail := multi();</code>);</li>
+<li>Spread a collection into arguments with * (e.g. apply foo(*args););</li>
+<li>Collect the trailing results into a collection by prefixing the last target with * (e.g. new head, *tail := multi(););</li>
 <li>You can capture results into multiple variables separated by comma;</li>
 <li>You can ignore one result using anonymous variable "_";</li>
 <li>Rules with multiple results can not be used in expressions;</li>
@@ -149,7 +149,7 @@ return;
 
 <h3 id="curried-signatures">Curried Signatures & Named Parameters</h3>
 
-<p>Since <em>Decision&nbsp;6</em> (2026-09-12), a Bee rule may declare an <strong>optional second parameter list</strong> &mdash; the <em>named-parameter slot</em> &mdash; directly after the primary parameter list. The slot accepts its arguments by name at the call site via a second parenthesised argument list. This gives rule invocations a clean, self-documenting keyword-argument style and replaces the legacy <code>using</code> postfix on <code>print</code> / <code>write</code> directives.</p>
+<p>Since <em>Decision&nbsp;6</em> (2026-09-12), a Bee rule may declare an <strong>optional second parameter list</strong> &mdash; the <em>named-parameter slot</em> &mdash; directly after the primary parameter list. The slot accepts its arguments by name at the call site via a second parenthesised argument list. This gives rule invocations a clean, self-documenting keyword-argument style and replaces the legacy using postfix on print / write directives.</p>
 
 <h4>Signature &amp; Call Pattern</h4>
 
@@ -167,13 +167,13 @@ print("a", "b")                      ();                   -- empty named slot: 
 <h4>Rules of the Named Slot</h4>
 <ul>
   <li>The two parameter lists are <strong>independent binders</strong>: positional arguments never flow into the named slot and named arguments never flow into the primary list.</li>
-  <li>Named arguments are <strong>order-independent</strong>: <code>(end: ";", sep: " | ")</code> and <code>(sep: " | ", end: ";")</code> resolve identically.</li>
-  <li>Parameters in the named slot may declare defaults using <code>:</code>; omitted names fall back to those defaults.</li>
-  <li>The named slot is <strong>reserved at compile time</strong>: a rule may declare an empty slot <code>rule ping()():</code> and still receive an empty curried call <code>ping()()</code>.</li>
-  <li>The named slot does <strong>not</strong> support the <code>*</code> variadic prefix.</li>
+  <li>Named arguments are <strong>order-independent</strong>: (end: ";", sep: " | ") and (sep: " | ", end: ";") resolve identically.</li>
+  <li>Parameters in the named slot may declare defaults using :; omitted names fall back to those defaults.</li>
+  <li>The named slot is <strong>reserved at compile time</strong>: a rule may declare an empty slot rule ping()(): and still receive an empty curried call ping()().</li>
+  <li>The named slot does <strong>not</strong> support the * variadic prefix.</li>
 </ul>
 
-<div class="alert alert-warning"><b>Deprecated:</b> the legacy <code>using</code> keyword on call sites such as <code>print(a, b) using " | ";</code> still lexes but emits the diagnostic <code>E0011 DeprecatedSymbol 'using'</code> and will harden to <code>E0009</code> in Phase&nbsp;7.2. Rewrite any author-targeted <code>using</code> form as <code>print(a, b)(sep: " | ");</code>.</div>
+<div class="alert alert-warning"><b>Deprecated:</b> the legacy using keyword on call sites such as print(a, b) using " | "; still lexes but emits the diagnostic E0011 DeprecatedSymbol 'using' and will harden to E0009 in Phase&nbsp;7.2. Rewrite any author-targeted using form as print(a, b)(sep: " | ");.</div>
 
 <h3 id="variadic-rules" class="anchor">Variadic Rule</h3>
 <p>The last parameter in a parameter list can use prefix: "*" to receive multiple values into an array of values. This is called "varargs" parameter and is very useful way to accept multiple parameters by declaring just one.</p>
@@ -230,7 +230,7 @@ return;
 
 <h2 id="rule-contracts">Rule Contracts</h2>
 
-<p>Bee rules support <b>Design by Contract</b>. A contract is a formal check embedded in the rule body that verifies the rule is called correctly and computes correct results. Two keywords are available: <code>assert</code> and <code>expect</code>.</p>
+<p>Bee rules support <b>Design by Contract</b>. A contract is a formal check embedded in the rule body that verifies the rule is called correctly and computes correct results. Two keywords are available: assert and expect.</p>
 
 <h4>Example:</h4>
 
@@ -246,16 +246,16 @@ return;
 
 <h4>Semantics:</h4>
 <ul>
-<li><b>assert</b> condition; &mdash; Precondition check. If the condition is false (<code>0</code> or <code>false</code>), a warning <code>W0301: AssertionWarning</code> is printed to standard error (<em>stderr</em>), but program execution continues uninterrupted.</li>
-<li><b>expect</b> condition; &mdash; Invariant check. If the condition is false, a runtime error <code>E0303: ExpectationFailed</code> is raised and propagated up the call stack. If it is not caught by an enclosing <b>trial</b> block, the application halts immediately with a failure exit status.</li>
+<li><b>assert</b> condition; &mdash; Precondition check. If the condition is false (0 or false), a warning W0301: AssertionWarning is printed to standard error (<em>stderr</em>), but program execution continues uninterrupted.</li>
+<li><b>expect</b> condition; &mdash; Invariant check. If the condition is false, a runtime error E0303: ExpectationFailed is raised and propagated up the call stack. If it is not caught by an enclosing <b>trial</b> block, the application halts immediately with a failure exit status.</li>
 </ul>
 
 <h4>Notes:</h4>
 <ul>
-<li>Place <code>assert</code> statements first in the rule body: they verify inputs before computation;</li>
-<li>Place <code>expect</code> statements last, before <em>return</em>: they verify results before handing them back;</li>
+<li>Place assert statements first in the rule body: they verify inputs before computation;</li>
+<li>Place expect statements last, before <em>return</em>: they verify results before handing them back;</li>
 <li>Contracts are regular statements, not part of the rule signature &mdash; you can use them in any rule, including <em>main</em>;</li>
-<li>Use the approximate comparison operator <code>&asymp;</code> instead of <code>=</code> when checking real number results;</li>
+<li>Use the approximate comparison operator &asymp; instead of = when checking real number results;</li>
 </ul>
 
 <div class="alert alert-secondary">Use <b>assert</b> for caller mistakes you can tolerate and log. Use <b>expect</b> for internal invariants that must never break &mdash; a failed <b>expect</b> means the rule itself has a defect.</div>
@@ -453,23 +453,23 @@ x = 30
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>rules</em> module (<code>spec/03</code> §7), plus the shared global deprecation codes relevant to rules:</p>
+<p>Diagnostic codes raised by the <em>rules</em> module (spec/03 §7), plus the shared global deprecation codes relevant to rules:</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0301</code></td><td><code>UndeclaredRule</code>: Rule invoked prior to definition or forward declaration.</td><td>Define or forward-declare the rule first.</td></tr>
-    <tr><td><code>W0301</code></td><td><code>AssertionWarning</code>: Assertion failed in an <code>assert</code> contract clause.</td><td>Logged to stderr; review the asserted invariant.</td></tr>
-    <tr><td><code>E0303</code></td><td><code>ExpectationFailed</code>: Expectation failed in an <code>expect</code> contract clause or body statement.</td><td>Fatal runtime error if unhandled.</td></tr>
-    <tr><td><code>E0304</code></td><td><code>MultiResultInExpression</code>: Multi-result rule used inside an arithmetic expression tree.</td><td>Call the rule at statement level and deconstruct its results.</td></tr>
-    <tr><td><code>E0305</code></td><td><code>MissingReturnTerminator</code>: Rule block does not end with an aligned <code>return;</code>.</td><td>Append <code>return;</code> at the rule end.</td></tr>
-    <tr><td><code>E0306</code></td><td><code>SignatureMismatch</code>: Forward declaration does not match the rule implementation signature.</td><td>Align the two signatures.</td></tr>
-    <tr><td><code>E0307</code></td><td><code>MissingNamedArgument</code>: Call site omits a required named-parameter slot binding with no default (D6).</td><td>Supply the named argument at the call site.</td></tr>
-    <tr><td><code>W0308</code></td><td><code>NamedSlotIgnored</code>: Curried <code>(...)</code> list appended where the rule declares no named slot (D6).</td><td>Remove the extraneous named-argument list.</td></tr>
-    <tr><td><code>E0309</code></td><td><code>UnknownNamedArgument</code>: Call site names an identifier not present in the rule's declared named slot (D6).</td><td>Use only declared named-slot identifiers.</td></tr>
-    <tr><td><code>E0010</code></td><td><code>DeprecatedKeyword</code> <code>repeat</code>: Legacy loop-jump keyword; canonical is <code>next</code> (Decision 15). Non-fatal; still maps to NEXT.</td><td>Replace with <code>next</code>.</td></tr>
-    <tr><td><code>E0011</code></td><td><code>DeprecatedKeyword</code> <code>using</code>: Legacy <code>using</code> postfix; canonical is curried <code>(name: ...)</code> (Decision 6). Non-fatal.</td><td>Use the curried named-argument form.</td></tr>
+    <tr><td>E0301</td><td>UndeclaredRule: Rule invoked prior to definition or forward declaration.</td><td>Define or forward-declare the rule first.</td></tr>
+    <tr><td>W0301</td><td>AssertionWarning: Assertion failed in an assert contract clause.</td><td>Logged to stderr; review the asserted invariant.</td></tr>
+    <tr><td>E0303</td><td>ExpectationFailed: Expectation failed in an expect contract clause or body statement.</td><td>Fatal runtime error if unhandled.</td></tr>
+    <tr><td>E0304</td><td>MultiResultInExpression: Multi-result rule used inside an arithmetic expression tree.</td><td>Call the rule at statement level and deconstruct its results.</td></tr>
+    <tr><td>E0305</td><td>MissingReturnTerminator: Rule block does not end with an aligned return;.</td><td>Append return; at the rule end.</td></tr>
+    <tr><td>E0306</td><td>SignatureMismatch: Forward declaration does not match the rule implementation signature.</td><td>Align the two signatures.</td></tr>
+    <tr><td>E0307</td><td>MissingNamedArgument: Call site omits a required named-parameter slot binding with no default (D6).</td><td>Supply the named argument at the call site.</td></tr>
+    <tr><td>W0308</td><td>NamedSlotIgnored: Curried (...) list appended where the rule declares no named slot (D6).</td><td>Remove the extraneous named-argument list.</td></tr>
+    <tr><td>E0309</td><td>UnknownNamedArgument: Call site names an identifier not present in the rule's declared named slot (D6).</td><td>Use only declared named-slot identifiers.</td></tr>
+    <tr><td>E0010</td><td>DeprecatedKeyword repeat: Legacy loop-jump keyword; canonical is next (Decision 15). Non-fatal; still maps to NEXT.</td><td>Replace with next.</td></tr>
+    <tr><td>E0011</td><td>DeprecatedKeyword using: Legacy using postfix; canonical is curried (name: ...) (Decision 6). Non-fatal.</td><td>Use the curried named-argument form.</td></tr>
   </tbody>
 </table>
 

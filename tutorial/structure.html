@@ -209,7 +209,7 @@ Bee has a modular architecture. A source file represents a module. A project can
 </ul>
 
 <h3 id="system-path-sigils">System Path Sigils (&sect;spec/04 §3)</h3>
-<p>Bee protects system paths and runtime configuration under the <code>$</code> sigil. The canonical path sigils are:</p>
+<p>Bee protects system paths and runtime configuration under the $ sigil. The canonical path sigils are:</p>
 
 <table class="table table-bordered table-sm table-striped">
   <thead><tr><th>Sigil</th><th>Default resolution</th><th>Description</th></tr></thead>
@@ -527,18 +527,18 @@ return;</code></pre>
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>Structure</em> module (<code>spec/04</code> §7):</p>
+<p>Diagnostic codes raised by the <em>Structure</em> module (spec/04 §7):</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0401</code></td><td><code>MainModuleRedefinition</code>: Secondary or library module contains <code>rule main</code>.</td><td>Remove <code>rule main</code> from non-entry modules.</td></tr>
-    <tr><td><code>E0402</code></td><td><code>PrivateMemberAccess</code>: Access to an unexported member (missing <code>.</code> prefix).</td><td>Export the member with a <code>.</code> prefix or access within module.</td></tr>
-    <tr><td><code>E0403</code></td><td><code>ModuleNotFound</code>: Module file missing from the search path (<code>$pro_mod</code>, <code>$pro_lib</code>, <code>$bee_lib</code>).</td><td>Place the module in a configured search path.</td></tr>
-    <tr><td><code>E0404</code></td><td><code>CyclicImportError</code>: Circular dependency between imported modules.</td><td>Break the import cycle.</td></tr>
-    <tr><td><code>E0405</code></td><td><code>MainImportForbidden</code>: Attempt to load <code>main.bee</code> via a <code>use</code> directive.</td><td>Do not import the entry module.</td></tr>
-    <tr><td><code>E0406</code></td><td><code>UnsynchronizedWorker</code>: Scope exited with pending <code>begin</code> threads prior to a <code>wait</code> barrier.</td><td>Add a <code>wait</code> barrier before scope exit. (Semantic twin of E1201 in concurrency.)</td></tr>
+    <tr><td>E0401</td><td>MainModuleRedefinition: Secondary or library module contains rule main.</td><td>Remove rule main from non-entry modules.</td></tr>
+    <tr><td>E0402</td><td>PrivateMemberAccess: Access to an unexported member (missing . prefix).</td><td>Export the member with a . prefix or access within module.</td></tr>
+    <tr><td>E0403</td><td>ModuleNotFound: Module file missing from the search path ($pro_mod, $pro_lib, $bee_lib).</td><td>Place the module in a configured search path.</td></tr>
+    <tr><td>E0404</td><td>CyclicImportError: Circular dependency between imported modules.</td><td>Break the import cycle.</td></tr>
+    <tr><td>E0405</td><td>MainImportForbidden: Attempt to load main.bee via a use directive.</td><td>Do not import the entry module.</td></tr>
+    <tr><td>E0406</td><td>UnsynchronizedWorker: Scope exited with pending begin threads prior to a wait barrier.</td><td>Add a wait barrier before scope exit. (Semantic twin of E1201 in concurrency.)</td></tr>
   </tbody>
 </table>
 

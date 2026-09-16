@@ -482,7 +482,7 @@
 </pre>
 
 <h2 id="deprecated-forms">Deprecated operator forms</h2>
-<p>Legacy spellings still lex but emit a non-fatal <code>E0010 DeprecatedSymbol</code>
+<p>Legacy spellings still lex but emit a non-fatal E0010 DeprecatedSymbol
 warning and map to their canonical equivalents (Decisions 12 &amp; 13):</p>
 <table class="table table-bordered table-striped">
 <thead>
@@ -752,19 +752,19 @@ warning and map to their canonical equivalents (Decisions 12 &amp; 13):</p>
 <!-- work in progress-->
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>operators</em> module (<code>spec/01</code> §6):</p>
+<p>Diagnostic codes raised by the <em>operators</em> module (spec/01 §6):</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E0101</code></td><td><code>UTF8BomMarker</code>: Unexpected UTF-8 BOM marker at source start.</td><td>Strip the BOM from the source header.</td></tr>
-    <tr><td><code>E0102</code></td><td><code>UnterminatedBlockComment</code>: Block comment (<code>+-</code>) without a closing <code>-+</code>.</td><td>Ensure closing <code>-+</code> exists.</td></tr>
-    <tr><td><code>E0103</code></td><td><code>InvalidEscapeSequence</code>: Invalid escape sequence in a string literal.</td><td>Use valid <code>\n</code>, <code>\t</code>, <code>\uXXXX</code> escapes.</td></tr>
-    <tr><td><code>E0104</code></td><td><code>SingleLetterUppercaseIdentifier</code>: Single-letter uppercase variable identifier.</td><td>Use a lowercase start or a multi-letter type identifier.</td></tr>
-    <tr><td><code>E0105</code></td><td><code>UnterminatedStringOrMarkup</code>: Unterminated string literal or markup block.</td><td>Check closing quotes or the matching markup tag.</td></tr>
-    <tr><td><code>E0010</code></td><td><code>DeprecatedSymbol</code>/<code>DeprecatedKeyword</code>: Legacy form encountered: <code>repeat</code> (use <code>next</code>, D15); <code>&ne;</code>/<code>==</code>/<code>!=</code>/<code>&lt;&gt;</code> (use <code>&not;</code>/<code>=</code>/<code>&not;</code>, D12); <code>.!</code>/<code>!.</code>/<code>!!</code> range glyphs (use <code>..&lt;</code>/<code>&gt;..</code>/<code>&gt;..&lt;</code>, D13).</td><td>Replace with the canonical form; non-fatal until Phase 7.2 hardens to E0009.</td></tr>
-    <tr><td><code>E0011</code></td><td><code>DeprecatedSymbol</code> 'using': Legacy <code>using</code>/<code>using:</code> postfix on io_stmt or rule call (D6).</td><td>Use curried named-argument call form <code>(sep: ...)</code>; non-fatal until hardened to E0009.</td></tr>
+    <tr><td>E0101</td><td>UTF8BomMarker: Unexpected UTF-8 BOM marker at source start.</td><td>Strip the BOM from the source header.</td></tr>
+    <tr><td>E0102</td><td>UnterminatedBlockComment: Block comment (+-) without a closing -+.</td><td>Ensure closing -+ exists.</td></tr>
+    <tr><td>E0103</td><td>InvalidEscapeSequence: Invalid escape sequence in a string literal.</td><td>Use valid \n, \t, \uXXXX escapes.</td></tr>
+    <tr><td>E0104</td><td>SingleLetterUppercaseIdentifier: Single-letter uppercase variable identifier.</td><td>Use a lowercase start or a multi-letter type identifier.</td></tr>
+    <tr><td>E0105</td><td>UnterminatedStringOrMarkup: Unterminated string literal or markup block.</td><td>Check closing quotes or the matching markup tag.</td></tr>
+    <tr><td>E0010</td><td>DeprecatedSymbol/DeprecatedKeyword: Legacy form encountered: repeat (use next, D15); &ne;/==/!=/&lt;&gt; (use &not;/=/&not;, D12); .!/!./!! range glyphs (use ..&lt;/&gt;../&gt;..&lt;, D13).</td><td>Replace with the canonical form; non-fatal until Phase 7.2 hardens to E0009.</td></tr>
+    <tr><td>E0011</td><td>DeprecatedSymbol 'using': Legacy using/using: postfix on io_stmt or rule call (D6).</td><td>Use curried named-argument call form (sep: ...); non-fatal until hardened to E0009.</td></tr>
   </tbody>
 </table>
 

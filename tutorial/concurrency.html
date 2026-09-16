@@ -55,7 +55,7 @@ In Bee we have special statements to start a process asynchronously and run in p
 <thead>
 <tr><th>keyword</th><th>description</th></tr></thead><tbody>
 <tr><td>begin  </td><td>call a rule asynchronously and create a new thread in a private Region Arena</td></tr>
-<tr><td>wait   </td><td>synchronization barrier &mdash; block the parent thread until all active <code>begin</code> workers complete</td></tr>
+<tr><td>wait   </td><td>synchronization barrier &mdash; block the parent thread until all active begin workers complete</td></tr>
 <tr><td>yield  </td><td>suspend a coroutine task and return control (and optionally a value) to the consumer</td></tr>
 </tbody>
 </table>
@@ -199,23 +199,23 @@ return
 
 <h2 id="worker-exceptions">Worker Exception Isolation</h2>
 
-<p>An uncaught exception or panic inside a worker thread does not corrupt the parent or sibling Region Arenas (spec/12 §5). The failure is captured in the worker's thread-local <code>$trial</code> handle.</p>
+<p>An uncaught exception or panic inside a worker thread does not corrupt the parent or sibling Region Arenas (spec/12 §5). The failure is captured in the worker's thread-local $trial handle.</p>
 
-<p>When the parent executes <code>wait;</code>, any captured worker exceptions are aggregated and <b>re-raised at the barrier call site</b>, so a surrounding <code>trial</code> block can handle them. This surfaces as <code>E1204 WorkerPanicReRaised</code>.</p>
+<p>When the parent executes wait;, any captured worker exceptions are aggregated and <b>re-raised at the barrier call site</b>, so a surrounding trial block can handle them. This surfaces as E1204 WorkerPanicReRaised.</p>
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>Concurrency</em> module (<code>spec/12</code> §7):</p>
+<p>Diagnostic codes raised by the <em>Concurrency</em> module (spec/12 §7):</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E1201</code></td><td><code>UnsynchronizedWorker</code>: Scope exited with pending <code>begin</code> threads prior to a <code>wait</code> barrier.</td><td>Add a <code>wait</code> barrier before scope exit. (Canonical working code; twin of E0406 in structure.)</td></tr>
-    <tr><td><code>E1202</code></td><td><code>DataRaceAttempt</code>: Direct cross-thread mutation without a <code>+&gt;</code> reduction channel.</td><td>Use the <code>+&gt;</code> reduction channel.</td></tr>
-    <tr><td><code>E1203</code></td><td><code>CoroutinesChannelClosed</code>: <code>yield var &lt;&lt; task</code> on a closed or finished coroutine.</td><td>Re-open the channel or check coroutine state.</td></tr>
-    <tr><td><code>E1204</code></td><td><code>WorkerPanicReRaised</code>: Unhandled exception in a worker thread surfaced at the <code>wait</code> barrier.</td><td>Inspect the <code>$trial</code> handle and handle the re-raise.</td></tr>
-    <tr><td><code>E1205</code></td><td><code>YieldOutsideCoroutine</code>: <code>yield</code> used inside a non-coroutine static rule.</td><td>Declare the rule as a coroutine or remove <code>yield</code>.</td></tr>
+    <tr><td>E1201</td><td>UnsynchronizedWorker: Scope exited with pending begin threads prior to a wait barrier.</td><td>Add a wait barrier before scope exit. (Canonical working code; twin of E0406 in structure.)</td></tr>
+    <tr><td>E1202</td><td>DataRaceAttempt: Direct cross-thread mutation without a +&gt; reduction channel.</td><td>Use the +&gt; reduction channel.</td></tr>
+    <tr><td>E1203</td><td>CoroutinesChannelClosed: yield var &lt;&lt; task on a closed or finished coroutine.</td><td>Re-open the channel or check coroutine state.</td></tr>
+    <tr><td>E1204</td><td>WorkerPanicReRaised: Unhandled exception in a worker thread surfaced at the wait barrier.</td><td>Inspect the $trial handle and handle the re-raise.</td></tr>
+    <tr><td>E1205</td><td>YieldOutsideCoroutine: yield used inside a non-coroutine static rule.</td><td>Declare the rule as a coroutine or remove yield.</td></tr>
   </tbody>
 </table>
 <!-- Footer -->

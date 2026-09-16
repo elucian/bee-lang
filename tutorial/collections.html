@@ -95,10 +95,10 @@ return;
 
 <p>Bee predefined collections are implemented in the language kernel. While these collections cover most use-cases, they also represent the base for inheritance. Core collections are so called "battery included" features.</p>
 
-<h3 id="indexing\-anchor">1-Based Indexing &amp; the <code>$</code> End Anchor</h3>
-<p>Every indexed collection (List, Array, Matrix, String, Slice) is <b>1-based</b>: the first element is <code>[1]</code> and indices run from 1 to the collection length. Index <code>0</code> is not a valid element position — it raises <code>E1006 ZeroBasedIndexAttempt</code>.</p>
+<h3 id="indexing\-anchor">1-Based Indexing &amp; the $ End Anchor</h3>
+<p>Every indexed collection (List, Array, Matrix, String, Slice) is <b>1-based</b>: the first element is [1] and indices run from 1 to the collection length. Index 0 is not a valid element position — it raises E1006 ZeroBasedIndexAttempt.</p>
 
-<p>The <code>$</code> token is the dynamic <b>end anchor</b>: it yields the collection length (<code>$[L] = |L|</code>), so it addresses the last element. Combined with arithmetic it becomes position-relative to the end:</p>
+<p>The $ token is the dynamic <b>end anchor</b>: it yields the collection length ($[L] = |L|), so it addresses the last element. Combined with arithmetic it becomes position-relative to the end:</p>
 
 <pre><code class="language-bee">new list := (10, 20, 30, 40);
 
@@ -107,7 +107,7 @@ print list[$];     -- Last element: 40
 print list[$ - 1]; -- Second-to-last element: 30 (relative to the end)
 </code></pre>
 
-<p><code>$</code> also composes with the range operators to slice from a dynamic endpoint:</p>
+<p>$ also composes with the range operators to slice from a dynamic endpoint:</p>
 
 <pre><code class="language-bee">new slice := list[2..$ - 1]; -- from index 2 to second-to-last item
 </code></pre>
@@ -115,7 +115,7 @@ print list[$ - 1]; -- Second-to-last element: 30 (relative to the end)
 <h3 id="ordinal">Ordinal Type</h3>
 <p>Ordinal is an ordered small set of identifiers. Each identifier represents an integer value starting from a specified number with interval of one. It can be used for ranking, selection or codification.</p>
 
-<p> The set of elements is enclosed in curly brackets, separated by comma. Usually the first element has value 1, but this can be specified using (n) in front of the curly bracket:<code> (n){elements}.</code></p>
+<p> The set of elements is enclosed in curly brackets, separated by comma. Usually the first element has value 1, but this can be specified using (n) in front of the curly bracket: (n){elements}.</p>
 
 <h4>Declaration Pattern:</h4>
 <pre><code class="language-bee">type OrdinalName: (1){name1, name2, name3} &lt;: Ordinal;
@@ -371,7 +371,7 @@ return;
 </code></pre>
 
 <h4>Output:</h4>
-<pre class="language-output"><code>
+<pre class="language-output">
 ⎡ 1  2  3 ⎤
 ⎢ 4  5  6 ⎥
 ⎣ 7  8  9 ⎦
@@ -490,7 +490,7 @@ return;
 </thead>
 <tbody>
 <tr>
-<td><code>'_'</code></td>
+<td>'_'</td>
 <td>Byte / ASCII single symbol or ASCII string literal</td>
 </tr>
 <tr>
@@ -605,18 +605,18 @@ return;
 </ul>
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>Collections</em> module (<code>spec/10</code> §5):</p>
+<p>Diagnostic codes raised by the <em>Collections</em> module (spec/10 §5):</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E1001</code></td><td><code>IndexOutOfBounds</code>: Index less than 1 or greater than the collection length <code>$</code>.</td><td>Use 1-based indexing; <code>$-k</code> for end-relative.</td></tr>
-    <tr><td><code>E1002</code></td><td><code>DuplicateSetKey</code>: Insertion of a duplicate key/element into Set/Map.</td><td>Check membership or allow overwrite.</td></tr>
-    <tr><td><code>E1003</code></td><td><code>MatrixDimensionMismatch</code>: Incompatible row/column dimension during assignment.</td><td>Align matrix dimensions.</td></tr>
-    <tr><td><code>E1004</code></td><td><code>TypeIncompatibleCollection</code>: Value type does not match the declared collection element type.</td><td>Cast the value or change the element type.</td></tr>
-    <tr><td><code>E1005</code></td><td><code>InvalidSetAlgebra</code>: Set operator (<code>&cap;</code>, <code>&cup;</code>) applied to a non-set type.</td><td>Use set operators only on sets.</td></tr>
-    <tr><td><code>E1006</code></td><td><code>ZeroBasedIndexAttempt</code>: Use of index 0 (Bee is 1-based, Decision 1).</td><td>Rewrite the index starting from 1.</td></tr>
+    <tr><td>E1001</td><td>IndexOutOfBounds: Index less than 1 or greater than the collection length $.</td><td>Use 1-based indexing; $-k for end-relative.</td></tr>
+    <tr><td>E1002</td><td>DuplicateSetKey: Insertion of a duplicate key/element into Set/Map.</td><td>Check membership or allow overwrite.</td></tr>
+    <tr><td>E1003</td><td>MatrixDimensionMismatch: Incompatible row/column dimension during assignment.</td><td>Align matrix dimensions.</td></tr>
+    <tr><td>E1004</td><td>TypeIncompatibleCollection: Value type does not match the declared collection element type.</td><td>Cast the value or change the element type.</td></tr>
+    <tr><td>E1005</td><td>InvalidSetAlgebra: Set operator (&cap;, &cup;) applied to a non-set type.</td><td>Use set operators only on sets.</td></tr>
+    <tr><td>E1006</td><td>ZeroBasedIndexAttempt: Use of index 0 (Bee is 1-based, Decision 1).</td><td>Rewrite the index starting from 1.</td></tr>
   </tbody>
 </table>
 <!-- Footer -->

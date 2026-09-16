@@ -550,10 +550,10 @@ new array  := [ x | x &isin; (1..10)(2) ]; -- [1,3,5,7,9]
 
 <p><b>symbols:</b></p>
 <ul>
-<li>Universal quantifier "all" is &forall; (ASCII keyword synonym: <code>forall</code>)</li>
-<li>Existential quantifier "exists" is &exist; (ASCII keyword synonym: <code>exists</code>)</li>
+<li>Universal quantifier "all" is &forall; (ASCII keyword synonym: forall)</li>
+<li>Existential quantifier "exists" is &exist; (ASCII keyword synonym: exists)</li>
 </ul>
-<p>The Unicode glyphs &forall;/&exist; and their ASCII keyword synonyms <code>forall</code>/<code>exists</code> lex to a single token each (Decision 7 synonymy) and are interchangeable in source. (spec/11 §3). Qualifiers can be used as logical expressions in conditional expressions.</p>
+<p>The Unicode glyphs &forall;/&exist; and their ASCII keyword synonyms forall/exists lex to a single token each (Decision 7 synonymy) and are interchangeable in source. (spec/11 §3). Qualifiers can be used as logical expressions in conditional expressions.</p>
 
 <h4>Syntax:</h4>
 <pre><code class="language-bee">&exist; (x &isin; DS) ∧ condition(x);
@@ -612,7 +612,7 @@ return;
 
 
 <h2 id="pipelines-mapreduce">Pipelines &amp; Map-Reduce</h2>
-<p>Data transformations can be chained with the pipeline operator <code>&gt;&gt;</code>, threading a collection from one step into the next (spec/11 §4). A pipeline step is either a built-in collection method or a pure lambda.</p>
+<p>Data transformations can be chained with the pipeline operator &gt;&gt;, threading a collection from one step into the next (spec/11 §4). A pipeline step is either a built-in collection method or a pure lambda.</p>
 
 <pre><code class="language-bee">-- filter even numbers, square them, then sum the result
 new data := [1,2,3,4,5,6,7,8,9,10];
@@ -626,17 +626,17 @@ return;
 
 <h4>Map-Reduce operations</h4>
 <ul>
-<li><code>.map(&lambda;)</code> &mdash; transforms every element into a new representation.</li>
-<li><code>.filter(&lambda;)</code> &mdash; retains elements matching a boolean predicate lambda.</li>
-<li><code>.reduce(init, &lambda;)</code> &mdash; folds elements into a single aggregate using an accumulator lambda.</li>
+<li>.map(&lambda;) &mdash; transforms every element into a new representation.</li>
+<li>.filter(&lambda;) &mdash; retains elements matching a boolean predicate lambda.</li>
+<li>.reduce(init, &lambda;) &mdash; folds elements into a single aggregate using an accumulator lambda.</li>
 </ul>
 
 <h4>Built-in aggregates</h4>
 <ul>
-<li><code>.count()</code>, <code>.sum()</code>, <code>.avg()</code>, <code>.min()</code>, <code>.max()</code>.</li>
+<li>.count(), .sum(), .avg(), .min(), .max().</li>
 </ul>
 
-<p>The output type of a pipeline step must match the next step's input; a mismatch is reported as <code>E1103 PipelineStepIncompatible</code>.</p>
+<p>The output type of a pipeline step must match the next step's input; a mismatch is reported as E1103 PipelineStepIncompatible.</p>
 
 <h2 id="list-operations">List Operations</h2>
 <p>We can add elements to a list or remove elements from the list very fast:</p>
@@ -646,7 +646,7 @@ return;
 <li>operator += append one element in a set</li>
 <li>operator -= delete one element from a set</li>
 </ul>
-<p>Note: the <code>&gt;&gt;</code> glyph is <b>not</b> a list-shift here — it is the <b>pipeline</b> operator (<code>spec/11</code> §4, EBNF <code>pipeline_expr</code>). Bee has no dedicated list-shift operator; shifting is expressed via list slicing or the <code>&lt;+</code> / <code>+&gt;</code> append operations.</p>
+<p>Note: the &gt;&gt; glyph is <b>not</b> a list-shift here — it is the <b>pipeline</b> operator (spec/11 §4, EBNF pipeline_expr). Bee has no dedicated list-shift operator; shifting is expressed via list slicing or the &lt;+ / +&gt; append operations.</p>
 
 <h3 id="list-concatenation">List Concatenation</h3>
 <p>List concatenation is ready using operator &ldquo;+&rdquo;. This operator represent union. Therefore union act very similar to append, except we add multiple elements at the end of first list and we create a new list as result.</p>
@@ -1192,18 +1192,18 @@ return;
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>Processing</em> module (<code>spec/11</code> §7):</p>
+<p>Diagnostic codes raised by the <em>Processing</em> module (spec/11 §7):</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E1101</code></td><td><code>UnboxingTypeMismatch</code>: Unboxing a reference into an incompatible scalar type.</td><td>Unbox with the correct <code>Type(boxed)</code> target.</td></tr>
-    <tr><td><code>E1102</code></td><td><code>InvalidQuantifierDomain</code>: Quantifier applied to a non-collection operand.</td><td>Apply quantifiers to collections only.</td></tr>
-    <tr><td><code>E1103</code></td><td><code>PipelineStepIncompatible</code>: Output type of a pipeline step does not match the next step's input.</td><td>Insert an adapting step into the pipeline.</td></tr>
-    <tr><td><code>E1104</code></td><td><code>DeconstructionMismatch</code>: Number of targets exceeds collection elements without a <code>*</code> tail.</td><td>Add a <code>*</code> tail or reduce targets.</td></tr>
-    <tr><td><code>E1105</code></td><td><code>InvalidMatrixSlice</code>: Dimension wildcard <code>*</code> used on a non-matrix or invalid rank.</td><td>Use <code>*</code> only on valid matrix ranks.</td></tr>
-    <tr><td><code>E1106</code></td><td><code>NonBoxedAssignment</code>: Reference assignment <code>:=</code> on an unboxed value.</td><td>Box the value first with <code>[x]</code>.</td></tr>
+    <tr><td>E1101</td><td>UnboxingTypeMismatch: Unboxing a reference into an incompatible scalar type.</td><td>Unbox with the correct Type(boxed) target.</td></tr>
+    <tr><td>E1102</td><td>InvalidQuantifierDomain: Quantifier applied to a non-collection operand.</td><td>Apply quantifiers to collections only.</td></tr>
+    <tr><td>E1103</td><td>PipelineStepIncompatible: Output type of a pipeline step does not match the next step's input.</td><td>Insert an adapting step into the pipeline.</td></tr>
+    <tr><td>E1104</td><td>DeconstructionMismatch: Number of targets exceeds collection elements without a * tail.</td><td>Add a * tail or reduce targets.</td></tr>
+    <tr><td>E1105</td><td>InvalidMatrixSlice: Dimension wildcard * used on a non-matrix or invalid rank.</td><td>Use * only on valid matrix ranks.</td></tr>
+    <tr><td>E1106</td><td>NonBoxedAssignment: Reference assignment := on an unboxed value.</td><td>Box the value first with [x].</td></tr>
   </tbody>
 </table>
 

@@ -230,7 +230,7 @@ Bee is a compiled language. That means you must include whatever you use in your
   <li><strong>200 .. 9999</strong> : User / Application business-domain error codes.</li>
   <li><strong>&le; -1</strong> : Unrecoverable hard hardware / memory-security panic.</li>
 </ul>
-<p>Errors are surfaced through the global system variable <code>$error</code>:</p>
+<p>Errors are surfaced through the global system variable $error:</p>
 <pre><code class="language-bee">-- global type
 type SystemError: {code &isin; Z, message &isin; S} &lt;: Object;
 </code></pre>
@@ -308,7 +308,7 @@ $unexpected_error:= {2,"unexpected error"}  &isin; Error;</code></pre>
 
 
 <h3 id="file-io">File IO</h3>
-<p>To read and write files and save to disk, we import the <code>$bee.sys.io</code> namespace (spec/14 &sect;4). This namespace defines the opaque file-handle type <code>F</code> and directory operations:</p>
+<p>To read and write files and save to disk, we import the $bee.sys.io namespace (spec/14 &sect;4). This namespace defines the opaque file-handle type F and directory operations:</p>
 
 <pre><code class="language-bee">use $bee.sys.io as IO;
 
@@ -404,7 +404,7 @@ new file_name   := IO.File.open("name", "w");
 new folder_name := IO.Folder.create("name");
 </code></pre>
 
-<p>The system namespace hierarchy also exposes <code>$bee.sys.math</code>, <code>$bee.sys.string</code>, <code>$bee.sys.time</code>, and <code>$bee.sys.env</code> (spec/14 &sect;1).</p>
+<p>The system namespace hierarchy also exposes $bee.sys.math, $bee.sys.string, $bee.sys.time, and $bee.sys.env (spec/14 &sect;1).</p>
 
 <hr>
 
@@ -413,17 +413,17 @@ new folder_name := IO.Folder.create("name");
 
 <h2 id="diagnostics">Diagnostic error codes</h2>
 
-<p>Diagnostic codes raised by the <em>Library</em> module (<code>spec/14</code> §7):</p>
+<p>Diagnostic codes raised by the <em>Library</em> module (spec/14 §7):</p>
 <table class="table table-bordered table-striped table-sm">
   <thead>
     <tr><th>Code</th><th>Violation</th><th>Mitigation / diagnostic action</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>E1401</code></td><td><code>FileNotFound</code>: Target file path missing during an open operation.</td><td>Create the file or correct the path.</td></tr>
-    <tr><td><code>E1402</code></td><td><code>FileAccessDenied</code>: Insufficient OS permissions to open or write a file handle.</td><td>Fix the permissions.</td></tr>
-    <tr><td><code>E1403</code></td><td><code>UnclosedFileHandle</code>: Scope exited with an unclosed <code>F</code> file handle.</td><td>Close the handle before scope exit.</td></tr>
-    <tr><td><code>E1404</code></td><td><code>LibraryNotFound</code>: Requested <code>$bee.sys</code> submodule not available in the runtime build.</td><td>Build with the required submodule.</td></tr>
-    <tr><td><code>E1405</code></td><td><code>InvalidFileMode</code>: File open mode is not <code>r</code>, <code>w</code>, <code>a</code>, or <code>rw</code>.</td><td>Use one of the four accepted modes.</td></tr>
+    <tr><td>E1401</td><td>FileNotFound: Target file path missing during an open operation.</td><td>Create the file or correct the path.</td></tr>
+    <tr><td>E1402</td><td>FileAccessDenied: Insufficient OS permissions to open or write a file handle.</td><td>Fix the permissions.</td></tr>
+    <tr><td>E1403</td><td>UnclosedFileHandle: Scope exited with an unclosed F file handle.</td><td>Close the handle before scope exit.</td></tr>
+    <tr><td>E1404</td><td>LibraryNotFound: Requested $bee.sys submodule not available in the runtime build.</td><td>Build with the required submodule.</td></tr>
+    <tr><td>E1405</td><td>InvalidFileMode: File open mode is not r, w, a, or rw.</td><td>Use one of the four accepted modes.</td></tr>
   </tbody>
 </table>
 
