@@ -97,6 +97,8 @@ const (
 	PIPE_RIGHT     = ">>"
 	PIPE_LEFT      = "<<"
 	REDUCE_CHANNEL = "+>"
+	LIST_APPEND    = "<+"
+	BAR            = "|" // set-builder "such that" bar (spec/11 §5)
 
 	// Range operators (Decision 13, 2026-09-13).
 	// Canonical ASCII forms. The legacy ".!", "!.", "!!" forms still lex
@@ -172,6 +174,7 @@ const (
 	RETRY      = "RETRY"
 	NONE       = "NONE"
 	SCRAP      = "SCRAP"
+	CUT        = "CUT"
 	READ       = "READ"
 	TRIAL      = "TRIAL"
 	STOP       = "STOP"
@@ -243,6 +246,7 @@ var keywords = map[string]Type{
 	"retry":    RETRY,
 	"none":     NONE,
 	"scrap":    SCRAP,
+	"cut":      CUT,
 	"read":     READ,
 	"trial":    TRIAL,
 	"stop":     STOP,

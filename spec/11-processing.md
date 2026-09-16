@@ -139,6 +139,13 @@ transform_step    ::= identifier "(" [ arg_list ] ")" | lambda_expr ;
 (* Deconstruction & Matrix Slicing *)
 deconstruct_stmt  ::= "new" identifier_list [ "," "*" identifier ] ":=" expression ";" ;
 matrix_slice      ::= identifier "[" ( expression | "*" ) "," ( expression | "*" ) "]" ;
+
+(* Collection Builders / Comprehensions *)
+builder_expr      ::= ( "{" | "[" ) map_expr "|" ident "∈" domain [ "∧" condition ] ( "}" | "]" ) ;
+map_builder_expr  ::= "{" "(" key ":" value ")" "|" ident "∈" domain [ "∧" condition ] "}" ;
+
+(* Element Removal *)
+cut_stmt          ::= "cut" expression "[" index_expr "]" ";" ;
 ```
 
 ---

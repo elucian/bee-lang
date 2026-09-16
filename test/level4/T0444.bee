@@ -1,9 +1,8 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @DESC:T0444 list as queue FIFO using append and shift-left (spec/11 list ops)
 rule main:
   new q := (1,2,3);
   -- enqueue: append one element to end with `<+`
-  put q <+ 4;
+  let q <+ 4;
   expect q[1] = 1;
   expect q[2] = 2;
   expect q[3] = 3;
@@ -11,7 +10,7 @@ rule main:
   expect q[$] = 4;
 
   -- dequeue: shift list left removing first element with `<<`
-  pop q << 1;
+  cut q[1];
   expect q[1] = 2;
   expect q[2] = 3;
   expect q[3] = 4;

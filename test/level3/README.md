@@ -26,6 +26,6 @@ This level covers rules, contracts, and function definitions as defined in:
 | T0316    | Lambda in pipeline — inline s... | PASS       |
 | T0317    | Compose operator — f ∘ g comp... | FAIL       |
 | T0318    | Pipe operator — value |> f |>... | FAIL       |
-| T0319    | Partial application — ? place... | FAIL       |
+| T0319    | Partial application — ? place... | PASS       |
 | T0320    | Rule contract verification wi... | PASS       |
 | T0321    | Rule contract assert failure ... | PASS       |

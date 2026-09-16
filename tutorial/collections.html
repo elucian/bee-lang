@@ -109,8 +109,30 @@ print list[$ - 1]; -- Second-to-last element: 30 (relative to the end)
 
 <p>$ also composes with the range operators to slice from a dynamic endpoint:</p>
 
-<pre><code class="language-bee">new slice := list[2..$ - 1]; -- from index 2 to second-to-last item
+<pre><code class="language-bee">new slice := list[2..$ - 1]; -- view of elements 2..3: &lt;20, 30&gt;
 </code></pre>
+
+<h3 id="slicing-views">Slicing — Views, Not Copies</h3>
+<p>A slice expression <code>collection[a..b]</code> creates a <b>view</b> (a reference window) into the original collection, not an extraction. No elements are copied; the slice aliases the source storage, so mutations through the view are visible in the original collection and vice versa:</p>
+
+<pre><code class="language-bee">new list  := (10, 20, 30, 40);
+new slice := list[2..$ - 1]; -- view of elements 2..3
+
+let slice[1] := 99;          -- writes through the view
+print list[2];               -- 99 (original collection is affected)
+</code></pre>
+
+<h3 id="clone-operator">Reference Assignment vs. Clone Assignment <code>::</code></h3>
+<p>Assigning a collection (or slice) with <code>:=</code> binds a <b>reference</b>; both names share the same storage. To obtain an independent collection, use the clone-assignment operator <code>::</code>, which performs a <b>deep copy</b> at binding time:</p>
+
+<pre><code class="language-bee">new alias := list;           -- reference: alias and list share elements
+new clone :: list;           -- deep copy: clone is independent
+new frozen :: list[2..3];    -- materialize a view into a real sub-collection
+
+let clone[1] := 0;           -- does not affect list
+</code></pre>
+
+<p><code>::</code> is a binding operator (parallel to <code>:=</code>), not a prefix expression; it appears where <code>:=</code> would appear in <code>new</code> and <code>let</code> statements.</p>
 
 <h3 id="ordinal">Ordinal Type</h3>
 <p>Ordinal is an ordered small set of identifiers. Each identifier represents an integer value starting from a specified number with interval of one. It can be used for ranking, selection or codification.</p>
@@ -452,7 +474,7 @@ rule main:
    print map['key3']; -- "value3"
 
    -- remove an element by key
-   scrap map['key1']; -- remove "first" element
+   cut map['key1'];   -- remove "first" element
    apply map.print;   -- expected: {'key2':"value2", 'key3':"value3"};
 return;
 </code></pre>

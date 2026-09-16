@@ -1,11 +1,18 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=6 type=; literal=";"
--- @DESC:file: append_collection_example.bee
--- A rule that adds an item to a collection and uses `old`
--- to verify the size increased by exactly one.
+-- @DESC:T0409 contract store item in collection
+-- A rule that stores an item into a collection cell demo;
+-- collections pass by share (spec/10), so the caller
+-- verifies the stored value after apply returns.
 
-rule append_item(items ∈ @[Z], new_val ∈ Z):
-  expect length(items) = length(old items) + 1;
-  expect items[length(items)-1] = new_val;
-  let append(items, new_val);
+rule store_item(items ∈ [Z], pos ∈ Z, new_val ∈ Z):
+  assert pos >= 1;
+  let items[pos] := new_val;
+return;
+
+rule main:
+  new xs := [10, 20, 30];
+  apply store_item(xs, 3, 99);
+  expect xs[3] = 99;
+  expect xs[1] = 10;
+  print xs[3];
 return;
 

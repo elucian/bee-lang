@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC:T0118 Variable declaration with new
 rule main:
   new a ∈ Z;

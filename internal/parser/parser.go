@@ -6,6 +6,7 @@ import (
 	"bee/internal/token"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -166,8 +167,12 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 		return p.parseAssignment(tok)
 	case token.ZAP:
 		return p.parseZapStatement(tok)
+	case token.CUT:
+		return p.parseCutStatement(tok)
 	case token.ASSERT:
 		return p.parseAssertStatement(tok)
+	case token.APPLY:
+		return p.parseApplyStatement(tok)
 	case token.EXPECT:
 		return p.parseExpectStatement(tok)
 	case token.PRINT:
@@ -217,8 +222,100 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 // immediate `;`) is detected by a `;` lookahead immediately after the
 // signature closing tokens; in that case RuleStatement.ForwardDecl is set
 // and no body is consumed. See spec/03-rules.md §5.2.
+// skipTypeSpecifier consumes a balanced type annotation after `∈`/`in`.
+// The specifier may carry bracket/paren payloads (`[Z]`, `[Z](2,3)`,
+// `@[Z]`, `List(Z)`, `Map(S,Z)`) — consuming only one token would leave
+// the payload dangling and corrupt the surrounding parameter list or
+// declaration. Consumption stops at the first top-level `,`, `)`, `:=`,
+// `=`, or `;` (the enclosing production's own delimiters), which remain
+// unconsumed for the caller.
+func (p *Parser) skipTypeSpecifier() {
+	depth := 0
+	consumed := 0
+	for {
+		t := p.l.PeekToken()
+		if t.Type == token.EOF {
+			return
+		}
+		if depth == 0 && consumed > 0 &&
+			(t.Type == token.COMMA || t.Type == token.RPAREN ||
+				t.Type == token.ASSIGN || t.Type == token.EQ ||
+				t.Type == token.SEMICOLON) {
+			return
+		}
+		switch t.Type {
+		case token.LBRACKET, token.LPAREN:
+			depth++
+		case token.RBRACKET:
+			depth--
+		case token.RPAREN:
+			if depth > 0 {
+				depth--
+			}
+		}
+		p.l.NextToken()
+		consumed++
+	}
+}
+
+// captureTypeSpecifier consumes a balanced type annotation after `∈`/`in`
+// and returns the consumed tokens for post-analysis (e.g. matrix dimension
+// extraction). Same consumption semantics as skipTypeSpecifier.
+func (p *Parser) captureTypeSpecifier() []token.Token {
+	var toks []token.Token
+	depth := 0
+	consumed := 0
+	for {
+		t := p.l.PeekToken()
+		if t.Type == token.EOF {
+			return toks
+		}
+		if depth == 0 && consumed > 0 &&
+			(t.Type == token.COMMA || t.Type == token.RPAREN ||
+				t.Type == token.ASSIGN || t.Type == token.EQ ||
+				t.Type == token.SEMICOLON) {
+			return toks
+		}
+		switch t.Type {
+		case token.LBRACKET, token.LPAREN:
+			depth++
+		case token.RBRACKET:
+			depth--
+		case token.RPAREN:
+			if depth > 0 {
+				depth--
+			}
+		}
+		toks = append(toks, p.l.NextToken())
+		consumed++
+	}
+}
+
+// extractMatrixDims parses a captured type specifier token sequence for the
+// matrix pattern `[Type](rows, cols)` and returns the dimensions. Returns
+// nil when the pattern is absent.
+func extractMatrixDims(toks []token.Token) *[2]int {
+	// Pattern: LBRACKET type RBRACKET LPAREN INT COMMA INT RPAREN
+	for i := 0; i+6 < len(toks); i++ {
+		if toks[i].Type == token.LBRACKET &&
+			toks[i+2].Type == token.RBRACKET &&
+			toks[i+3].Type == token.LPAREN &&
+			toks[i+4].Type == token.INT &&
+			toks[i+5].Type == token.COMMA &&
+			toks[i+6].Type == token.INT {
+			rows, err1 := strconv.Atoi(toks[i+4].Literal)
+			cols, err2 := strconv.Atoi(toks[i+6].Literal)
+			if err1 == nil && err2 == nil {
+				return &[2]int{rows, cols}
+			}
+		}
+	}
+	return nil
+}
+
 func (p *Parser) parseRuleEntry(tok token.Token) Statement {
 	stmt := &RuleStatement{Token: tok}
+
 	// Rule identifier. spec/03 §5.4 permits a leading-dot member rule inside a
 	// closure generator (`rule .next() => ...`), which the lexer emits as DOT
 	// then the member name. parseMemberName folds the two into `.next`.
@@ -246,7 +343,7 @@ func (p *Parser) parseRuleEntry(tok token.Token) Statement {
 				if p.l.PeekToken().Type == token.IN_OP || p.l.PeekToken().Type == token.IN_KEYWORD ||
 					p.l.PeekToken().Literal == "∈" || p.l.PeekToken().Literal == "in" {
 					p.l.NextToken()
-					p.l.NextToken() // type specifier token
+					p.skipTypeSpecifier()
 				}
 				if p.l.PeekToken().Type == token.COMMA {
 					p.l.NextToken()
@@ -282,7 +379,7 @@ func (p *Parser) parseRuleEntry(tok token.Token) Statement {
 				if p.l.PeekToken().Type == token.IN_OP || p.l.PeekToken().Type == token.IN_KEYWORD ||
 					p.l.PeekToken().Literal == "∈" || p.l.PeekToken().Literal == "in" {
 					p.l.NextToken()
-					p.l.NextToken() // type specifier token
+					p.skipTypeSpecifier()
 				}
 				if p.l.PeekToken().Type == token.COMMA {
 					p.l.NextToken()
@@ -320,7 +417,7 @@ func (p *Parser) parseRuleEntry(tok token.Token) Statement {
 					if p.l.PeekToken().Type == token.IN_OP || p.l.PeekToken().Type == token.IN_KEYWORD ||
 						p.l.PeekToken().Literal == "∈" || p.l.PeekToken().Literal == "in" {
 						p.l.NextToken()
-						p.l.NextToken()
+						p.skipTypeSpecifier()
 					}
 					if p.l.PeekToken().Type == token.COMMA {
 						p.l.NextToken()
@@ -410,6 +507,51 @@ func (p *Parser) parseZapStatement(tok token.Token) Statement {
 		p.l.NextToken()
 	}
 	return stmt
+}
+
+// parseCutStatement handles `cut target[index];` — removes the element at
+// the given index/key from the collection, shifting remaining elements.
+// User-directed replacement for the legacy `scrap` keyword.
+func (p *Parser) parseCutStatement(tok token.Token) Statement {
+	stmt := &CutStatement{Token: tok}
+	stmt.Target = p.parsePrimary()
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken()
+	}
+	return stmt
+}
+
+// parseBuilderTail parses the tail of a collection builder after the mapping
+// expression and `|` have been consumed: `ident ∈ domain [∧ condition] }`.
+// The `isMap` flag distinguishes map builders (key:value mapping) from
+// set/array builders (element mapping).
+func (p *Parser) parseBuilderTail(tok token.Token, mapExpr Expression, isMap bool) Expression {
+	p.l.NextToken() // consume '|'
+	builder := &BuilderExpression{Token: tok, MapExpr: mapExpr, IsMap: isMap}
+	// Detect map builder: mapping head is a MapPairExpression.
+	if _, ok := mapExpr.(*MapPairExpression); ok {
+		builder.IsMap = true
+	}
+	// Loop variable.
+	varTok := p.l.NextToken()
+	builder.Variable = varTok.Literal
+	// ∈ (or `in`).
+	if p.l.PeekToken().Type == token.IN_OP || p.l.PeekToken().Literal == "in" {
+		p.l.NextToken()
+	}
+	// Domain expression (collection or range). Parse at precCompare so the
+	// climb stops before `∧` (precLogic), which is the builder filter separator.
+	builder.Domain = p.parseExpressionClimb(precCompare)
+	// Optional filter: `∧ condition`.
+	if p.l.PeekToken().Type == token.LOGICAL_AND || p.l.PeekToken().Literal == "and" {
+		p.l.NextToken() // consume ∧
+		builder.Condition = p.parseExpressionClimb(precLogic)
+	}
+	// Closing delimiter.
+	if p.l.PeekToken().Type == token.RBRACE || p.l.PeekToken().Type == token.RBRACKET {
+		p.l.NextToken()
+	}
+	return builder
 }
 
 // parseWriteStatement handles `write expression;` per spec/02-statements.md §5.
@@ -735,6 +877,19 @@ func (p *Parser) parseCycleStatement(tok token.Token) Statement {
 			))
 		} else {
 			stmt.Index = &Identifier{Token: indexTok, Value: indexTok.Literal}
+		}
+		// Optional second loop variable for map iteration: `for k, v ∈ m do`.
+		if p.l.PeekToken().Type == token.COMMA {
+			p.l.NextToken() // consume ','
+			valTok := p.l.NextToken()
+			if valTok.Type != token.IDENT {
+				p.errors = append(p.errors, fmt.Sprintf(
+					"E0009 SyntaxError:InvalidCycleHeader: line=%d (expected value identifier after ',' in for-cycle header; got type=%s literal=%q)",
+					valTok.Pos, valTok.Type, valTok.Literal,
+				))
+			} else {
+				stmt.Value = &Identifier{Token: valTok, Value: valTok.Literal}
+			}
 		}
 		// ∈ / in domain operator.
 		peekOp := p.l.PeekToken()
@@ -1110,19 +1265,36 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 		return ds
 	}
 
+	ds.SpreadIndex = -1
 	identTok := p.l.NextToken() // first ident
-	ds.Name = p.parseMemberName(identTok)
+	if identTok.Type == token.ASTERISK {
+		// Spread target: `*tail` (spec/11 §5.1).
+		spreadIdent := p.l.NextToken()
+		ds.Name = spreadIdent.Literal
+		ds.SpreadIndex = 0
+	} else {
+		ds.Name = p.parseMemberName(identTok)
+	}
 	ds.Names = append(ds.Names, ds.Name)
 
 	// Check for comma-separated identifier list (e.g. new a, b, c ∈ Z;)
 	for p.l.PeekToken().Type == token.COMMA {
 		p.l.NextToken() // consume ','
 		nextIdent := p.l.NextToken()
-		ds.Names = append(ds.Names, p.parseMemberName(nextIdent))
+		if nextIdent.Type == token.ASTERISK {
+			spreadIdent := p.l.NextToken()
+			ds.SpreadIndex = len(ds.Names)
+			ds.Names = append(ds.Names, spreadIdent.Literal)
+		} else {
+			ds.Names = append(ds.Names, p.parseMemberName(nextIdent))
+		}
 	}
 
-	nextTok := p.l.NextToken() // ∈, in, :=, or colon
-	if nextTok.Literal == ":=" {
+	nextTok := p.l.NextToken() // ∈, in, :=, ::, or colon
+	if nextTok.Literal == ":=" || nextTok.Type == token.CLONE_ASSIGN {
+		if nextTok.Type == token.CLONE_ASSIGN {
+			ds.Clone = true
+		}
 		val := p.parseExpression()
 		ds.Value = val
 		ds.Values = append(ds.Values, val)
@@ -1132,7 +1304,8 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 		}
 	} else if nextTok.Type == token.IN_OP || nextTok.Type == token.IN_KEYWORD || nextTok.Literal == "∈" || nextTok.Literal == "in" {
 		// e.g. new a, b, c ∈ Z [:= ...]
-		_ = p.l.NextToken() // consume type (e.g. Z)
+		typeToks := p.captureTypeSpecifier() // consume type annotation (e.g. Z, [Z](n), List(Z))
+		ds.MatrixDims = extractMatrixDims(typeToks)
 		if p.l.PeekToken().Literal == ":=" {
 			p.l.NextToken() // consume :=
 			val := p.parseExpression()
@@ -1265,6 +1438,12 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 		opTok.Type = token.MOD_ASSIGN
 	} else if opTok.Literal == ":=" {
 		opTok.Type = token.ASSIGN
+	} else if opTok.Type == token.CLONE_ASSIGN || opTok.Literal == "::" {
+		opTok.Type = token.CLONE_ASSIGN
+	} else if opTok.Type == token.LIST_APPEND || opTok.Literal == "<+" {
+		opTok.Type = token.LIST_APPEND
+	} else if opTok.Type == token.REDUCE_CHANNEL || opTok.Literal == "+>" {
+		opTok.Type = token.REDUCE_CHANNEL
 	} else if opTok.Literal == "=" {
 		opTok.Type = token.EQ
 	}
@@ -1360,6 +1539,47 @@ func (p *Parser) parseAssertStatement(tok token.Token) Statement {
 	return stmt
 }
 
+// parseApplyStatement parses the side-effect invocation directive per
+// spec/03-rules.md §3.1:
+//
+//	"apply" identifier "(" [ arg_list ] ")" ";"
+//
+// Semantically the wrapped call behaves like a CallExpression whose results
+// are discarded. Each argument is a full expression; an argument prefixed
+// with the reference-of operator (@ident, Decision 12) is recorded verbatim
+// as a PrefixExpression so the evaluator can apply copy-in/copy-out
+// write-back to the caller's cell once the rule body completes.
+func (p *Parser) parseApplyStatement(tok token.Token) Statement {
+	stmt := &ApplyStatement{Token: tok}
+	nameTok := p.l.NextToken()
+	name, _ := p.identLiteral(nameTok)
+	call := &CallExpression{Token: nameTok, Name: name}
+	if p.l.PeekToken().Type == token.LPAREN {
+		p.l.NextToken() // consume '('
+		if p.l.PeekToken().Type != token.RPAREN {
+			for {
+				if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+					break
+				}
+				call.Args = append(call.Args, p.parseExpression())
+				if p.l.PeekToken().Type == token.COMMA {
+					p.l.NextToken() // consume ','
+					continue
+				}
+				break
+			}
+		}
+		if p.l.PeekToken().Type == token.RPAREN {
+			p.l.NextToken() // consume ')'
+		}
+	}
+	stmt.Call = call
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken() // Skip ;
+	}
+	return stmt
+}
+
 func (p *Parser) parseExpectStatement(tok token.Token) Statement {
 	stmt := &ExpectStatement{Token: tok}
 	stmt.Condition = p.parseExpression()
@@ -1388,10 +1608,19 @@ func (p *Parser) parsePrintStatement(tok token.Token) *PrintStatement {
 	}
 
 	// Consume optional '(' for the positional argument list.
+	// Do NOT consume '(' when it opens a quantifier expression
+	// `(∀ x ∈ S : cond)` / `(∃ x ∈ S : cond)` — those are handled
+	// by the expression parser's LPAREN primary.
 	hasParens := false
 	if p.l.PeekToken().Type == token.LPAREN {
-		hasParens = true
-		p.l.NextToken()
+		snap := p.l.Snapshot()
+		p.l.NextToken() // consume '('
+		nextTok := p.l.PeekToken()
+		p.l.Restore(snap)
+		if nextTok.Type != token.FORALL && nextTok.Type != token.EXISTS {
+			hasParens = true
+			p.l.NextToken()
+		}
 	}
 
 	// Parse positional arguments.
@@ -1728,6 +1957,26 @@ func (p *Parser) parsePrimary() Expression {
 			return &LambdaExpression{Token: tok, Params: params, Body: body}
 		}
 		p.l.Restore(snap)
+
+		// Quantifier expression (spec/11 §3):
+		// `(∀ x ∈ collection : condition)` / `(∃ x ∈ collection : condition)`.
+		if p.l.PeekToken().Type == token.FORALL || p.l.PeekToken().Type == token.EXISTS {
+			quantTok := p.l.NextToken() // consume ∀ or ∃
+			varTok := p.l.NextToken()   // consume identifier
+			if p.l.PeekToken().Type == token.IN_OP || p.l.PeekToken().Literal == "in" {
+				p.l.NextToken() // consume ∈ or in
+			}
+			domain := p.parseExpressionClimb(precLogic)
+			if p.l.PeekToken().Type == token.COLON {
+				p.l.NextToken() // consume ':'
+			}
+			cond := p.parseExpressionClimb(precLogic)
+			if p.l.PeekToken().Type == token.RPAREN {
+				p.l.NextToken() // consume ')'
+			}
+			return &QuantifierExpression{Token: quantTok, Variable: varTok.Literal, Domain: domain, Condition: cond}
+		}
+
 		left := p.parseExpressionClimb(precLogic)
 
 		// Conditional expression selector (ternary) per spec/02-statements.md
@@ -1769,6 +2018,17 @@ func (p *Parser) parsePrimary() Expression {
 				p.l.NextToken() // consume ')'
 			}
 			return listLit
+		}
+
+		// Parenthesised key:value pair for map builders (spec/11 §5):
+		// `(key : value)` used as the mapping head of `{ (k:v) | ... }`.
+		if p.l.PeekToken().Type == token.COLON {
+			p.l.NextToken() // consume ':'
+			val := p.parseExpressionClimb(precLogic)
+			if p.l.PeekToken().Type == token.RPAREN {
+				p.l.NextToken() // consume ')'
+			}
+			return &MapPairExpression{Token: tok, Key: left, Value: val}
 		}
 
 		if p.l.PeekToken().Type == token.RPAREN {
@@ -1821,6 +2081,11 @@ func (p *Parser) parsePrimary() Expression {
 			return &SetLiteral{Token: tok}
 		}
 		first := p.parseExpression()
+		// Collection builder (spec/11 §5): `{ expr | ident ∈ domain [∧ cond] }`.
+		// The `|` bar separates the mapping expression from the domain clause.
+		if p.l.PeekToken().Type == token.BAR {
+			return p.parseBuilderTail(tok, first, false)
+		}
 		if p.l.PeekToken().Type == token.COLON {
 			p.l.NextToken() // consume ':'
 			mapLit := &MapLiteral{Token: tok}
@@ -1855,15 +2120,25 @@ func (p *Parser) parsePrimary() Expression {
 		// Elements are full expressions (comma is not a binary operator, so
 		// the climb loop parks on ',' and ']'), which also covers nested
 		// array literals for matrices.
-		arrLit := &ArrayLiteral{Token: tok}
-		for p.l.PeekToken().Type != token.RBRACKET && p.l.PeekToken().Type != token.EOF {
-			arrLit.Elements = append(arrLit.Elements, p.parseExpression())
-			if p.l.PeekToken().Type == token.COMMA {
-				p.l.NextToken() // consume ','
-				continue
+		// Array builder (spec/11 §5): `[ expr | ident ∈ domain [∧ cond] ]`.
+		// Probe: parse first expression, then check for the `|` builder bar.
+		if p.l.PeekToken().Type != token.RBRACKET && p.l.PeekToken().Type != token.EOF {
+			first := p.parseExpression()
+			if p.l.PeekToken().Type == token.BAR {
+				return p.parseBuilderTail(tok, first, false)
 			}
-			break
+			arrLit := &ArrayLiteral{Token: tok}
+			arrLit.Elements = append(arrLit.Elements, first)
+			for p.l.PeekToken().Type == token.COMMA {
+				p.l.NextToken() // consume ','
+				arrLit.Elements = append(arrLit.Elements, p.parseExpression())
+			}
+			if p.l.PeekToken().Type == token.RBRACKET {
+				p.l.NextToken() // consume ']'
+			}
+			return arrLit
 		}
+		arrLit := &ArrayLiteral{Token: tok}
 		if p.l.PeekToken().Type == token.RBRACKET {
 			p.l.NextToken() // consume ']'
 		}
@@ -1945,7 +2220,7 @@ func (p *Parser) parsePrimary() Expression {
 				if bracketTok.Literal == "$" {
 					snap := p.l.Snapshot()
 					p.l.NextToken() // advance past '$'
-					isBare := p.l.PeekToken().Type == token.RBRACKET
+					isBare := p.l.PeekToken().Type == token.RBRACKET || p.l.PeekToken().Type == token.COMMA
 					p.l.Restore(snap)
 					if isBare {
 						p.l.NextToken() // consume '$'
@@ -1953,13 +2228,31 @@ func (p *Parser) parsePrimary() Expression {
 					} else {
 						idxExpr = p.parseExpression()
 					}
+				} else if bracketTok.Type == token.ASTERISK {
+					// Wildcard `*` index (spec/11 §5.2): selects an entire row
+					// or column for matrix slice mutation.
+					p.l.NextToken() // consume '*'
+					idxExpr = &Identifier{Token: bracketTok, Value: "*"}
 				} else {
 					idxExpr = p.parseExpression()
+				}
+				ie := &IndexExpression{Token: bracketTok, Left: left, Index: idxExpr}
+				// spec/10 §4: parse additional comma-separated indices for
+				// matrix indexing (e.g. M[1,2], M[1,*]).
+				for p.l.PeekToken().Type == token.COMMA {
+					p.l.NextToken() // consume ','
+					nextTok := p.l.PeekToken()
+					if nextTok.Type == token.ASTERISK {
+						p.l.NextToken() // consume '*'
+						ie.ExtraIndices = append(ie.ExtraIndices, &Identifier{Token: nextTok, Value: "*"})
+					} else {
+						ie.ExtraIndices = append(ie.ExtraIndices, p.parseExpression())
+					}
 				}
 				if p.l.PeekToken().Type == token.RBRACKET {
 					p.l.NextToken() // consume ']'
 				}
-				left = &IndexExpression{Token: bracketTok, Left: left, Index: idxExpr}
+				left = ie
 			}
 		}
 	}

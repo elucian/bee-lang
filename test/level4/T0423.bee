@@ -1,9 +1,8 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
--- @DESC:file: set_algebra_ascii.bee
--- Set algebra in ASCII demo
+-- @DESC:file: set_algebra_unicode.bee
+-- Set algebra with Unicode operators demo
 rule main:
-  print {1,2} union {2,3};
-  print {1,2,3} inter {2,3};
-  print {1,2} subset {1,2,3};
+  print {1,2} ∪ {2,3};
+  print {1,2,3} ∩ {2,3};
+  print {1,2} ⊂ {1,2,3};
 return;
 

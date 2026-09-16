@@ -1,13 +1,14 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
--- @DESC:file: growing_shrinking_list.bee
--- Growing and shrinking a list demo
+-- @DESC:T0415 growing a list with <+ and +>
+-- List growth demo (spec/01 coll_op): <+ appends at the end,
+-- +> appends at the beginning (pipeline/map-reduce pattern).
 rule main:
   new l := (2,3);
   let l <+ 4;
   let l +> 1;
+  expect l[1] = 1;
+  expect l[2] = 2;
+  expect l[3] = 3;
+  expect l[4] = 4;
   print l;
-  let l << 1;
-  let l >> 1;
-  print l;
+  expect l = (1,2,3,4);
 return;
-

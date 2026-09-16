@@ -1,4 +1,3 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=22 type=; literal=";"
 -- @DESC:T0803 two coroutines taking turns (D14)
 -- D14: loop terminators migrated to done;.
 rule odds(n ∈ N) => (v ∈ N):

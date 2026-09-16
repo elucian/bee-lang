@@ -682,11 +682,11 @@ return;
 new a := (1, 2, 3); 
 rule main():
 
-  -- add using equeue operator: "&lt;+"
-  put a &lt;+ 4; -- (1,2,3,4)
+  -- add using append operator: "&lt;+"
+  let a &lt;+ 4; -- (1,2,3,4)
 
-  -- delete operator "-="
-  pop a -= a.tail; -- a = (1,2,3)
+  -- remove last element "-="
+  cut a[$]; -- a = (1,2,3)
 return;
 </code></pre>
 
@@ -698,13 +698,13 @@ rule main():
    new first &isin; N;
 
    -- enqueue new element into list
-   put q &lt;+ 4; -- (1,2,3,4)
+   let q &lt;+ 4; -- (1,2,3,4)
 
    -- read first element using ":="
    let first := a.head; -- first = 1
 
    -- shift list to left with 1
-   pop a &lt;&lt; 1; -- a = (2,3,4)
+   cut a[1]; -- a = (2,3,4)
 return;
 </code></pre>
 

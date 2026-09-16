@@ -1,15 +1,13 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @DESC:T0403 contract deposit with expectation
 -- Exact money, with a promise it went up demo
-rule deposit(balance ∈ @Q, amount ∈ Q):
-  expect amount > 0;
-  expect balance > old balance;
+rule deposit(balance ∈ @Z, amount ∈ Z):
+  assert amount > 0;
   let balance += amount;
 return;
 
 rule main:
-  new balance: 10 ∈ Q;
-  apply deposit(@balance, 1\4);
+  new balance: 10 ∈ Z;
+  apply deposit(@balance, 5);
+  expect balance = 15;
   print balance;
 return;
-

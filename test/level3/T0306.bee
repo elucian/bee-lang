@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @NEGATIVE
 -- @DESC: Expect postcondition fail — expect raises E0303 and halts, spec/03 §4
 rule main:

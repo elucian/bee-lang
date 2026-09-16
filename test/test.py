@@ -97,15 +97,7 @@ def test():
                     else:
                         failed += 1
                         failed_cases.append(test_name)
-                        # Auto-disable
-                        try:
-                            reason = res.stderr.strip().split("\n")[0] if res.stderr else "Assertion failed"
-                            if code_lines and "@DISABLED" not in code_lines[0]:
-                                code_lines.insert(0, f"-- @DISABLED: {reason}\n")
-                                with open(path, "w", encoding="utf-8") as tf:
-                                    tf.writelines(code_lines)
-                        except: pass
-                    
+
         level_results[lvl] = {"passed": passed, "failed": failed}
         total_passed += passed
         total_failed += failed

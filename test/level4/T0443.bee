@@ -1,16 +1,15 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @DESC:T0443 collection casting between array and set via builder (spec/11 casting)
 rule main:
   new source := [0,1,2,2,2,2];
   -- build set from array elements to eliminate duplicates
-  new s :: { x | x ∈ source };
+  new s := { x | x ∈ source };
   expect 0 ∈ s;
   expect 1 ∈ s;
   expect 2 ∈ s;
   expect 3 !∈ s;
 
   -- filtered set builder
-  new evens :: { x | x ∈ source ∧ (x % 2 = 0) };
+  new evens := { x | x ∈ source ∧ (x % 2 = 0) };
   expect 0 ∈ evens;
   expect 2 ∈ evens;
   expect 1 !∈ evens;

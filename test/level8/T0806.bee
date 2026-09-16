@@ -1,4 +1,3 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=10 type=; literal=";"
 -- @DESC:T0806 map-reduce with done terminators (D14)
 -- D14: for terminators migrated to done;.
 rule sum(a, b ∈ Z) => (r ∈ Z):

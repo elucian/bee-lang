@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC:T0130 Equality and identity relational operators
 rule main:
   new a ∈ Z; new b ∈ Z;

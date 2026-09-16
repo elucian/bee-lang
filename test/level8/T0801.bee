@@ -1,4 +1,3 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=9 type=; literal=";"
 -- @ENABLED: Reset by user
 -- @DESC:file: asynch_call.bee
 -- Asynchronous rule call demo

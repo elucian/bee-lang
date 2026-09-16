@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: Lambda in pipeline — inline shorthand passed to a processing operator, spec/07 §2.2
 rule main:
   new result := apply_transform(10, 20, (x, y) => x + y);

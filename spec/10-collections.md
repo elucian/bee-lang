@@ -37,11 +37,28 @@ print list[$];     -- Last element: 40
 print list[$ - 1]; -- Second-to-last element: 30
 ```
 
-### 2.3 Slicing Syntax
-Sub-collections are extracted using range operators:
+### 2.3 Slicing Syntax — Views, Not Copies
+A slice expression `collection[a..b]` creates a **view** (a reference window) into the original collection, not an extraction. No elements are copied; the slice aliases the source storage, so mutations through the view are visible in the original collection and vice versa:
 ```bee
-new slice := list[2..$ - 1]; -- Extract from index 2 to second-to-last item
+new list  := (10, 20, 30, 40);
+new slice := list[2..$ - 1]; -- view of elements 2..3: <20, 30>
+
+let slice[1] := 99;          -- writes through the view
+print list[2];               -- 99 (original collection is affected)
 ```
+
+### 2.4 Reference Assignment vs. Clone Assignment `::`
+Assigning a collection (or slice) with `:=` binds a **reference**; both names share the same storage:
+```bee
+new alias := list;           -- reference: alias and list share elements
+```
+To obtain an independent collection, use the clone-assignment operator `::` (see `spec/00-memory-model.md` §4), which performs a **deep copy** at binding time:
+```bee
+new clone :: list;           -- deep copy: clone is independent
+new frozen :: list[2..3];    -- materialize a view into a real sub-collection
+let clone[1] := 0;           -- does not affect list
+```
+`::` is a binding operator (parallel to `:=`), not a prefix expression; it appears where `:=` would appear in `new` and `let` statements.
 
 ---
 
@@ -110,8 +127,14 @@ Key-value dictionaries associate unique keys with values:
 new userMap ∈ {S: Z} := {"alice": 100, "bob": 200};
 
 let userMap["charlie"] := 300; -- Insert new key
-zap userMap["alice"];          -- Remove key
+cut userMap["alice"];          -- Remove key (element removal)
+zap oldRef;                    -- Invalidate a reference (memory directive, §2.3)
 ```
+
+**Element Removal (`cut`):** `cut target[index];` removes the element at the
+given 1-based index from a list/array (shifting remaining elements) or the key
+from a map. `cut` is the canonical collection element-removal keyword;
+`zap` remains the memory-directive keyword for invalidating identifiers.
 
 ---
 
@@ -133,8 +156,11 @@ ordinal_lit       ::= "(" integer_lit ")" "{" identifier ( "," identifier )* "}"
 indexing          ::= expression "[" index_expr ( "," index_expr )* "]" ;
 index_expr        ::= expression | "$" | range_expr ;
 
-set_algebra_op    ::= "∩" | "∪" | "\" | "Δ" | "⊂" | "⊃" | "∈" | "!∈" ;
+set_algebra_op    ::= "∩" | "∪" | "\\" | "Δ" | "⊂" | "⊃" | "∈" | "!∈" ;
 set_expr          ::= expression set_algebra_op expression ;
+
+(* Element Removal *)
+cut_stmt          ::= "cut" expression "[" index_expr "]" ";" ;
 ```
 
 ---

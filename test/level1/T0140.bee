@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: T0140 Unary minus and negative integer literals
 -- A leading `-` is a unary prefix operator producing a negative value, and
 -- composes with identifiers, parens, and arithmetic via normal precedence.

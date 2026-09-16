@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: T0135 Decision 13: fully-exclusive legacy `!!` still lexes as `>..<`
 -- The legacy `!!` form preserves fully-exclusive semantics and emits a non-fatal E0010 deprecation.
 rule main:

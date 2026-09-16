@@ -1,4 +1,3 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=6 type=IDENT literal="Z"
 -- @DESC:T0303 array traversal with done terminator (D14)
 -- D14: for loop terminates with done;.
 -- 1-based array indexing (Decision 1).

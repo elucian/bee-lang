@@ -167,6 +167,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.Token{Type: token.QUESTION, Literal: "?", Pos: token.Pos(l.line)}
 	case '$':
 		tok = token.Token{Type: token.SIGIL_SYS, Literal: "$", Pos: token.Pos(l.line)}
+	case '|':
+		tok = token.Token{Type: token.BAR, Literal: "|", Pos: token.Pos(l.line)}
 	case '#':
 		tok = token.Token{Type: token.HASH, Literal: "#", Pos: token.Pos(l.line)}
 	case '@':
@@ -387,6 +389,9 @@ func (l *Lexer) NextToken() token.Token {
 		} else if l.PeekChar() == '<' {
 			l.readChar()
 			tok = token.Token{Type: token.PIPE_LEFT, Literal: "<<", Pos: token.Pos(l.line)}
+		} else if l.PeekChar() == '+' {
+			l.readChar()
+			tok = token.Token{Type: token.LIST_APPEND, Literal: "<+", Pos: token.Pos(l.line)}
 		} else if l.PeekChar() == '=' {
 			l.readChar()
 			tok = token.Token{Type: token.LTE, Literal: "<=", Pos: token.Pos(l.line)}
@@ -423,6 +428,11 @@ func (l *Lexer) NextToken() token.Token {
 	case '"':
 		tok.Type = token.STRING
 		tok.Literal = l.readString()
+		tok.Pos = token.Pos(l.line)
+		return tok
+	case '\'':
+		tok.Type = token.STRING
+		tok.Literal = l.readSingleString()
 		tok.Pos = token.Pos(l.line)
 		return tok
 	case '`':
@@ -657,6 +667,43 @@ func (l *Lexer) readString() string {
 	return sb.String()
 }
 
+// readSingleString reads a single-quoted string literal ('...').
+// Per spec/01 §4.1: standard backslash escapes, no interpolation,
+// cannot span physical line breaks.
+func (l *Lexer) readSingleString() string {
+	var sb strings.Builder
+	l.readChar() // consume opening quote
+
+	for l.ch != '\'' && l.ch != 0 && l.ch != '\n' {
+		if l.ch == '\\' {
+			l.readChar()
+			switch l.ch {
+			case 'n':
+				sb.WriteRune('\n')
+			case 'r':
+				sb.WriteRune('\r')
+			case 't':
+				sb.WriteRune('\t')
+			case '\\':
+				sb.WriteRune('\\')
+			case '\'':
+				sb.WriteRune('\'')
+			case '"':
+				sb.WriteRune('"')
+			case '0':
+				sb.WriteRune(0)
+			default:
+				sb.WriteRune(l.ch)
+			}
+		} else {
+			sb.WriteRune(l.ch)
+		}
+		l.readChar()
+	}
+	l.readChar() // consume closing quote
+	return sb.String()
+}
+
 func (l *Lexer) readRawString() string {
 	position := l.position + 1
 	l.readChar() // consume opening backtick
@@ -731,8 +778,11 @@ func isLetter(ch rune) bool {
 		('Α' <= ch && ch <= 'Ω') ||
 		('а' <= ch && ch <= 'я') ||
 		('А' <= ch && ch <= 'Я') ||
-		(ch >= '⁰' && ch <= '⁹') ||
-		ch > 127
+		// Subscript digits are valid identifier continuation (spec/01 §5 EBNF).
+		(ch >= '₀' && ch <= '₉')
+	// NOTE: superscript digits (⁰-⁹) are NOT identifier parts — they are
+	// power operators (D10). The catch-all `ch > 127` was removed because
+	// it incorrectly admitted operator runes into identifiers.
 }
 
 func isDigit(ch rune) bool {

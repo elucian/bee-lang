@@ -1,4 +1,3 @@
--- @DISABLED: E0009 SyntaxError:InvalidCycleHeader: line=5 (expected `âˆˆ` or `in` after for-index identifier; got type=, literal=",")
 -- @DESC:T0319 walking a map with done terminator (D14)
 -- D14: for loop terminates with done;.
 rule main:
@@ -6,6 +5,5 @@ rule main:
   for k, v ∈ m do
     write k + "=" + v + " ";
   done;
-  print;
+  print; -- 1 = a 2 = b
 return;
-

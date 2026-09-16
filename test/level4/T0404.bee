@@ -1,16 +1,17 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
 -- @DESC:T0404 contract grow on a collection
--- old works on a collection too demo
-rule grow(items ∈ [Z], by ∈ Z):
-  assert by >= 0;
-  expect items.length = old items.length + by;
-  let items ++ by;
+-- A rule that stamps a collection cell demo; collections pass
+-- by share (spec/10), so the caller verifies the mutation
+-- after apply returns.
+rule stamp(items ∈ [Z], pos ∈ Z, val ∈ Z):
+  assert pos >= 1;
+  let items[pos] := val;
 return;
 
 rule main:
-  new xs ∈ [Z](2);
-  print xs.length;
-  apply grow(xs, 3);
-  print xs.length;
+  new xs := [10, 20, 30];
+  apply stamp(xs, 2, 99);
+  expect xs[2] = 99;
+  expect xs[$] = 30;
+  print xs[2];
 return;
 

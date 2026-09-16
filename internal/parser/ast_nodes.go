@@ -95,6 +95,15 @@ type DeclarationStatement struct {
 	Names  []string
 	Value  Expression
 	Values []Expression
+	// Clone is true when the binding operator is `::` (deep copy)
+	// instead of `:=` (reference). See spec/10 §2.4.
+	Clone bool
+	// SpreadIndex is the 0-based position in Names of the `*tail` spread
+	// target (spec/11 §5.1), or -1 when no spread is present.
+	SpreadIndex int
+	// MatrixDims holds the (rows, cols) from a typed matrix declaration
+	// `new M ∈ [Z](r, c)` (spec/10 §3.3). Nil for non-matrix declarations.
+	MatrixDims *[2]int
 }
 
 func (ds *DeclarationStatement) statementNode() {}
@@ -180,6 +189,9 @@ type IndexExpression struct {
 	Token token.Token
 	Left  Expression
 	Index Expression
+	// ExtraIndices holds additional comma-separated indices for matrix
+	// indexing (spec/10 §4: index_expr ("," index_expr)*). Nil for 1D.
+	ExtraIndices []Expression
 }
 
 func (ie *IndexExpression) expressionNode() {}
@@ -253,6 +265,24 @@ type RuleStatement struct {
 func (rs *RuleStatement) statementNode() {}
 func (rs *RuleStatement) Pos() token.Pos { return rs.Token.Pos }
 
+// ApplyStatement implements the side-effect invocation directive per
+// spec/03-rules.md §3.1:
+//
+//	apply rule_name(arg_list);
+//
+// The wrapped call executes exactly like a CallExpression except that any
+// returned results are discarded. An argument written with the reference-of
+// prefix (@ident, Decision 12) passes the caller's cell by reference: after
+// the rule body completes, the bound parameter's final value is written back
+// into the caller's variable (copy-in/copy-out).
+type ApplyStatement struct {
+	Token token.Token
+	Call  *CallExpression
+}
+
+func (as *ApplyStatement) statementNode() {}
+func (as *ApplyStatement) Pos() token.Pos { return as.Token.Pos }
+
 type ZapStatement struct {
 	Token token.Token
 	Name  string
@@ -260,6 +290,16 @@ type ZapStatement struct {
 
 func (zs *ZapStatement) statementNode() {}
 func (zs *ZapStatement) Pos() token.Pos { return zs.Token.Pos }
+
+// CutStatement removes an element from a collection by index/key,
+// shifting remaining elements. User-directed replacement for `scrap`.
+type CutStatement struct {
+	Token  token.Token
+	Target Expression // IndexExpression identifying the element to remove
+}
+
+func (cs *CutStatement) statementNode() {}
+func (cs *CutStatement) Pos() token.Pos { return cs.Token.Pos }
 
 type WriteStatement struct {
 	Token token.Token
@@ -359,6 +399,7 @@ type CycleStatement struct {
 	BodyHeader string          // "do" | "while" | "for"
 	Condition  Expression      // for `while expr do` (nil otherwise)
 	Index      *Identifier     // for `for i ∈ expr do` (nil otherwise)
+	Value      *Identifier     // for `for k, v ∈ map do` — second loop var (nil for scalar iteration)
 	Range      Expression      // for `for i ∈ expr do` (nil otherwise)
 	IsForall   bool            // true if `for ∀ i ∈ …` (D11 quantifier)
 	Body       *BlockStatement // volatile block
@@ -406,6 +447,55 @@ type SteppedRangeExpression struct {
 
 func (sre *SteppedRangeExpression) expressionNode() {}
 func (sre *SteppedRangeExpression) Pos() token.Pos  { return sre.Token.Pos }
+
+// QuantifierExpression implements the predicate-logic quantifier expression
+// per spec/11-processing.md §3:
+//
+//	quantifier_expr ::= "(" ( "∀" | "∃" ) identifier "∈" expression ":" condition ")" ;
+//
+// Returns 1 (true) when the predicate holds for all (∀) or at least one (∃)
+// element of the domain collection; 0 (false) otherwise.
+type QuantifierExpression struct {
+	Token     token.Token // ∀ or ∃
+	Variable  string      // loop variable identifier
+	Domain    Expression  // collection to iterate
+	Condition Expression  // predicate to evaluate per element
+}
+
+func (qe *QuantifierExpression) expressionNode() {}
+func (qe *QuantifierExpression) Pos() token.Pos  { return qe.Token.Pos }
+
+// BuilderExpression implements collection builder/comprehension syntax
+// (spec/11 §5):
+//
+//	set_builder   ::= "{" expr "|" ident "∈" domain [ "∧" condition ] "}" ;
+//	array_builder ::= "[" expr "|" ident "∈" domain [ "∧" condition ] "]" ;
+//	map_builder   ::= "{" "(" key ":" value ")" "|" ident "∈" domain [ "∧" condition ] "}" ;
+//
+// The builder iterates the domain, binds each element to Variable, evaluates
+// the optional filter Condition, and collects the MapExpr result.
+type BuilderExpression struct {
+	Token     token.Token // opening delimiter ({ or [)
+	MapExpr   Expression  // expression to collect (e.g. x, x², (k:v))
+	Variable  string      // loop variable
+	Domain    Expression  // collection to iterate
+	Condition Expression  // optional filter (nil = no filter)
+	IsMap     bool        // true for map builders {(k:v) | ...}
+}
+
+func (be *BuilderExpression) expressionNode() {}
+func (be *BuilderExpression) Pos() token.Pos  { return be.Token.Pos }
+
+// MapPairExpression wraps a parenthesised `(key : value)` pair used as
+// the mapping head of a map builder `{ (k:v) | x ∈ domain }`.
+type MapPairExpression struct {
+	Token token.Token
+	Key   Expression
+	Value Expression
+}
+
+func (mpe *MapPairExpression) expressionNode() {}
+func (mpe *MapPairExpression) Pos() token.Pos  { return mpe.Token.Pos }
 
 // CallExpression implements the rule invocation expression per
 // spec/03-rules.md §3.1 and §6 EBNF:

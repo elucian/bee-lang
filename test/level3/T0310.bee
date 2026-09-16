@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: Closures state capture — rule returns a closure with boxed mutable state
 rule counter_generator(start ∈ Z) => (next ∈ Rule):
   set .count := [start];

@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC:T0104 Exponentiation and power operators
 rule main:
   new base, exp, res ∈ Z;

@@ -32,6 +32,14 @@ type closureObject struct {
 	Nested map[string]*parser.RuleStatement // member rules keyed by folded name (`.next`)
 }
 
+// MatrixValue stores a 2D matrix in row-major order (spec/10 §3.3).
+// Elements are 1-based indexed: M[r,c] → Data[(r-1)*Cols + (c-1)].
+type MatrixValue struct {
+	Data []int
+	Rows int
+	Cols int
+}
+
 type Evaluator struct {
 	symbols       map[string]int
 	stringSymbols map[string]string
@@ -39,9 +47,10 @@ type Evaluator struct {
 	// listValues, setValues, mapValues store collection literals bound to
 	// identifiers (spec/10 §1). All values are stored as []int for the
 	// bootstrap evaluator; sets are deduplicated and sorted.
-	listValues map[string][]int
-	setValues  map[string][]int
-	mapValues  map[string]map[string]int
+	listValues   map[string][]int
+	setValues    map[string][]int
+	mapValues    map[string]map[string]int
+	matrixValues map[string]MatrixValue
 	// steppedRanges stores SteppedRangeExpression ASTs by identifier name
 	// so that subsequent `(ident)[i]` indexing can materialise the i-th
 	// element. Decision 13 (D13, 2026-09-13).
@@ -93,6 +102,7 @@ func New() *Evaluator {
 		listValues:     make(map[string][]int),
 		setValues:      make(map[string][]int),
 		mapValues:      make(map[string]map[string]int),
+		matrixValues:   make(map[string]MatrixValue),
 		steppedRanges:  make(map[string]*parser.SteppedRangeExpression),
 		identities:     make(map[string]int),
 		nextID:         1,
@@ -199,10 +209,19 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		val := e.evalIntExpression(s.Condition)
 		if val == 0 {
 			e.DumpContext()
-			panic(fmt.Sprintf("expect failed at line %d", int(s.Token.Pos)))
+			// spec/03-rules.md §4/§7: a failed expect raises E0303
+			// ExpectationFailed, a fatal runtime error (failure exit status)
+			// — never a Go panic (GEMINI.md §4: no panic in error flows).
+			fmt.Fprintf(os.Stderr, "[ERROR] E0303 ExpectationFailed: expect failed at line %d\n", int(s.Token.Pos))
+			os.Exit(1)
 		} else {
 			e.debugLog("DEBUG: Expectation passed in line %d\n", int(s.Token.Pos))
 		}
+	case *parser.ApplyStatement:
+		// spec/03 §3.1: execute the rule for side effects, discarding results.
+		// By-reference @args are written back inside callRule before the
+		// caller's frame is restored.
+		e.callRule(s.Call, nil)
 	case *parser.PrintStatement:
 		separator := " "
 		if s.Separator != nil {
@@ -218,6 +237,34 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			fmt.Print(val)
 		}
 		fmt.Println()
+	case *parser.WriteStatement:
+		// spec/02 §5: `write expr;` prints without trailing newline.
+		if s.Value != nil {
+			fmt.Print(e.evalExpression(s.Value))
+		}
+	case *parser.CutStatement:
+		// `cut target[index];` removes the element at the given 1-based index
+		// from a list/array (shifting remaining elements) or the key from a map.
+		if idxExpr, isIndex := s.Target.(*parser.IndexExpression); isIndex {
+			if ident, ok := idxExpr.Left.(*parser.Identifier); ok {
+				// Map key removal
+				if m, hasMap := e.mapValues[ident.Value]; hasMap {
+					key := e.evalExpression(idxExpr.Index)
+					delete(m, key)
+					break
+				}
+				// List/array element removal (1-based)
+				for _, store := range []map[string][]int{e.listValues, e.arrayValues} {
+					if coll, found := store[ident.Value]; found {
+						idx := e.evalIndexExpr(idxExpr.Index, len(coll))
+						if idx >= 1 && idx <= len(coll) {
+							store[ident.Value] = append(coll[:idx-1], coll[idx:]...)
+						}
+						break
+					}
+				}
+			}
+		}
 	case *parser.AssignmentStatement:
 		e.debugLog("EVALUATOR DEBUG: AssignmentStatement start, token lit=%q, type=%v\n", s.Token.Literal, s.Token.Type)
 		// Pre-evaluate all RHS integer values before mutating any symbol, so a
@@ -245,6 +292,56 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					key := e.evalExpression(idxExpr.Index)
 					if i < len(pendingInts) {
 						m[key] = pendingInts[i]
+					}
+					continue
+				}
+				// Matrix broadcast/slice mutation (spec/10 §3.3 + spec/11 §5.2):
+				// `let M[*] := v` fills all elements; `let M[r,*] := v` fills row r;
+				// `let M[*,c] := v` fills column c; `let M[r,c] := v` sets one cell.
+				if mat, hasMat := e.matrixValues[ident.Value]; hasMat {
+					if i < len(pendingInts) {
+						val := pendingInts[i]
+						isWildcard := func(expr parser.Expression) bool {
+							if id, isID := expr.(*parser.Identifier); isID {
+								return id.Value == "*"
+							}
+							return false
+						}
+						if len(idxExpr.ExtraIndices) == 1 {
+							rowW := isWildcard(idxExpr.Index)
+							colW := isWildcard(idxExpr.ExtraIndices[0])
+							if rowW && colW {
+								// M[*,*] — fill all
+								for j := range mat.Data {
+									mat.Data[j] = val
+								}
+							} else if rowW {
+								// M[*,c] — fill column c
+								col := e.evalIntExpression(idxExpr.ExtraIndices[0])
+								for r := 1; r <= mat.Rows; r++ {
+									mat.Data[(r-1)*mat.Cols+(col-1)] = val
+								}
+							} else if colW {
+								// M[r,*] — fill row r
+								row := e.evalIntExpression(idxExpr.Index)
+								for c := 1; c <= mat.Cols; c++ {
+									mat.Data[(row-1)*mat.Cols+(c-1)] = val
+								}
+							} else {
+								// M[r,c] — single cell
+								row := e.evalIntExpression(idxExpr.Index)
+								col := e.evalIntExpression(idxExpr.ExtraIndices[0])
+								if row >= 1 && row <= mat.Rows && col >= 1 && col <= mat.Cols {
+									mat.Data[(row-1)*mat.Cols+(col-1)] = val
+								}
+							}
+						} else if isWildcard(idxExpr.Index) {
+							// M[*] — fill all elements (broadcast)
+							for j := range mat.Data {
+								mat.Data[j] = val
+							}
+						}
+						e.matrixValues[ident.Value] = mat
 					}
 					continue
 				}
@@ -284,6 +381,33 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				}
 			}
 			e.debugLog("EVALUATOR DEBUG: Assigning to %s\n", name.Value)
+			// Collection append operators (spec/01-lexical-structure.md
+			// coll_op): `let l <+ x;` appends x at the end (List Append),
+			// `let l +> x;` prepends x at the beginning (Pipeline Append,
+			// Map-Reduce pattern). Operates on the stored slice in place;
+			// lists and arrays share the []int materialisation. The rebind
+			// replaces the stored slice header, so callers observing the
+			// same variable see the grown collection.
+			if s.Token.Literal == "<+" || s.Token.Literal == "+>" {
+				rhs := pendingInts[i]
+				if lst, ok := e.listValues[name.Value]; ok {
+					if s.Token.Literal == "<+" {
+						e.listValues[name.Value] = append(lst, rhs)
+					} else {
+						e.listValues[name.Value] = append([]int{rhs}, lst...)
+					}
+					continue
+				}
+				if arr, ok := e.arrayValues[name.Value]; ok {
+					if s.Token.Literal == "<+" {
+						e.arrayValues[name.Value] = append(arr, rhs)
+					} else {
+						e.arrayValues[name.Value] = append([]int{rhs}, arr...)
+					}
+					continue
+				}
+				continue
+			}
 			// Boxed closure state mutation (spec/03 §5.4): `let .field op= expr;`
 			// mutates the heap-allocated cell on the current closure frame.
 			if strings.HasPrefix(name.Value, ".") {
@@ -361,8 +485,35 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				curVal, ok := e.symbols[name.Value]
 				e.debugLog("EVALUATOR DEBUG: Name %s exists? %v, curVal = %d\n", name.Value, ok, curVal)
 
-				// Assignment handles both initial assignment and mutation (compound op)
+				// Set element add/remove (spec/10 §3.4): `let s += x;` adds
+				// x to the set; `let s -= x;` removes x from the set.
 				lit := s.Token.Literal
+				e.debugLog("EVALUATOR DEBUG: SetCheck name=%s lit=%s setKeys=%v\n", name.Value, lit, func() []string {
+					keys := make([]string, 0, len(e.setValues))
+					for k := range e.setValues {
+						keys = append(keys, k)
+					}
+					return keys
+				}())
+				if lit == "+=" || lit == "-=" {
+					if st, isSet := e.setValues[name.Value]; isSet {
+						if lit == "+=" {
+							e.setValues[name.Value] = dedupSortInts(append(st, rightVal))
+						} else {
+							filtered := make([]int, 0, len(st))
+							for _, v := range st {
+								if v != rightVal {
+									filtered = append(filtered, v)
+								}
+							}
+							e.setValues[name.Value] = filtered
+						}
+						e.ensureIdentity(name.Value)
+						continue
+					}
+				}
+
+				// Assignment handles both initial assignment and mutation (compound op)
 				e.debugLog("EVALUATOR DEBUG: Executing mutation, lit=%q\n", lit)
 				switch lit {
 				case "+=":
@@ -420,6 +571,24 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		if len(names) == 0 && s.Name != "" {
 			names = []string{s.Name}
 		}
+		// Typed matrix declaration (spec/10 §3.3): `new M ∈ [Z](r, c)`
+		// zero-initialises an r×c matrix in row-major order.
+		if s.MatrixDims != nil {
+			rows, cols := s.MatrixDims[0], s.MatrixDims[1]
+			for _, name := range names {
+				e.matrixValues[name] = MatrixValue{
+					Data: make([]int, rows*cols),
+					Rows: rows,
+					Cols: cols,
+				}
+				e.ensureIdentity(name)
+			}
+			// If a value is also provided, fall through to the value binding
+			// below so `new M ∈ [Z](2,3) := [[1,2,3],[4,5,6]];` initialises.
+			if len(s.Values) == 0 && s.Value == nil {
+				break
+			}
+		}
 		// Multi-result deconstruction (spec/03 §2.3): when a single
 		// CallExpression is assigned to multiple names, invoke once and
 		// distribute results positionally.
@@ -447,6 +616,31 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				} else {
 					e.symbols[names[0]] = 0
 					e.ensureIdentity(names[0])
+				}
+				break
+			}
+		}
+		// Deconstruction with spread (spec/11 §5.1):
+		// `new x, y, *tail := [1,2,3,4,5];` — head elements bound positionally,
+		// remaining elements collected into the spread target as a collection.
+		if s.SpreadIndex >= 0 && len(s.Values) == 1 {
+			if elems, kind, ok := e.resolveCollection(s.Values[0]); ok {
+				headCount := len(names) - 1 // all names except the spread target
+				for i := 0; i < headCount && i < len(elems); i++ {
+					e.symbols[names[i]] = elems[i]
+					e.ensureIdentity(names[i])
+				}
+				if s.SpreadIndex < len(names) && headCount <= len(elems) {
+					tail := elems[headCount:]
+					switch kind {
+					case kindArray:
+						e.arrayValues[names[s.SpreadIndex]] = tail
+					case kindList:
+						e.listValues[names[s.SpreadIndex]] = tail
+					default:
+						e.arrayValues[names[s.SpreadIndex]] = tail
+					}
+					e.ensureIdentity(names[s.SpreadIndex])
 				}
 				break
 			}
@@ -506,7 +700,54 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					// registry so CallExpression dispatch can find it.
 					e.lambdaValues[name] = lambdaExpr
 					e.ensureIdentity(name)
+				} else if sre, ok := s.Values[i].(*parser.SteppedRangeExpression); ok {
+					// Decision 13 (D13): bind stepped range so `(name)[i]`
+					// indexing materialises the i-th element (1-based, D1).
+					e.steppedRanges[name] = sre
+					delete(e.symbols, name)
+					e.ensureIdentity(name)
+				} else if builder, ok := s.Values[i].(*parser.BuilderExpression); ok {
+					// Collection builder (spec/11 §5): materialise the builder
+					// into the appropriate collection store.
+					e.evalBuilderBinding(name, builder)
 				} else {
+					// Deep clone binding: `new X :: expr;` (spec/10 §2.4).
+					if s.Clone {
+						if e.tryCloneBinding(name, s.Values[i]) {
+							continue
+						}
+					}
+					// Slice view binding: `new w := a[2..$-1];` (spec/10 §2.3).
+					if idxExpr, isIdx := s.Values[i].(*parser.IndexExpression); isIdx {
+						if ident, ok := idxExpr.Left.(*parser.Identifier); ok {
+							if coll, kind, okColl := e.resolveCollection(ident); okColl {
+								if slice := e.evalSliceView(idxExpr, coll); slice != nil {
+									switch kind {
+									case kindArray:
+										e.arrayValues[name] = slice
+									case kindList:
+										e.listValues[name] = slice
+									case kindSet:
+										e.setValues[name] = dedupSortInts(slice)
+									}
+									e.ensureIdentity(name)
+									continue
+								}
+							}
+						}
+					}
+					// Set algebra: `new u := s1 ∪ s2;` (spec/10 §3.4).
+					if e.trySetAlgebra(name, s.Values[i]) {
+						continue
+					}
+					// Collection concatenation: `new c := [1,2] + [3];` (spec/10).
+					if e.tryCollectionConcat(name, s.Values[i]) {
+						continue
+					}
+					// Reference binding: `new alias := collection;` (spec/10 §2.4).
+					if e.tryRefBinding(name, s.Values[i]) {
+						continue
+					}
 					val := e.evalIntExpression(s.Values[i])
 					e.symbols[name] = val
 					e.ensureIdentity(name)
@@ -548,6 +789,43 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					e.lambdaValues[name] = lambdaExpr
 					e.ensureIdentity(name)
 				} else {
+					// Deep clone binding: `new X :: expr;` (spec/10 §2.4).
+					if s.Clone {
+						if e.tryCloneBinding(name, s.Value) {
+							continue
+						}
+					}
+					// Slice view binding: `new w := a[2..$-1];` (spec/10 §2.3).
+					if idxExpr, isIdx := s.Value.(*parser.IndexExpression); isIdx {
+						if ident, ok := idxExpr.Left.(*parser.Identifier); ok {
+							if coll, kind, okColl := e.resolveCollection(ident); okColl {
+								if slice := e.evalSliceView(idxExpr, coll); slice != nil {
+									switch kind {
+									case kindArray:
+										e.arrayValues[name] = slice
+									case kindList:
+										e.listValues[name] = slice
+									case kindSet:
+										e.setValues[name] = dedupSortInts(slice)
+									}
+									e.ensureIdentity(name)
+									continue
+								}
+							}
+						}
+					}
+					// Set algebra: `new u := s1 ∪ s2;` (spec/10 §3.4).
+					if e.trySetAlgebra(name, s.Value) {
+						continue
+					}
+					// Collection concatenation: `new cm := l + m;` (spec/10).
+					if e.tryCollectionConcat(name, s.Value) {
+						continue
+					}
+					// Reference binding: `new alias := collection;` (spec/10 §2.4).
+					if e.tryRefBinding(name, s.Value) {
+						continue
+					}
 					val := e.evalIntExpression(s.Value)
 					e.symbols[name] = val
 					e.ensureIdentity(name)
@@ -739,6 +1017,76 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 					firstOffset = step
 				}
 				for v := start + firstOffset; inRangePerOp(be.Token, v, start, end); v += step {
+					e.symbols[indexName] = v
+					e.ensureIdentity(indexName)
+					if s.Body != nil {
+						for _, stmt := range s.Body.Statements {
+							if e.exitingRule {
+								deferRestore()
+								return
+							}
+							e.evalStatement(stmt)
+						}
+					}
+				}
+			case *parser.Identifier:
+				// Map iteration with key,value: `for k, v ∈ m do` binds
+				// k to each key and v to each value (spec/10 §3.5).
+				if s.Value != nil {
+					if m, isMap := e.mapValues[rng.Value]; isMap {
+						valueName := s.Value.Value
+						prevValV, hadPrevV := e.symbols[valueName]
+						prevIDV, hadPrevIDV := e.identities[valueName]
+						defer func() {
+							if hadPrevV {
+								e.symbols[valueName] = prevValV
+							} else {
+								delete(e.symbols, valueName)
+							}
+							if hadPrevIDV {
+								e.identities[valueName] = prevIDV
+							} else {
+								delete(e.identities, valueName)
+							}
+						}()
+						// Iterate in sorted-key order for determinism.
+						keys := make([]string, 0, len(m))
+						for k := range m {
+							keys = append(keys, k)
+						}
+						sort.Strings(keys)
+						for _, k := range keys {
+							e.symbols[indexName] = 0 // keys are strings in mapValues
+							e.stringSymbols[indexName] = k
+							e.symbols[valueName] = m[k]
+							e.ensureIdentity(indexName)
+							e.ensureIdentity(valueName)
+							if s.Body != nil {
+								for _, stmt := range s.Body.Statements {
+									if e.exitingRule {
+										deferRestore()
+										return
+									}
+									e.evalStatement(stmt)
+								}
+							}
+						}
+						break
+					}
+				}
+				// Foreach over a stored collection (spec/10 §3.1 lists /
+				// §3.2 arrays / spec/11 pipelines): `for e ∈ l do` binds the
+				// loop variable to each element in collection order. Arrays,
+				// lists, and sets all materialise as []int in this evaluator.
+				var elems []int
+				if arr, ok := e.arrayValues[rng.Value]; ok {
+					elems = arr
+				} else if lst, ok := e.listValues[rng.Value]; ok {
+					elems = lst
+				} else if st, ok := e.setValues[rng.Value]; ok {
+					elems = st
+				}
+				for _, v := range elems {
 					e.symbols[indexName] = v
 					e.ensureIdentity(indexName)
 					if s.Body != nil {
@@ -973,21 +1321,52 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 		// sequence (1-based, Decision 1). Otherwise fall back to the
 		// existing identifier-array indexing semantics.
 		if sre, ok := expr.Left.(*parser.SteppedRangeExpression); ok {
-			idx := e.evalIntExpression(expr.Index)
+			idx := e.evalIndexExpr(expr.Index, e.steppedRangeLength(sre))
 			val := e.steppedRangeValue(sre, idx)
 			return val, e.allocID()
 		}
 		if ident, ok := expr.Left.(*parser.Identifier); ok {
 			if sre, hasSRE := e.steppedRanges[ident.Value]; hasSRE {
-				idx := e.evalIntExpression(expr.Index)
+				idx := e.evalIndexExpr(expr.Index, e.steppedRangeLength(sre))
 				val := e.steppedRangeValue(sre, idx)
 				return val, e.ensureIdentity(ident.Value)
 			}
-			var idx int
-			if arr, ok := e.arrayValues[ident.Value]; ok {
-				idx = e.evalIndexExpr(expr.Index, len(arr))
+			// Map key indexing (spec/10 §3.5): M[k] looks up the value for key k.
+			if m, hasMap := e.mapValues[ident.Value]; hasMap {
+				key := e.evalExpression(expr.Index)
+				return m[key], e.ensureIdentity(ident.Value)
 			}
+			// Matrix 2D indexing (spec/10 §3.3): M[r, c] with 1-based indices.
+			if mat, hasMat := e.matrixValues[ident.Value]; hasMat {
+				if len(expr.ExtraIndices) == 1 {
+					row := e.evalIntExpression(expr.Index)
+					col := e.evalIntExpression(expr.ExtraIndices[0])
+					if row >= 1 && row <= mat.Rows && col >= 1 && col <= mat.Cols {
+						return mat.Data[(row-1)*mat.Cols+(col-1)], e.ensureIdentity(ident.Value)
+					}
+					return 0, e.allocID()
+				}
+				// Single-index matrix access: flatten to 1-based linear index.
+				idx := e.evalIndexExpr(expr.Index, len(mat.Data))
+				if idx >= 1 && idx <= len(mat.Data) {
+					return mat.Data[idx-1], e.ensureIdentity(ident.Value)
+				}
+				return 0, e.allocID()
+			}
+			var idx int
+			// Resolve the collection store in spec/10 order: arrays, then
+			// lists, then sets. All materialise as []int with 1-based indexing
+			// (Decision 1); the bounds/anchor rules are identical across kinds.
+			var coll []int
 			if arr, ok := e.arrayValues[ident.Value]; ok {
+				coll = arr
+			} else if lst, ok := e.listValues[ident.Value]; ok {
+				coll = lst
+			} else if st, ok := e.setValues[ident.Value]; ok {
+				coll = st
+			}
+			if coll != nil {
+				idx = e.evalIndexExpr(expr.Index, len(coll))
 				if idx == 0 {
 					fmt.Fprintf(os.Stderr, "[ERROR] E1006 ZeroBasedIndexAttempt: index 0 at line %d\n", int(expr.Token.Pos))
 					return 0, e.allocID()
@@ -999,11 +1378,11 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 					fmt.Fprintf(os.Stderr, "[ERROR] E1001 NegativeIndex: index %d is negative; use a[$-n] for a relative end-anchor at line %d\n", idx, int(expr.Token.Pos))
 					panic(fmt.Sprintf("negative index not allowed at line %d", int(expr.Token.Pos)))
 				}
-				if idx < 1 || idx > len(arr) {
-					fmt.Fprintf(os.Stderr, "[ERROR] E1001 IndexOutOfBounds: index %d out of range 1..%d at line %d\n", idx, len(arr), int(expr.Token.Pos))
+				if idx < 1 || idx > len(coll) {
+					fmt.Fprintf(os.Stderr, "[ERROR] E1001 IndexOutOfBounds: index %d out of range 1..%d at line %d\n", idx, len(coll), int(expr.Token.Pos))
 					return 0, e.allocID()
 				}
-				return arr[idx-1], e.ensureIdentity(ident.Value)
+				return coll[idx-1], e.ensureIdentity(ident.Value)
 			}
 		}
 		return 0, e.allocID()
@@ -1053,6 +1432,45 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 		// expression reports a value rather than panicking.
 		rightVal, _ := e.evalIntExpressionWithID(expr.Right)
 		return rightVal, e.allocID()
+	case *parser.QuantifierExpression:
+		// spec/11 §3: (∀ x ∈ S : P(x)) returns 1 iff every element satisfies
+		// the predicate; (∃ x ∈ S : P(x)) returns 1 iff at least one does.
+		// The loop variable is bound per-iteration and restored afterwards.
+		elems, _, ok := e.resolveCollection(expr.Domain)
+		if !ok {
+			return 0, e.allocID()
+		}
+		varName := expr.Variable
+		prevVal, hadPrev := e.symbols[varName]
+		prevID, hadPrevID := e.identities[varName]
+		defer func() {
+			if hadPrev {
+				e.symbols[varName] = prevVal
+			} else {
+				delete(e.symbols, varName)
+			}
+			if hadPrevID {
+				e.identities[varName] = prevID
+			} else {
+				delete(e.identities, varName)
+			}
+		}()
+		isForall := expr.Token.Type == token.FORALL || expr.Token.Literal == "∀"
+		for _, elem := range elems {
+			e.symbols[varName] = elem
+			e.ensureIdentity(varName)
+			result := e.evalIntExpression(expr.Condition)
+			if isForall && result == 0 {
+				return 0, e.allocID() // universal: any false → false
+			}
+			if !isForall && result != 0 {
+				return 1, e.allocID() // existential: any true → true
+			}
+		}
+		if isForall {
+			return 1, e.allocID() // all passed
+		}
+		return 0, e.allocID() // none found
 	case *parser.BinaryExpression:
 		lit := expr.Token.Literal
 		// Identity operators (Decision 2 — pointer identity)
@@ -1119,6 +1537,48 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 					return 0, 0
 				}
 			}
+			return 0, 0
+		}
+		// Not-in (membership negation, spec/10 §3.4): x !∈ coll.
+		if lit == "!∈" || expr.Token.Type == token.NOT_IN {
+			leftVal, _ := e.evalIntExpressionWithID(expr.Left)
+			if id, ok := expr.Right.(*parser.Identifier); ok {
+				for _, store := range []map[string][]int{e.arrayValues, e.listValues, e.setValues} {
+					if coll, found := store[id.Value]; found {
+						for _, v := range coll {
+							if v == leftVal {
+								return 0, 0 // found → !∈ is false
+							}
+						}
+						return 1, 0 // not found → !∈ is true
+					}
+				}
+			}
+			return 1, 0 // not a collection → vacuously true
+		}
+		// Set algebra binary operators (spec/10 §3.4): ∩ ∪ Δ ⊂ ⊃.
+		// When these appear in expression context (not declaration binding),
+		// evaluate them as boolean predicates for ⊂/⊃, or materialise a
+		// temporary set and check membership for ∩/∪/Δ.
+		if expr.Token.Type == token.SUBSET || expr.Token.Type == token.SUPERSET || lit == "⊂" || lit == "⊃" {
+			leftElems, _, okL := e.resolveCollection(expr.Left)
+			rightElems, _, okR := e.resolveCollection(expr.Right)
+			if okL && okR {
+				ls := toIntSet(leftElems)
+				rs := toIntSet(rightElems)
+				if lit == "⊂" || expr.Token.Type == token.SUBSET {
+					if isSubset(ls, rs) {
+						return 1, 0
+					}
+					return 0, 0
+				}
+				// ⊃
+				if isSubset(rs, ls) {
+					return 1, 0
+				}
+				return 0, 0
+			}
+			return 0, 0
 		}
 
 		// <!-- EVAL: RADICAL_OPERATOR_EVALUATION -->
@@ -1278,6 +1738,16 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 		}
 		return "{" + strings.Join(parts, ", ") + "}"
 	case *parser.BinaryExpression:
+		// String concatenation: when either operand is a string literal or
+		// a string-bound identifier, `+` concatenates in string context.
+		if expr.Token.Literal == "+" {
+			leftStr := e.evalExpression(expr.Left)
+			rightStr := e.evalExpression(expr.Right)
+			// Heuristic: if either side is non-numeric, treat as string concat.
+			if !isNumericString(leftStr) || !isNumericString(rightStr) {
+				return leftStr + rightStr
+			}
+		}
 		return strconv.Itoa(e.evalIntExpression(expr))
 	case *parser.MemberExpression:
 		// Member access (spec/03 §5.4): leading-dot boxed field read, or an
@@ -1422,6 +1892,48 @@ func (e *Evaluator) steppedRangeValue(sre *parser.SteppedRangeExpression, i int)
 	return val
 }
 
+// steppedRangeLength returns the number of elements in the stepped range
+// sequence, used to bind the `$` end-anchor for index expressions (D1+D13).
+func (e *Evaluator) steppedRangeLength(sre *parser.SteppedRangeExpression) int {
+	be := sre.Range.(*parser.BinaryExpression)
+	start := e.evalIntExpression(be.Left)
+	end := e.evalIntExpression(be.Right)
+	step := e.evalIntExpression(sre.Step)
+	if step == 0 {
+		step = 1
+	}
+	leftOffset := 0
+	switch be.Token.Type {
+	case token.RANGE_RGHT_INC, token.RANGE_EXCL:
+		leftOffset = step
+	}
+	first := start + leftOffset
+	// Compute count by iterating from first until the bundle excludes the value.
+	count := 0
+	for i := 1; ; i++ {
+		val := start + leftOffset + (i-1)*step
+		inRange := false
+		switch be.Token.Type {
+		case token.RANGE_INCL:
+			inRange = val >= start && val <= end
+		case token.RANGE_LEFT_INC:
+			inRange = val >= start && val < end
+		case token.RANGE_RGHT_INC:
+			inRange = val > start && val <= end
+		case token.RANGE_EXCL:
+			inRange = val > start && val < end
+		default:
+			inRange = val >= start && val <= end
+		}
+		if !inRange {
+			break
+		}
+		count++
+	}
+	_ = first
+	return count
+}
+
 // callRule executes a rule invocation per spec/03-rules.md §3.1. It creates
 // a scoped call frame: the caller's symbols are saved, the rule's declared
 // parameters are bound to the evaluated argument values, the body is
@@ -1473,7 +1985,17 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	// Evaluate arguments in the caller's frame before switching.
 	argVals := make([]int, len(call.Args))
 	for i, arg := range call.Args {
-		argVals[i] = e.evalIntExpression(arg)
+		// By-reference argument (@ident): copy the caller cell's *value* in —
+		// evaluating the PrefixExpression would yield the D12 identity ID,
+		// not the variable's value. Write-back happens after the body runs.
+		if prefix, isRef := arg.(*parser.PrefixExpression); isRef && prefix.Operator == "@" {
+			if ident, isIdent := prefix.Right.(*parser.Identifier); isIdent {
+				argVals[i] = e.symbols[ident.Value]
+				continue
+			}
+		} else {
+			argVals[i] = e.evalIntExpression(arg)
+		}
 	}
 
 	// Save the caller's frame.
@@ -1508,6 +2030,22 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	for i, param := range rule.Params {
 		if i < len(argVals) {
 			e.symbols[param] = argVals[i]
+
+			// Composite by-share binding (spec/03 §2.2): when the argument
+			// is an identifier (optionally @-prefixed) that names a stored
+			// collection, bind the parameter to the *same* slice so element
+			// mutations inside the rule are visible to the caller. The
+			// caller's frame is saved above, so aliasing is safe here.
+			argExpr := call.Args[i]
+			if prefix, isRef := argExpr.(*parser.PrefixExpression); isRef && prefix.Operator == "@" {
+				argExpr = prefix.Right
+			}
+			if ident, isIdent := argExpr.(*parser.Identifier); isIdent {
+				if arr, ok := savedArrays[ident.Value]; ok {
+					e.arrayValues[param] = arr
+					delete(e.symbols, param)
+				}
+			}
 		}
 	}
 	// Initialise result variables to zero (spec/03 §2.3 default init).
@@ -1536,6 +2074,30 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 			}
 		}
 		results[i] = e.symbols[res]
+	}
+
+	// By-reference write-back (spec/03 §3.1 apply-directive semantics):
+	// an argument spelled `@ident` at the call site binds the callee's
+	// parameter to the caller's cell. After the body completes, copy the
+	// parameter's final value back into the caller's saved frame so the
+	// mutation is visible to the caller (copy-in/copy-out).
+	for i, arg := range call.Args {
+		prefix, isRef := arg.(*parser.PrefixExpression)
+		if !isRef || prefix.Operator != "@" {
+			continue
+		}
+		ident, isIdent := prefix.Right.(*parser.Identifier)
+		if !isIdent || i >= len(rule.Params) {
+			continue
+		}
+		param := rule.Params[i]
+		if val, ok := e.symbols[param]; ok {
+			savedSymbols[ident.Value] = val
+		}
+		if arr, ok := e.arrayValues[param]; ok {
+			savedArrays[ident.Value] = arr
+		}
+		e.ensureIdentity(ident.Value)
 	}
 
 	// Restore the caller's frame.
@@ -1668,6 +2230,447 @@ func dedupSortInts(elems []int) []int {
 	}
 	sort.Ints(out)
 	return out
+}
+
+// collectionKind tags which evaluator store a collection binding belongs to
+// so concatenation preserves the source kind (arrays stay arrays, lists stay
+// lists, sets stay dedup-sorted sets) per spec/10-collections.md.
+type collectionKind int
+
+const (
+	kindNone collectionKind = iota
+	kindArray
+	kindList
+	kindSet
+)
+
+// resolveCollection evaluates an expression to a stored collection slice.
+// Identifier operands resolve through the three collection stores; literal
+// operands materialise directly. Returns ok=false when the expression does
+// not denote a collection.
+func (e *Evaluator) resolveCollection(expr parser.Expression) ([]int, collectionKind, bool) {
+
+	switch v := expr.(type) {
+	case *parser.Identifier:
+		if arr, ok := e.arrayValues[v.Value]; ok {
+			return arr, kindArray, true
+		}
+		if lst, ok := e.listValues[v.Value]; ok {
+			return lst, kindList, true
+		}
+		if st, ok := e.setValues[v.Value]; ok {
+			return st, kindSet, true
+		}
+	case *parser.ArrayLiteral:
+		elems := make([]int, len(v.Elements))
+		for j, el := range v.Elements {
+			elems[j] = e.evalIntExpression(el)
+		}
+		return elems, kindArray, true
+	case *parser.ListLiteral:
+		elems := make([]int, len(v.Elements))
+		for j, el := range v.Elements {
+			elems[j] = e.evalIntExpression(el)
+		}
+		return elems, kindList, true
+	case *parser.SetLiteral:
+		elems := make([]int, len(v.Elements))
+		for j, el := range v.Elements {
+			elems[j] = e.evalIntExpression(el)
+		}
+		return dedupSortInts(elems), kindSet, true
+	case *parser.BinaryExpression:
+		// Range expression as domain (e.g. `1..6`): materialise the sequence.
+
+		if isRangeSepToken(v.Token.Type) {
+			return e.materialiseRange(v), kindArray, true
+		}
+	case *parser.SteppedRangeExpression:
+		// Stepped range as domain (e.g. `(1..10)(2)`): materialise.
+		return e.materialiseSteppedRange(v), kindArray, true
+	}
+	return nil, kindNone, false
+}
+
+// isRangeSepToken reports whether tok is one of the four D13 range separators.
+func isRangeSepToken(t token.Type) bool {
+	switch t {
+	case token.RANGE_INCL, token.RANGE_LEFT_INC, token.RANGE_RGHT_INC, token.RANGE_EXCL:
+		return true
+	}
+	return false
+}
+
+// materialiseRange expands a range binary expression (e.g. `1..6`) into an
+// ordered []int honouring the endpoint inclusivity of the range operator (D13).
+func (e *Evaluator) materialiseRange(be *parser.BinaryExpression) []int {
+	start := e.evalIntExpression(be.Left)
+	end := e.evalIntExpression(be.Right)
+	lo, hi := start, end
+	switch be.Token.Type {
+	case token.RANGE_LEFT_INC: // ..<
+		hi = end - 1
+	case token.RANGE_RGHT_INC: // >..
+		lo = start + 1
+	case token.RANGE_EXCL: // >..<
+		lo = start + 1
+		hi = end - 1
+	}
+	var out []int
+	for i := lo; i <= hi; i++ {
+		out = append(out, i)
+	}
+	return out
+}
+
+// materialiseSteppedRange expands a SteppedRangeExpression into an ordered
+// []int honouring endpoint inclusivity (D13+D1).
+func (e *Evaluator) materialiseSteppedRange(sre *parser.SteppedRangeExpression) []int {
+	be := sre.Range.(*parser.BinaryExpression)
+	start := e.evalIntExpression(be.Left)
+	end := e.evalIntExpression(be.Right)
+	step := e.evalIntExpression(sre.Step)
+	if step == 0 {
+		step = 1
+	}
+	leftOffset := 0
+	switch be.Token.Type {
+	case token.RANGE_RGHT_INC, token.RANGE_EXCL:
+		leftOffset = step
+	}
+	var out []int
+	for i := 1; ; i++ {
+		val := start + leftOffset + (i-1)*step
+		inRange := false
+		switch be.Token.Type {
+		case token.RANGE_INCL:
+			inRange = val >= start && val <= end
+		case token.RANGE_LEFT_INC:
+			inRange = val >= start && val < end
+		case token.RANGE_RGHT_INC:
+			inRange = val > start && val <= end
+		case token.RANGE_EXCL:
+			inRange = val > start && val < end
+		default:
+			inRange = val >= start && val <= end
+		}
+		if !inRange {
+			break
+		}
+		out = append(out, val)
+	}
+	return out
+}
+
+// evalBuilderBinding evaluates a BuilderExpression and binds the result to
+// the named collection store (set, array, or map). spec/11 §5.
+func (e *Evaluator) evalBuilderBinding(name string, b *parser.BuilderExpression) {
+	domain, _, ok := e.resolveCollection(b.Domain)
+	if !ok {
+		return
+	}
+	varName := b.Variable
+	prevVal, hadPrev := e.symbols[varName]
+	prevID, hadPrevID := e.identities[varName]
+	defer func() {
+		if hadPrev {
+			e.symbols[varName] = prevVal
+		} else {
+			delete(e.symbols, varName)
+		}
+		if hadPrevID {
+			e.identities[varName] = prevID
+		} else {
+			delete(e.identities, varName)
+		}
+	}()
+
+	if b.IsMap {
+		// Map builder: { (k:v) | x ∈ domain [∧ cond] }
+		pair, isPair := b.MapExpr.(*parser.MapPairExpression)
+		if !isPair {
+			return
+		}
+		m := make(map[string]int)
+		for _, elem := range domain {
+			e.symbols[varName] = elem
+			e.ensureIdentity(varName)
+			if b.Condition != nil && e.evalIntExpression(b.Condition) == 0 {
+				continue
+			}
+			key := e.evalExpression(pair.Key)
+			val := e.evalIntExpression(pair.Value)
+			m[key] = val
+		}
+		e.mapValues[name] = m
+		e.ensureIdentity(name)
+		return
+	}
+
+	// Set or array builder.
+	var results []int
+	for _, elem := range domain {
+		e.symbols[varName] = elem
+		e.ensureIdentity(varName)
+		if b.Condition != nil && e.evalIntExpression(b.Condition) == 0 {
+			continue
+		}
+		results = append(results, e.evalIntExpression(b.MapExpr))
+	}
+	if b.Token.Literal == "[" {
+		e.arrayValues[name] = results
+	} else {
+		e.setValues[name] = dedupSortInts(results)
+	}
+	e.ensureIdentity(name)
+}
+
+// trySetAlgebra evaluates a binary set-algebra expression (`∩`, `∪`, `Δ`, `⊂`, `⊃`)
+// and binds the result under `name` in the set store. Returns true when handled.
+// spec/10-collections.md §3.4.
+func (e *Evaluator) trySetAlgebra(name string, expr parser.Expression) bool {
+	be, ok := expr.(*parser.BinaryExpression)
+	if !ok {
+		return false
+	}
+	op := be.Token.Literal
+	if op != "∩" && op != "∪" && op != "Δ" && op != "⊂" && op != "⊃" {
+		return false
+	}
+	leftElems, _, okL := e.resolveCollection(be.Left)
+	rightElems, _, okR := e.resolveCollection(be.Right)
+	if !okL || !okR {
+		return false
+	}
+	leftSet := toIntSet(leftElems)
+	rightSet := toIntSet(rightElems)
+	switch op {
+	case "∩":
+		e.setValues[name] = dedupSortInts(setIntersect(leftSet, rightSet))
+	case "∪":
+		e.setValues[name] = dedupSortInts(setUnion(leftSet, rightSet))
+	case "Δ":
+		e.setValues[name] = dedupSortInts(setSymDiff(leftSet, rightSet))
+	case "⊂":
+		if isSubset(leftSet, rightSet) {
+			e.symbols[name] = 1
+		} else {
+			e.symbols[name] = 0
+		}
+	case "⊃":
+		if isSubset(rightSet, leftSet) {
+			e.symbols[name] = 1
+		} else {
+			e.symbols[name] = 0
+		}
+	}
+	e.ensureIdentity(name)
+	return true
+}
+
+// tryCloneBinding implements the `::` deep-copy binding (spec/10 §2.4).
+// It resolves the RHS expression to a collection and stores an independent
+// deep copy under `name`. Returns true when the binding was performed.
+func (e *Evaluator) tryCloneBinding(name string, expr parser.Expression) bool {
+	// Resolve the RHS to a collection.
+	switch v := expr.(type) {
+	case *parser.Identifier:
+		if arr, ok := e.arrayValues[v.Value]; ok {
+			cp := make([]int, len(arr))
+			copy(cp, arr)
+			e.arrayValues[name] = cp
+			e.ensureIdentity(name)
+			return true
+		}
+		if lst, ok := e.listValues[v.Value]; ok {
+			cp := make([]int, len(lst))
+			copy(cp, lst)
+			e.listValues[name] = cp
+			e.ensureIdentity(name)
+			return true
+		}
+		if st, ok := e.setValues[v.Value]; ok {
+			cp := make([]int, len(st))
+			copy(cp, st)
+			e.setValues[name] = cp
+			e.ensureIdentity(name)
+			return true
+		}
+		if m, ok := e.mapValues[v.Value]; ok {
+			cp := make(map[string]int, len(m))
+			for k, val := range m {
+				cp[k] = val
+			}
+			e.mapValues[name] = cp
+			e.ensureIdentity(name)
+			return true
+		}
+	case *parser.IndexExpression:
+		// Clone of a slice view: `new frozen :: list[2..3];`
+		// Materialise the view into a real sub-collection.
+		if ident, ok := v.Left.(*parser.Identifier); ok {
+			if coll, _, okColl := e.resolveCollection(ident); okColl {
+				slice := e.evalSliceView(v, coll)
+				if slice != nil {
+					e.arrayValues[name] = slice
+					e.ensureIdentity(name)
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// tryRefBinding implements the `:=` reference binding for identifiers that
+// resolve to collections (spec/10 §2.4). Both names share the same storage.
+// Returns true when the binding was performed.
+func (e *Evaluator) tryRefBinding(name string, expr parser.Expression) bool {
+	ident, ok := expr.(*parser.Identifier)
+	if !ok {
+		return false
+	}
+	if arr, ok := e.arrayValues[ident.Value]; ok {
+		e.arrayValues[name] = arr // shared reference
+		e.ensureIdentity(name)
+		return true
+	}
+	if lst, ok := e.listValues[ident.Value]; ok {
+		e.listValues[name] = lst
+		e.ensureIdentity(name)
+		return true
+	}
+	if st, ok := e.setValues[ident.Value]; ok {
+		e.setValues[name] = st
+		e.ensureIdentity(name)
+		return true
+	}
+	if m, ok := e.mapValues[ident.Value]; ok {
+		e.mapValues[name] = m
+		e.ensureIdentity(name)
+		return true
+	}
+	return false
+}
+
+// evalSliceView extracts a sub-slice from a collection using a range index
+// expression (e.g. `a[2..$-1]`). Returns nil when the index is not a range.
+// The returned slice is a NEW copy (materialised view), not a reference.
+func (e *Evaluator) evalSliceView(idxExpr *parser.IndexExpression, coll []int) []int {
+	be, ok := idxExpr.Index.(*parser.BinaryExpression)
+	if !ok || !isRangeSeparatorToken(be.Token) {
+		return nil
+	}
+	savedLen, savedHas := e.dollarLen, e.hasDollar
+	e.dollarLen, e.hasDollar = len(coll), true
+	defer func() { e.dollarLen, e.hasDollar = savedLen, savedHas }()
+	start := e.evalIntExpression(be.Left)
+	end := e.evalIntExpression(be.Right)
+	// 1-based inclusive range: clamp to [1, len]
+	if start < 1 {
+		start = 1
+	}
+	if end > len(coll) {
+		end = len(coll)
+	}
+	if start > end {
+		return []int{}
+	}
+	result := make([]int, end-start+1)
+	copy(result, coll[start-1:end])
+	return result
+}
+
+// --- Set helper functions ---
+
+func isNumericString(s string) bool {
+	if s == "" {
+		return true
+	}
+	_, err := strconv.Atoi(s)
+	return err == nil
+}
+
+func toIntSet(elems []int) map[int]bool {
+	s := make(map[int]bool, len(elems))
+	for _, v := range elems {
+		s[v] = true
+	}
+	return s
+}
+
+func setIntersect(a, b map[int]bool) []int {
+	var result []int
+	for v := range a {
+		if b[v] {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
+func setUnion(a, b map[int]bool) []int {
+	var result []int
+	for v := range a {
+		result = append(result, v)
+	}
+	for v := range b {
+		if !a[v] {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
+func setSymDiff(a, b map[int]bool) []int {
+	var result []int
+	for v := range a {
+		if !b[v] {
+			result = append(result, v)
+		}
+	}
+	for v := range b {
+		if !a[v] {
+			result = append(result, v)
+		}
+	}
+	return result
+}
+
+func isSubset(a, b map[int]bool) bool {
+	for v := range a {
+		if !b[v] {
+			return false
+		}
+	}
+	return true
+}
+
+// tryCollectionConcat evaluates `left + right` as collection concatenation
+// (spec/10). When both operands resolve to collections, the concatenated
+// slice is bound under `name` in the store matching the left operand's kind
+// (sets re-dedup). Returns true when the binding was performed.
+func (e *Evaluator) tryCollectionConcat(name string, expr parser.Expression) bool {
+	be, ok := expr.(*parser.BinaryExpression)
+	if !ok || be.Token.Literal != "+" {
+		return false
+	}
+	leftElems, leftKind, okL := e.resolveCollection(be.Left)
+	rightElems, _, okR := e.resolveCollection(be.Right)
+	if !okL || !okR {
+		return false
+	}
+	joined := append(append([]int{}, leftElems...), rightElems...)
+	switch leftKind {
+	case kindArray:
+		e.arrayValues[name] = joined
+	case kindList:
+		e.listValues[name] = joined
+	case kindSet:
+		e.setValues[name] = dedupSortInts(joined)
+	}
+	e.ensureIdentity(name)
+	return true
 }
 
 func (e *Evaluator) callMember(me *parser.MemberExpression) (interface{}, bool) {

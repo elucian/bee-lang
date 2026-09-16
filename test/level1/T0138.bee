@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: T0138 Decision 13: postfix-step with fully-exclusive range `>..<`
 -- `(1>..<5)(1)` discretises the fully-exclusive range (1,5) to three elements {2,3,4}.
 rule main:

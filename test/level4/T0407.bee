@@ -1,9 +1,8 @@
--- @DISABLED: W0901 SignatureGrammarPartial: line=3 rule="bump" (signature decoder is heuristic; full type binding deferred to Phase 7.2)
 -- @DESC:T0407 contract postcondition with result binding
 -- A postcondition demo
 rule bump(n ∈ Z) => (r ∈ Z):
-  expect r > n;
   let r := n + 1;
+  expect r > n;
 return;
 
 rule main:

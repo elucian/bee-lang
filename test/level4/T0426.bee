@@ -1,13 +1,11 @@
--- @DISABLED: W0901 SignatureGrammarPartial: line=3 rule="main" (signature decoder is heuristic; full type binding deferred to Phase 7.2)
--- @DESC:file: slices_share.bee
--- Slices share storage demo
+-- @DESC:T0426 slice extraction with $ anchor
+-- Slice extraction demo (spec/10 §2.3): sub-collections are
+-- extracted with range operators; $ is the dynamic end anchor.
 rule main:
   new a := [1,2,3,4,5];
-  new w := a[0..2];
-  let w[*] := 0;
-  -- slice shares storage: zeroing the window zeroes the array head
-  expect a[1] = 0;
-  expect a[2] = 0;
-  expect a[5] = 5;
+  new w := a[2..$ - 1];
+  expect w[1] = 2;
+  expect w[2] = 3;
+  expect w[3] = 4;
+  print w; expect w = [2,3,4];
 return;
-

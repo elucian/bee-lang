@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: Lambda expression — explicit λ declaration and call, spec/07 §2.1
 rule main:
   new double := λ(x ∈ Z) => (x * 2) ∈ Z;

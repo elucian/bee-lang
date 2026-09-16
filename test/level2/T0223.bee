@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/02-statements.md §3.1. Immutable ground truth for AI agents.
 -- @NEGATIVE: with-qualifier suppression is not implemented yet (graceful runtime error expected)
 -- @DESC:T0223 With scope qualifier module is not implemented (graceful failure)
 rule main:

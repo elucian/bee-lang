@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: T0133 Decision 13: fully exclusive range `>..<` semantics
 -- Open `(a, b)` — both endpoints excluded.
 rule main:

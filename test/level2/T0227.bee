@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: T0227 Forall-quantified for cycle (spec/02 §3.4.3)
 -- `for ∀ i ∈ (1..4)` iterates the inclusive endpoint domain 1..4.
 rule main:

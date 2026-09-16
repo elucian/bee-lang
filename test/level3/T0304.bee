@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: Assert precondition fail — assert emits W0301 warning to stderr, execution continues, spec/03 §4
 rule main:
   new a ∈ Z; new b ∈ Z;

@@ -1,5 +1,4 @@
 -- @ENABLED: Reset by user
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC:T0102 Relational and comparison operators
 rule main:
   new a, b, r1, r2, r3 ∈ Z;

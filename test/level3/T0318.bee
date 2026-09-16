@@ -1,6 +1,3 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
--- @DISABLED: Parser — pipe operator not yet implemented
 -- @DESC: Pipe operator — value |> f |> g chains transformations, spec/07 §5
 rule main:
   new double := λ(x ∈ Z) => (x * 2) ∈ Z;

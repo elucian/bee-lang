@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: T0139 Decision 11: parenthesised parallel colon-initialisation
 -- `new (a, b) : (1, 2) ∈ Z;` — N identifiers (N=2), M expressions (M=2), N = M,
 -- all sharing the trailing `∈ Z` type qualifier.

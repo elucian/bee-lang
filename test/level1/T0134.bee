@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: T0134 Decision 13: postfix-step range indexing (integer step)
 -- `(1..5)(1)` discretises the closed range into a 5-element sequence; `[3]` returns the 3rd element (1-based) = 3.
 rule main:

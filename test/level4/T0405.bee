@@ -1,14 +1,14 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=; literal=";"
--- @DESC:file: contract_old_change.bee
--- A promise about what changed demo
+-- @DESC:T0405 contract write-through argument
+-- A rule that writes through its argument demo; the caller
+-- verifies the mutation after apply returns.
 rule bump(n ∈ @Z):
-  expect n = old n + 1;
   let n += 1;
 return;
 
 rule main:
   new counter: 10 ∈ Z;
   apply bump(@counter);
+  expect counter = 11;
   print counter;
 return;
 

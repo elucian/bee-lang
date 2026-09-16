@@ -1,6 +1,3 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=5 type=; literal=";"
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
--- @DISABLED: Parser — compose operator not yet implemented
 -- @DESC: Compose operator — f ∘ g composes two lambdas, spec/07 §5
 rule main:
   new f := λ(x ∈ Z) => (x + 1) ∈ Z;

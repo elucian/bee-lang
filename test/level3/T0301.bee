@@ -1,4 +1,3 @@
--- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
 -- @DESC: Rule anatomy no params — minimal rule with no parameters, spec/03 §2.1
 rule greet:
   print "Hello from rule";

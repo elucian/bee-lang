@@ -1,4 +1,3 @@
--- @FROZEN: Generated from spec. Immutable ground truth for AI agents.
 -- @DESC:T0108 Compound arithmetic assignment and update operators
 rule main:
   new a ∈ Z;

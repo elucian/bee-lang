@@ -1,4 +1,3 @@
--- @DISABLED: E0009 SyntaxError:UnrecognizedStatement: line=4 type=IDENT literal="use"
 -- @ENABLED: Reset by user
 -- @DESC:file: main_module.bee
 -- using qualifier suppressor
