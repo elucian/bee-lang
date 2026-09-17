@@ -152,6 +152,24 @@ return
 
 <p><b>Note:</b> A lambda function can't call a rule. Just a rule can call a lambda function. This prevent a lambda function to modify states and it remain pure.</p>
 
+<h2 id="partial-application">Partial application</h2>
+
+<p>A lambda call may place the single-character <b>?</b> placeholder in any
+argument position. The result is a <i>partial application</i>: the provided
+arguments are captured, and the open positions are filled when the partial is
+later invoked, left to right.</p>
+
+<h4>Example</h4>
+
+<pre><code class="language-bee">-- x captured as 5, y left open
+new add := &amp;lambda;(x, y &amp;isin; Z) =&gt; (x + y) &amp;isin; Z;
+new add5 := add(5, ?);
+expect add5(3) = 8;  -- 3 fills y, so 5 + 3 = 8
+</code></pre>
+
+<p>A partial application is a first-class value (type L) and can be stored and
+reused like any lambda.</p>
+
 <h2 id="simd-gpu">SIMD &amp; GPU auto-vectorization</h2>
 
 <p>Because lambdas are guaranteed pure and side-effect free, the Bee compiler

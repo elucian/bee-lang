@@ -92,6 +92,8 @@ type_list         ::= type_specifier ( "," type_specifier )* ;
 
 (* Invocations *)
 lambda_call       ::= expression "(" [ arg_list ] ")" ;
+arg_elem          ::= expression | "?" ;     (* "?" marks a partial-application slot *)
+arg_list          ::= arg_elem ( "," arg_elem )* ;
 
 (* Method Calls (T0126 — currently parked in test/debt/) *)
 method_call       ::= expression "." identifier "(" [ arg_list ] ")" ;
@@ -100,6 +102,28 @@ method_call       ::= expression "." identifier "(" [ arg_list ] ")" ;
 ### 6.1 Method-call dispatch (T0126, **debt**)
 
 `x.type()` is the canonical way to query a value's runtime type. The grammar is identical to a function call, but the receiver is namespaced by `.` and the method lookup table is derived from the type's declared method descriptors (see `spec/06-objects.md` §5). Test reference: `test/debt/T0126-method-call.bee`. The compiler currently does not have a `MethodCallExpression` AST node; this entry remains in technical debt until issue `15-method-call-grant.md` is resolved.
+
+---
+
+### 6.2 Partial Application (the ? placeholder)
+
+A lambda call may place the single-character **? placeholder** in any argument
+position. The result is a *partial application*: the provided arguments are
+captured, and the open positions are filled when the partial is later invoked
+(left to right).
+
+```bee
+new add := λ(x, y ∈ Z) => (x + y) ∈ Z;
+new add5 := add(5, ?);  -- x captured as 5, y left open
+expect add5(3) = 8;     -- 3 fills y, so 5 + 3 = 8
+```
+
+- A partial application is a first-class value, typed L like its source lambda.
+- Open ? slots are filled left-to-right by the arguments of the subsequent
+  call; supplying more arguments than open slots is an arity excess and the
+  extra arguments are ignored.
+- The ? marker is only meaningful as an argument to a lambda call; used
+  anywhere else it evaluates to 0.
 
 ---
 

@@ -84,6 +84,10 @@ type Evaluator struct {
 	// lambdaValues binds names to pure lambda expressions (spec/07 §2.1) —
 	// the first-class `L` values that CallExpression resolves before rules.
 	lambdaValues map[string]*parser.LambdaExpression
+	// partialValues binds names to partial applications (spec/07-functions.md §6):
+	// the wrapped lambda plus captured arguments left over from a call such as
+	// add(5, ?). A later invocation add5(3) supplies the open placeholder.
+	partialValues map[string]*partialApplication
 	// inLambda tracks lambda invocation depth so the evaluator can enforce
 	// the spec/07 §3 purity invariants (E0701: a lambda cannot call a rule;
 	// E0704: a lambda cannot reference outer variables).
@@ -126,6 +130,7 @@ func New() *Evaluator {
 		boxedCells:     make(map[string]*BoxedCell),
 		closureObjects: make(map[string]*closureObject),
 		lambdaValues:   make(map[string]*parser.LambdaExpression),
+		partialValues:  make(map[string]*partialApplication),
 	}
 }
 
@@ -660,7 +665,10 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		// Single-result rule call (spec/03 §3.1): `new r := rule_call(...)`
 		// where the CallExpression is the sole value for a single name.
 		if len(names) == 1 && len(s.Values) == 1 {
-			if call, ok := s.Values[0].(*parser.CallExpression); ok {
+			// A partial-application call (new f := fn(a, ?)) must NOT be routed
+			// through the single-result rule-call shortcut below: the main loop
+			// registers it as a curried value (spec/07-functions.md §6).
+			if call, ok := s.Values[0].(*parser.CallExpression); ok && !e.hasPlaceholderArg(call.Args) {
 				results := e.callRule(call, nil)
 				if len(results) > 0 {
 					e.bindResultValue(names[0], results[0])
@@ -764,6 +772,15 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					// Collection builder (spec/11 §5): materialise the builder
 					// into the appropriate collection store.
 					e.evalBuilderBinding(name, builder)
+				} else if call, ok := s.Values[i].(*parser.CallExpression); ok {
+					// Partial application (spec/07-functions.md §6): a lambda
+					// call containing a ? placeholder yields a curried value.
+					if e.registerPartialFromCall(name, call) {
+						continue
+					}
+					val := e.evalIntExpression(call)
+					e.symbols[name] = val
+					e.ensureIdentity(name)
 				} else {
 					// Deep clone binding: `new X :: expr;` (spec/10 §2.4).
 					if s.Clone {
@@ -841,6 +858,15 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					e.ensureIdentity(name)
 				} else if lambdaExpr, ok := s.Value.(*parser.LambdaExpression); ok {
 					e.lambdaValues[name] = lambdaExpr
+					e.ensureIdentity(name)
+				} else if call, ok := s.Value.(*parser.CallExpression); ok {
+					// Partial application (spec/07-functions.md §6): a lambda
+					// call containing a ? placeholder yields a curried value.
+					if e.registerPartialFromCall(name, call) {
+						continue
+					}
+					val := e.evalIntExpression(call)
+					e.symbols[name] = val
 					e.ensureIdentity(name)
 				} else {
 					// Deep clone binding: `new X :: expr;` (spec/10 §2.4).
@@ -1503,6 +1529,11 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 		}
 		return 0, e.allocID()
 	case *parser.CallExpression:
+		// Partial-application invocation (spec/07-functions.md §6): a name
+		// bound to a partial application supplies the open placeholders here.
+		if pa, isPa := e.partialValues[expr.Name]; isPa {
+			return e.callPartial(pa, expr), e.allocID()
+		}
 		// Lambda invocation (spec/07 §6 lambda_call): first-class `L` values
 		// take dispatch precedence — a rule CAN call a lambda (§3 invariant 4).
 		if lambdaExpr, isLambda := e.lambdaValues[expr.Name]; isLambda {
@@ -2417,7 +2448,13 @@ func (e *Evaluator) callLambda(le *parser.LambdaExpression, call *parser.CallExp
 	for i, arg := range call.Args {
 		argVals[i] = e.evalIntExpression(arg)
 	}
+	return e.evalLambdaBody(le, argVals)
+}
 
+// evalLambdaBody binds paramVals to le.Params in a fresh pure frame and
+// evaluates the lambda body, restoring the caller's frame afterwards. It is
+// shared by full lambda calls and partial-application invocations.
+func (e *Evaluator) evalLambdaBody(le *parser.LambdaExpression, paramVals []int) int {
 	// Fresh pure frame: parameters only.
 	savedSymbols := e.symbols
 	savedStrings := e.stringSymbols
@@ -2428,8 +2465,8 @@ func (e *Evaluator) callLambda(le *parser.LambdaExpression, call *parser.CallExp
 	e.arrayValues = make(map[string][]int)
 	e.boxedCells = make(map[string]*BoxedCell)
 	for i, param := range le.Params {
-		if i < len(argVals) {
-			e.symbols[param] = argVals[i]
+		if i < len(paramVals) {
+			e.symbols[param] = paramVals[i]
 		}
 	}
 
@@ -2443,6 +2480,99 @@ func (e *Evaluator) callLambda(le *parser.LambdaExpression, call *parser.CallExp
 	e.arrayValues = savedArrays
 	e.boxedCells = savedBoxed
 	return result
+}
+
+// partialArgument records one parameter slot of a partial application: either
+// a captured (bound) value or a still-open ? placeholder awaiting a later arg.
+type partialArgument struct {
+	hasBound bool
+	val      int
+}
+
+// partialApplication wraps a pure lambda together with the argument values
+// captured at partial-application time (spec/07-functions.md §6). Slots with
+// hasBound==false are open placeholders filled in call order when the partial
+// is later invoked.
+type partialApplication struct {
+	lambda *parser.LambdaExpression
+	args   []partialArgument
+}
+
+// buildPartialApplication derives a partial application from a lambda call
+// whose argument list contains a ? placeholder: the provided (non-?) args are
+// captured positionally onto the new partial. Placeholder slots are left open
+// for a subsequent invocation to fill.
+func (e *Evaluator) buildPartialApplication(le *parser.LambdaExpression, call *parser.CallExpression) *partialApplication {
+	pa := &partialApplication{lambda: le}
+	for range le.Params {
+		pa.args = append(pa.args, partialArgument{})
+	}
+	for i, arg := range call.Args {
+		if _, isPh := arg.(*parser.PlaceholderExpression); isPh {
+			continue // leave the slot open (unbound placeholder)
+		}
+		if i < len(pa.args) {
+			pa.args[i].hasBound = true
+			pa.args[i].val = e.evalIntExpression(arg)
+		}
+	}
+	return pa
+}
+
+// hasPlaceholderArg reports whether any of the call arguments is a ?.
+func (e *Evaluator) hasPlaceholderArg(args []parser.Expression) bool {
+	for _, a := range args {
+		if _, ok := a.(*parser.PlaceholderExpression); ok {
+			return true
+		}
+	}
+	return false
+}
+
+// callPartial invokes a partial application, filling its open placeholder
+// slots with the supplied arguments in order, then evaluating the wrapped
+// lambda with the fully-bound parameter values (spec/07-functions.md §6).
+func (e *Evaluator) callPartial(pa *partialApplication, call *parser.CallExpression) int {
+	paramVals := make([]int, len(pa.args))
+	for i, a := range pa.args {
+		if a.hasBound {
+			paramVals[i] = a.val
+		}
+	}
+	argVals := make([]int, len(call.Args))
+	for i, arg := range call.Args {
+		argVals[i] = e.evalIntExpression(arg)
+	}
+	next := 0
+	for _, av := range argVals {
+		for next < len(pa.args) && pa.args[next].hasBound {
+			next++
+		}
+		if next >= len(pa.args) {
+			break // extra arguments beyond the lambda arity are dropped
+		}
+		paramVals[next] = av
+		next++
+	}
+	return e.evalLambdaBody(pa.lambda, paramVals)
+}
+
+// registerPartialFromCall binds name to a partial application when call
+// targets a lambda and contains a ? placeholder (spec/07-functions.md §6).
+// Returns true if a partial application was registered; false means the call
+// is a normal rule/lambda invocation and should be evaluated as usual.
+func (e *Evaluator) registerPartialFromCall(name string, call *parser.CallExpression) bool {
+	lambdaExpr, isLambda := e.lambdaValues[call.Name]
+	if !isLambda {
+		return false
+	}
+	if !e.hasPlaceholderArg(call.Args) {
+		return false
+	}
+	pa := e.buildPartialApplication(lambdaExpr, call)
+	e.partialValues[name] = pa
+	e.ensureIdentity(name)
+	return true
 }
 
 // isStateGenerator reports whether a rule declares boxed state cells
@@ -3009,13 +3139,15 @@ type scopedBindingSnapshot struct {
 	steppedVal  *parser.SteppedRangeExpression
 	hasLambda   bool
 	lambdaVal   *parser.LambdaExpression
+	hasPartial  bool
+	partialVal  *partialApplication
 	hasIdentity bool
 	identityVal int
 }
 
 func (s *scopedBindingSnapshot) any() bool {
 	return s.hasInt || s.hasString || s.hasArray || s.hasList || s.hasSet ||
-		s.hasMap || s.hasMatrix || s.hasStepped || s.hasLambda
+		s.hasMap || s.hasMatrix || s.hasStepped || s.hasLambda || s.hasPartial
 }
 
 // scopeFrame is one lexical scope. It records which names were (re)declared in
@@ -3105,6 +3237,9 @@ func (e *Evaluator) snapshotBinding(name string) *scopedBindingSnapshot {
 	if v, ok := e.lambdaValues[name]; ok {
 		sn.hasLambda, sn.lambdaVal = true, v
 	}
+	if v, ok := e.partialValues[name]; ok {
+		sn.hasPartial, sn.partialVal = true, v
+	}
 	if v, ok := e.identities[name]; ok {
 		sn.hasIdentity, sn.identityVal = true, v
 	}
@@ -3123,6 +3258,7 @@ func (e *Evaluator) clearBinding(name string) {
 	delete(e.matrixValues, name)
 	delete(e.steppedRanges, name)
 	delete(e.lambdaValues, name)
+	delete(e.partialValues, name)
 	delete(e.identities, name)
 }
 
@@ -3155,6 +3291,9 @@ func (e *Evaluator) restoreBinding(name string, sn *scopedBindingSnapshot) {
 	}
 	if sn.hasLambda {
 		e.lambdaValues[name] = sn.lambdaVal
+	}
+	if sn.hasPartial {
+		e.partialValues[name] = sn.partialVal
 	}
 	if sn.hasIdentity {
 		e.identities[name] = sn.identityVal

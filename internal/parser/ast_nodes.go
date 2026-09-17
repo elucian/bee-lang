@@ -125,6 +125,18 @@ type StringLiteral struct {
 func (sl *StringLiteral) expressionNode() {}
 func (sl *StringLiteral) Pos() token.Pos  { return sl.Token.Pos }
 
+// PlaceholderExpression marks the ? placeholder in a partial-application
+// call (spec/07-functions.md §6): add(5, ?) binds x to 5 and leaves one
+// argument position open, to be supplied when the resulting partial is
+// invoked. It is only meaningful as a CallExpression argument.
+type PlaceholderExpression struct {
+	Token token.Token
+}
+
+func (pe *PlaceholderExpression) expressionNode() {}
+func (pe *PlaceholderExpression) Pos() token.Pos  { return pe.Token.Pos }
+
+
 type IntegerLiteral struct {
 	Token token.Token
 	Value string

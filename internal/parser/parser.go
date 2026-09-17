@@ -1961,6 +1961,13 @@ func (p *Parser) parsePrimary() Expression {
 		right := p.parsePrimary()
 		return &PrefixExpression{Token: tok, Operator: tok.Literal, Right: right}
 	}
+	// Partial-application placeholder (spec/07-functions.md §6): a standalone
+	// ? marks an argument position left open for currying, as in add(5, ?).
+	// The parser emits a PlaceholderExpression so the evaluator can build a
+	// partial application when it appears among a call argument list.
+	if tok.Type == token.QUESTION {
+		return &PlaceholderExpression{Token: tok}
+	}
 	// Lambda expression (spec/07-functions.md §2.1 / §6):
 	// `λ(params) => (body) [∈ Type]`.
 	if tok.Type == token.LAMBDA {
