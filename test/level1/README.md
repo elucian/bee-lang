@@ -26,17 +26,17 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | T0106    | Test assignment, equality (=)... | No     | PASS       |
 | T0107    | Square root, cube root, and r... | No     | PASS       |
 | T0108    | Compound arithmetic assignmen... | No     | PASS       |
-| T0115    | Exercises several print outpu... | Yes    | PASS       |
+| T0115    | Exercises several print outpu... | No     | PASS       |
 | T0116    | Line and block comments forma... | No     | PASS       |
 | T0117    | Constant declaration with set    | No     | PASS       |
 | T0118    | Variable declaration with new    | No     | PASS       |
-| T0119    | file: ending_early.bee           | Yes    | PASS       |
-| T0120    | file: hello_world.bee            | Yes    | PASS       |
+| T0119    | file: ending_early.bee           | No     | PASS       |
+| T0120    | file: hello_world.bee            | No     | PASS       |
 | T0121    | file: initial_values.bee         | No     | PASS       |
 | T0122    | file: parallel_assignment.bee    | No     | PASS       |
-| T0123    | file: print_write.bee            | Yes    | PASS       |
-| T0124    | String compound mutation: `+=... | No     | SKIP       |
+| T0123    | file: print_write.bee            | No     | PASS       |
+| T0124    | String compound concatenation... | No     | FAIL       |
 | T0125    | Chained compound mutation on ... | No     | PASS       |
-| T0128    | The print statement writes a ... | Yes    | PASS       |
+| T0128    | The print statement writes a ... | No     | PASS       |
 | T0129    | Compound assignment updates a... | No     | PASS       |
 | T0130    | Equality and identity relatio... | No     | PASS       |

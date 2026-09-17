@@ -1,6 +1,5 @@
 -- @DESC: For cycle with inline next jump (skip evens) (D14)
 -- @AI: No - Self sufficient fast test
--- @DISABLED: `next` (continue) unimplemented: runtime sums all 10 (no skip)
 -- D14: `next` is an inline transfer (continue), not a block terminator.
 rule main:
   cycle:

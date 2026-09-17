@@ -114,6 +114,25 @@ if (a = 0) and (not (b = 0)) do ...
   let x ^= 3;   -- Exponentiation (x = x³)
   let x √= 2;   -- Square root (x = √x)
   ```
+- **String Compound Concatenation (`+` and `+=` on type `S`):**
+  The `+` operator on two strings performs concatenation, producing a new string
+  value, not numeric addition. The compound form rebinds the target rather than
+  mutating in place:
+  $$s \leftarrow s + e, \quad \text{where } s \in \text{S}, \, e \in \text{S}$$
+  Because strings are immutable (spec/05 §2), `let s += e` is defined as a
+  rebinding: the target `s` is re-bound to the freshly allocated concatenated
+  string `s + e`. The superseded string value becomes garbage and is reclaimed
+  by the Tier-3 generational GC (spec/00 §2.3) on a later collection, never
+  mutating the previous value in place.
+  ```bee
+  new s ∈ Str;
+  let s := "foo";
+  let s += "bar";  -- s rebinds to "foobar" (concat, not mutation)
+  expect s = "foobar";
+  let s += "!";    -- s rebinds to "foobar!"
+  expect s = "foobar!";
+  expect s ¬ "foobar";
+  ```
 - **Deep Clone Assignment (`::`):**
   $$x \mathrel{::} y \implies \text{clone}_{\text{deep}}(y)$$
   Performs an isolated deep copy of composite structures, creating an independent memory allocation.

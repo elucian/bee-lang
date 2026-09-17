@@ -1,6 +1,5 @@
--- @DISABLED: Spec 05 marks Str immutable and spec 01 mutates only on arithmetic cells (+=, -=); string mutation/equality is unimplemented (E0303). Kept as honest gap signal.
--- @DESC: String compound mutation: `+=` concatenates in place
--- @NOTE: String mutation/equality is unimplemented (E0303); kept as honest gap signal.
+-- @DESC: String compound concatenation: `+=` rebinds to concat (spec/02 §2.2)
+-- @NOTE: String `+=` rebinds to concatenation; superseded value reclaimed by Tier-3 GC (spec/00 §2.3).
 rule main:
   new s ∈ Str;
   let s := "foo";

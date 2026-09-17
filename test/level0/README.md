@@ -5,11 +5,11 @@ Boot-level tests that validate the Bee compiler can lex, parse, evaluate, and pr
 | CASE   | DESCRIPTION                       | AI    | STATUS    |
 | ------ | --------------------------------- | ----- | --------- |
 | T0005    | Negative test — compiler must... | No     | PASS       |
-| T0001    | Hello World Test                 | Yes    | PASS       |
-| T0002    | Large list of numbers            | Yes    | PASS       |
-| T0003    | Multiple arguments               | Yes    | PASS       |
-| T0004    | Test print with custom separa... | Yes    | PASS       |
-| smoke    | Smoke test validation            | Yes    | PASS       |
+| T0001    | Hello World Test                 | No     | PASS       |
+| T0002    | Large list of numbers            | No     | PASS       |
+| T0003    | Multiple arguments               | No     | PASS       |
+| T0004    | Test print with custom separa... | No     | PASS       |
+| smoke    | Smoke test validation            | No     | PASS       |
 
 ## Spec Coverage
 

@@ -59,6 +59,7 @@ type Evaluator struct {
 	nextID        int
 	debug         bool
 	exitingRule   bool
+	continueCycle bool
 	// ruleRegistry indexes every *parser.RuleStatement by name so that
 	// CallExpression can resolve rule invocations (spec/03 §3.1).
 	ruleRegistry map[string]*parser.RuleStatement
@@ -176,7 +177,9 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		}
 		e.debugLog("EVALUATOR DEBUG: entering rule main\n")
 		prevExiting := e.exitingRule
+		prevContinue := e.continueCycle
 		e.exitingRule = false
+		e.continueCycle = false
 		for _, stmt := range s.Body.Statements {
 			if e.exitingRule {
 				break
@@ -184,6 +187,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			e.evalStatement(stmt)
 		}
 		e.exitingRule = prevExiting
+		e.continueCycle = prevContinue
 		e.debugLog("EVALUATOR DEBUG: exited rule main\n")
 	case *parser.BlockStatement:
 		for _, stmt := range s.Statements {
@@ -836,11 +840,27 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			}
 		}
 	case *parser.TransferStatement:
-		// Decision: `over` and other early-exit transfer statements set the
-		// exitingRule flag so the canonical §16.2 semantics apply — the
-		// enclosing rule's body short-circuits immediately.
-		if s.Keyword == "over" || s.Keyword == "stop" || s.Keyword == "exit" || s.Keyword == "abort" || s.Keyword == "panic" {
-			e.exitingRule = true
+		// D14 extends the jump grammar with an optional `if <cond>` guard; a
+		// guarded transfer only acts when the guard is truthy. The guard serves
+		// both the early-exit forms below and D15's `next` loop-jump.
+		take := true
+		if s.Condition != nil {
+			take = e.evalIntExpression(s.Condition) != 0
+		}
+		if take {
+			// Early-exit transfers set the exitingRule flag so the canonical
+			// §16.2 semantics apply — the enclosing rule's body short-circuits
+			// immediately.
+			if s.Keyword == "over" || s.Keyword == "stop" || s.Keyword == "exit" || s.Keyword == "abort" || s.Keyword == "panic" {
+				e.exitingRule = true
+			}
+			// D15: `next` is the canonical loop-jump (continue) transfer. It sets
+			// the continueCycle flag so the enclosing cycle skips the remainder
+			// of the current iteration's body and advances to the next increment/
+			// evaluation phase (spec/02-statements.md §3.4).
+			if s.Keyword == "next" {
+				e.continueCycle = true
+			}
 		}
 	case *parser.CycleStatement:
 		e.evalCycleStatement(s)
@@ -901,6 +921,10 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 						breakOut = true
 						break
 					}
+					if e.continueCycle {
+						e.continueCycle = false
+						break
+					}
 					e.evalStatement(stmt)
 				}
 			}
@@ -921,6 +945,10 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 				for _, stmt := range s.Body.Statements {
 					if e.exitingRule {
 						breakOut = true
+						break
+					}
+					if e.continueCycle {
+						e.continueCycle = false
 						break
 					}
 					e.evalStatement(stmt)
@@ -966,6 +994,10 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 								deferRestore()
 								return
 							}
+							if e.continueCycle {
+								e.continueCycle = false
+								break
+							}
 							e.evalStatement(stmt)
 						}
 					}
@@ -989,6 +1021,10 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 								if e.exitingRule {
 									deferRestore()
 									return
+								}
+								if e.continueCycle {
+									e.continueCycle = false
+									break
 								}
 								e.evalStatement(stmt)
 							}
@@ -1024,6 +1060,10 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 							if e.exitingRule {
 								deferRestore()
 								return
+							}
+							if e.continueCycle {
+								e.continueCycle = false
+								break
 							}
 							e.evalStatement(stmt)
 						}
@@ -1067,6 +1107,10 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 										deferRestore()
 										return
 									}
+									if e.continueCycle {
+										e.continueCycle = false
+										break
+									}
 									e.evalStatement(stmt)
 								}
 							}
@@ -1095,6 +1139,10 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 								deferRestore()
 								return
 							}
+							if e.continueCycle {
+								e.continueCycle = false
+								break
+							}
 							e.evalStatement(stmt)
 						}
 					}
@@ -1106,6 +1154,10 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 						if e.exitingRule {
 							deferRestore()
 							return
+						}
+						if e.continueCycle {
+							e.continueCycle = false
+							break
 						}
 						e.evalStatement(stmt)
 					}
@@ -2012,6 +2064,7 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 		savedArrays[k] = v
 	}
 	savedExiting := e.exitingRule
+	savedContinue := e.continueCycle
 	savedBoxed := e.boxedCells
 
 	// Fresh frame: bind parameters.
@@ -2019,6 +2072,7 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	e.stringSymbols = make(map[string]string)
 	e.arrayValues = make(map[string][]int)
 	e.exitingRule = false
+	e.continueCycle = false
 	// Install the closure's boxed cells so member access resolves to the
 	// shared, persistent state (a fresh generator starts with its own new
 	// cells; a method call reuses the object's existing cells).
@@ -2105,6 +2159,7 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	e.stringSymbols = savedStrings
 	e.arrayValues = savedArrays
 	e.exitingRule = savedExiting
+	e.continueCycle = savedContinue
 	e.boxedCells = savedBoxed
 
 	return results

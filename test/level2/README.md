@@ -22,7 +22,7 @@ This level covers statement structures, control flow mechanisms, and modules as 
 | T0209    | Nested cycles: stop outer bre... | No     | PASS       |
 | T0210    | `next` resumes from the top, ... | No     | PASS       |
 | T0211    | Labeled nested cycle: cross-l... | No     | SKIP       |
-| T0212    | For cycle with inline next ju... | No     | SKIP       |
+| T0212    | For cycle with inline next ju... | No     | PASS       |
 | T0213    | Then epilogue runs once after... | No     | PASS       |
 | T0214    | Redo directive restarts curre... | No     | PASS       |
 | T0215    | Loop completion block with th... | No     | PASS       |

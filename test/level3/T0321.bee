@@ -4,6 +4,6 @@ rule main:
   new a ∈ Z; new b ∈ Z;
   let a := 50;
   let b := 20;
-  assert a < b;
-  expect a > b;
+  assert a < b;  -- generate just worning
+  expect a > b;  -- will pass
 return;
