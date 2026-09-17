@@ -1,4 +1,4 @@
--- @DESC:T0105 Range membership with in operator
+-- @DESC: Range membership with in operator
 rule main:
   new a ∈ Z;
   let a := 10;

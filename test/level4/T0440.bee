@@ -1,4 +1,4 @@
--- @DESC:T0440 matrix row/column slice mutation and broadcast (spec/11 §5.2)
+-- @DESC: matrix row/column slice mutation and broadcast (spec/11 §5.2)
 rule main:
   new M ∈ [Z](2,2);
   -- broadcast assignment to all elements via [*]

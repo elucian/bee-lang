@@ -1,4 +1,4 @@
--- @DESC:T0442 quantifiers forall/exists over a collection (spec/11 §3)
+-- @DESC: quantifiers forall/exists over a collection (spec/11 §3)
 rule main:
   new nums := {2,4,6,8};
   -- every element is even

@@ -1,16 +1,15 @@
--- @DESC:T0209 Nested cycles with labels, inline jump and stop (D14)
--- D14: nested for/cycle blocks close with done; labels remain jump targets
--- for `stop outer` / `next outer` / `redo outer`.
+-- @DESC: Nested cycles: stop outer breaks the outer loop (D14)
+-- D14: labelled cycles close with done; `stop outer` terminates the outer
+-- cycle early from a nested body.
 rule main:
   cycle outer:
     new i ∈ Z;
+    new k := 0;
   for i ∈ (1..3) do
     for j ∈ (1..3) do
       stop outer if i * j > 4;
-      write i * j;
-      next if i + j = 5;
+      let k += 1;
     done;
   done outer;
-  print;
+  expect k = 5;  -- i=1→3 bodies, i=2→2 bodies, stop outer at i=2,j=3
 return;
-

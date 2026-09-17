@@ -1,4 +1,4 @@
--- @DESC:T0805 independent loop with forall and done (D14)
+-- @DESC: independent loop with forall and done (D14)
 -- For ∀ quantifier with done; terminator.
 rule main:
   new squares ∈ [Z](6);
@@ -7,4 +7,3 @@ rule main:
   done;
   print squares;
 return;
-

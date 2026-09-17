@@ -1,4 +1,4 @@
--- @DESC:T0201 Basic variable initialization
+-- @DESC: Basic variable initialization
 rule main:
   new a, b, c ∈ Z;                   -- explicit declare 3 variable
   expect a = 0 and b = 0 and c = 0;   -- default value is zero

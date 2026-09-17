@@ -1,6 +1,8 @@
--- @DESC: Partial application — ? placeholder creates a curried lambda, spec/07 §6
+-- @DESC: Partial application — the ? placeholder curries one argument of a binary lambda, spec/07 §6
+-- @AI: No - self-sufficient: assertion-only, no stdout.
+-- @DISABLED: Partial application is unimplemented: `add(5, ?)` is rejected (E0301 UndeclaredRule, no ? placeholder in the parser/spec/07 §6).
 rule main:
   new add := λ(x, y ∈ Z) => (x + y) ∈ Z;
   new add5 := add(5, ?);
-  print add5(3);
+  expect add5(3) = 8;
 return;

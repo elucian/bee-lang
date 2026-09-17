@@ -1,5 +1,8 @@
 -- @DESC:file: print_write.bee
 -- print and write demo
+-- @AI: Yes - `write` emits no newline until the bare `print`; stdout
+--   must be exactly "no newline\nthen one".
+-- @EXPECT: no newline\nthen one
 rule main:
   write "no";
   write " newline";

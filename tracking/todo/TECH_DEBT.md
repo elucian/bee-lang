@@ -29,3 +29,9 @@
 ## 6. Concurrency/Runtime
 - [ ] Message Queue: Implement the lock-free message-passing queue for cross-region data passing.
 - [ ] Coroutine Checkpointing: Formalize the register-state save mechanism for `yield` in the LLVM backend.
+
+## 7. Tooling (bee-ed)
+- [ ] Report: `sh run.sh ed edit` verified working for single-line atomic replacement
+      (`clean.py` and `.temp` clean integration, 2026-09-17). No regression found; spooling
+      multi-line content via `.temp/` + `@path` continues to be the recommended pattern.
+      (Manual §9 appended to `manual/DEVELOPER.md` via `append` + `balance`, 2026-09-17: balance OK 29 tags after edit; workflow confirmed.)

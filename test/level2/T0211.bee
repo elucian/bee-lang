@@ -1,4 +1,4 @@
--- @DESC:T0211 Labeled nested cycles with cross-label stop (D14)
+-- @DESC: Labeled nested cycles with cross-label stop (D14)
 -- D14: labels are jump targets for stop/next/redo.
 rule main:
   cycle outer:
@@ -12,4 +12,3 @@ rule main:
     done inner;
   done outer;
 return;
-

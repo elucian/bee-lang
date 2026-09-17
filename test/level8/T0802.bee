@@ -1,4 +1,4 @@
--- @DESC:T0802 coroutine with done terminator (D14)
+-- @DESC: coroutine with done terminator (D14)
 -- D14: for loop terminates with done;.
 rule ticker(n ∈ N) => (v ∈ N):
   for i ∈ (1..n) do:
@@ -18,4 +18,3 @@ rule main:
   print;
   wait;
 return;
-

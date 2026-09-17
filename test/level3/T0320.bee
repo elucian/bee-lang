@@ -1,9 +1,9 @@
--- @DESC: Rule contract verification with assert and expect
+-- @DESC: Rule contract — assert and expect precondition/postcondition both hold, spec/03 §4
+-- @AI: No - self-sufficient: assertion-only, no stdout.
 rule main:
   new a ∈ Z; new b ∈ Z;
   let a := 10;
   let b := 20;
   assert a < b;
   expect a + b = 30;
-  print (a, b) using: " + ";
 return;

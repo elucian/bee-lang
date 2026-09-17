@@ -1,4 +1,4 @@
--- @DESC:T0409 contract store item in collection
+-- @DESC: contract store item in collection
 -- A rule that stores an item into a collection cell demo;
 -- collections pass by share (spec/10), so the caller
 -- verifies the stored value after apply returns.
@@ -15,4 +15,3 @@ rule main:
   expect xs[1] = 10;
   print xs[3];
 return;
-

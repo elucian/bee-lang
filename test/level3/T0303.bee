@@ -1,8 +1,9 @@
--- @DESC: Assert precondition pass — assert condition holds, no warning emitted, spec/03 §4
+-- @DESC: Assert precondition pass — assert holds and execution continues normally, spec/03 §4
+-- @AI: No - self-sufficient: assertion-only, no stdout.
 rule main:
   new a ∈ Z; new b ∈ Z;
   let a := 10;
   let b := 20;
   assert a < b;
-  print "assert passed";
+  expect a + b = 30;
 return;

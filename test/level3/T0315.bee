@@ -1,5 +1,6 @@
--- @DESC: Lambda expression — explicit λ declaration and call, spec/07 §2.1
+-- @DESC: Lambda expression — explicit λ declaration assigned to a variable and callable, spec/07 §2.1
+-- @AI: No - self-sufficient: assertion-only, no stdout.
 rule main:
   new double := λ(x ∈ Z) => (x * 2) ∈ Z;
-  print double(21);
+  expect double(21) = 42;
 return;

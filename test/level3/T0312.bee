@@ -1,9 +1,10 @@
--- @DESC: Nested rule calls — one rule calls another rule and captures result
+-- @DESC: Nested rule calls — one rule calls another and captures its result, spec/03 §3
+-- @AI: No - self-sufficient: assertion-only, no stdout.
 rule double(n ∈ Z) => (r ∈ Z):
   let r := n * 2;
 return;
 
 rule main:
   new x := double(21);
-  print x;
+  expect x = 42;
 return;

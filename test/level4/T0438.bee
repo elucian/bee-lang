@@ -1,4 +1,4 @@
--- @DESC:T0438 list concatenation and append/shift operators (spec/10 §3.1, spec/11 list ops)
+-- @DESC: list concatenation and append/shift operators (spec/10 §3.1, spec/11 list ops)
 rule main:
   -- list concatenation with `+` creates a new list
   new a := ('a','b','c');

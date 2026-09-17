@@ -1,4 +1,4 @@
--- @DESC:T0407 contract postcondition with result binding
+-- @DESC: contract postcondition with result binding
 -- A postcondition demo
 rule bump(n ∈ Z) => (r ∈ Z):
   let r := n + 1;
@@ -8,4 +8,3 @@ return;
 rule main:
   print bump(1);
 return;
-

@@ -1,9 +1,10 @@
--- @DESC:T0204 Complex arithmetic with labeled output
+-- @DESC: Complex arithmetic with operator precedence
+-- @AI: No - Self sufficient fast test
 rule main:
   new a ∈ Z;
   let a := (10 + 5) * 2;
-  print "Result of (10 + 5) * 2 is: ", a;
-  
+  expect a = 30;  -- parentheses force (10+5)*2
+
   let a := 10 + 5 * 2;
-  print "Result of 10 + 5 * 2 is: ", a;
+  expect a = 20;  -- * binds tighter than + : 10 + (5*2)
 return;

@@ -1,4 +1,5 @@
--- @DESC: Closures state capture — rule returns a closure with boxed mutable state
+-- @DESC: Closures state capture — a generator rule returns a closure with boxed mutable state advanced on each call, spec/03 §5.4
+-- @AI: No - self-sufficient: assertion-only, no stdout.
 rule counter_generator(start ∈ Z) => (next ∈ Rule):
   set .count := [start];
   rule .next() => (val ∈ Z):
@@ -9,7 +10,7 @@ return;
 
 rule main:
   new c := counter_generator(1);
-  print c.next();
-  print c.next();
-  expect c.next()=4;
+  expect c.next() = 2;
+  expect c.next() = 3;
+  expect c.next() = 4;
 return;

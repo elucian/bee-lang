@@ -1,4 +1,4 @@
--- @DESC: T0140 Unary minus and negative integer literals
+-- @DESC: Unary minus and negative integer literals
 -- A leading `-` is a unary prefix operator producing a negative value, and
 -- composes with identifiers, parens, and arithmetic via normal precedence.
 rule main:

@@ -114,7 +114,7 @@ The Bee lexer employs a strict **Maximal Munch (Longest Match)** rule: at any po
 3. **Comment Markers:**
    - `--`: Single-line comment; consumes characters up to `\n` or `EOF`.
    - `+-`: Block comment header; consumes all code points until matching closing `-+` delimiter. Supports nested block comments `+- ... +- ... -+ ... -+`.
-   - `(: ... :)`: Expression comment; delimited by `(:` and `:)`. Supports nesting and can be placed inside expressions or span regions containing other comments.
+   - `/+ ... +/`: Expression comment; delimited by `/+` and `+/`. Supports nesting and can be placed inside expressions or span regions containing other comments.
 
 ---
 
@@ -200,7 +200,7 @@ coll_op        ::= "+>" | "<+" | "++" | "-=" ;
 arith_op       ::= "+" | "-" | "*" | "/" | "^" | "√" | "%" ;
 comment_single ::= "--" [^\n]* ;
 	comment_block  ::= "+-" ( [^+] | "+" [^-] | comment_block )* "-+" ;
-	expr_comment   ::= "(:" ( [^:] | ":" [^)] )* ":)" ;
+	expr_comment   ::= "/+" ( [^+/] | expr_comment )* "+/" ;
 
 (* Strings & Markup *)
 single_string  ::= "'" ( escape_seq | [^'\\] )* "'" ;

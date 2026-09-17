@@ -170,3 +170,58 @@ excluding `readme.md`).
 - **Source-of-truth reflex.** For *process*: `config/AGENTS.md` >
   `.agents/skills/bee/SKILL.md` > ad-hoc notes. For *language facts*:
   `/spec/` wins.
+## 9. Ed-Tool usage & troubleshooting (`bee-ed`)
+
+`bee-ed` (`cmd/ed`, built on demand as `bin/bee-ed` by `run.sh ed`) is the
+**mandatory** file-maintenance tool for every Markdown/HTML/source edit in this
+repository. Its job is to keep changes atomic and reviewable, eliminate the
+"hand-edit drift" that silently corrupts markup, and thereby **reduce
+maintenance cost and raise agentic productivity**. Do not edit repo files with
+raw write/insert tools; route them through `bee-ed` so each change is verified,
+idempotent, and auditable.
+
+### 9.1 Golden rules
+
+- **Balance before AND after.** Every edit to an HTML/Markdown file starts and
+  ends with `sh run.sh ed balance <file>`. Run it, see `OK`, edit, run it again.
+- **Build is automatic.** `run.sh ed` compiles `bin/bee-ed` from `cmd/ed` on
+  each invocation, so the tool always matches the committed sources.
+- **Never force a failed edit.** A mismatch means the tools is telling you the
+  target is not unique or the context drifted. Diagnose, correct the anchor,
+  and retry — do not work around the tool.
+- **Log what the tool tells you.** Any tooling defect or non-obvious gotcha
+  goes into `tracking/todo/TECH_DEBT.md` (see §7 Tooling) so the tool and its
+  docs improve instead of tripping the next user.
+
+### 9.2 Command reference
+
+| Command | Purpose | Gotcha |
+| :--- | :--- | :--- |
+| `ed balance <file>` | Validate tag/structure (`(tutorial)` markup + plain Markdown). | Fails are cascading: fix the **first** reported issue only, then re-run. |
+| `ed apply <patch> <file>` | Apply a unified diff atomically. | Requires **exact `@@` offsets**; anchor hunks with unique surrounding context; `--dry-run` first. |
+| `ed edit <file> <old> <new>` | Replace a **unique** substring. | Refuses on 0 or >1 matches — pick a truly unique anchor. |
+| `ed append <file> [chunk\|@chunk.txt]` | Append a reviewable chunk. | For multi-line content, spool to `.temp/` and reference with `@`. |
+| `ed sed <re> <sub> <glob...>` | Parallel RE2 regex tree edits. | Always `--dry-run` first; a bare glob `*.ext` matches file base names at any depth. |
+
+### 9.3 Multi-line spooling workflow (`.temp/`)
+
+Multi-line replacements should **never** be passed inline. Instead:
+
+1. Write the new content to a scratch file under `.temp/` (gitignored, cleared by
+   `sh run.sh clean`).
+2. Append/replace referencing it: `sh run.sh ed append manual/DEVELOPER.md @.temp/chunk.md`
+   or `sh run.sh ed edit <file> '<old>' '@.temp/new.txt'`.
+3. Run `balance` afterward. Stray trailing newlines or extra spaces in the spool
+   are the most common cause of a malformed result — verify and re-edit.
+
+### 9.4 Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| :--- | :--- | :--- |
+| `balance` reports an error cascade | Only the first error is real; the rest are fallout | Fix issue #1, re-run `balance`, iterate. |
+| `edit` says 0 or >1 matches | Your anchor is not unique | Broaden/narrow the anchor until it matches exactly once. |
+| `apply` misplaces a hunk | Stale `@@` offsets | Re-derive offsets; use `--dry-run` and unique context anchors. |
+| `sed` rewrites the wrong files | Glob too broad | Prefer base-name globs; always `--dry-run` and inspect. |
+| Paths/replacements get corrupted (`</code>` → `</code>`-adjacent junk) | MSYS2/Windows arg conversion | `run.sh ed` already sets `MSYS2_ARG_CONV_EXCL='*' MSYS_NO_PATHCONV=1`. If calling the binary directly, set them yourself. |
+| Persistent, unexplained failure | Possible tool defect | Do NOT force. Note it in `tracking/todo/TECH_DEBT.md` §7 Tooling and report. |
+

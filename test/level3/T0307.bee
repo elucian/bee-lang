@@ -1,8 +1,11 @@
--- @DESC: Rule docstrings — triple-dash comment above rule body is documentation, spec/03 §2.1
+-- @DESC: Rule docstrings — triple-dash comment is accepted as documentation in a rule body, spec/03 §2.1
+-- @AI: No - self-sufficient: assertion-only, no stdout.
 rule main:
   ---
   This rule demonstrates that docstrings are accepted
   as part of the rule body layout.
   ---
-  print "docstring ok";
+  new x ∈ Z;
+  let x := 2024;
+  expect x = 2024;
 return;

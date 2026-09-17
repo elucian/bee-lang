@@ -1,4 +1,4 @@
--- @DESC: T0225 Ternary conditional expression selector (spec/02 §3.2)
+-- @DESC: Ternary conditional expression selector (spec/02 §3.2)
 -- `(expr_true if condition else expr_false)` — parenthesised conditional.
 rule main:
   new x := 5;

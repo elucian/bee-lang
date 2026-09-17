@@ -1,12 +1,13 @@
--- @DESC:T0206 Cycle with inline next and stop conditions (D14)
--- D14: cycle block closes with done; next is an inline jump (continue).
+-- @DESC: Cycle with inline stop condition (D14)
+-- D14: cycle block closes with done; stop terminates the loop early.
 rule main:
+  new count := 0;
   new n := 3;
   cycle do
-      write n;
+      let count += 1;
       let n -= 1;
       stop if n = 0;
   done;
-  print;
+  expect count = 3;  -- writes 3,2,1 then stops at 0
+  expect n = 0;
 return;
-

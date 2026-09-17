@@ -1,4 +1,4 @@
--- @DESC:T0406 contract clamp with named results
+-- @DESC: contract clamp with named results
 -- Both, naming results and parameters demo
 rule clamp(v, lo, hi ∈ Z) => (r ∈ Z):
   expect lo ≤ hi;
@@ -16,4 +16,3 @@ rule main:
   expect clamp(5,0,10) = 5;
   expect clamp(99,0,10) = 10;
 return;
-

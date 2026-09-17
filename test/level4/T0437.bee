@@ -1,4 +1,4 @@
--- @DESC:T0437 collection iteration with $ anchor and control flow (spec/11 §1)
+-- @DESC: collection iteration with $ anchor and control flow (spec/11 §1)
 rule main:
   new a := [10, 20, 30, 40, 50];
   new total := 0;

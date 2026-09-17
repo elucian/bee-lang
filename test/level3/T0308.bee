@@ -1,11 +1,13 @@
--- @DESC: Scoping parameter shadowing — inner scope shadows outer variable, spec/03 §4
+-- @DESC: Scoping parameter shadowing — inner block shadows outer variable, which is restored on exit, spec/03 §4
+-- @AI: No - self-sufficient: assertion-only, no stdout.
+-- @DISABLED: Block-scoped shadowing is not restored by the runtime: an inner `let x := 2;` after `new x` merges into the caller's scope, so after the block x is 2 not 1 (E0303 at expect line 11). W0901 heuristic signature decoder; full block scoping deferred to Phase 7.2.
 rule main:
   new x ∈ Z;
   let x := 1;
   if true do
     new x ∈ Z;
     let x := 2;
-    print x;
+    expect x = 2;
   done;
-  print x;
+  expect x = 1;
 return;

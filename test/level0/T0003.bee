@@ -1,4 +1,6 @@
 -- @DESC: Multiple arguments
+-- @AI: Yes - verifies default space separator across arguments.
+-- @EXPECT: Hello, World!
 rule main:
   print ("Hello,", "World!");
 return;

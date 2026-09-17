@@ -2,13 +2,14 @@
 
 Boot-level tests that validate the Bee compiler can lex, parse, evaluate, and print outputs without crashing. These tests intentionally cover the minimum surface required to exercise the print/io grammar path and entry-rule header (`rule main: ... return;`).
 
-| CASE     | DESCRIPTION                      | STATUS     |
-| -------- | -------------------------------- | ---------- |
-| T0001    | Hello World Test                 | PASS       |
-| T0002    | Large list of numbers            | PASS       |
-| T0003    | Multiple arguments               | PASS       |
-| T0004    | Test print with custom separa... | PASS       |
-| smoke    | Smoke test validation            | PASS       |
+| CASE   | DESCRIPTION                       | AI    | STATUS    |
+| ------ | --------------------------------- | ----- | --------- |
+| T0005    | Negative test — compiler must... | No     | PASS       |
+| T0001    | Hello World Test                 | Yes    | PASS       |
+| T0002    | Large list of numbers            | Yes    | PASS       |
+| T0003    | Multiple arguments               | Yes    | PASS       |
+| T0004    | Test print with custom separa... | Yes    | PASS       |
+| smoke    | Smoke test validation            | Yes    | PASS       |
 
 ## Spec Coverage
 

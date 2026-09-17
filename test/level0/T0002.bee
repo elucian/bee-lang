@@ -1,4 +1,6 @@
 -- @DESC: Large list of numbers
+-- @AI: Yes - verifies print with curried named-argument separator.
+-- @EXPECT: 10,20,30,40,50
 rule main:
   print (10, 20, 30, 40, 50) (sep: ",");
 return;

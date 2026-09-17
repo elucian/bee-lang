@@ -1,6 +1,6 @@
--- @DESC:T0117 Constant declaration with set
+-- @DESC: Constant declaration with set
 set LIMIT: 10 ∈ Z;
 rule main:
-  print LIMIT;
+  expect LIMIT = 10;
+  expect LIMIT - 10 = 0;
 return;
-

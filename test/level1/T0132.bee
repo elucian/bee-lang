@@ -1,4 +1,4 @@
--- @DESC: T0132 Decision 13: left-exclusive range `>..` semantics
+-- @DESC: Decision 13: left-exclusive range `>..` semantics
 -- Half-open `(a, b]` — a is NOT in, b IS in.
 rule main:
   new b ∈ Z;

@@ -1,9 +1,9 @@
 -- @NEGATIVE
--- @DESC: Expect postcondition fail — expect raises E0303 and halts, spec/03 §4
+-- @DESC: Expect postcondition fail — expect raises E0303 and halts the program, spec/03 §4
+-- @AI: No - self-sufficient: assertion-only, must exit non-zero.
 rule main:
   new a ∈ Z; new b ∈ Z;
   let a := 10;
   let b := 20;
   expect a + b = 99;
-  print "should not reach here";
 return;

@@ -1,4 +1,4 @@
--- @DESC:T0404 contract grow on a collection
+-- @DESC: contract grow on a collection
 -- A rule that stamps a collection cell demo; collections pass
 -- by share (spec/10), so the caller verifies the mutation
 -- after apply returns.
@@ -14,4 +14,3 @@ rule main:
   expect xs[$] = 30;
   print xs[2];
 return;
-

@@ -1,4 +1,4 @@
--- @DESC:T0405 contract write-through argument
+-- @DESC: contract write-through argument
 -- A rule that writes through its argument demo; the caller
 -- verifies the mutation after apply returns.
 rule bump(n ∈ @Z):
@@ -11,4 +11,3 @@ rule main:
   expect counter = 11;
   print counter;
 return;
-

@@ -1,4 +1,4 @@
--- @DESC:T0415 growing a list with <+ and +>
+-- @DESC: growing a list with <+ and +>
 -- List growth demo (spec/01 coll_op): <+ appends at the end,
 -- +> appends at the beginning (pipeline/map-reduce pattern).
 rule main:

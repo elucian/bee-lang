@@ -27,6 +27,10 @@ __pycache__/
 *.pyc
 
 
+# Temp files (spooled by AI agents & build steps)
+.temp/
+
+
 # Test results
 test/status/
 test/output/

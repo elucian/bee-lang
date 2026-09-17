@@ -1,4 +1,4 @@
--- @DESC:T0441 set algebra intersection, union, symmetric difference (spec/10 §3.4)
+-- @DESC: set algebra intersection, union, symmetric difference (spec/10 §3.4)
 rule main:
   new s1 := {1,2,3,4,5};
   new s2 := {3,4,5,6,7};

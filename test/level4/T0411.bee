@@ -1,4 +1,4 @@
--- @DESC:T0303 array traversal with done terminator (D14)
+-- @DESC: array traversal with done terminator (D14)
 -- D14: for loop terminates with done;.
 -- 1-based array indexing (Decision 1).
 
@@ -16,4 +16,3 @@ rule main:
     print i;
   done;
 return;
-

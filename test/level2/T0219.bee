@@ -1,4 +1,4 @@
--- @DESC:T0219 Match all evaluates every matching branch
+-- @DESC: Match all evaluates every matching branch
 rule main:
   new n := 2;
   new result := 0;

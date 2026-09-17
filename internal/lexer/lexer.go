@@ -147,11 +147,6 @@ func (l *Lexer) NextToken() token.Token {
 	case ',':
 		tok = token.Token{Type: token.COMMA, Literal: ",", Pos: token.Pos(l.line)}
 	case '(':
-		if l.PeekChar() == ':' {
-			l.readChar()
-			l.skipExprComment()
-			return l.NextToken()
-		}
 		tok = token.Token{Type: token.LPAREN, Literal: "(", Pos: token.Pos(l.line)}
 	case ')':
 		tok = token.Token{Type: token.RPAREN, Literal: ")", Pos: token.Pos(l.line)}
@@ -362,6 +357,12 @@ func (l *Lexer) NextToken() token.Token {
 		if l.PeekChar() == '=' {
 			l.readChar()
 			tok = token.Token{Type: token.DIV_ASSIGN, Literal: "/=", Pos: token.Pos(l.line)}
+		} else if l.PeekChar() == '+' {
+			// Expression comment: `/+ ... +/`, delimited by `/+` and `+/`, supports
+			// nesting, and may sit inside an expression (spec/01 §4).
+			l.readChar() // consume '+'
+			l.skipExprComment()
+			return l.NextToken()
 		} else {
 			tok = token.Token{Type: token.SLASH, Literal: "/", Pos: token.Pos(l.line)}
 		}
@@ -529,14 +530,16 @@ func (l *Lexer) skipSingleComment() {
 }
 
 func (l *Lexer) skipExprComment() {
-	l.readChar() // consume ':'
+	l.readChar() // consume '+' (second rune of the '/+' opener)
 	depth := 1
 	for depth > 0 && l.ch != 0 {
-		if l.ch == '(' && l.PeekChar() == ':' {
+		if l.ch == '/' && l.PeekChar() == '+' {
+			// nested '/+' opener
 			l.readChar()
 			l.readChar()
 			depth++
-		} else if l.ch == ':' && l.PeekChar() == ')' {
+		} else if l.ch == '+' && l.PeekChar() == '/' {
+			// '+/' closer
 			l.readChar()
 			l.readChar()
 			depth--

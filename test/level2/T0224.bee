@@ -1,4 +1,4 @@
--- @DESC:T0224 Match one with multiple comma-separated targets
+-- @DESC: Match one with multiple comma-separated targets
 rule main:
   new n := 3;
   new result := 0;

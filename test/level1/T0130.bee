@@ -1,6 +1,6 @@
--- @DESC:T0130 Equality and identity relational operators
+-- @DESC: Equality and identity relational operators
 rule main:
-  new a ∈ Z; new b ∈ Z;
+  new a, b ∈ Z;
   let a := 10;
   let b := 10;
 

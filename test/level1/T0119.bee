@@ -1,6 +1,9 @@
 -- @ENABLED: Reset by user
 -- @DESC:file: ending_early.bee
 -- Ending early demo
+-- @AI: Yes - `over` terminates before the trailing print and forced
+--   expectation; stdout must be exactly "before".
+-- @EXPECT: before
 rule main:
   print "before";
   over;

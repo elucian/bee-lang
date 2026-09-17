@@ -1,4 +1,4 @@
--- @DESC:T0210 Anonymous cycle: prologue with next and stop jumps (D14)
+-- @DESC: Anonymous cycle: prologue with next and stop jumps (D14)
 -- D14: anonymous `cycle:` opens stable prologue without label.
 rule main:
   cycle:
@@ -10,4 +10,3 @@ rule main:
     write count;
   done;
 return;
-

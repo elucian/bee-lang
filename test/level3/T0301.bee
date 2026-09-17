@@ -1,8 +1,10 @@
--- @DESC: Rule anatomy no params — minimal rule with no parameters, spec/03 §2.1
-rule greet:
-  print "Hello from rule";
+-- @DESC: Rule anatomy no params — a parameterless rule returns a value asserted by main, spec/03 §2.1
+-- @AI: No - self-sufficient: assertion-only, no stdout.
+rule greet => (s ∈ Z):
+  let s := 42;
 return;
 
 rule main:
-  print "main done";
+  new r := greet();
+  expect r = 42;
 return;

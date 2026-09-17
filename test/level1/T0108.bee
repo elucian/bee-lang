@@ -1,4 +1,4 @@
--- @DESC:T0108 Compound arithmetic assignment and update operators
+-- @DESC: Compound arithmetic assignment and update operators
 rule main:
   new a ∈ Z;
   let a := 10;

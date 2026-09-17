@@ -1,4 +1,4 @@
--- @DESC:T0436 array and hash-map builders over stepped range (spec/11 §4, spec/10 §3)
+-- @DESC: array and hash-map builders over stepped range (spec/11 §4, spec/10 §3)
 rule main:
   -- array builder: [ x | x ∈ (1..10)(2) ] => [1,3,5,7,9]
   new arr := [ x | x ∈ (1..10)(2) ];

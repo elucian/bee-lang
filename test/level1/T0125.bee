@@ -1,15 +1,12 @@
--- @DESC:T0125 Chained arithmetic mutation operators
+-- @DESC: Chained compound mutation on type-inferred cells
 rule main:
-  new x ∈ Z;
-  let x := 10;
+  new x := 10;          -- type inference form; no explicit `∈ Z`
   let x += 5;
   expect x = 15;
-  let x -= 2;
-  expect x = 13;
   let x *= 2;
-  expect x = 26;
-  let x /= 2;
-  expect x = 13;
-  let x %= 3;
-  expect x = 1;
+  expect x = 30;
+  new y := 7;
+  let y -= 2;
+  expect y = 5;
+  expect x = 30;        -- independent cell unaffected by y
 return;

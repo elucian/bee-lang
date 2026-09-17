@@ -1,11 +1,12 @@
--- @DESC:T0208 Conditional if-else branching
--- if and else demo
+-- @DESC: Conditional if-else branching
+-- @AI: No - Self sufficient fast test
 rule main:
   new n := 7;
+  new out := "";
   if n > 10 do
-    print "big";
+    let out := "big";
   else
-    print "small";
+    let out := "small";
   done;
+  expect out = "small";  -- 7 > 10 is false → else branch
 return;
-

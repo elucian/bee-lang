@@ -1,9 +1,9 @@
--- @DESC: Rule contract assert failure emits warning to stderr and continues execution
+-- @DESC: Rule contract assert failure — a violated assert warns on stderr but expect still verifies, spec/03 §4
+-- @AI: No - self-sufficient: assertion-only, no stdout.
 rule main:
   new a ∈ Z; new b ∈ Z;
   let a := 50;
   let b := 20;
   assert a < b;
   expect a > b;
-  print (a, b) using: " > ";
 return;

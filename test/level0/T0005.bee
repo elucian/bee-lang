@@ -1,0 +1,7 @@
+-- @DESC: Negative test — compiler must reject illegal assignment `let a = 10;` (uses `=` instead of declaration-assign `:=`); passes only when the evaluator exits non-zero (spec/02 §2 declarations use `:=`).
+-- @AI: No - self-sufficient: negative assertion, no stdout.
+-- @NEGATIVE
+rule main:
+  let a = 10;
+  print "Test Failed";
+return;

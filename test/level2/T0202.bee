@@ -1,4 +1,5 @@
--- @DESC:T0202 Hello World with String variable
+-- @DESC: Hello World with String variable
+-- @AI: No - Self sufficient fast test
 rule main:
   new s ∈ S; -- declare without initialization
   let s := "Hello World";
@@ -6,6 +7,6 @@ rule main:
   expect s  = n;  -- same value
   expect s is n;  -- same refference
   expect @s = @n; -- same pointer
-  print s;
-  print n;
+  expect s = "Hello World";
+  expect n = "Hello World";
 return;

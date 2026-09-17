@@ -1,4 +1,4 @@
--- @DESC:T0220 Match selects a range-inclusive branch
+-- @DESC: Match selects a range-inclusive branch
 rule main:
   new n := 5;
   new result := 0;

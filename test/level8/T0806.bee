@@ -1,4 +1,4 @@
--- @DESC:T0806 map-reduce with done terminators (D14)
+-- @DESC: map-reduce with done terminators (D14)
 -- D14: for terminators migrated to done;.
 rule sum(a, b ∈ Z) => (r ∈ Z):
   for i ∈ (a..b) do:
@@ -19,4 +19,3 @@ rule main:
   done;
   print total;
 return;
-

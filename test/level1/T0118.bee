@@ -1,7 +1,6 @@
--- @DESC:T0118 Variable declaration with new
+-- @DESC: Variable declaration with new
 rule main:
   new a ∈ Z;
   let a := 42;
-  print a;
+  expect a = 42;
 return;
-

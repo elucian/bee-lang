@@ -1,4 +1,4 @@
--- @DESC:T0403 contract deposit with expectation
+-- @DESC: contract deposit with expectation
 -- Exact money, with a promise it went up demo
 rule deposit(balance ∈ @Z, amount ∈ Z):
   assert amount > 0;

@@ -1,13 +1,14 @@
--- @DESC:T0207 Conditional execution with else-if ladder
--- An else-if ladder demo
+-- @DESC: Conditional execution with else-if ladder
+-- @AI: No - Self sufficient fast test
 rule main:
   new n := 0;
+  new out := "";
   if n > 0 do
-    print "positive";
+    let out := "positive";
   else if n < 0 do
-    print "negative";
+    let out := "negative";
   else
-    print "zero";
+    let out := "zero";
   done;
+  expect out = "zero";  -- n = 0 falls to the else branch
 return;
-

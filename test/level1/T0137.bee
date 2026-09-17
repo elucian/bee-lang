@@ -1,7 +1,7 @@
--- @DESC: T0137 Decision 13: postfix-step with left-exclusive range `>..`
--- `(1>..5)(1)` discretises the left-exclusive range (1,5] to four elements {2,3,4,5}.
+-- @DESC: Decision 13: postfix-step with left-exclusive range `>..`
+-- Stepping a left-exclusive postfix range (1,5] yields four elements {2,3,4,5}.
 rule main:
-  new r ∈ Z;
+  new r ∈ [Z];
   new a ∈ Z;
   new b ∈ Z;
   new c ∈ Z;

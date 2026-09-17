@@ -240,7 +240,7 @@ func (p *Parser) skipTypeSpecifier() {
 		if depth == 0 && consumed > 0 &&
 			(t.Type == token.COMMA || t.Type == token.RPAREN ||
 				t.Type == token.ASSIGN || t.Type == token.EQ ||
-				t.Type == token.SEMICOLON) {
+				t.Type == token.COLON || t.Type == token.SEMICOLON) {
 			return
 		}
 		switch t.Type {
@@ -273,7 +273,7 @@ func (p *Parser) captureTypeSpecifier() []token.Token {
 		if depth == 0 && consumed > 0 &&
 			(t.Type == token.COMMA || t.Type == token.RPAREN ||
 				t.Type == token.ASSIGN || t.Type == token.EQ ||
-				t.Type == token.SEMICOLON) {
+				t.Type == token.COLON || t.Type == token.SEMICOLON) {
 			return toks
 		}
 		switch t.Type {
@@ -1324,6 +1324,17 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 			for range ds.Names {
 				ds.Values = append(ds.Values, val)
 			}
+		} else if p.l.PeekToken().Type == token.COLON {
+			// Decision 11 (ratified 2026-09-14): parallel colon-initialisation.
+			// `new x,y,z ∈ Z: 2;` broadcasts the single value to every declared
+			// identifier under an explicit type. (`=` is the deprecated legacy
+			// spelling; `:` is canonical.)
+			p.l.NextToken() // consume ':'
+			val := p.parseExpression()
+			ds.Value = val
+			for range ds.Names {
+				ds.Values = append(ds.Values, val)
+			}
 		}
 	} else if nextTok.Literal == ":" {
 		// D9 (ratified 2026-09-13): `:` is structural pair-up with NO type
@@ -1445,7 +1456,16 @@ func (p *Parser) parseAssignment(tok token.Token) Statement {
 	} else if opTok.Type == token.REDUCE_CHANNEL || opTok.Literal == "+>" {
 		opTok.Type = token.REDUCE_CHANNEL
 	} else if opTok.Literal == "=" {
-		opTok.Type = token.EQ
+		// spec/02-statements.md §2 / MANIFEST Decision 9: a `let` declaration
+		// must use type-inferred `:=` (or a compound/collection operator); bare
+		// `=` is the *value-equality* operator, not an assignment operator, so
+		// accepting it here violates the grammar. Reject it with E0009 so the
+		// evaluator exits non-zero.
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:InvalidAssignOp: line=%d (bare `=` is value-equality, not assignment; `let` requires `:=`)",
+			opTok.Pos,
+		))
+		opTok.Type = token.EQ // keep the token payload valid; error already recorded
 	}
 
 	p.debugLog("PARSER DEBUG: final stmt.Token literal=%q, type=%v\n", opTok.Literal, opTok.Type)

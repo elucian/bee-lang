@@ -1,4 +1,4 @@
--- @DESC:T0439 array decomposition, spreading, and rendering (spec/11 §5.1)
+-- @DESC: array decomposition, spreading, and rendering (spec/11 §5.1)
 rule main:
   -- deconstruction: head elements plus *tail
   new x, y, *rest := [1,2,3,4,5];

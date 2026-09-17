@@ -1,4 +1,4 @@
--- @DESC:T0107 Square root, cube root, and radical operators
+-- @DESC: Square root, cube root, and radical operators
 -- This test is failing on ³√ 2³ = 2;
 rule main:
   new x ∈ Z;

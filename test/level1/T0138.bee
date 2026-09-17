@@ -1,7 +1,7 @@
--- @DESC: T0138 Decision 13: postfix-step with fully-exclusive range `>..<`
--- `(1>..<5)(1)` discretises the fully-exclusive range (1,5) to three elements {2,3,4}.
+-- @DESC: Decision 13: postfix-step with fully-exclusive range `>..<`
+-- Stepping a fully-exclusive postfix range (1,5) yields three elements {2,3,4}.
 rule main:
-  new r ∈ Z;
+  new r ∈ [Z];
   new a ∈ Z;
   new b ∈ Z;
   new c ∈ Z;

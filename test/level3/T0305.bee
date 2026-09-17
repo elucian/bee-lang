@@ -1,8 +1,9 @@
--- @DESC: Expect postcondition pass — expect condition holds, no error raised, spec/03 §4
+-- @DESC: Expect postcondition pass — expect holds and no error is raised, spec/03 §4
+-- @AI: No - self-sufficient: assertion-only, no stdout.
 rule main:
   new a ∈ Z; new b ∈ Z;
   let a := 10;
   let b := 20;
   expect a + b = 30;
-  print "expect passed";
+  expect b - a = 10;
 return;

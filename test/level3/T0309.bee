@@ -1,10 +1,15 @@
--- @DESC: Scoping variable locality — rule-local variables are not visible outside, spec/03 §4
-rule helper:
+-- @DESC: Scoping variable locality — a rule-local variable never leaks into the caller's scope, spec/03 §4
+-- @AI: No - self-sufficient: assertion-only, no stdout.
+rule helper => (v ∈ Z):
   new local_var ∈ Z;
   let local_var := 42;
-  print local_var;
+  let v := local_var;
 return;
 
 rule main:
-  print "locality ok";
+  new h := helper();
+  expect h = 42;
+  new outer ∈ Z;
+  let outer := 7;
+  expect outer = 7;
 return;

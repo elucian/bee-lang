@@ -1,4 +1,4 @@
--- @DESC:T0426 slice extraction with $ anchor
+-- @DESC: slice extraction with $ anchor
 -- Slice extraction demo (spec/10 §2.3): sub-collections are
 -- extracted with range operators; $ is the dynamic end anchor.
 rule main:

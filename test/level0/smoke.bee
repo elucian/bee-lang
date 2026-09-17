@@ -1,4 +1,6 @@
--- @DESC:Smoke test validation
+-- @DESC: Smoke test validation
+-- @AI: Yes - smoke path exercises bare print without parentheses.
+-- @EXPECT: Smoke test
 rule main:
   print "Smoke test";
 return;

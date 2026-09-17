@@ -1,4 +1,6 @@
--- @DESC:T0115 Comprehensive print and formatted output forms
+-- @DESC: Exercises several print output forms (blank, str, int, tuple, multi-arg, floats).
+-- @AI: Yes - multiple print-output forms verified byte-exact.
+-- @EXPECT: \nHello, Bee!\n42\nNumber: 100\nMultiple arguments 365 passed\n42 43 44\n3.14
 rule main:
   print;
   print "Hello, Bee!";

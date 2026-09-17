@@ -1,5 +1,8 @@
 -- @DESC:file: hello_world.bee
 -- hello world demo
+-- @AI: Yes - `write` emits no newline while `print` terminates the line;
+--   stdout must be exactly "Hello World\ndone".
+-- @EXPECT: Hello World\ndone
 rule main:
   write "Hello";
   write " ";

@@ -1,4 +1,5 @@
--- @DESC: Recursion — factorial via recursive rule call
+-- @DESC: Recursion — factorial computed via a recursive rule call, spec/03 §3
+-- @AI: No - self-sufficient: assertion-only, no stdout.
 rule factorial(n ∈ N) => (r ∈ N):
   if n ≤ 1 do
     let r := 1;
@@ -9,5 +10,5 @@ return;
 
 rule main:
   new f := factorial(5);
-  print f;
+  expect f = 120;
 return;

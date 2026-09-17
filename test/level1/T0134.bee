@@ -1,7 +1,7 @@
--- @DESC: T0134 Decision 13: postfix-step range indexing (integer step)
--- `(1..5)(1)` discretises the closed range into a 5-element sequence; `[3]` returns the 3rd element (1-based) = 3.
+-- @DESC: Decision 13: postfix-step range indexing (integer step)
+-- A stepped postfix range yields a 5-element closed sequence; rank-3 indexing gives the third element (1-based) = 3.
 rule main:
-  new stepped ∈ Z;
+  new stepped ∈ [Z];
   new third ∈ Z;
   new first ∈ Z;
 

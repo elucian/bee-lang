@@ -1,4 +1,6 @@
 -- @DESC: Test print with custom separator (Decision 6 curried named-argument form)
+-- @AI: Yes - verifies curried (sep: " | ") form with evaluated vars.
+-- @EXPECT: 1 | 2
 rule main:
   new a ∈ Z; new b ∈ Z;
   let a := 1;

@@ -1,5 +1,5 @@
 -- @NEGATIVE: with-qualifier suppression is not implemented yet (graceful runtime error expected)
--- @DESC:T0223 With scope qualifier module is not implemented (graceful failure)
+-- @DESC: With scope qualifier module is not implemented (graceful failure)
 rule main:
   new x := 5;
   with math do

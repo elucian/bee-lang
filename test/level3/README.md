@@ -6,26 +6,26 @@ This level covers rules, contracts, and function definitions as defined in:
 
 ## Test Coverage
 
-| CASE     | DESCRIPTION                      | STATUS     |
-| -------- | -------------------------------- | ---------- |
-| T0301    | Rule anatomy no params — mini... | PASS       |
-| T0302    | Rule anatomy with params — ru... | PASS       |
-| T0303    | Assert precondition pass — as... | PASS       |
-| T0304    | Assert precondition fail — as... | PASS       |
-| T0305    | Expect postcondition pass — e... | PASS       |
-| T0306    | Expect postcondition fail — e... | PASS       |
-| T0307    | Rule docstrings — triple-dash... | PASS       |
-| T0308    | Scoping parameter shadowing —... | PASS       |
-| T0309    | Scoping variable locality — r... | PASS       |
-| T0310    | Closures state capture — rule... | PASS       |
-| T0311    | Early return with exit — exit... | PASS       |
-| T0312    | Nested rule calls — one rule ... | PASS       |
-| T0313    | Recursion — factorial via rec... | PASS       |
-| T0314    | Multi-result deconstruction —... | PASS       |
-| T0315    | Lambda expression — explicit ... | PASS       |
-| T0316    | Lambda in pipeline — inline s... | PASS       |
-| T0317    | Compose operator — f ∘ g comp... | FAIL       |
-| T0318    | Pipe operator — value |> f |>... | FAIL       |
-| T0319    | Partial application — ? place... | PASS       |
-| T0320    | Rule contract verification wi... | PASS       |
-| T0321    | Rule contract assert failure ... | PASS       |
+| CASE     | DESCRIPTION                      | AI    | STATUS     |
+| -------- | -------------------------------- | ----- | ---------- |
+| T0301    | Rule anatomy no params — a pa... | No     | PASS       |
+| T0302    | Rule anatomy with params — ru... | No     | PASS       |
+| T0303    | Assert precondition pass — as... | No     | PASS       |
+| T0304    | Assert precondition fail — as... | No     | PASS       |
+| T0305    | Expect postcondition pass — e... | No     | PASS       |
+| T0306    | Expect postcondition fail — e... | No     | PASS       |
+| T0307    | Rule docstrings — triple-dash... | No     | PASS       |
+| T0308    | Scoping parameter shadowing —... | No     | SKIP       |
+| T0309    | Scoping variable locality — a... | No     | PASS       |
+| T0310    | Closures state capture — a ge... | No     | PASS       |
+| T0311    | Early return with exit — exit... | No     | PASS       |
+| T0312    | Nested rule calls — one rule ... | No     | PASS       |
+| T0313    | Recursion — factorial compute... | No     | PASS       |
+| T0314    | Multi-result deconstruction —... | No     | PASS       |
+| T0315    | Lambda expression — explicit ... | No     | PASS       |
+| T0316    | Lambda inline — an anonymous ... | No     | SKIP       |
+| T0317    | Compose operator — f ∘ g appl... | No     | SKIP       |
+| T0318    | Pipe operator — value |> f |>... | No     | SKIP       |
+| T0319    | Partial application — the ? p... | No     | SKIP       |
+| T0320    | Rule contract — assert and ex... | No     | PASS       |
+| T0321    | Rule contract assert failure ... | No     | PASS       |

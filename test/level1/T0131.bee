@@ -1,4 +1,4 @@
--- @DESC: T0131 Decision 13: right-exclusive range `..<` semantics
+-- @DESC: Decision 13: right-exclusive range `..<` semantics
 -- Closed `[a, b)` — a is in, b is NOT in.
 rule main:
   new a ∈ Z;

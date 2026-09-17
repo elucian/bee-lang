@@ -1,4 +1,4 @@
--- @DESC:T0304 bubble sort with done terminators (D14)
+-- @DESC: bubble sort with done terminators (D14)
 -- D14: cycle/for terminator migrated to done;.
 rule main:
   new a := [5, 4, 3, 2, 1];
@@ -21,4 +21,3 @@ rule main:
   expect a[4] = 4;
   expect a[5] = 5;
 return;
-

@@ -1,5 +1,7 @@
--- @DESC: Lambda in pipeline — inline shorthand passed to a processing operator, spec/07 §2.2
+-- @DESC: Lambda inline — an anonymous lambda is called immediately with arguments, spec/07 §2.2
+-- @AI: No - self-sufficient: assertion-only, no stdout.
+-- @DISABLED: Lambda-as-processing-argument is unimplemented: invoking an anonymous lambda immediately `((x,y) => x+y)(...)` and passing a lambda as a rule argument are both E0009 syntax errors (spec/07 §2.2 deferred).
 rule main:
-  new result := apply_transform(10, 20, (x, y) => x + y);
-  print result;
+  new result := ((x, y) => x + y)(10, 20);
+  expect result = 30;
 return;

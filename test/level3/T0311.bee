@@ -1,10 +1,12 @@
--- @DESC: Early return with exit — exit terminates rule early with current result, spec/03 §3.2
+-- @DESC: Early return with exit — exit returns the rule's current result and skips the remaining body, spec/03 §3.2
+-- @AI: No - self-sufficient: assertion-only, no stdout.
+rule pick() => (v ∈ Z):
+  let v := 7;
+  exit;
+  let v := 99;
+return;
+
 rule main:
-  new count ∈ Z;
-  let count := 0;
-  if count = 0 do
-    print "early exit";
-    exit;
-  done;
-  print "should not reach here";
+  new x := pick();
+  expect x = 7;
 return;

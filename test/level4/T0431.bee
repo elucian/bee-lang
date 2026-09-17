@@ -1,4 +1,4 @@
--- @DESC:T0431 dollar-anchor arithmetic and array processing with asserts
+-- @DESC: dollar-anchor arithmetic and array processing with asserts
 rule main:
   	-- Array literal and $-anchor (spec/10 §2.1, §3.2)
   	new a := [10, 20, 30, 40];

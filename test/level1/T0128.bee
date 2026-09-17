@@ -1,5 +1,7 @@
--- @DESC:@FROZEN: Generated from /spec/. Immutable ground truth for AI agents.
--- T0128: Print statement functionality check
+-- @DESC: The print statement writes a computed integer expression to stdout.
+-- @FROZEN: Generated from /spec/. Immutable ground truth; kept so AI agents never rewrite the print io assertion.
+-- @AI: Yes - computed integer printed, verified byte-exact.
+-- @EXPECT: 13
 rule main:
   new a ∈ Z;
   let a := 10 + 3;

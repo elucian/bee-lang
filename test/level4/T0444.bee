@@ -1,4 +1,4 @@
--- @DESC:T0444 list as queue FIFO using append and shift-left (spec/11 list ops)
+-- @DESC: list as queue FIFO using append and shift-left (spec/11 list ops)
 rule main:
   new q := (1,2,3);
   -- enqueue: append one element to end with `<+`

@@ -1,4 +1,5 @@
--- @DESC:T0214 Redo directive restarts current iteration (D14)
+-- @DESC: Redo directive restarts current iteration (D14)
+-- @AI: No - Self sufficient fast test
 -- D14: `redo` re-evaluates the loop header without flushing volatile body state.
 rule main:
   cycle:
@@ -10,6 +11,5 @@ rule main:
     let succeeded += 1;
     stop if succeeded = 2;
   done;
-  print succeeded;
+  expect succeeded = 2;  -- two successful post-redo iterations
 return;
-

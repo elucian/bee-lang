@@ -1,8 +1,12 @@
 -- @DESC:file: initial_values.bee
 -- Initial values demo
 rule main:
+  -- initialization with individual values
   new a: 1, b: 2 ∈ Z;
   expect a = 1;
   expect b = 2;
-  print "successful initialization"
+
+  -- initialization in series with one value
+  new x,y,z ∈ Z: 2;
+  expect x + y + z = 6;
 return;

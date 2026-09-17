@@ -1,4 +1,4 @@
--- @DESC:T0319 walking a map with done terminator (D14)
+-- @DESC: walking a map with done terminator (D14)
 -- D14: for loop terminates with done;.
 rule main:
   new m := {1:"a", 2:"b"};

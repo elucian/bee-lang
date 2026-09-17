@@ -64,10 +64,56 @@ an `expect` is false.
 
 | Tag | Meaning |
 | :--- | :--- |
-| `-- @DESC:<name> <purpose>` | Required. Human + harness description of the test's purpose (shown in the level `README.md` table). |
+| `-- @DESC:<name> <purpose>` | Required. Human + harness description of the test's purpose (shown in the level `README.md` table). Must describe *what the test does* — never restate the code, since the body is not duplicated in the README. |
+| `-- @AI: Yes - <reason>` | Required note on output-producing tests. Replaces the legacy `-- * AI based test.`. Flags that the case uses `print` and is verified against `@EXPECT` by the runner's AI/printer layer. Omit the tag (or use `@AI: No`) for purely assertion-driven tests. |
+| `-- @EXPECT: <exact output>` | Required for **AI based** (`print`-using) tests. The runner captures stdout and compares it (byte-exact, surfaced assertion) against this tag. A mismatch — or a missing tag on a `print` test — **fails** the case with no human/agent reading required. |
 | `-- @NEGATIVE` | The test supplies a *negative* program: it **passes** on a non-zero exit and **fails** on exit 0 (e.g. a rejected `a[-1]` index). |
 | `-- @DISABLED: <reason>` | Skipped by the harness. Inserted automatically when a case fails; the reason is the first stderr diagnostic. Powerful, honest positive signal: disabled == feature not yet implemented. |
 | `-- @FROZEN` / `@ENABLED` | Legacy lifecycle markers (spec-protocol). `@FROZEN` marks immutable ground truth; `@ENABLED` manual re-activation. |
+
+### No overtesting — completeness & sufficiency
+
+The suite must be complete **and** sufficient — nothing redundant, nothing missing.
+
+- **Each case must justify its existence.** A case that covers a feature already
+  covered by another case *and nothing more* is redundant: it adds run time with
+  zero new signal and must not be created.
+- **Two cases may share a feature only when each also exercises a distinct
+  additional spec surface** (a different decision, operand, edge, or interaction).
+  When two cases collapse to the *same* feature and nothing else, the later one
+  is not deleted outright — it is **enhanced in complexity** to fold in an
+  additional feature of the specification, so the pair as a whole stays complete
+  without duplicating work.
+- **Tune to the specification.** Every case should map to one or more concrete
+  spec rules (decision/§-reference); a case with no spec justification is a
+  strong overtest candidate.
+- **Optimize for necessity.** Prefer fewer, richer tests over many shallow ones:
+  a test is worth keeping only if it fails on some real regression the others
+  do not catch. Over-testing bloats run time and, worse, gives false confidence
+  by passing tests that only re-verify already-proven behavior.
+
+*Aim: the union of all cases is the smallest set whose failure modes cover the
+entire examined spec surface with no meaningful gap and no meaningful overlap.*
+
+Every level `README.md` status table carries four columns:
+
+```
+| CASE | DESCRIPTION | AI | STATUS |
+```
+
+- **AI** is `Yes` iff the case's source body emits stdout via `print`, declared with
+  the header tag `-- @AI: Yes`. Otherwise `No`. The runner confirms the tag by
+  scanning the source directly (comment lines never count), so a description merely
+  mentioning "print" cannot mislabel an assertion-only test.
+- For `AI=Yes` cases the runner prints a machine-readable verdict the AI can act on:
+
+  ```
+  [T0001] AI=Yes expect="Hello World" actual="Hello World" -> OK
+  ```
+
+  `OK` means actual == expected; `MISMATCH` or `NO-EXPECT` means the case FAILS.
+- `AI=No` (assertion-only) cases self-verify via `expect`; the evaluator exits non-zero
+  the instant one is false, so they pass/fail with no output inspection.
 
 ### Lifecycle & automatic testing
 

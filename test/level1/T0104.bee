@@ -1,4 +1,4 @@
--- @DESC:T0104 Exponentiation and power operators
+-- @DESC: Exponentiation and power operators
 rule main:
   new base, exp, res ∈ Z;
   let base := 2;

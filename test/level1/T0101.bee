@@ -1,4 +1,4 @@
--- @DESC:T0101 Essential arithmetic operations and assignments
+-- @DESC: Essential arithmetic operations and assignments
 rule main:
   new a, b, c, d, e ∈ Z;
   let a := 10 + 3;

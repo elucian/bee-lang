@@ -1,4 +1,5 @@
--- @DESC:T0213 Then epilogue runs once after stop (D14)
+-- @DESC: Then epilogue runs once after stop (D14)
+-- @AI: No - Self sufficient fast test
 -- D14: `then` block executes exactly once after loop exit.
 rule main:
   cycle counter:
@@ -7,7 +8,6 @@ rule main:
     let n += 1;
     stop if n = 5;
   then
-    print "stopped at n = " + n;
+    expect n = 5;  -- then runs once after stop at n=5
   done counter;
 return;
-

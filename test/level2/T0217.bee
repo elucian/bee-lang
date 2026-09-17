@@ -1,10 +1,13 @@
--- @DESC:T0217 If-else block control flow
+-- @DESC: If-else block control flow
+-- @AI: No - Self sufficient fast test
 rule main:
   new x ∈ Z;
   let x := 10;
+  new out := "";
   if x > 5 do
-    print "positive";
+    let out := "positive";
   else
-    print "non-positive";
+    let out := "non-positive";
   done;
+  expect out = "positive";  -- 10 > 5 → then branch
 return;

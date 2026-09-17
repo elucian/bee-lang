@@ -1,5 +1,5 @@
 -- @ENABLED: Reset by user
--- @DESC:T0102 Relational and comparison operators
+-- @DESC: Relational and comparison operators
 rule main:
   new a, b, r1, r2, r3 ∈ Z;
   let a := 5;

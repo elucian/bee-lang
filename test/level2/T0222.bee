@@ -1,4 +1,4 @@
--- @DESC:T0222 Start scope runs its prologue then its do body
+-- @DESC: Start scope runs its prologue then its do body
 rule main:
   start worker:
     new temp := 42;

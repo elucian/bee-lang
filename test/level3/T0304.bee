@@ -1,8 +1,9 @@
--- @DESC: Assert precondition fail — assert emits W0301 warning to stderr, execution continues, spec/03 §4
+-- @DESC: Assert precondition fail — assert emits W0301 warning to stderr yet execution continues, spec/03 §4
+-- @AI: No - self-sufficient: assertion-only, no stdout.
 rule main:
   new a ∈ Z; new b ∈ Z;
   let a := 50;
   let b := 20;
   assert a < b;
-  print "continued after assert";
+  expect a > b;
 return;

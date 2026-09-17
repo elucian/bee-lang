@@ -1,9 +1,15 @@
--- @DESC:T0116 Line and block comments formatting
+-- @DESC: Line and block comments formatting
 +-------------------------------
 |  a whole-line comment        |
 |  another one, all boxed      |
 -------------------------------+
 rule main:
-  print "comments"; -- trailing comment
+  expect True; -- trailing comment
+
+  expect 1 /+ 3 +/ + 1 = 2; -- expression comments are out
+  expect /+ False or True +/ True; -- expression comments
 return;
+------------------------------------
 -- after the return we have comments
+-- the after comment can be cool
+------=-----------------------------

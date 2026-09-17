@@ -104,6 +104,12 @@ colon-initialisation, both ratified 2026-09-14) are ready for implementation.
 
 - **Spec-driven generation:** generate new test files (`.bee`) strictly under
   `test/levelX/`, derived directly from `/spec/`.
+- **No overtesting — complete & sufficient:** do not add a case that merely
+  re-covers a feature another case already covers *and nothing more*. When two
+  cases collapse to the same single feature, enhance the later one in complexity
+  to fold in an additional spec feature rather than duplicating the first. Every
+  case must fail on some real regression the others do not catch. (Details:
+  `test/readme.md` §4 — “No overtesting — completeness & sufficiency”.)
 - **Locking created tests (AI-immunity):** every newly generated `.bee` test
   file MUST include this header tag on line 1:
   `-- @FROZEN: Generated from /spec/. Immutable ground truth for AI agents.`

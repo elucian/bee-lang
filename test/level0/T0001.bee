@@ -1,4 +1,6 @@
 -- @DESC: Hello World Test
+-- @AI: Yes - verifies the io_stmt print path emits exact stdout.
+-- @EXPECT: Hello World
 rule main:
   print("Hello World");
 return;

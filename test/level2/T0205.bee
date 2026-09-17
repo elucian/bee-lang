@@ -1,7 +1,7 @@
--- @DESC:T0205 Test Expectation and variable resolution
+-- @DESC: Test Expectation and variable resolution
+-- @AI: No - Self sufficient fast test
 rule main:
   new a ∈ Z;
   let a := 42;
   expect a = 42;
-  print ("a = ", a);
 return;
