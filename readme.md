@@ -40,7 +40,7 @@ sh setup.sh
 
 ## 3. Workflow Automation & Developer Notes
 
-## 3. Workflow Automation & Developer Notes
+This project is optimized for automation testing. We use TDD method. First we create the test, then we automate the test then we run the test and then we improve the compiler to pass the test suites.
 
 ### Automation Scripts
 - **Reset Environment**: `python test/reset.py`
