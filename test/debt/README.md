@@ -14,6 +14,8 @@ This folder contains `.bee` test cases that **represent known unimplemented feat
 | ---- | -------------------------------------- | --------------------------------------- | ------------------------------------------------------------ |
 | T0126 | Method-call dispatch (`x.type()`)     | `spec/07-functions.md` §6 (lambda_call) | Awaiting decision: extend `Expression` AST with `MethodCall`; bind to spec/06-objects.md method table. |
 | T0127 | Rule call → parallel destructuring     | `spec/03-rules.md` §3.1 (call sites)    | Awaiting decision: tuple-return rule grammar; multi-binding destructuring. |
+| T0317 | Compose operator (`f ∘ g`)            | `spec/07-functions.md` §5              | Awaiting decision: lexer `COMPOSE` token, parser precedence, evaluator composition. See `tracking/issues/21-lambda-operator-extensions.md`. |
+| T0318 | Pipe operator (`value \|> f`)          | `spec/07-functions.md` §5              | Awaiting decision: lexer `PIPE` token, parser precedence, evaluator pipeline logic. See `tracking/issues/21-lambda-operator-extensions.md`. |
 
 ## Conventions
 

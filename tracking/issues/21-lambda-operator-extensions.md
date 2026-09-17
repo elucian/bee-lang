@@ -5,9 +5,9 @@ Three level-3 tests exercise higher-order lambda operators that have no parser o
 
 | Test | Operator | Description | Current Status |
 | :--- | :--- | :--- | :--- |
-| T0317 | `∘` (compose) | `f ∘ g` composes two lambdas into a new lambda | `@DISABLED` — parser rejects `∘` |
-| T0318 | `\|>` (pipe) | `value \|> f \|> g` chains value through lambdas left-to-right | `@DISABLED` — parser rejects `\|>` |
-| T0319 | `?` (partial) | `add(5, ?)` creates a curried lambda with one argument bound | `@DISABLED` — parser rejects `?` in call position |
+| T0317 | `∘` (compose) | `f ∘ g` composes two lambdas into a new lambda | Moved to `test/debt/` (`@DEBT`) — parser rejects `∘` |
+| T0318 | `|>` (pipe) | `value |> f |> g` chains value through lambdas left-to-right | Moved to `test/debt/` (`@DEBT`) — parser rejects `|>` |
+| T0319 | `?` (partial) | `add(5, ?)` creates a curried lambda with one argument bound | Implemented; `T0319.bee` PASS (returned to active level3) |
 
 All three fail with `E0009 SyntaxError:UnrecognizedStatement` at the operator token. These features are **not blocking** — they are sugar-level extensions that don't gate any other level-3 or level-4 work.
 

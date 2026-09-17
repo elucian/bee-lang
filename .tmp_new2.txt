@@ -1,0 +1,27 @@
+<h2 id="immediately-invoked-lambda">Immediately-invoked lambda expressions (IIFE)</h2>
+
+<p>A lambda expression may be <i>defined and invoked in the same statement</i>:
+write the lambda literal inline and follow it immediately with a call list. This
+is useful for a one-off pure transformation that does not need a name.</p>
+
+<h4>Syntax:</h4>
+<pre><code class="language-bee">-- define an anonymous lambda and call it right away
+new result := &lambda;((x,y) =&gt; x + y)(10,20); -- 30
+expect result = 30; -- pass
+</code></pre>
+
+<h4>Example:</h4>
+<pre><code class="language-bee">rule main:
+  -- one-off pure transformation, no binding needed
+  new total := &lambda;((a,b) =&gt; a * b)(6,7);
+  expect total = 42; -- will pass
+return;
+</code></pre>
+
+<p><b>Properties:</b></p>
+<ul>
+<li>the full <b>&lambda;</b> form is required before the parameter list;</li>
+<li>an IIFE results in a value, not a lambda reference — it is not stored as type L;</li>
+<li>the purity invariants apply unchanged: the body stays stateless, side-effect
+    free, and cannot call a rule.</li>
+</ul>

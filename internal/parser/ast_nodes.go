@@ -545,6 +545,25 @@ type LambdaExpression struct {
 func (le *LambdaExpression) expressionNode() {}
 func (le *LambdaExpression) Pos() token.Pos  { return le.Token.Pos }
 
+// ImmediatelyInvokedLambda implements the IIFE form per spec/07-functions.md
+// §6.3 immediate_call:
+//
+//	immediate_call ::= lambda_expr "(" [ arg_list ] ")" ;
+//
+// The parser produces this node when a full λ lambda is immediately followed by
+// a call list, e.g. λ((x, y) => x + y)(10, 20). The λ marker is mandatory; a
+// bare shorthand cannot be invoked directly. Lambda holds the inline lambda and
+// Args the positional arguments bound to its parameters. An IIFE evaluates to
+// the lambda body's result value — it is NOT stored as an L reference.
+type ImmediatelyInvokedLambda struct {
+	Token  token.Token
+	Lambda *LambdaExpression
+	Args   []Expression
+}
+
+func (iie *ImmediatelyInvokedLambda) expressionNode() {}
+func (iie *ImmediatelyInvokedLambda) Pos() token.Pos  { return iie.Token.Pos }
+
 // MemberExpression implements a dotted member-access path per spec/03-rules.md
 // §5.4 (Closures & State Generators). It is produced in two surface forms:
 //

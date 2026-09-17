@@ -86,6 +86,9 @@ lambda_decl       ::= "new" identifier ":=" lambda_expr ";" ;
 lambda_expr       ::= ( "λ" | "\" ) "(" [ param_list ] ")" "=>" "(" expression ")" [ ( "∈" | "in" ) type_specifier ] ;
 short_lambda      ::= "(" [ ident_list ] ")" "=>" expression ;
 
+(* Immediately-invoked lambda (IIFE, T0316) *)
+immediate_call    ::= lambda_expr "(" [ arg_list ] ")" ;
+
 (* Type Descriptor *)
 lambda_type       ::= "L" | "λ" "(" [ type_list ] ")" "=>" type_specifier ;
 type_list         ::= type_specifier ( "," type_specifier )* ;
@@ -124,6 +127,28 @@ expect add5(3) = 8;     -- 3 fills y, so 5 + 3 = 8
   extra arguments are ignored.
 - The ? marker is only meaningful as an argument to a lambda call; used
   anywhere else it evaluates to 0.
+
+---
+
+### 6.3 Immediately-Invoked Lambda Expressions (IIFE)
+
+A lambda expression may be *defined and invoked in the same statement*: the
+lambda literal is written inline and immediately followed by a call list. This
+is useful when a one-off pure transformation is needed without binding a name.
+
+```bee
+new result := λ((x, y) => x + y)(10, 20);  -- 30
+expect result = 30;
+```
+
+- The anonymous lambda `(x, y) => x + y` is created on the spot and called with
+  the arguments `(10, 20)`, producing `30`.
+- The `λ` marker is mandatory immediately before the parameter list; a bare
+  shorthand form cannot be invoked directly.
+- An IIFE results in a value, not a lambda reference: it is a single expression,
+  not stored as type `L`.
+- The purity invariants of §3 apply unchanged; no state, I/O, or mutable
+  capture is allowed in the body.
 
 ---
 

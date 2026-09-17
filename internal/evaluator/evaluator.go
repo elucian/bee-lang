@@ -1528,6 +1528,11 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			fmt.Fprintf(os.Stderr, "[ERROR] E0704 UnboundLambdaVariable: %q at line %d\n", expr.Value, int(expr.Token.Pos))
 		}
 		return 0, e.allocID()
+	case *parser.ImmediatelyInvokedLambda:
+		// Spec/07 §6.3 IIFE (immediate_call): evaluate the argument list in the
+		// caller's frame, then run the inline lambda body in a fresh pure frame.
+		// Yields the body's result value, not a stored L reference.
+		return e.callImmediatelyInvokedLambda(expr), e.allocID()
 	case *parser.CallExpression:
 		// Partial-application invocation (spec/07-functions.md §6): a name
 		// bound to a partial application supplies the open placeholders here.
@@ -2433,6 +2438,19 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	e.boxedCells = savedBoxed
 
 	return results
+}
+
+// callImmediatelyInvokedLambda evaluates an IIFE (spec/07 §6.3 immediate_call):
+// the argument list is evaluated in the caller's frame, then the inline lambda
+// body runs in a fresh pure frame bound to those arguments. It shares
+// evalLambdaBody's purity discipline, so the body cannot see outer state or
+// call a rule, and yields a value rather than a stored L reference.
+func (e *Evaluator) callImmediatelyInvokedLambda(iie *parser.ImmediatelyInvokedLambda) int {
+	argVals := make([]int, len(iie.Args))
+	for i, arg := range iie.Args {
+		argVals[i] = e.evalIntExpression(arg)
+	}
+	return e.evalLambdaBody(iie.Lambda, argVals)
 }
 
 // callLambda invokes a first-class lambda value (spec/07-functions.md §2).

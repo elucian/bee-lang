@@ -1971,6 +1971,44 @@ func (p *Parser) parsePrimary() Expression {
 	// Lambda expression (spec/07-functions.md §2.1 / §6):
 	// `λ(params) => (body) [∈ Type]`.
 	if tok.Type == token.LAMBDA {
+		// Spec/07 §6.3 IIFE form: λ immediately wrapping a parenthesised
+		// short-lambda, e.g. λ((x, y) => x + y)(10, 20). A '(' whose next token
+		// is another '(' marks this form; otherwise fall back to the standard
+		// full-lambda grammar in parseLambdaExpression.
+		if p.l.PeekToken().Type == token.LPAREN {
+			snap := p.l.Snapshot()
+			p.l.NextToken() // consume '('
+			if p.l.PeekToken().Type == token.LPAREN {
+				p.l.Restore(snap)
+				inner := p.parsePrimary() // parenthesised short-lambda
+				if le, isLambda := inner.(*LambdaExpression); isLambda {
+					if p.l.PeekToken().Type == token.LPAREN {
+						iie := &ImmediatelyInvokedLambda{Token: tok, Lambda: le}
+						p.l.NextToken() // consume '('
+						if p.l.PeekToken().Type != token.RPAREN {
+							for {
+								if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+									break
+								}
+								iie.Args = append(iie.Args, p.parseExpression())
+								if p.l.PeekToken().Type == token.COMMA {
+									p.l.NextToken() // consume ','
+									continue
+								}
+								break
+							}
+						}
+						if p.l.PeekToken().Type == token.RPAREN {
+							p.l.NextToken() // consume ')'
+						}
+						return iie
+					}
+					return le
+				}
+				return inner
+			}
+			p.l.Restore(snap)
+		}
 		return p.parseLambdaExpression(tok)
 	}
 	if tok.Type == token.LPAREN {

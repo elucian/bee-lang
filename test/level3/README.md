@@ -23,9 +23,7 @@ This level covers rules, contracts, and function definitions as defined in:
 | T0313    | Recursion — factorial compute... | No     | PASS       |
 | T0314    | Multi-result deconstruction —... | No     | PASS       |
 | T0315    | Lambda expression — explicit ... | No     | PASS       |
-| T0316    | Lambda inline — an anonymous ... | No     | SKIP       |
-| T0317    | Compose operator — f ∘ g appl... | No     | SKIP       |
-| T0318    | Pipe operator — value |> f |>... | No     | SKIP       |
+| T0316    | Lambda inline — an anonymous ... | No     | PASS       |
 | T0319    | Partial application — the ? p... | No     | PASS       |
 | T0320    | Rule contract — assert and ex... | No     | PASS       |
 | T0321    | Rule contract assert failure ... | No     | PASS       |

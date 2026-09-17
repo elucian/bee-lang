@@ -1,7 +1,6 @@
+-- @DEBT: Pipe operator `|>` (`value |> f |> g` threads a value through transformations, spec/07 §5) is unimplemented. `5 |> double |> inc` is an E0009 syntax error. Requires lexer PIPE token, parser precedence entry, and evaluator pipeline logic. See tracking/issues/21-lambda-operator-extensions.md.
 -- @DESC: Pipe operator — value |> f |> g threads a value through transformations, spec/07 §5
 -- @AI: No - self-sufficient: assertion-only, no stdout.
--- @DISABLED: Pipe operator `|>` is unimplemented: `5 |> double |> inc` is an
--- @FROZEN: E0009 syntax error (spec/07 §5).
 rule main:
   new double := λ(x ∈ Z) => (x * 2) ∈ Z;
   new inc := λ(x ∈ Z) => (x + 1) ∈ Z;
