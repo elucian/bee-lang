@@ -1,5 +1,6 @@
 -- @NEGATIVE
 -- @DESC: raw negative index a[-1] is rejected; use a[$-1] (spec/10 §2.1)
+-- @AI: No - negative rejection test; unreachable print is dead code
 rule main:
   new a := [10, 20, 30];
   let b := a[-1];

@@ -8,4 +8,4 @@ This level covers object-oriented features, file system interactions, and concur
 
 | CASE     | DESCRIPTION                      | STATUS     |
 | -------- | -------------------------------- | ---------- |
-| T0501    | T0501 File I/O operations test   | PASS       |
+| T0501    | File I/O operations test         | Yes    | FAIL       |

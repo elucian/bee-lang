@@ -1,4 +1,5 @@
 -- @DESC: dollar-anchor arithmetic and array processing with asserts
+-- @AI: No - self-sufficient assertion test
 rule main:
   	-- Array literal and $-anchor (spec/10 §2.1, §3.2)
   	new a := [10, 20, 30, 40];
@@ -28,5 +29,4 @@ rule main:
   done;
   expect acc = 15;
 
-  print "T0431 dollar-anchor assertions passed";
 return;

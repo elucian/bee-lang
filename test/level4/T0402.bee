@@ -1,4 +1,5 @@
 -- @DESC:file: contract_argument_mutation.bee
+-- @AI: No - self-sufficient assertion test
 -- A rule that writes through its argument demo
 rule bump(n ∈ @Z):
   let n += 1;
@@ -7,6 +8,6 @@ return;
 rule main:
   new counter: 10 ∈ Z;
   apply bump(@counter);
-  print counter;
+  expect counter = 11;
 return;
 

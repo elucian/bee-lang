@@ -1,4 +1,5 @@
 -- @DESC: array traversal with done terminator (D14)
+-- @AI: No - self-sufficient assertion test
 -- D14: for loop terminates with done;.
 -- 1-based array indexing (Decision 1).
 
@@ -13,6 +14,6 @@ rule main:
 
                                         -- array traversal and print
   for i ∈ (1..10) do
-    print i;
+    expect a[i] = i;
   done;
 return;

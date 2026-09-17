@@ -1,8 +1,10 @@
 -- @DESC:file: sized_array.bee
+-- @AI: No - self-sufficient assertion test
 -- A sized array demo
 rule main:
   new a ∈ [Z](5);
   let a[*] := 7;
-  print a;
+  expect a[1] = 7;
+  expect a[$] = 7;
 return;
 

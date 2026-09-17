@@ -1,4 +1,5 @@
 -- @DESC: quantifiers forall/exists over a collection (spec/11 §3)
+-- @AI: No - self-sufficient assertion test
 rule main:
   new nums := {2,4,6,8};
   -- every element is even
@@ -13,5 +14,4 @@ rule main:
   new any_odd := (∃ x ∈ nums : x % 2 = 1);
   expect any_odd = 0;
 
-  print "T0442 quantifier assertions passed";
 return;

@@ -1,4 +1,5 @@
 -- @DESC: set builder with filter over new range syntax (spec/10 §3, spec/11 processing)
+-- @AI: No - self-sufficient assertion test
 rule main:
   -- set builder without mapping, 1-based domain (1..6)
   new evens := { x | x ∈ (1..6) ∧ (x % 2 = 0) };
@@ -14,5 +15,4 @@ rule main:
   expect 9 ∈ squares;
   expect 16 ∈ squares;
 
-  print "T0435 set-builder assertions passed";
 return;

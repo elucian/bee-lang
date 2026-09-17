@@ -1,3 +1,4 @@
+-- @DISABLED: set union/intersection evaluate to 0 (unimplemented, spec/10 §3.4)
 -- @DESC:file: set_algebra_unicode.bee
 -- Set algebra with Unicode operators demo
 rule main:

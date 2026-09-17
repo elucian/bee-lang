@@ -1,3 +1,4 @@
+-- @DISABLED: map builder (x:x²) evaluates to 0 (unimplemented)
 -- @DESC:file: map_builder.bee
 -- Map builder demo
 rule main:

@@ -1,4 +1,5 @@
 -- @DESC: contract deposit with expectation
+-- @AI: No - self-sufficient assertion test
 -- Exact money, with a promise it went up demo
 rule deposit(balance ∈ @Z, amount ∈ Z):
   assert amount > 0;
@@ -9,5 +10,4 @@ rule main:
   new balance: 10 ∈ Z;
   apply deposit(@balance, 5);
   expect balance = 15;
-  print balance;
 return;

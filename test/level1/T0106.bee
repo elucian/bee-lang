@@ -1,4 +1,4 @@
--- @DESC: Test assignment, equality (=), and inequality (≠) operators
+-- @DESC: Test assignment, equality (=), and inequality (¬) operators
 rule main:
   new a ∈ Z; new b ∈ Z; new r1 ∈ Z; new r2 ∈ Z;
   let a := 42;
@@ -10,6 +10,6 @@ rule main:
   let b := 100;
   expect b = 100;
   expect a = 42;
-  let r2 := a ≠ b;
+  let r2 := a ¬ b;
   expect r2 = 1;
 return;

@@ -1,7 +1,10 @@
 -- @DESC:file: quantifiers.bee
+-- @AI: No - self-sufficient assertion test
 -- Quantifiers demo
 rule main:
-  print (∀ i ∈ {2,4,6} : i % 2 = 0);
-  print (∃ i ∈ {1,3,5} : i = 3);
+  new all_even := (∀ i ∈ {2,4,6} : i % 2 = 0);
+  expect all_even = 1;
+  new has_three := (∃ i ∈ {1,3,5} : i = 3);
+  expect has_three = 1;
 return;
 

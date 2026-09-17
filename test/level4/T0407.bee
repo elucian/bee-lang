@@ -1,4 +1,5 @@
 -- @DESC: contract postcondition with result binding
+-- @AI: No - self-sufficient assertion test
 -- A postcondition demo
 rule bump(n ∈ Z) => (r ∈ Z):
   let r := n + 1;
@@ -6,5 +7,6 @@ rule bump(n ∈ Z) => (r ∈ Z):
 return;
 
 rule main:
-  print bump(1);
+  new r := bump(1);
+  expect r = 2;
 return;

@@ -1,4 +1,5 @@
 -- @DESC: collection casting between array and set via builder (spec/11 casting)
+-- @AI: No - self-sufficient assertion test
 rule main:
   new source := [0,1,2,2,2,2];
   -- build set from array elements to eliminate duplicates
@@ -14,5 +15,4 @@ rule main:
   expect 2 ∈ evens;
   expect 1 !∈ evens;
 
-  print "T0443 collection casting assertions passed";
 return;

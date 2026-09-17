@@ -1,4 +1,5 @@
 -- @DESC: array decomposition, spreading, and rendering (spec/11 §5.1)
+-- @AI: No - self-sufficient assertion test
 rule main:
   -- deconstruction: head elements plus *tail
   new x, y, *rest := [1,2,3,4,5];
@@ -9,5 +10,4 @@ rule main:
   expect rest[3] = 5;
   expect rest[$-1] = 4;
 
-  print "T0439 decomposition assertions passed";
 return;

@@ -41,11 +41,14 @@ def test():
                 desc = "TBD"
                 with open(path, "r", encoding="utf-8") as tf:
                     lines = tf.readlines()
-                if lines and "@DISABLED" in lines[0]:
+                # Scan every line for lifecycle tags. @DISABLED and @NEGATIVE may
+                # appear below the @DESC line, so they must be found independently
+                # of the @DESC break below (a `break` at line 1 would hide them).
+                if any("@DISABLED" in line for line in lines):
                     disabled = True
+                if any("@NEGATIVE" in line for line in lines):
+                    negative = True
                 for line in lines:
-                    if "@NEGATIVE" in line:
-                        negative = True
                     if "-- @DESC:" in line:
                         desc = line.split("@DESC:")[1].strip()
                         break

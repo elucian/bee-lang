@@ -1,6 +1,6 @@
 -- @DISABLED: Spec 05 marks Str immutable and spec 01 mutates only on arithmetic cells (+=, -=); string mutation/equality is unimplemented (E0303). Kept as honest gap signal.
 -- @DESC: String compound mutation: `+=` concatenates in place
--- @NOTE: This test contains ≠ that is deprecated in favor of
+-- @NOTE: String mutation/equality is unimplemented (E0303); kept as honest gap signal.
 rule main:
   new s ∈ Str;
   let s := "foo";
@@ -8,6 +8,5 @@ rule main:
   expect s = "foobar";
   let s += "!";
   expect s = "foobar!";
-  expect s ≠ "foobar"; -- deprecated
-  expect s ¬ "foobar"; -- correct
+  expect s ¬ "foobar";
 return;

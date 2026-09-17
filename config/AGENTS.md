@@ -249,12 +249,17 @@ fact?"* and update both sides together.
      specificity, then drop `--dry-run` to rewrite atomically in parallel.
    - All language documentation and specification changes MUST occur in the
      `/spec` directory.
-   - **TDD integration:** every feature or fix must maintain test parity:
+   - **TDD integration — one test at a time; build and test never mingle.**
+     Do **not** run the bulk suite or smoke on every change; the user runs
+     `sh run.sh test` / `sh run.sh smoke` themselves when they want an overall
+     assessment. Iterate one `.bee` test at a time for each feature/fix:
      1. Audit `/spec/` and update EBNF.
      2. Create/update a `.bee` test case in `test/levelX/` with a `-- @DESC:` tag.
-     3. Run `python test/solo.py <test_name>` to verify and auto-update
-        `test/levelX/README.md`.
-     4. Run `sh run.sh smoke` for system-wide health check before yielding.
+     3. Run `sh run.sh build` to compile only — never test here.
+     4. Run `sh run.sh solo <test_name>` to run just that single `.bee` test and
+        auto-update `test/levelX/README.md`. Recompile alone and re-run the same
+        solo test until it passes, then yield. Skip `sh run.sh smoke` and the
+        full suite unless the user explicitly asks.
 
 ## 8. Multi-user / multi-agent coordination
 

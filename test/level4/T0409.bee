@@ -1,4 +1,5 @@
 -- @DESC: contract store item in collection
+-- @AI: No - self-sufficient assertion test
 -- A rule that stores an item into a collection cell demo;
 -- collections pass by share (spec/10), so the caller
 -- verifies the stored value after apply returns.
@@ -13,5 +14,4 @@ rule main:
   apply store_item(xs, 3, 99);
   expect xs[3] = 99;
   expect xs[1] = 10;
-  print xs[3];
 return;

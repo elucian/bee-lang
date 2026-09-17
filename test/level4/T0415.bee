@@ -1,4 +1,5 @@
 -- @DESC: growing a list with <+ and +>
+-- @AI: No - self-sufficient assertion test
 -- List growth demo (spec/01 coll_op): <+ appends at the end,
 -- +> appends at the beginning (pipeline/map-reduce pattern).
 rule main:
@@ -9,6 +10,5 @@ rule main:
   expect l[2] = 2;
   expect l[3] = 3;
   expect l[4] = 4;
-  print l;
   expect l = (1,2,3,4);
 return;

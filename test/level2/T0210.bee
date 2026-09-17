@@ -1,12 +1,15 @@
--- @DESC: Anonymous cycle: prologue with next and stop jumps (D14)
--- D14: anonymous `cycle:` opens stable prologue without label.
+-- @DESC: `next` resumes from the top, skipping the body tail (D14)
+-- @AI: No - Self sufficient fast test
+-- D14: `next` jumps to the loop header; the statements below it are skipped.
 rule main:
-  cycle:
-    new count := 0;
-  do
+  new count := 0;
+  new tails := 0;  -- counts body-tail executions (cells reached past `next`)
+  cycle do
     let count += 1;
-    next if count % 2 = 0;
-    stop if count ≥ 100;
-    write count;
+    next if count % 2 = 0;  -- even iterations: skip the tail
+    let tails += 1;
+    stop if count ≥ 7;
   done;
+  expect tails = 4;  -- only odd iterations 1,3,5,7 reach the tail
+  expect count = 7;
 return;

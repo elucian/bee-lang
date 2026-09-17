@@ -1,4 +1,5 @@
 -- @DESC: contract grow on a collection
+-- @AI: No - self-sufficient assertion test
 -- A rule that stamps a collection cell demo; collections pass
 -- by share (spec/10), so the caller verifies the mutation
 -- after apply returns.
@@ -12,5 +13,4 @@ rule main:
   apply stamp(xs, 2, 99);
   expect xs[2] = 99;
   expect xs[$] = 30;
-  print xs[2];
 return;

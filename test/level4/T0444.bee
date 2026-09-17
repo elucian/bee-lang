@@ -1,4 +1,5 @@
 -- @DESC: list as queue FIFO using append and shift-left (spec/11 list ops)
+-- @AI: No - self-sufficient assertion test
 rule main:
   new q := (1,2,3);
   -- enqueue: append one element to end with `<+`
@@ -16,5 +17,4 @@ rule main:
   expect q[3] = 4;
   expect q[$] = 4;
 
-  print "T0444 queue operation assertions passed";
 return;

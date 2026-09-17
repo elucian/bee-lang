@@ -1,4 +1,5 @@
 -- @DESC: array and hash-map builders over stepped range (spec/11 §4, spec/10 §3)
+-- @AI: No - self-sufficient assertion test
 rule main:
   -- array builder: [ x | x ∈ (1..10)(2) ] => [1,3,5,7,9]
   new arr := [ x | x ∈ (1..10)(2) ];
@@ -16,5 +17,4 @@ rule main:
   -- deep comparison with literal (value comparison)
   expect mymap = { 2:4, 4:16, 6:36, 8:64 };
 
-  print "T0436 builder assertions passed";
 return;

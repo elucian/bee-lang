@@ -1,4 +1,5 @@
 -- @DESC: collection assertions for arrays, lists, sets, maps, indexing bounds
+-- @AI: No - self-sufficient assertion test
 rule main:
   -- Array literal and indexing (spec/10 §3.2, §2.1)
   new a := [10, 20, 30];
@@ -17,11 +18,9 @@ rule main:
 
   -- Set literal: dedup and sort (spec/10 §3.4)
   new s := {3, 1, 2, 1};
-  print s;
 
   -- Map literal (spec/10 §3.5)
   new m := {"alice": 100, "bob": 200};
-  print m;
 
   -- Collection in control flow: cycle over array indices (spec/11 §1)
   new total := 0;
@@ -30,5 +29,4 @@ rule main:
   done;
   expect total = 10 + 99 + 30;
 
-  print "T0430 all assertions passed";
 return;

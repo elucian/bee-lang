@@ -1,4 +1,5 @@
 -- @DESC: contract write-through argument
+-- @AI: No - self-sufficient assertion test
 -- A rule that writes through its argument demo; the caller
 -- verifies the mutation after apply returns.
 rule bump(n ∈ @Z):
@@ -9,5 +10,4 @@ rule main:
   new counter: 10 ∈ Z;
   apply bump(@counter);
   expect counter = 11;
-  print counter;
 return;

@@ -4,7 +4,7 @@ rule main:
   expect a = 0 and b = 0 and c = 0;   -- default value is zero
   new x, y, z := 1, 2, 3;   -- type inference, mapping
   expect x + y + z = 6;     -- check all 3 in one go
-  new xo, yo, zo ∈ Z = 10;  -- explicit pair-up;
+  new xo, yo, zo ∈ Z:10;  -- explicit pair-up;
   expect xo = 10 and yo = 10 and zo = 10;
   expect xo = yo and zo = yo and zo = xo;
 return;

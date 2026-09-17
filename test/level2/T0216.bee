@@ -1,9 +1,13 @@
 -- @DESC: While cycle iteration loop (D14)
+-- @AI: No - Self sufficient fast test
 -- D14: the while-conditioned body closes with the mandatory done terminator.
 rule main:
   new n := 0;
+  new steps := 0;
   cycle while n < 3 do
-    write n;
+    let steps += 1;
     let n += 1;
   done;
+  expect steps = 3;
+  expect n = 3;
 return;
