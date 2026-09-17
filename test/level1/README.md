@@ -35,7 +35,7 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | T0121    | file: initial_values.bee         | No     | PASS       |
 | T0122    | file: parallel_assignment.bee    | No     | PASS       |
 | T0123    | file: print_write.bee            | No     | PASS       |
-| T0124    | String compound concatenation... | No     | FAIL       |
+| T0124    | String compound concatenation... | No     | PASS       |
 | T0125    | Chained compound mutation on ... | No     | PASS       |
 | T0128    | The print statement writes a ... | No     | PASS       |
 | T0129    | Compound assignment updates a... | No     | PASS       |

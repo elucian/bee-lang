@@ -1,4 +1,3 @@
--- @DISABLED: cross-label 'next <label>' unimplemented; falls through to inner tail (E0303, cells=26 vs 2)
 -- @DESC: Labeled nested cycle: cross-label next skips the inner tail (D14)
 -- @AI: No - Self sufficient fast test
 -- D14: `next outer` jumps to the next outer iteration, skipping the inner tail.

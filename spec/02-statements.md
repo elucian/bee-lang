@@ -181,6 +181,23 @@ with math_module do
 done;
 ```
 
+#### Block Scoping & Shadowing
+Every `do ... done` block — an `if` / `cycle` / `for` body, or a `start`/`with`
+block — opens a lexical scope. A `new` declaration inside a block binds a local
+name that **shadows** any outer binding of the same name: the outer value is
+left untouched and is restored as soon as the block exits. Inside the block,
+`let` assigns to the innermost (shadowed) variable.
+```bee
+new x ∈ Z;
+let x := 1;
+if true do
+  new x ∈ Z;
+  let x := 2;
+  expect x = 2;   // the block-local x shadows the outer x
+done;
+expect x = 1;     // outer x unchanged once the block scope exits
+```
+
 ---
 
 ### 3.2 Conditional Execution (`if / else`)
@@ -262,6 +279,33 @@ independent options — `cycle [label] [:]`.
 - The **label** is only a jump target for `stop` / `next` / `redo` and
   a cross-check against the closing `done [label];`. It plays no role in
   scope creation.
+
+**Cross-label `next <label>`:** when a `next` carries a label, it targets
+that *named* cycle directly. If the named cycle is an enclosing one, the
+jump advances to the named cycle's **next iteration**, unwinding every
+cycle between the jump site and the target: each intervening inner cycle
+breaks out entirely (skipping its `then` epilogue) *without consuming the
+jump*, until the named cycle handles it. This lets a deep inner loop
+resume an outer loop from one level.
+
+```bee
+cycle outer:
+  new cells := 0;
+for i ∈ (1..2) do
+  for j ∈ (1..3) do
+    next outer if j = 2;  -- cross-label: jump to next outer at j=2
+    let cells += 1;       -- inner tail: runs only for j=1
+  done;
+  let cells += 10;        -- outer tail: never reached (skipped on the jump)
+done outer;
+expect cells = 2;         -- 2 passes × j=1; an unskipped +10 tail would give 22
+```
+
+An **unlabeled** `next` — or a `next <label>` whose label is not an
+enclosing cycle — targets the innermost enclosing cycle. The target's
+identity is resolved at runtime among the enclosing loops of the *same
+rule*; a label never crosses a rule boundary (label scoping is lexical,
+per rule).
 
 **Volatile body scope:** the `do` block scope is re-created on every
 iteration. Avoid `new` inside the repetitive block for anything meant to

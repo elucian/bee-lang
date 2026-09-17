@@ -60,6 +60,17 @@ type Evaluator struct {
 	debug         bool
 	exitingRule   bool
 	continueCycle bool
+	// loopLabelStack records the labels (empty string for anonymous) of the
+	// cycles currently being evaluated, innermost last. It lets `next <label>`
+	// resolve *which* enclosing cycle a labeled jump targets so a cross-label
+	// jump can unwind the intervening loops (spec/02-statements.md §3.4).
+	loopLabelStack []string
+	// continueTargetDepth is the index (into loopLabelStack, 0 = outermost) of
+	// the cycle that a pending `next` should continue. A loop whose depth equals
+	// continueTargetDepth consumes the jump and advances its iteration; a loop
+	// deeper than the target unwinds entirely (skipping its `then`) without
+	// consuming it. Unlabeled `next` targets the innermost enclosing cycle.
+	continueTargetDepth int
 	// ruleRegistry indexes every *parser.RuleStatement by name so that
 	// CallExpression can resolve rule invocations (spec/03 §3.1).
 	ruleRegistry map[string]*parser.RuleStatement
@@ -83,6 +94,10 @@ type Evaluator struct {
 	// index), enabling arithmetic anchors like `a[$-1]` (spec/10 §3.2).
 	dollarLen int
 	hasDollar bool
+	// scopes is the lexical block-scope stack (spec/02 §blocks). Each frame
+	// records names (re)declared with `new` inside a `do...done` block so a
+	// shadowed outer variable is restored when the scope exits.
+	scopes []*scopeFrame
 }
 
 func (e *Evaluator) SetDebug(debug bool) {
@@ -178,6 +193,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		e.debugLog("EVALUATOR DEBUG: entering rule main\n")
 		prevExiting := e.exitingRule
 		prevContinue := e.continueCycle
+		prevTarget := e.continueTargetDepth
 		e.exitingRule = false
 		e.continueCycle = false
 		for _, stmt := range s.Body.Statements {
@@ -188,11 +204,16 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		}
 		e.exitingRule = prevExiting
 		e.continueCycle = prevContinue
+		e.continueTargetDepth = prevTarget
 		e.debugLog("EVALUATOR DEBUG: exited rule main\n")
 	case *parser.BlockStatement:
+		// A `do...done` block opens a lexical scope (spec/02 §blocks): `new`
+		// bindings inside shadow outer names and are restored on exit.
+		e.enterScope()
 		for _, stmt := range s.Statements {
 			e.evalStatement(stmt)
 		}
+		e.leaveScope()
 	case *parser.IfStatement:
 		condVal := e.evalIntExpression(s.Condition)
 		if condVal != 0 {
@@ -442,6 +463,32 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				continue
 			}
 			if i < len(s.Values) {
+				// String compound concatenation (spec/02 §2.2): `let s += e`
+				// where s and e are strings rebinds s to the concatenation
+				// s+e. Strings are immutable (spec/05 §2), so this must be
+				// detected BEFORE the plain string assignment below — the
+				// literal/alias path would otherwise overwrite s instead of
+				// concatenating. The target keeps its own identity (create or
+				// reuse) so reference stability is preserved.
+				if s.Token.Literal == "+=" {
+					if cur, curIsString := e.stringSymbols[name.Value]; curIsString {
+						if strLit, ok := s.Values[i].(*parser.StringLiteral); ok {
+							e.stringSymbols[name.Value] = cur + strLit.Value
+							delete(e.symbols, name.Value)
+							e.ensureIdentity(name.Value)
+							e.debugLog("EVALUATOR DEBUG: Concatenated string %s = %q\n", name.Value, e.stringSymbols[name.Value])
+							continue
+						} else if strIdent, ok := s.Values[i].(*parser.Identifier); ok {
+							if strVal, hasStr := e.stringSymbols[strIdent.Value]; hasStr {
+								e.stringSymbols[name.Value] = cur + strVal
+								delete(e.symbols, name.Value)
+								e.ensureIdentity(name.Value)
+								e.debugLog("EVALUATOR DEBUG: Concatenated string %s = %q\n", name.Value, e.stringSymbols[name.Value])
+								continue
+							}
+						}
+					}
+				}
 				if strLit, ok := s.Values[i].(*parser.StringLiteral); ok {
 					e.stringSymbols[name.Value] = strLit.Value
 					delete(e.symbols, name.Value)
@@ -650,6 +697,9 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			}
 		}
 		for i, name := range names {
+			// `new` declares in the current lexical scope, shadowing any outer
+			// binding (spec/02 §blocks) so it can be restored on block exit.
+			e.declareBinding(name)
 			e.debugLog("EVALUATOR DEBUG: Declaring %s\n", name)
 			// Boxed closure state (spec/03 §5.4): `set .field := [expr];` boxes the
 			// value into a heap-allocated, mutable cell on the current closure
@@ -857,9 +907,25 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			// D15: `next` is the canonical loop-jump (continue) transfer. It sets
 			// the continueCycle flag so the enclosing cycle skips the remainder
 			// of the current iteration's body and advances to the next increment/
-			// evaluation phase (spec/02-statements.md §3.4).
+			// evaluation phase (spec/02-statements.md §3.4). A labeled `next
+			// <label>` targets that named cycle directly: it jumps to the next
+			// iteration of the outer labeled loop, unwinding every inner loop in
+			// between (cross-label jump, spec/02-statements.md §3.4).
 			if s.Keyword == "next" {
 				e.continueCycle = true
+				// Unlabeled `next` continues the innermost enclosing cycle.
+				e.continueTargetDepth = len(e.loopLabelStack) - 1
+				// Labeled `next <label>` resolves the named cycle's depth in the
+				// active loop stack. If the label is not an enclosing cycle, it is
+				// treated as the innermost (a copy of the unlabeled form).
+				if s.Label != nil {
+					for i := len(e.loopLabelStack) - 1; i >= 0; i-- {
+						if e.loopLabelStack[i] == s.Label.Value {
+							e.continueTargetDepth = i
+							break
+						}
+					}
+				}
 			}
 		}
 	case *parser.CycleStatement:
@@ -880,7 +946,53 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 // iteration" is therefore enforced by convention here (prologue runs once,
 // body re-runs each pass) rather than by partitioning the environment. Full
 // scope partitioning is deferred to the Phase 5 typechecker (Task 5.3).
+// jumpKind enumerates how a pending `next` jump should affect the cycle that
+// is currently testing it.
+const (
+	jumpNone     = iota // no pending `next`
+	jumpContinue        // this cycle is the target: continue its next iteration
+	jumpUnwind          // this cycle sits between the `next` and its target: break out entirely
+	jumpClear           // target is a cycle already inside this one (stale): consume and proceed
+)
+
+// jumpMode decides what a cycle currently executing at loopLabelStack's top
+// must do with a pending `next` jump. Positions are compared against
+// continueTargetDepth (0 = outermost). A cycle at the target depth consumes
+// the jump and moves to its next iteration; a deeper cycle unwinds without
+// consuming; a shallower cycle means the jump was already consumed inside
+// (stale flag), so it just clears and proceeds.
+func (e *Evaluator) jumpMode() int {
+	if !e.continueCycle {
+		return jumpNone
+	}
+	top := len(e.loopLabelStack) - 1
+	switch {
+	case top == e.continueTargetDepth:
+		return jumpContinue
+	case top > e.continueTargetDepth:
+		return jumpUnwind
+	default:
+		return jumpClear
+	}
+}
+
+// cycleLabel returns the label of a cycle statement, or "" for an anonymous
+// cycle (used to populate the evaluator's loopLabelStack).
+func cycleLabel(s *parser.CycleStatement) string {
+	if s.Label != nil {
+		return s.Label.Value
+	}
+	return ""
+}
+
 func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
+	// Push this cycle's label (empty string for anonymous cycles) so labeled
+	// `next <label>` / `stop <label>` / `redo <label>` jumps can resolve which
+	// enclosing cycle they target. The defer guarantees the stack is unwound on
+	// every return path, including an early transfer-induced exit.
+	e.loopLabelStack = append(e.loopLabelStack, cycleLabel(s))
+	defer func() { e.loopLabelStack = e.loopLabelStack[:len(e.loopLabelStack)-1] }()
+
 	// 1. Prologue runs exactly once for labeled cycles (stable outer scope).
 	//    Anonymous cycles have no prologue — skip.
 	if s.Prologue != nil {
@@ -921,12 +1033,25 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 						breakOut = true
 						break
 					}
-					if e.continueCycle {
-						e.continueCycle = false
+					if m := e.jumpMode(); m != jumpNone {
+						if m == jumpContinue || m == jumpClear {
+							e.continueCycle = false
+							break
+						}
+						// jumpUnwind: a labeled `next` targets an outer cycle; break
+						// this loop entirely without consuming the jump.
+						breakOut = true
 						break
 					}
 					e.evalStatement(stmt)
 				}
+			}
+			// A `next` placed as the last body statement is not seen by the
+			// per-statement check above; act on any pending jump here.
+			if m := e.jumpMode(); m == jumpUnwind {
+				breakOut = true
+			} else if m == jumpClear || m == jumpContinue {
+				e.continueCycle = false
 			}
 			if breakOut {
 				break
@@ -947,12 +1072,21 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 						breakOut = true
 						break
 					}
-					if e.continueCycle {
-						e.continueCycle = false
+					if m := e.jumpMode(); m != jumpNone {
+						if m == jumpContinue || m == jumpClear {
+							e.continueCycle = false
+							break
+						}
+						breakOut = true
 						break
 					}
 					e.evalStatement(stmt)
 				}
+			}
+			if m := e.jumpMode(); m == jumpUnwind {
+				breakOut = true
+			} else if m == jumpClear || m == jumpContinue {
+				e.continueCycle = false
 			}
 			if breakOut {
 				break
@@ -994,11 +1128,24 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 								deferRestore()
 								return
 							}
-							if e.continueCycle {
-								e.continueCycle = false
-								break
+							if m := e.jumpMode(); m != jumpNone {
+								if m == jumpContinue || m == jumpClear {
+									e.continueCycle = false
+									break
+								}
+								// jumpUnwind: a labeled `next` targets an outer cycle;
+								// exit this loop (skipping its `then`) without
+								// consuming the jump, so the outer loop handles it.
+								deferRestore()
+								return
 							}
 							e.evalStatement(stmt)
+						}
+						if m := e.jumpMode(); m == jumpUnwind {
+							deferRestore()
+							return
+						} else if m == jumpClear || m == jumpContinue {
+							e.continueCycle = false
 						}
 					}
 				}
@@ -1022,11 +1169,21 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 									deferRestore()
 									return
 								}
-								if e.continueCycle {
-									e.continueCycle = false
-									break
+								if m := e.jumpMode(); m != jumpNone {
+									if m == jumpContinue || m == jumpClear {
+										e.continueCycle = false
+										break
+									}
+									deferRestore()
+									return
 								}
 								e.evalStatement(stmt)
+							}
+							if m := e.jumpMode(); m == jumpUnwind {
+								deferRestore()
+								return
+							} else if m == jumpClear || m == jumpContinue {
+								e.continueCycle = false
 							}
 						}
 					}
@@ -1061,11 +1218,21 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 								deferRestore()
 								return
 							}
-							if e.continueCycle {
-								e.continueCycle = false
-								break
+							if m := e.jumpMode(); m != jumpNone {
+								if m == jumpContinue || m == jumpClear {
+									e.continueCycle = false
+									break
+								}
+								deferRestore()
+								return
 							}
 							e.evalStatement(stmt)
+						}
+						if m := e.jumpMode(); m == jumpUnwind {
+							deferRestore()
+							return
+						} else if m == jumpClear || m == jumpContinue {
+							e.continueCycle = false
 						}
 					}
 				}
@@ -1107,11 +1274,21 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 										deferRestore()
 										return
 									}
-									if e.continueCycle {
-										e.continueCycle = false
-										break
+									if m := e.jumpMode(); m != jumpNone {
+										if m == jumpContinue || m == jumpClear {
+											e.continueCycle = false
+											break
+										}
+										deferRestore()
+										return
 									}
 									e.evalStatement(stmt)
+								}
+								if m := e.jumpMode(); m == jumpUnwind {
+									deferRestore()
+									return
+								} else if m == jumpClear || m == jumpContinue {
+									e.continueCycle = false
 								}
 							}
 						}
@@ -1139,11 +1316,21 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 								deferRestore()
 								return
 							}
-							if e.continueCycle {
-								e.continueCycle = false
-								break
+							if m := e.jumpMode(); m != jumpNone {
+								if m == jumpContinue || m == jumpClear {
+									e.continueCycle = false
+									break
+								}
+								deferRestore()
+								return
 							}
 							e.evalStatement(stmt)
+						}
+						if m := e.jumpMode(); m == jumpUnwind {
+							deferRestore()
+							return
+						} else if m == jumpClear || m == jumpContinue {
+							e.continueCycle = false
 						}
 					}
 				}
@@ -1155,11 +1342,21 @@ func (e *Evaluator) evalCycleStatement(s *parser.CycleStatement) {
 							deferRestore()
 							return
 						}
-						if e.continueCycle {
-							e.continueCycle = false
-							break
+						if m := e.jumpMode(); m != jumpNone {
+							if m == jumpContinue || m == jumpClear {
+								e.continueCycle = false
+								break
+							}
+							deferRestore()
+							return
 						}
 						e.evalStatement(stmt)
+					}
+					if m := e.jumpMode(); m == jumpUnwind {
+						deferRestore()
+						return
+					} else if m == jumpClear || m == jumpContinue {
+						e.continueCycle = false
 					}
 				}
 			}
@@ -1541,11 +1738,28 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			return 0, 0
 		}
 		if lit == "=" || expr.Token.Type == token.EQ || lit == "==" {
+			// String-aware equality (spec/02 §2.2 / spec/05 §2): when either
+			// operand is a string literal or a string-bound identifier, compare
+			// the actual string values. The int path below would otherwise force
+			// both operands to 0 (strings carry no int value), silently making
+			// mismatched strings compare equal.
+			if e.isStringExpr(expr.Left) || e.isStringExpr(expr.Right) {
+				if e.evalExpression(expr.Left) == e.evalExpression(expr.Right) {
+					return 1, 0
+				}
+				return 0, 0
+			}
 			leftVal, _ := e.evalIntExpressionWithID(expr.Left)
 			rightVal, _ := e.evalIntExpressionWithID(expr.Right)
 			return evalComparison(lit, leftVal, rightVal, expr.Token.Type, lit), 0
 		}
 		if expr.Token.Type == token.NEQ || expr.Token.Type == token.NOT_EQ || lit == "¬" || lit == "!=" || lit == "<>" || expr.Token.Type == token.NEQ_UNICODE || lit == "≠" || strings.Contains(lit, "≠") {
+			if e.isStringExpr(expr.Left) || e.isStringExpr(expr.Right) {
+				if e.evalExpression(expr.Left) != e.evalExpression(expr.Right) {
+					return 1, 0
+				}
+				return 0, 0
+			}
 			leftVal, _ := e.evalIntExpressionWithID(expr.Left)
 			rightVal, _ := e.evalIntExpressionWithID(expr.Right)
 			return evalComparison(lit, leftVal, rightVal, expr.Token.Type, lit), 0
@@ -1683,6 +1897,22 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 		}
 	}
 	return 0, 0
+}
+
+// isStringExpr reports whether the expression yields a string value: a string
+// literal, or an identifier currently bound in the stringSymbols table. It is
+// used to steer equality/inequality (spec/02 §2.2, spec/05 §2) and friends to
+// a string-aware comparison rather than through the integer path, where a
+// string operand degrades to 0.
+func (e *Evaluator) isStringExpr(node parser.Expression) bool {
+	switch expr := node.(type) {
+	case *parser.StringLiteral:
+		return true
+	case *parser.Identifier:
+		_, ok := e.stringSymbols[expr.Value]
+		return ok
+	}
+	return false
 }
 
 func (e *Evaluator) evalExpression(node parser.Expression) string {
@@ -2065,6 +2295,8 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	}
 	savedExiting := e.exitingRule
 	savedContinue := e.continueCycle
+	savedTarget := e.continueTargetDepth
+	savedLoopStack := e.loopLabelStack
 	savedBoxed := e.boxedCells
 
 	// Fresh frame: bind parameters.
@@ -2073,6 +2305,11 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	e.arrayValues = make(map[string][]int)
 	e.exitingRule = false
 	e.continueCycle = false
+	e.continueTargetDepth = 0
+	// A labelled `next <label>` may only target a cycle within the same rule;
+	// the callee starts with an empty loop stack so caller labels stay out of
+	// scope (spec/02-statements.md §3.4).
+	e.loopLabelStack = nil
 	// Install the closure's boxed cells so member access resolves to the
 	// shared, persistent state (a fresh generator starts with its own new
 	// cells; a method call reuses the object's existing cells).
@@ -2160,6 +2397,8 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	e.arrayValues = savedArrays
 	e.exitingRule = savedExiting
 	e.continueCycle = savedContinue
+	e.continueTargetDepth = savedTarget
+	e.loopLabelStack = savedLoopStack
 	e.boxedCells = savedBoxed
 
 	return results
@@ -2746,4 +2985,178 @@ func (e *Evaluator) callMember(me *parser.MemberExpression) (interface{}, bool) 
 		return results[0], true
 	}
 	return 0, true
+}
+
+// scopedBindingSnapshot captures an identifier's full binding across the
+// evaluator's typed store maps so lexical block shadowing (spec/02 §blocks)
+// can restore the outer value when the block scope exits.
+type scopedBindingSnapshot struct {
+	hasInt      bool
+	intVal      int
+	hasString   bool
+	stringVal   string
+	hasArray    bool
+	arrayVal    []int
+	hasList     bool
+	listVal     []int
+	hasSet      bool
+	setVal      []int
+	hasMap      bool
+	mapVal      map[string]int
+	hasMatrix   bool
+	matrixVal   MatrixValue
+	hasStepped  bool
+	steppedVal  *parser.SteppedRangeExpression
+	hasLambda   bool
+	lambdaVal   *parser.LambdaExpression
+	hasIdentity bool
+	identityVal int
+}
+
+func (s *scopedBindingSnapshot) any() bool {
+	return s.hasInt || s.hasString || s.hasArray || s.hasList || s.hasSet ||
+		s.hasMap || s.hasMatrix || s.hasStepped || s.hasLambda
+}
+
+// scopeFrame is one lexical scope. It records which names were (re)declared in
+// this scope with `new`, together with a snapshot of each shadowed outer
+// binding so leaveScope can restore it on block exit.
+type scopeFrame struct {
+	saved    map[string]*scopedBindingSnapshot
+	declared map[string]bool
+}
+
+func (e *Evaluator) currentScope() *scopeFrame {
+	if len(e.scopes) == 0 {
+		return nil
+	}
+	return e.scopes[len(e.scopes)-1]
+}
+
+func (e *Evaluator) enterScope() {
+	e.scopes = append(e.scopes, &scopeFrame{
+		saved:    make(map[string]*scopedBindingSnapshot),
+		declared: make(map[string]bool),
+	})
+}
+
+func (e *Evaluator) leaveScope() {
+	if len(e.scopes) == 0 {
+		return
+	}
+	frame := e.scopes[len(e.scopes)-1]
+	e.scopes = e.scopes[:len(e.scopes)-1]
+	for name := range frame.declared {
+		e.clearBinding(name)
+		if sn, ok := frame.saved[name]; ok {
+			e.restoreBinding(name, sn)
+		}
+	}
+}
+
+// declareBinding records a `new` binding in the innermost scope frame. If the
+// name already binds to an outer variable, that outer binding is snapshotted so
+// it can be restored when the scope exits (block-scoped shadowing, spec/02 §blocks).
+func (e *Evaluator) declareBinding(name string) {
+	if strings.HasPrefix(name, ".") {
+		return
+	}
+	frame := e.currentScope()
+	if frame == nil {
+		return
+	}
+	if frame.declared[name] {
+		return
+	}
+	if sn := e.snapshotBinding(name); sn.any() {
+		frame.saved[name] = sn
+	}
+	frame.declared[name] = true
+}
+
+// snapshotBinding captures the current visible binding of name across all typed
+// stores. It is called before a shadowing `new` overwrites the name.
+func (e *Evaluator) snapshotBinding(name string) *scopedBindingSnapshot {
+	sn := &scopedBindingSnapshot{}
+	if v, ok := e.symbols[name]; ok {
+		sn.hasInt, sn.intVal = true, v
+	}
+	if v, ok := e.stringSymbols[name]; ok {
+		sn.hasString, sn.stringVal = true, v
+	}
+	if v, ok := e.arrayValues[name]; ok {
+		sn.hasArray, sn.arrayVal = true, v
+	}
+	if v, ok := e.listValues[name]; ok {
+		sn.hasList, sn.listVal = true, v
+	}
+	if v, ok := e.setValues[name]; ok {
+		sn.hasSet, sn.setVal = true, v
+	}
+	if v, ok := e.mapValues[name]; ok {
+		sn.hasMap, sn.mapVal = true, v
+	}
+	if v, ok := e.matrixValues[name]; ok {
+		sn.hasMatrix, sn.matrixVal = true, v
+	}
+	if v, ok := e.steppedRanges[name]; ok {
+		sn.hasStepped, sn.steppedVal = true, v
+	}
+	if v, ok := e.lambdaValues[name]; ok {
+		sn.hasLambda, sn.lambdaVal = true, v
+	}
+	if v, ok := e.identities[name]; ok {
+		sn.hasIdentity, sn.identityVal = true, v
+	}
+	return sn
+}
+
+// clearBinding removes every typed binding for name. Called on scope exit for
+// names (re)declared within that scope.
+func (e *Evaluator) clearBinding(name string) {
+	delete(e.symbols, name)
+	delete(e.stringSymbols, name)
+	delete(e.arrayValues, name)
+	delete(e.listValues, name)
+	delete(e.setValues, name)
+	delete(e.mapValues, name)
+	delete(e.matrixValues, name)
+	delete(e.steppedRanges, name)
+	delete(e.lambdaValues, name)
+	delete(e.identities, name)
+}
+
+// restoreBinding reinstates a snapshotted outer binding after a shadowed scope
+// exits. Only the stores recorded in the snapshot are restored.
+func (e *Evaluator) restoreBinding(name string, sn *scopedBindingSnapshot) {
+	if sn.hasInt {
+		e.symbols[name] = sn.intVal
+	}
+	if sn.hasString {
+		e.stringSymbols[name] = sn.stringVal
+	}
+	if sn.hasArray {
+		e.arrayValues[name] = sn.arrayVal
+	}
+	if sn.hasList {
+		e.listValues[name] = sn.listVal
+	}
+	if sn.hasSet {
+		e.setValues[name] = sn.setVal
+	}
+	if sn.hasMap {
+		e.mapValues[name] = sn.mapVal
+	}
+	if sn.hasMatrix {
+		e.matrixValues[name] = sn.matrixVal
+	}
+	if sn.hasStepped {
+		e.steppedRanges[name] = sn.steppedVal
+	}
+	if sn.hasLambda {
+		e.lambdaValues[name] = sn.lambdaVal
+	}
+	if sn.hasIdentity {
+		e.identities[name] = sn.identityVal
+	}
 }

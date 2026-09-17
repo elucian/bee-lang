@@ -21,7 +21,7 @@ This level covers statement structures, control flow mechanisms, and modules as 
 | T0208    | Conditional if-else branching    | No     | PASS       |
 | T0209    | Nested cycles: stop outer bre... | No     | PASS       |
 | T0210    | `next` resumes from the top, ... | No     | PASS       |
-| T0211    | Labeled nested cycle: cross-l... | No     | SKIP       |
+| T0211    | Labeled nested cycle: cross-l... | No     | PASS       |
 | T0212    | For cycle with inline next ju... | No     | PASS       |
 | T0213    | Then epilogue runs once after... | No     | PASS       |
 | T0214    | Redo directive restarts curre... | No     | PASS       |

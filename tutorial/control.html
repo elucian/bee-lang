@@ -120,6 +120,20 @@ return;
   <li>any "do" block has a local scope</li>
 </ul>
 
+<h3 id="block-scoping">Block Scoping &amp; Shadowing</h3>
+
+<p>Every <em>do ... done</em> block &mdash; an <em>if</em> / <em>cycle</em> / <em>for</em> body, or a <em>start</em>/<em>with</em> block &mdash; opens a lexical scope. A <em>new</em> declaration inside a block binds a local name that <b>shadows</b> any outer binding of the same name: the outer value is left untouched and is restored as soon as the block exits. Inside the block, <em>let</em> assigns to the innermost (shadowed) variable.</p>
+
+<pre><code class="language-bee">new x ∈ Z;
+let x := 1;
+if true do
+  new x ∈ Z;
+  let x := 2;
+  expect x = 2;   // the block-local x shadows the outer x
+done;
+expect x = 1;     // outer x unchanged once the block scope exits
+</code></pre>
+
 <h2 id="decision">Conditional Selector</h2>
 
 <p>In Bee, decision statements can be used to create code branches. Selection of one branch or other is controlled by a logic condition. Bee has tow ways to employ a conditional: at the beginning of a code branch or at the end of a statement.</p>

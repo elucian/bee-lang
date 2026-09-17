@@ -1,6 +1,7 @@
 -- @DESC: Compose operator — f ∘ g applies g then f, spec/07 §5
 -- @AI: No - self-sufficient: assertion-only, no stdout.
--- @DISABLED: Compose operator `∘` is unimplemented: `new h := f ∘ g;` is an E0009 syntax error (spec/07 §5).
+-- @DISABLED: Compose operator `∘` is not approved:
+-- @FROZEN: `new h := f ∘ g;` is an E0009 syntax error (spec/07 §5).
 rule main:
   new f := λ(x ∈ Z) => (x + 1) ∈ Z;
   new g := λ(x ∈ Z) => (x * 2) ∈ Z;

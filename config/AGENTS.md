@@ -120,6 +120,13 @@ colon-initialisation, both ratified 2026-09-14) are ready for implementation.
 - **Disable, never delete:** if a test fails persistently across fix attempts,
   AI agents must NEVER delete the file. Disable it by prepending
   `-- @DISABLED: <reason>` on line 1 of the `.bee` file.
+- **Test-driving policy — single-test runs only.** Agents never drive the test
+  harness on *initiative*. To validate the one fix it is working on, an agent
+  **may** run the single test (`sh run.sh solo <test>`). Agents **must never**
+  run bulk passes — a whole level (`sh run.sh test <level>`), the full suite
+  (`sh run.sh test`), or `sh run.sh smoke` — without explicit prior approval
+  for that one run. An agent never predicts or claims a pass for tests it did
+  not run.
 
 ## 6. Tutorial maintenance & synchronization (Decision 5)
 
@@ -222,9 +229,16 @@ fact?"* and update both sides together.
      logic-touching edits beyond the task.
 
 2. **Stop-loop protocol:**
-   - **One fix attempt per prompt.** If a test fails after one targeted fix,
-     halt immediately: explain the failure to `os.Stderr`, yield back, and do
-     **not** modify more files.
+   - **One fix attempt per prompt.** Apply at most one targeted fix, then halt
+     immediately, yield back, and do **not** modify more files. Never re-attempt
+     the same failing test in a loop. You **may** run the *single* test for the
+     fix you just made (`sh run.sh solo <test>`); you **must not** run bulk
+     tests (a whole level or the full suite) without explicit user approval
+     (§5).
+   - **Never guess.** Diagnose the root cause by comparing the implementation
+     against the relevant `/spec`/EBNF before editing; state that root cause
+     in the ≤3-line summary. If the code already appears correct, say so and
+     tell the user to rebuild the binary before re-running the test.
    - **Never guess.** Diagnose the root cause by comparing the implementation
      against the relevant `/spec`/EBNF before editing; state that root cause.
    - **Ask when blocked or in doubt.** If you cannot identify the root cause,
@@ -249,17 +263,20 @@ fact?"* and update both sides together.
      specificity, then drop `--dry-run` to rewrite atomically in parallel.
    - All language documentation and specification changes MUST occur in the
      `/spec` directory.
-   - **TDD integration — one test at a time; build and test never mingle.**
-     Do **not** run the bulk suite or smoke on every change; the user runs
-     `sh run.sh test` / `sh run.sh smoke` themselves when they want an overall
-     assessment. Iterate one `.bee` test at a time for each feature/fix:
+   - **TDD integration — one test at a time; single-test runs only.**
+     The agent edits source. It **may** run the *single* test for its one fix
+     (`sh run.sh solo <test_name>`). It NEVER runs a whole level
+     (`sh run.sh test <level>`), the full suite (`sh run.sh test`), or
+     `sh run.sh smoke` on its own except when the user explicitly requests
+     that one run. For each single-test fix:
      1. Audit `/spec/` and update EBNF.
-     2. Create/update a `.bee` test case in `test/levelX/` with a `-- @DESC:` tag.
-     3. Run `sh run.sh build` to compile only — never test here.
-     4. Run `sh run.sh solo <test_name>` to run just that single `.bee` test and
-        auto-update `test/levelX/README.md`. Recompile alone and re-run the same
-        solo test until it passes, then yield. Skip `sh run.sh smoke` and the
-        full suite unless the user explicitly asks.
+     2. Create/update the `.bee` test case in `test/levelX/` with a
+        `-- @DESC:` tag.
+     3. Apply the one targeted code fix (diff-first, via `bee-ed`).
+     4. **Stop and yield.** You **may** run only the single test for this fix
+        (`sh run.sh solo <test_name>`); never run any other test or a bulk
+        pass. State the root cause (and the single-test result) in ≤3 lines
+        and hand back. Rebuild the binary first only if the source changed.
 
 ## 8. Multi-user / multi-agent coordination
 
@@ -272,8 +289,9 @@ fact?"* and update both sides together.
 - **Own your target.** Before editing, confirm the file is not another
   agent's in-flight work (multi-user repos). Prefer disjoint write scopes when
   parallel work is delegated.
-- **Accountability (optional).** Append an `Attributed-to: <agent-id or
-  user>` trailer to commits so multi-agent history stays debuggable. Never
+- **Accountability (optional).** Append an `Attributed-to:` trailer naming the
+  agent-id or the user, to commits so multi-agent history stays debuggable.
+  Never
   rewrite another author's commit.
 - **Source-of-truth reflex.** If two files disagree, the file closer to the
   root of the chain (`config/AGENTS.md` > `.agents/skills/bee/SKILL.md` >

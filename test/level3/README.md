@@ -15,7 +15,7 @@ This level covers rules, contracts, and function definitions as defined in:
 | T0305    | Expect postcondition pass — e... | No     | PASS       |
 | T0306    | Expect postcondition fail — e... | No     | PASS       |
 | T0307    | Rule docstrings — triple-dash... | No     | PASS       |
-| T0308    | Scoping parameter shadowing —... | No     | SKIP       |
+| T0308    | Scoping parameter shadowing —... | No     | PASS       |
 | T0309    | Scoping variable locality — a... | No     | PASS       |
 | T0310    | Closures state capture — a ge... | No     | PASS       |
 | T0311    | Early return with exit — exit... | No     | PASS       |
