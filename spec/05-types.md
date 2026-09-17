@@ -180,4 +180,4 @@ type_intro        ::= expression "." "type" "(" ")" ;
 ## 8. Alignment Status
 
 - **Issues Addressed:** Formalized mathematical primitives, fixed-point $Qm.n$ rationals, subtyping (`<:`), ranges/domains, approximate equality (`≈`), type casting (`:>`), and universal `.type()` introspection.
-- **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/05-types.md`.
+- **Manifest Tracking:** Updated `manual/MANIFEST.md` to reflect completion of `spec/05-types.md`.

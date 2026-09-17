@@ -1,6 +1,6 @@
 # Solution 15 — Method-call AST & Resolution
 
-Approach proposed to close `issues/15-method-call-grant.md`.
+Approach proposed to close `tracking/issues/15-method-call-grant.md`.
 
 ## 1. AST
 Add to `internal/ast/ast.go`:

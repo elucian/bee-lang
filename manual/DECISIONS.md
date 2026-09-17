@@ -2,7 +2,7 @@
 
 This file is the canonical backlog of **user-locked decisions** governing the
 Bee language design. A *decision* is a normative choice that resolves an open
-question in `/spec` or `/issues/`. Implementing agents MUST consult this
+question in `/spec` or `/tracking/issues/`. Implementing agents MUST consult this
 backlog before introducing any new operator, statement, keyword, or grammar
 production.
 
@@ -17,7 +17,7 @@ production.
 
 | ID    | Topic                                       | Status            | Date        |
 | ----- | ------------------------------------------- | ----------------- | ----------- |
-| D0    | Architectural constraints (GEMINI.md §4)    | ✅ Ratified       | 2026-09-12  |
+| D0    | Architectural constraints (config/AGENTS.md §2) | ✅ Ratified       | 2026-09-12  |
 | D1    | 1-based indexing at source/parser/AST       | ✅ Ratified       | 2026-09-12  |
 | D2    | Identity vs mutation (`is`/`is not`, `+=`)  | ✅ Ratified       | 2026-09-12  |
 | D3    | Operator canonicalisation (`<>` vs `≠`)     | ✅ Ratified       | 2026-09-12  |
@@ -40,7 +40,7 @@ production.
 ## D0 — Architectural constraints
 
 **Status:** ✅ Ratified 2026-09-12.
-**Source of truth:** `GEMINI.md` §4.
+**Source of truth:** `config/AGENTS.md` §2.
 
 Idiomatic Go throughout. No `panic` in compiler error flows; explicit
 `error` returns. 1-based indexing at source, lowered to 0-based only in
@@ -172,7 +172,7 @@ print(a, b)(sep: " | ");
 ## D8 — Rule-call result destructuring
 
 **Status:** 🟢 Deferred to Phase 8.4.
-**Source of truth:** `issues/16-rule-tuple-destructure.md`, parked
+**Source of truth:** `tracking/issues/16-rule-tuple-destructure.md`, parked
 debt test `test/debt/T0127-rule-call-result-binding.bee`.
 
 Grammar for `new a, b, c := zeros();` where `zeros()` returns a tuple
@@ -775,7 +775,7 @@ are now 100% harmonized with D14. The next implementation phase must:
 * Docs pass (this entry): `spec/02-statements.md` §1/§3.4/§5/§7,
   `spec/00-memory-model.md` §2.2, `tutorial/control.html`,
   `tutorial/syntax.html`, `tutorial/js/bee.js`, `MANIFEST.md`,
-  `issues/20-next-canonical-jump.md`, `solution/20-next-canonical-jump.md`.
+  `tracking/issues/20-next-canonical-jump.md`, `tracking/solutions/20-next-canonical-jump.md`.
 
 ## D16 — Central diagnostic-code registry (JSON) + `E04xx` de-collision
 
@@ -814,7 +814,7 @@ are now 100% harmonized with D14. The next implementation phase must:
 * Updated `spec/00-memory-model.md` (§2.2 in-text `E0801`; §5 table) and
   `tutorial/memory.html` (diagnostic table + resolved-note replacing the
   former "E04xx overloaded" warning).
-* Audit trail in `todo/TUTORIAL_TODO.md` §3.3.
+* Audit trail in `tracking/todo/TUTORIAL_TODO.md` §3.3.
 
 ---
 

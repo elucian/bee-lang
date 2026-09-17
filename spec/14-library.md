@@ -132,4 +132,4 @@ system_var        ::= "$" ( "error" | "trial" | "precision" | "platform" ) ;
 ## 8. Alignment Status
 
 - **Issues Addressed:** Formalized Standard Library tree-shaking static linkage, `$bee.sys` namespaces, universal `entity.type()`, `$error` codes (`1..199` vs `200+`), File handles (`F`), directory processing, and diagnostic codes.
-- **Manifest Tracking:** Updated `MANIFEST.md` to mark all specifications in `/spec` fully formalized.
+- **Manifest Tracking:** Updated `manual/MANIFEST.md` to mark all specifications in `/spec` fully formalized.

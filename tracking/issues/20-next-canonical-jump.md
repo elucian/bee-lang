@@ -41,12 +41,12 @@ D14 optimized for grammar uniformity (demoting `repeat` from block terminator) b
 | `tutorial/control.html` | §cycle notes, §nested, §for examples | `repeat` → `next` in code/keyword mentions |
 | `tutorial/syntax.html` | Keyword tables | `repeat` → `next` |
 | `tutorial/js/bee.js` | Highlighter | `repeat` recategorized control → interruption |
-| `todo/DECISIONS.md` | D15 entry | Ratification record |
-| `MANIFEST.md` | D15 mirror + Phase 8.6 delta | Status update |
+| `manual/DECISIONS.md` | D15 entry | Ratification record |
+| `manual/MANIFEST.md` | D15 mirror + Phase 8.6 delta | Status update |
 
 ## Acceptance Criteria
 1. `spec/02-statements.md` EBNF lists `"next" [ label ]` in `transfer_stmt` with a deprecation note for `repeat`.
 2. Tutorial code examples spell the jump `next`; no keyword-table row presents `repeat` as canonical.
 3. Lexer emits E0010 on `repeat` and produces identical parse results for `repeat` and `next`.
-4. D15 recorded in `todo/DECISIONS.md` and mirrored in `MANIFEST.md`.
+4. D15 recorded in `manual/DECISIONS.md` and mirrored in `manual/MANIFEST.md`.
 5. `sh run.sh smoke` passes — all `@FROZEN` levels green without modifying any frozen test.

@@ -23,4 +23,4 @@ Bee handles rule execution and workflow through two distinct modes: Synchronous 
 
 ---
 **Status:** Implemented/Resolved in design brainstorming.
-**Linked Issues:** `bee/todo/FLOW_CONTROL.md`.
+**Linked Issues:** `tracking/todo/FLOW_CONTROL.md`.

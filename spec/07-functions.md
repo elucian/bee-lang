@@ -118,4 +118,4 @@ method_call       ::= expression "." identifier "(" [ arg_list ] ")" ;
 ## 8. Alignment Status
 
 - **Issues Addressed:** Formalized `λ` lambda syntax, callback shorthand, purity invariants, `L` type descriptor, expression maps, SIMD/GPU vectorization, and diagnostic codes.
-- **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/07-functions.md`.
+- **Manifest Tracking:** Updated `manual/MANIFEST.md` to reflect completion of `spec/07-functions.md`.

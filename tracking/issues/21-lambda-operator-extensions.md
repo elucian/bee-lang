@@ -25,7 +25,7 @@ Per project protocol, implementation requires ratification **before** any code c
    - `∘` as an infix operator with defined precedence (likely between comparison and arithmetic).
    - `|>` as a left-associative infix operator (pipeline/application).
    - `?` as a placeholder expression valid only in call argument position.
-2. **Decision ratification:** Record in `todo/DECISIONS.md` as D16 (or next available).
+2. **Decision ratification:** Record in `manual/DECISIONS.md` as D16 (or next available).
 
 ## Design Sketch
 
@@ -61,13 +61,13 @@ new add5 := add(5, ?);    -- λ(y) => add(5, y)
 | `internal/parser/` | Precedence table, expression parser | Wire new operators, `?` call-site detection |
 | `internal/evaluator/` | Expression evaluator | Implement compose, pipe, partial logic |
 | `spec/07-functions.md` | §5 or new §5a | Add grammar productions, semantics, examples |
-| `todo/DECISIONS.md` | D16 entry | Ratification record |
-| `MANIFEST.md` | D16 mirror | Status update |
+| `manual/DECISIONS.md` | D16 entry | Ratification record |
+| `manual/MANIFEST.md` | D16 mirror | Status update |
 | `tutorial/functions.html` | New section or §advanced | Add contract rules and examples for all three operators |
 
 ## Acceptance Criteria
 1. `spec/07-functions.md` EBNF includes `∘`, `|>`, `?` productions.
-2. D16 recorded in `todo/DECISIONS.md` and mirrored in `MANIFEST.md`.
+2. D16 recorded in `manual/DECISIONS.md` and mirrored in `manual/MANIFEST.md`.
 3. T0317, T0318, T0319 pass with `@DISABLED` removed.
 4. Tutorial `functions.html` documents all three operators with contract rules and examples.
 5. `sh run.sh smoke` passes — no regressions in existing frozen tests.

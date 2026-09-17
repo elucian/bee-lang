@@ -228,4 +228,4 @@ markup_payload ::= [^<]* ;
 
 ## 7. Issue Alignment
 
-- **Resolves:** `issues/07-lexical-completeness.md` (Fully defines string interpolation, raw backtick strings, markup EBNF, Unicode sets, escape codes, and Maximal Munch disambiguation rules).
+- **Resolves:** `tracking/issues/07-lexical-completeness.md` (Fully defines string interpolation, raw backtick strings, markup EBNF, Unicode sets, escape codes, and Maximal Munch disambiguation rules).

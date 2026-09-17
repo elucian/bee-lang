@@ -98,5 +98,5 @@ mutability_prefix ::= "let" | "alter" ;
 
 ## 6. Issue & Solution Alignment Status
 
-- **Issues Addressed:** Fully resolves `issues/MEMORY_MODEL.md` by formalizing Region Arenas, `zap` static analysis guarantees, and error diagnostics.
-- **Solution Verification:** Aligned with `solution/01-memory-management.md` and `solution/03-region-based-memory.md`.
+- **Issues Addressed:** Fully resolves `tracking/issues/MEMORY_MODEL.md` by formalizing Region Arenas, `zap` static analysis guarantees, and error diagnostics.
+- **Solution Verification:** Aligned with `tracking/solutions/01-memory-management.md` and `tracking/solutions/03-region-based-memory.md`.

@@ -211,7 +211,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			e.DumpContext()
 			// spec/03-rules.md §4/§7: a failed expect raises E0303
 			// ExpectationFailed, a fatal runtime error (failure exit status)
-			// — never a Go panic (GEMINI.md §4: no panic in error flows).
+			// — never a Go panic (config/AGENTS.md §2: no panic in error flows).
 			fmt.Fprintf(os.Stderr, "[ERROR] E0303 ExpectationFailed: expect failed at line %d\n", int(s.Token.Pos))
 			os.Exit(1)
 		} else {
@@ -355,7 +355,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 						continue
 					}
 					if idx < 0 {
-						// spec/10 §2.1 + solution/06: raw negative indexing is a hard
+						// spec/10 §2.1 + tracking/solutions/06-indexing-strategy.md: raw negative indexing is a hard
 						// error (use `a[$-n]`). Halt with a non-zero exit so @NEGATIVE
 						// tests observe the graceful failure, mirroring expect.
 						fmt.Fprintf(os.Stderr, "[ERROR] E1001 NegativeIndex: index %d is negative; use a[$-n] for a relative end-anchor at line %d\n", idx, int(idxExpr.Token.Pos))
@@ -1372,7 +1372,7 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 					return 0, e.allocID()
 				}
 				if idx < 0 {
-					// spec/10 §2.1 + solution/06: raw negative indexing is a hard
+					// spec/10 §2.1 + tracking/solutions/06-indexing-strategy.md: raw negative indexing is a hard
 					// error (use `a[$-n]`). Halt with a non-zero exit so @NEGATIVE
 					// tests observe the graceful failure, mirroring expect.
 					fmt.Fprintf(os.Stderr, "[ERROR] E1001 NegativeIndex: index %d is negative; use a[$-n] for a relative end-anchor at line %d\n", idx, int(expr.Token.Pos))
@@ -1651,7 +1651,7 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 					return "0"
 				}
 				if idx < 0 {
-					// spec/10 §2.1 + solution/06: raw negative indexing is a hard
+					// spec/10 §2.1 + tracking/solutions/06-indexing-strategy.md: raw negative indexing is a hard
 					// error (use `a[$-n]`). Halt with a non-zero exit so @NEGATIVE
 					// tests observe the graceful failure, mirroring expect.
 					fmt.Fprintf(os.Stderr, "[ERROR] E1001 NegativeIndex: index %d is negative; use a[$-n] for a relative end-anchor at line %d\n", idx, int(expr.Token.Pos))

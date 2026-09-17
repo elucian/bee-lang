@@ -3,14 +3,14 @@
 ## Status
 **Open — failing test (T0121+T0122 disabled).** Spec ambiguity + parser gap.
 
-**Awaiting ratification of D9 + D11 (`todo/DECISIONS.md`).** Once the user
+**Awaiting ratification of D9 + D11 (`manual/DECISIONS.md`).** Once the user
 ratifies the colon `:` pair-up semantics (D9) and the parallel
 colon-initialisation grammar (D11), the `parseDeclaration` rewrite
 becomes a single coordinated change. Do NOT implement before
 ratification.
 
 ## Related
-- Issue #1 (`issues/001-operator-colon-ambiguity.md`) covers the general `:` vs `:=` vs `=` semantics. This issue is the SPECIFIC parallel-destructure grammar extension.
+- Issue #1 (`tracking/issues/001-operator-colon-ambiguity.md`) covers the general `:` vs `:=` vs `=` semantics. This issue is the SPECIFIC parallel-destructure grammar extension.
 
 ## Observed Behaviour
 

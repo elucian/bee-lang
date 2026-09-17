@@ -1762,7 +1762,7 @@ func isBinaryOp(tok token.Token) bool {
 
 // Precedence levels for the precedence-climbing expression parser.
 // Convention: HIGHER integer = TIGHTER binding (Clinger / Wirth style).
-// The numbering mirrors the canonical table in `todo/DECISIONS.md` §D10
+// The numbering mirrors the canonical table in `manual/DECISIONS.md` §D10
 // and `spec/02-statements.md` §5 EBNF, where the spec's "Level 1 = parens"
 // (highest) is mapped to the tightest binary level.
 const (

@@ -9,7 +9,7 @@ tooling that reads the index as a source of truth.
 - Lists a non-existent module (`04-functions.md`) and omits a real one
   (`07-functions.md`), so the index cannot be relied on to derive the
   tutorial mapping.
-- `GEMINI.md` §6 already uses the correct names (`04-structure.md`,
+- `config/AGENTS.md` §6 already uses the correct names (`04-structure.md`,
   `07-functions.md`); the spec index disagrees with it, which is itself the
   kind of documentation defect the synchronization invariant is meant to
   prevent.
@@ -21,7 +21,7 @@ tooling that reads the index as a source of truth.
 - Correct the entry:
   - `04-functions.md` → `04-structure.md` (its real identity).
   - Add the missing `07-functions.md` entry.
-- Reconcile `spec/readme.md` with `GEMINI.md` §6 and the actual files in
+- Reconcile `spec/readme.md` with `config/AGENTS.md` §6 and the actual files in
   `spec/` so all three agree.
 
 Actual `/spec/` modules: `00-memory-model.md`, `01-lexical-structure.md`,

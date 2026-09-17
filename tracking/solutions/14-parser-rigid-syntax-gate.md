@@ -2,7 +2,7 @@
 
 **Status:** Proposed (counters Issue 14)
 **Date:** 2026-09-12
-**Source Issue:** `issues/14-parser-silent-token-drop.md`
+**Source Issue:** `tracking/issues/14-parser-silent-token-drop.md`
 **Spec Reference:** `spec/02-statements.md` §1 (executive statement taxonomy), `spec/02-statements.md` §5 (EBNF), `spec/03-rules.md` §1 (canonical `rule main:` form).
 
 ## Root Cause

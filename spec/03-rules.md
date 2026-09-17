@@ -253,7 +253,7 @@ named_argument    ::= identifier ":" expression ;
 ## 8. Alignment Status
 
 - **Issues Addressed:** Formalized rule semantics, contracts, TCO, closures, and forward declarations.
-- **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/03-rules.md`.
+- **Manifest Tracking:** Updated `manual/MANIFEST.md` to reflect completion of `spec/03-rules.md`.
 - **Decision 12 Deprecation Sweep (2026-09-12):** All normative examples in this spec now use the canonical value-inequality operator `¬`. The single residual `≠` reference is an intentional deprecation annotation in a code comment per Decision 12.
 - **Spec Audit Locked (Phase 7 prep):** `spec/01-lexical-structure.md`, `spec/02-statements.md`, and `spec/03-rules.md` are now harmonized with Decisions 1–6.
 - **Decision 6 — Curried Rule Signatures (2026-09-12):** This pass introduces §2.4 (named-parameter slots), updates §2.1/§2.2/§3.1, and extends the §6 EBNF with `named_param_list`, `named_parameter`, `named_arg_list`, and `named_argument` productions. The legacy `using` keyword is deprecated; canonical I/O call sites use curried named arguments (`print(a, b)(sep: " | ")`). New diagnostic codes `E0307`, `W0308`, `E0309`, and `E0011` are added. Implementer (`internal/lexer/` & `internal/parser/`) is gated by Anti-Loop Gate until `spec/02-statements.md` is also harmonized with the new `io_stmt` EBNF (next pass).

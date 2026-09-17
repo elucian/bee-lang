@@ -85,7 +85,7 @@ elif [ "$COMMAND" = "commit" ]; then
     MSG=$(echo "$TARGET $REST" | sed 's/^ *//;s/ *$//')
     if [ -z "$MSG" ]; then
         # Synthesize subject: detect ratified decisions and new tests in staged diff.
-        DECISIONS=$(git diff --cached -U0 -- todo/DECISIONS.md | grep '^+' | grep -oE 'Decision [0-9]+' | sort -u | tr '\n' ', ' | sed 's/, $//')
+        DECISIONS=$(git diff --cached -U0 -- manual/DECISIONS.md | grep '^+' | grep -oE 'Decision [0-9]+' | sort -u | tr '\n' ', ' | sed 's/, $//')
         NEWTESTS=$(git diff --cached --name-only --diff-filter=A -- 'test/level*/T*.bee' | grep -oE 'T[0-9]+' | sort -u | tr '\n' ' ' | sed 's/ $//')
         FILES=$(git diff --cached --name-only | wc -l | tr -d ' ')
         if [ -n "$DECISIONS" ] && [ -n "$NEWTESTS" ]; then

@@ -13,4 +13,4 @@
    - **Implicit Multiplication:** Automatically converts implicit multiplication syntax like `2(a+b)` or `n(x+y)` to explicit `2 * (a + b)` or `n * (x + y)`.
    - **Operator Spacing:** Normalizes spacing around assignment (`:=`, `::`), arithmetic (`+`, `-`, `*`, `/`), relational (`=`, `≠`, `∈`), and range operators (`..`).
    - **Block Header Formatting:** Normalizes colons `:` and keyword alignment for `rule`, `if`, `while`, `for`, `cycle`, `match`, and `trial` (including `try`, `miss`, `final` section alignment).
-5. **Specification Reference:** `solution/12-code-beautifier.md`
+5. **Specification Reference:** `tracking/solutions/12-code-beautifier.md`

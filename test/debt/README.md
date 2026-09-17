@@ -4,7 +4,7 @@ This folder contains `.bee` test cases that **represent known unimplemented feat
 
 ## Lifecycle
 
-1. **Promoted from `test/levelX/`.** A passing level test (PASS) is never moved here. A failing test that surfaces a grammar gap or unimplemented feature MAY be moved here manually once a `solution/` note documents the intended resolution.
+1. **Promoted from `test/levelX/`.** A passing level test (PASS) is never moved here. A failing test that surfaces a grammar gap or unimplemented feature MAY be moved here manually once a `tracking/solutions/` note documents the intended resolution.
 2. **Read-only ground truth.** `@FROZEN` headers are preserved. The `@DISABLED` marker is replaced with `@DEBT` to signal "parked, awaiting design decision".
 3. **Re-promotion.** When the underlying feature is implemented, the test is moved back to the active level and the `@DEBT` marker is removed.
 

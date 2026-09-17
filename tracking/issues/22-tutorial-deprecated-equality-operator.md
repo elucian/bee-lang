@@ -12,7 +12,7 @@ that emits `E0010 deprecated-symbol: '==' — use '='`.
 
 - The public tutorial teaches authors to write `==`, the deprecated form.
 - Spec and tutorial disagree on the same operator, violating the
-  synchronization invariant in `GEMINI.md` §6.
+  synchronization invariant in `config/AGENTS.md` §6.
 - New language adopters copy examples into Bee source and immediately trigger
   `E0010` deprecation diagnostics.
 

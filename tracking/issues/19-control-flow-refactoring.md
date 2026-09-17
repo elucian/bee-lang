@@ -50,16 +50,16 @@ The `repeat` keyword is overloaded as both a block terminator (`repeat;` closes 
 | `tutorial/rules.html` | 2 code examples | `repeat;` → `done;` |
 | `tutorial/structure.html` | 1 code example | `repeat;` → `done;` |
 | `tutorial/syntax.html` | Keyword table | Update `repeat` description |
-| `todo/DECISIONS.md` | Index + D14 entry | Add D14 ratification record |
-| `MANIFEST.md` | D14 mirror | Add D14 to User-Locked Decisions |
+| `manual/DECISIONS.md` | Index + D14 entry | Add D14 ratification record |
+| `manual/MANIFEST.md` | D14 mirror | Add D14 to User-Locked Decisions |
 
 ## Acceptance Criteria
 1. `spec/02-statements.md` §3.4, §5, §6, §7 fully reflect D14 grammar.
 2. All tutorial `.html` examples use `done;` terminators for loops.
 3. No `repeat` block terminators remain in any spec or tutorial example.
 4. `next` keyword is removed from EBNF and tutorial examples.
-5. D14 entry added to `todo/DECISIONS.md` with full ratified semantics.
-6. MANIFEST.md updated with D14 mirror entry.
+5. D14 entry added to `manual/DECISIONS.md` with full ratified semantics.
+6. manual/MANIFEST.md updated with D14 mirror entry.
 7. `sh run.sh smoke` passes (existing tests are legacy-syntax `@FROZEN`; the smoke run confirms no parser regressions from doc-only changes).
 
 ## Compiler Implementation (Deferred)

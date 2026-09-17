@@ -261,9 +261,9 @@ compilers" audience. Treat as proposals; confirm scope before authoring.
 
 These are prerequisites or supporting chores, not page authoring.
 
-### 3.1 `todo/DECISIONS.md` index is stale
+### 3.1 `manual/DECISIONS.md` index is stale
 - [x] **Done 2026-09-14.** D10 and D11 ratified; the body and index now agree
-  (`✅ Ratified` in both) and `MANIFEST.md` mirrors the ratification. D10's
+  (`✅ Ratified` in both) and `manual/MANIFEST.md` mirrors the ratification. D10's
   MANIFEST entry was also corrected to drop the stale `¬`-as-unary claim (that
   belongs to D12) and D11's summary captured the accepted parenthesised form
   `new (a, b):(1,2) ∈ Z` and the rejected bare list. Index also includes D15.
@@ -320,7 +320,7 @@ These are prerequisites or supporting chores, not page authoring.
   revision as discovery continues. When a design changes, update the matched
   spec ↦ tutorial pair together (see §6 mapping and the sync invariant).
 - **DoD note:** using a feature in the tutorial is not ratification; ratification
-  is the design decision itself, recorded in `todo/DECISIONS.md` (D1–D16).
+  is the design decision itself, recorded in `manual/DECISIONS.md` (D1–D16).
 
 ---
 

@@ -46,7 +46,7 @@ Refactor `internal/parser/parser.go::ParseProgram` to:
 
 ## Owner
 
-Implementation (post-spec-harmonization gate per `MANIFEST.md` Anti-Loop Gate).
+Implementation (post-spec-harmonization gate per `manual/MANIFEST.md` Anti-Loop Gate).
 ## Resolution (Phase 7.7, 2026-09-12)
 
 1. **Errors / Warnings split.** `internal/parser/parser.go::Parser` now carries `errors []string` (hard E0009) and `warnings []string` (soft W0901 + E0011). `Warnings()` accessor added.

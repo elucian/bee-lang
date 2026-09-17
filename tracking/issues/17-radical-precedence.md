@@ -3,7 +3,7 @@
 ## Status
 **Open — failing test (T0107 disabled).** Spec gap + parser gap.
 
-**Awaiting ratification of D10 (`todo/DECISIONS.md`).** Once the user
+**Awaiting ratification of D10 (`manual/DECISIONS.md`).** Once the user
 ratifies the precedence table (Unary > Power > Mul/Div > Add/Sub >
 Range > Compare > Logic), `parseExpression` is refactored to use
 precedence climbing rather than the current naive for-loop. Do NOT
@@ -82,7 +82,7 @@ The `return` is **early-bail**: when a prefix-radical is parsed, control returns
 
 ## Why I am NOT Implementing Now
 
-Per AGENTS.md Anti-Loop Protocol: "NEVER attempt more than one edit pass per user prompt" + "Before applying an edit, explain the root cause identified by comparing the implementation against the relevant `/spec`."
+Per config/AGENTS.md Anti-Loop Protocol: "NEVER attempt more than one edit pass per user prompt" + "Before applying an edit, explain the root cause identified by comparing the implementation against the relevant `/spec`."
 
 Root-cause analysis is documented above. **Implementation requires three coordinated edits**: spec EBNF (locked-in decision needed), AST (potentially `PrefixExpression` node), and parser (precedence climbing rewrite). That exceeds the scope of a single "one edit pass" — user must approve the precedence table before I rewrite the parser.
 

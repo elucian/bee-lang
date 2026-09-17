@@ -26,8 +26,8 @@ Output format
 
 Components
 ----------
-- `V<phase>`   : current Manifest Phase/version, read from MANIFEST.md.
-- `D<epoch>`   : highest authored decision id in todo/DECISIONS.md.
+- `V<phase>`   : current Manifest Phase/version, read from manual/MANIFEST.md.
+- `D<epoch>`   : highest authored decision id in manual/DECISIONS.md.
 - `<hash8>`    : first 8 hex chars of SHA-256 over the canonical files below.
 
 Usage
@@ -42,10 +42,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 # Canonical context files, in a FIXED order (do not reorder — it changes the hash).
+# config/AGENTS.md is the canonical agent-rule contract (all agents, all users);
+# per-agent adapters (config/GEMINI.md, config/CLAUDE.md,
+# config/copilot-instructions.md, config/ZED.md) and the root discovery stubs
+# are excluded by design because they hold no normative facts (thin imports).
 FILES = [
-    "GEMINI.md",
-    "MANIFEST.md",
-    "todo/DECISIONS.md",
+    "config/AGENTS.md",
+    "manual/MANIFEST.md",
+    "manual/DECISIONS.md",
 ]
 # All spec modules, sorted, excluding the index (readme.md).
 FILES += sorted(
@@ -61,7 +65,7 @@ def _read(name: str) -> str:
 
 def current_phase() -> str:
     """Extract the Manifest Phase version (e.g. '8.7')."""
-    m = _read("MANIFEST.md")
+    m = _read("manual/MANIFEST.md")
     mm = re.search(r"Phase\s+(\d+)\.(\d+)", m)
     if mm:
         return f"{mm.group(1)}.{mm.group(2)}"
@@ -70,7 +74,7 @@ def current_phase() -> str:
 
 def decision_epoch() -> int:
     """Highest authored decision id referenced in the decisions backlog."""
-    d = _read("todo/DECISIONS.md")
+    d = _read("manual/DECISIONS.md")
     ids = sorted({int(mm.group(1)) for mm in re.finditer(r"\bD(\d+)\b", d)})
     return ids[-1] if ids else 0
 

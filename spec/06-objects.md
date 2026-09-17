@@ -188,4 +188,4 @@ super_call        ::= "super" [ "." identifier ] "(" [ arg_list ] ")" ;
 ## 8. Alignment Status
 
 - **Issues Addressed:** Formalized Universal Entity Model (`entity.type()`), Object constructors, public/private member scoping, inheritance (`<:`), `super.`, abstract methods, traits (`+`), and dictionary keys.
-- **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/06-objects.md`.
+- **Manifest Tracking:** Updated `manual/MANIFEST.md` to reflect completion of `spec/06-objects.md`.

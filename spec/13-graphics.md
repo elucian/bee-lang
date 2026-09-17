@@ -144,4 +144,4 @@ visibility_stmt   ::= ( "show" | "hide" ) identifier ";" ;
 ## 8. Alignment Status
 
 - **Issues Addressed:** Formalized Angular type `G` (`°`, `′`, `″`), Cartesian/Polar primitives (`CRT`, `POL`, `VEC`, `CRC`, `SQR`, `PLG`), `Canvas`/`Layer`/`Shape`/`Label` scene graph, `draw`/`wipe`/`show`/`hide` statements, and diagnostic codes.
-- **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/13-graphics.md`.
+- **Manifest Tracking:** Updated `manual/MANIFEST.md` to reflect completion of `spec/13-graphics.md`.

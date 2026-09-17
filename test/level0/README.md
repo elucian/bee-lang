@@ -28,7 +28,7 @@ The lexer now collapses `is not` (literal sequence `is` + ASCII space + `not`) i
 
 ## Known Hazards Surfaced
 
-- `issues/14-parser-silent-token-drop.md` — `parseStatement` returns `nil` for unrecognized keywords without recording a parser error. Legacy `fn main() {}` source previously passed as a false positive; canonical `rule main:` form verified below.
+- `tracking/issues/14-parser-silent-token-drop.md` — `parseStatement` returns `nil` for unrecognized keywords without recording a parser error. Legacy `fn main() {}` source previously passed as a false positive; canonical `rule main:` form verified below.
 
 ## Verification
 

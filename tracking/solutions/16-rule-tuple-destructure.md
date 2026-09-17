@@ -1,6 +1,6 @@
 # Solution 16 — Rule-call tuple destructuring
 
-Approach proposed to close `issues/16-rule-tuple-destructure.md`.
+Approach proposed to close `tracking/issues/16-rule-tuple-destructure.md`.
 
 ## 1. Spec change (BLOCKER #1)
 Update `spec/03-rules.md` §3.1 to formalise the tuple-return EBNF:

@@ -186,4 +186,4 @@ wait_barrier      ::= "wait" ";" ;
 ## 8. Alignment Status
 
 - **Issues Addressed:** Formalized module namespaces, singleton lifecycle persistence, member visibility (`.`), and clean `with ... do ... done;` scope syntax.
-- **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/04-structure.md`.
+- **Manifest Tracking:** Updated `manual/MANIFEST.md` to reflect completion of `spec/04-structure.md`.

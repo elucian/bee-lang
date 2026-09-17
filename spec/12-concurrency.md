@@ -141,4 +141,4 @@ target_collection ::= identifier | expression ;
 ## 8. Alignment Status
 
 - **Issues Addressed:** Formalized multithreading (`begin`/`wait`), thread-safe reduction (`+>`), coroutines (`yield`), channel extraction (`<<`), worker exception isolation, and diagnostic codes.
-- **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/12-concurrency.md`.
+- **Manifest Tracking:** Updated `manual/MANIFEST.md` to reflect completion of `spec/12-concurrency.md`.

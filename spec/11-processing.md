@@ -166,4 +166,4 @@ cut_stmt          ::= "cut" expression "[" index_expr "]" ";" ;
 ## 8. Alignment Status
 
 - **Issues Addressed:** Formalized primitive boxing `[x]`, unboxing `Type(boxed)`, quantifiers (`∀`, `∃`), pipelines (`>>`), map-reduce, deconstruction (`*`), matrix row/column slicing (`M[1, *]`), deep clone (`::`), and diagnostic codes.
-- **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/11-processing.md`.
+- **Manifest Tracking:** Updated `manual/MANIFEST.md` to reflect completion of `spec/11-processing.md`.

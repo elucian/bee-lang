@@ -181,4 +181,4 @@ cut_stmt          ::= "cut" expression "[" index_expr "]" ";" ;
 ## 6. Alignment Status
 
 - **Issues Addressed:** Formalized collection syntax, 1-based indexing invariants, and set algebra semantics.
-- **Manifest Tracking:** Updated `MANIFEST.md` to reflect completion of `spec/10-collections.md`.
+- **Manifest Tracking:** Updated `manual/MANIFEST.md` to reflect completion of `spec/10-collections.md`.
