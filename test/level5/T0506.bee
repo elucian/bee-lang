@@ -3,7 +3,7 @@
 ----------------------------------------------------------+
 rule Counter(initial ∈ N) => (self ∈ Counter):
   new self.count := initial;
-  new sentinel  := 999; -- private: no self. prefix
+  new sentinel  := 99; -- private: no self. prefix
 
   -- public accessor method
   rule .value(self ∈ Counter) => (r ∈ N):
@@ -16,6 +16,9 @@ rule main:
 
   -- public member reachable on the instance
   expect c.value = 5;
+
+  -- sentinel
+  expect
 
   -- private member is not exported: reading c.sentinel must fail/unbound
   assert c.value = 5;

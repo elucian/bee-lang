@@ -1,5 +1,5 @@
 +------------------------------------------------------------
--- @DESC: coroutine channel extraction yield r << task (C4)
+-- @DESC: coroutine channel extraction yield r << task (C23)
 ------------------------------------------------------------+
 rule ticker(n ∈ N) => (r ∈ N):
   for i ∈ (1..n) do

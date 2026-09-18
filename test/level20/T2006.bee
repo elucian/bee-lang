@@ -1,6 +1,6 @@
 +----------------------------------------------------------
 -- @DESC: worker exception isolation and barrier re-raise
---        (C6)
+--        (C25)
 ----------------------------------------------------------+
 rule risky(n ∈ Z) => (r ∈ Z):
   fail if n < 0;
@@ -8,15 +8,13 @@ rule risky(n ∈ Z) => (r ∈ Z):
 return;
 
 rule main:
-  trial:
+  try
     begin risky(-1);
     wait; -- barrier re-raises the worker panic here
-  catch:
+  error
     -- E1204 WorkerPanicReRaised handled; continue normally
     pass;
   done;
-
-  expect true;
 return;
 
 +----------------------------------------------------------

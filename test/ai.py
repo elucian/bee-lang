@@ -40,7 +40,7 @@ except (AttributeError, ValueError):
     pass
 
 LEVELS = ["level0", "level1", "level2", "level3", "level4", "level5",
-          "level6", "level7", "level8"]
+          "level6", "level7", "level8", "level20"]
 BEE = "./bin/bee.exe"
 PRINT_RE = re.compile(r"\bprint\b")
 

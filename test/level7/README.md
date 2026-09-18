@@ -6,5 +6,5 @@ This level covers system integration and library interactions.
 
 | CASE  | AI  | STATUS | DESCRIPTION               |
 | ----- | --- | ------ | ------------------------- |
-| T0701 | Yes | YES    | file: main_module.bee     |
-| T0702 | No  | NO     | file: test_module.bee     |
+| T0701 | Yes | FAIL   | file: main_module.bee     |
+| T0702 | No  | PASS   | file: test_module.bee     |

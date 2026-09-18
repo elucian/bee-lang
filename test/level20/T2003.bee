@@ -1,5 +1,5 @@
 +----------------------------------------------
--- @DESC: coroutine generator with yield (C3)
+-- @DESC: coroutine generator with yield (C22)
 ----------------------------------------------+
 rule ticker(n ∈ N) => (v ∈ N):
   for i ∈ (1..n) do

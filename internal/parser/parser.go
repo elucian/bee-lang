@@ -1705,6 +1705,45 @@ func (p *Parser) parseApplyStatement(tok token.Token) Statement {
 	stmt := &ApplyStatement{Token: tok}
 	nameTok := p.l.NextToken()
 	name, _ := p.identLiteral(nameTok)
+	// Member-dispatch form (spec/06 §3): `apply obj.method` invokes a public
+	// method exported on the object instance for its side effects. Adjacent to
+	// the familiar `apply rule(...)`. The bare method name (no `()`) is Bee
+	// convention for parameter-less rule invocation.
+	if p.l.PeekToken().Type == token.DOT || p.l.PeekToken().Literal == "." {
+		p.l.NextToken() // consume '.'
+		memberTok := p.l.NextToken()
+		member, _ := p.identLiteral(memberTok)
+		me := &MemberExpression{
+			Token: nameTok,
+			Base:  &Identifier{Token: nameTok, Value: name},
+			Parts: []string{member},
+		}
+		if p.l.PeekToken().Type == token.LPAREN {
+			p.l.NextToken() // consume '('
+			me.IsCall = true
+			if p.l.PeekToken().Type != token.RPAREN {
+				for {
+					if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+						break
+					}
+					me.Args = append(me.Args, p.parseExpression())
+					if p.l.PeekToken().Type == token.COMMA {
+						p.l.NextToken() // consume ','
+						continue
+					}
+					break
+				}
+			}
+			if p.l.PeekToken().Type == token.RPAREN {
+				p.l.NextToken() // consume ')'
+			}
+		}
+		stmt.Target = me
+		if p.l.PeekToken().Type == token.SEMICOLON {
+			p.l.NextToken() // Skip ;
+		}
+		return stmt
+	}
 	call := &CallExpression{Token: nameTok, Name: name}
 	if p.l.PeekToken().Type == token.LPAREN {
 		p.l.NextToken() // consume '('
@@ -2371,7 +2410,12 @@ func (p *Parser) parsePrimary() Expression {
 
 	var left Expression
 	left = &Identifier{Token: tok, Value: tok.Literal}
-	if _, isName := p.identLiteral(tok); tok.Type == token.IDENT || isName {
+	// The `self` keyword is a bare SELF-token primary, but it participates in
+	// object member access exactly like an identifier (`self.a`, spec/06 §2.1
+	// constructor anatomy). Allow it to enter the plain-identifier block below
+	// so the dotted path parses as a MemberExpression with Base=Identifier("self")
+	// that the evaluator resolves against the bound instance.
+	if _, isName := p.identLiteral(tok); tok.Type == token.IDENT || tok.Type == token.SELF || isName {
 		// Rule call expression (spec/03 §3.1): IDENT followed by `(` is a
 		// CallExpression, not a plain identifier. Consume the full arg list.
 		if p.l.PeekToken().Type == token.LPAREN {

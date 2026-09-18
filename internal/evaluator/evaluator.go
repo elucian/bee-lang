@@ -80,6 +80,11 @@ type Evaluator struct {
 	// of a string-valued member. This is the foundation of ``type()``/``.type()``
 	// introspection returning "O" (the universal root Object).
 	objectValues map[string]*ObjectValue
+	// currentSelf, when non-nil, marks that the evaluator is currently executing
+	// the body of an object constructor rule (spec/06 §2/§3). Bare `new` locals
+	// declared during that window are captured as private instance members so
+	// methods can read them by name without exporting them publicly.
+	currentSelf  *ObjectValue
 	matrixValues map[string]MatrixValue
 	// steppedRanges stores SteppedRangeExpression ASTs by identifier name
 	// so that subsequent `(ident)[i]` indexing can materialise the i-th
@@ -296,6 +301,20 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		// spec/03 §3.1: execute the rule for side effects, discarding results.
 		// By-reference @args are written back inside callRule before the
 		// caller's frame is restored.
+		if s.Target != nil {
+			// spec/06 §3 member dispatch: `apply obj.method` invokes the public
+			// method on the instance for its side effects; the result is discarded.
+			if me, isMember := s.Target.(*parser.MemberExpression); isMember {
+				if ident, isIdent := me.Base.(*parser.Identifier); isIdent && len(me.Parts) == 1 {
+					if obj, hasObj := e.objectValues[ident.Value]; hasObj {
+						if method, hasMethod := obj.methods[me.Parts[0]]; hasMethod {
+							e.callMethod(method, obj)
+						}
+					}
+				}
+			}
+			break
+		}
 		e.callRule(s.Call, nil)
 	case *parser.PrintStatement:
 		separator := " "
@@ -1756,6 +1775,13 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 				if found {
 					return 0, e.allocID()
 				}
+				// Public method dispatch (spec/06 §3): a bare `obj.method` in an
+				// expression invokes the exported method and yields its int result.
+				if method, hasMethod := obj.methods[expr.Parts[0]]; hasMethod {
+					if v, ok := e.callMethod(method, obj); ok {
+						return v, e.allocID()
+					}
+				}
 			}
 		}
 		// List member access: `.head` returns first element, `.tail` returns
@@ -1961,6 +1987,22 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 		lit := expr.Token.Literal
 		// Identity operators (Decision 2 — pointer identity)
 		if expr.Token.Type == token.IS || expr.Token.Type == token.IS_NOT || lit == "is" || lit == "is not" {
+			// Versatile `is` (spec/06 §1): when the right operand is a non-bound
+			// name that denotes a type, this is a type-membership test instead of
+			// a pointer-identity comparison — e.g. `obj is Object` returns true
+			// when obj's reported type is the universal root Object.
+			if rid, isRIdent := expr.Right.(*parser.Identifier); isRIdent && !e.isBoundValueName(rid.Value) {
+				if canon, isType := e.typeNameRef(rid.Value); isType {
+					result := e.typeName(expr.Left) == canon
+					if expr.Token.Type == token.IS_NOT || lit == "is not" {
+						result = !result
+					}
+					if result {
+						return 1, 0
+					}
+					return 0, 0
+				}
+			}
 			_, leftID := e.evalIntExpressionWithID(expr.Left)
 			_, rightID := e.evalIntExpressionWithID(expr.Right)
 			if expr.Token.Type == token.IS_NOT || lit == "is not" {
@@ -2170,10 +2212,49 @@ type ObjectValue struct {
 	// "O"); instances built by a constructor rule carry the rule's name (e.g.
 	// `Foo(...)` yields "Foo"). Empty means anonymous → "Object" (spec/06 §1).
 	typeName string
+	// methods holds the public methods exported on this instance (spec/06 §3):
+	// nested `rule .sum(self ∈ Type) => (...)` definitions declared inside the
+	// constructor body are keyed here by bare member name ("sum") so dot-notation
+	// `obj.sum` and `apply obj.sum` dispatch to a callMethod frame. Methods are
+	// per-instance closures over the object's own dictionary.
+	methods map[string]*parser.RuleStatement
+	// privates captures the constructor's private-local variables (spec/06 §3):
+	// bare, non-`self.`-prefixed `new` bindings declared in the constructor body
+	// (e.g. `new sentinel := 99`). They are NOT exported as public members, so
+	// `c.sentinel` from outside is unbound; they are only injected into the frame
+	// of methods defined on this instance so a method body may read them directly
+	// by bare name (encapsulation without a prefix).
+	privates map[string]objField
 }
 
 func newObjectValue() *ObjectValue {
-	return &ObjectValue{fields: make(map[string]objField)}
+	return &ObjectValue{fields: make(map[string]objField), methods: make(map[string]*parser.RuleStatement), privates: make(map[string]objField)}
+}
+
+// objString serializes an ObjectValue into a canonical, deterministic,
+// JSON-like string with member keys sorted alphabetically (spec/06 §2.4).
+// String-valued members are quoted; int-valued members are unquoted. The
+// ordering is sorted so identical objects always render identically, which is
+// what makes autonomous @EXPECT verification of printed objects reliable.
+func objString(o *ObjectValue) string {
+	if o == nil {
+		return "{}"
+	}
+	keys := make([]string, 0, len(o.fields))
+	for k := range o.fields {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys))
+	for _, k := range keys {
+		f := o.fields[k]
+		if f.isStr {
+			parts = append(parts, k+": \""+f.sVal+"\"")
+		} else {
+			parts = append(parts, k+": "+strconv.Itoa(f.iVal))
+		}
+	}
+	return "{" + strings.Join(parts, ", ") + "}"
 }
 
 // typeNameOf returns the Bee type name the object reports via type()/obj.type().
@@ -2371,6 +2452,17 @@ func (e *Evaluator) runConstructor(rs *parser.RuleStatement, call *parser.CallEx
 		}
 	}
 
+	// Register public method definitions (spec/06 §3): nested `rule .sum(self
+	// ∈ Type) => (...)` declarations in the constructor body are exported on the
+	// instance. They are not executed for their own side effects (evalStatement
+	// ignores non-`main` rules); instead they are captured here so later
+	// dot-notation `obj.sum` / `apply obj.sum` can dispatch to them.
+	for _, stmt := range rs.Body.Statements {
+		if mst, isRule := stmt.(*parser.RuleStatement); isRule && strings.HasPrefix(mst.Name, ".") && !mst.ForwardDecl && mst.Body != nil {
+			instance.methods[mst.Name[1:]] = mst
+		}
+	}
+
 	// Execute the constructor body.
 	for _, stmt := range rs.Body.Statements {
 		if e.exitingRule {
@@ -2395,6 +2487,95 @@ func (e *Evaluator) runConstructor(rs *parser.RuleStatement, call *parser.CallEx
 	e.loopLabelStack = savedLoopStack
 
 	return []interface{}{instance}
+}
+
+// callMethod executes a public object method (spec/06 §3): a nested `rule
+// .name(self ∈ Type) => (result ∈ R)` registered on an instance. It creates a
+// private frame in which the instance is bound as `self` (so the body's
+// `self.a` member reads resolve against the object both as the typed `self`
+// parameter and via the object store), runs the body, and returns the declared
+// result value. This mirrors runConstructor's frame discipline.
+func (e *Evaluator) callMethod(rs *parser.RuleStatement, instance *ObjectValue) (int, bool) {
+	if rs == nil || rs.ForwardDecl || rs.Body == nil || instance == nil {
+		return 0, false
+	}
+
+	savedObjects := e.objectValues
+	savedMaps := e.mapValues
+	savedSymbols := e.symbols
+	savedStrings := e.stringSymbols
+	savedArrays := e.arrayValues
+	savedLists := e.listValues
+	savedSets := e.setValues
+	savedMatrix := e.matrixValues
+	savedBoxed := e.boxedCells
+	savedExiting := e.exitingRule
+	savedContinue := e.continueCycle
+	savedTarget := e.continueTargetDepth
+	savedLoopStack := e.loopLabelStack
+
+	// Fresh private frame: only `self` and the parameters are visible.
+	e.symbols = make(map[string]int)
+	e.stringSymbols = make(map[string]string)
+	e.arrayValues = make(map[string][]int)
+	e.listValues = make(map[string][]int)
+	e.setValues = make(map[string][]int)
+	e.matrixValues = make(map[string]MatrixValue)
+	e.mapValues = make(map[string]map[string]int)
+	e.objectValues = make(map[string]*ObjectValue)
+	e.boxedCells = make(map[string]*BoxedCell)
+	e.exitingRule = false
+	e.continueCycle = false
+	e.continueTargetDepth = 0
+	e.loopLabelStack = nil
+
+	// Bind the receiver instance as `self` so `self.a` member reads and writes
+	// resolve against the object. Parameter-less methods need no other binding.
+	e.objectValues["self"] = instance
+
+	// Initialise declared results to zero (spec/03 §2.3 default init). The
+	// `self` formal param is satisfied by the receiver, so it is skipped.
+	for _, res := range rs.Results {
+		if res != "self" {
+			e.symbols[res] = 0
+		}
+	}
+
+	// Execute the method body.
+	for _, stmt := range rs.Body.Statements {
+		if e.exitingRule {
+			break
+		}
+		e.evalStatement(stmt)
+	}
+
+	// Capture the first declared result.
+	result := 0
+	for _, res := range rs.Results {
+		if res != "self" {
+			if v, ok := e.symbols[res]; ok {
+				result = v
+			}
+			break
+		}
+	}
+
+	// Restore the caller's frame.
+	e.objectValues = savedObjects
+	e.mapValues = savedMaps
+	e.symbols = savedSymbols
+	e.stringSymbols = savedStrings
+	e.arrayValues = savedArrays
+	e.listValues = savedLists
+	e.setValues = savedSets
+	e.matrixValues = savedMatrix
+	e.boxedCells = savedBoxed
+	e.exitingRule = savedExiting
+	e.continueCycle = savedContinue
+	e.continueTargetDepth = savedTarget
+	e.loopLabelStack = savedLoopStack
+
+	return result, true
 }
 
 // isObjectExpr reports whether an expression denotes an object/map value (a
@@ -2534,6 +2715,79 @@ func (e *Evaluator) typeName(expr parser.Expression) string {
 	return "?"
 }
 
+// isBoundValueName reports whether name is currently bound to a runtime value
+// in any of the evaluator's value stores. It is used to disambiguate the
+// versatile `is` operator (spec/06 §1 + Decision 14): when the right operand
+// is a *non-bound* name that denotes a type, `is` performs a type-membership
+// check; when both operands are bound values it stays a pointer-identity
+// comparison. A name that is a type but also bound as a value keeps identity
+// semantics.
+func (e *Evaluator) isBoundValueName(name string) bool {
+	if _, ok := e.symbols[name]; ok {
+		return true
+	}
+	if _, ok := e.stringSymbols[name]; ok {
+		return true
+	}
+	if _, ok := e.objectValues[name]; ok {
+		return true
+	}
+	if _, ok := e.arrayValues[name]; ok {
+		return true
+	}
+	if _, ok := e.listValues[name]; ok {
+		return true
+	}
+	if _, ok := e.setValues[name]; ok {
+		return true
+	}
+	if _, ok := e.mapValues[name]; ok {
+		return true
+	}
+	if _, ok := e.matrixValues[name]; ok {
+		return true
+	}
+	if _, ok := e.boxedCells[name]; ok {
+		return true
+	}
+	if _, ok := e.closureObjects[name]; ok {
+		return true
+	}
+	return false
+}
+
+// typeNameRef canonicalises a type-name spelling to the canonical type-name
+// string produced by typeName, and reports whether name denotes a TYPE at all.
+// Builtin Bee type names (Object, N/Z/R, Str/S, Bool/B, and the collection
+// types) plus every registered custom type qualify. This powers the versatile
+// `is` operator: `x is TypeName` becomes a type-membership test (spec/06 §1).
+func (e *Evaluator) typeNameRef(name string) (string, bool) {
+	switch name {
+	case "Object":
+		return "Object", true
+	case "N", "Z", "Int", "Integer":
+		return "Z", true
+	case "R", "Real", "Float":
+		return "R", true
+	case "S", "Str", "String":
+		return "S", true
+	case "B", "Bool", "Boolean":
+		return "B", true
+	case "A", "Array":
+		return "A", true
+	case "L", "List":
+		return "L", true
+	case "E", "Set":
+		return "E", true
+	case "M", "Map", "Dict", "Dictionary":
+		return "M", true
+	}
+	if _, ok := e.typeRegistry[name]; ok {
+		return name, true
+	}
+	return "", false
+}
+
 func (e *Evaluator) isStringExpr(node parser.Expression) bool {
 	switch expr := node.(type) {
 	case *parser.StringLiteral:
@@ -2649,6 +2903,9 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 			}
 			return "{" + strings.Join(parts, ", ") + "}"
 		}
+		if obj, hasObj := e.objectValues[expr.Value]; hasObj {
+			return objString(obj)
+		}
 		if val, ok := e.symbols[expr.Value]; ok {
 			return strconv.Itoa(val)
 		}
@@ -2719,6 +2976,14 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 						return sVal
 					}
 					return strconv.Itoa(iVal)
+				}
+				// Public method dispatch (spec/06 §3): a bare `obj.method` in any
+				// eager/evalExpression context invokes the method and yields its
+				// int result as a string.
+				if method, hasMethod := obj.methods[expr.Parts[0]]; hasMethod {
+					if v, ok := e.callMethod(method, obj); ok {
+						return strconv.Itoa(v)
+					}
 				}
 			}
 			if lst, ok := e.listValues[ident.Value]; ok {

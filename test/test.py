@@ -70,7 +70,7 @@ def test():
     args = parser.parse_args()
 
     print("=== STEP: Running Test Cases ===")
-    levels = [args.level] if args.level else ["level0", "level1", "level2", "level3", "level4", "level5", "level6", "level7", "level8"]
+    levels = [args.level] if args.level else ["level0", "level1", "level2", "level3", "level4", "level5", "level6", "level7", "level8", "level20"]
     level_results = {}
     total_passed = 0
     total_failed = 0

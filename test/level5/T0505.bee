@@ -26,4 +26,3 @@ spec/06-objects.md §3: methods `.name(self ∈ Type)` exported
 on the instance are invoked via `apply instance.method`.
 -------------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
--- @DISABLED: constructor `self` binding and public `.method` not implemented

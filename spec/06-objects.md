@@ -91,6 +91,23 @@ both directions: writing `citizen["age"] := 16` is equivalent to writing
 regardless of which notation is used. The overlay is a distinctive Bee feature,
 rarely found in other statically typed languages.
 
+### 2.4 Object Serialization (Canonical JSON-Like Rendering)
+
+Printing a bare object identifier renders the instance as a **canonical,
+ordered JSON-like string**:
+
+```bee
+new obj := {name: "Cleopatra", age: 15};
+print obj;   -- {age: 15, name: "Cleopatra"}
+```
+
+The serialization is **deterministic**: member keys are emitted in ascending
+alphabetical order, so two structurally equal objects always render
+identically. String-valued members are wrapped in double quotes; int-valued
+members are emitted unquoted. The deterministic ordering makes autonomous
+`@EXPECT` output verification of printed objects reliable — the same content
+never renders differently run to run. An empty object renders as `{}`.
+
 ---
 
 ## 3. Encapsulation & Member Visibility

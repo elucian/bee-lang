@@ -191,6 +191,16 @@ expect citizen["age"] = citizen.age;    -- true
 
 <div class="alert alert-info"><b>Note:</b>The attribute overlay works because the object dictionary is authoritative. It is a rarely provided capability in statically typed languages.</div>
 
+<h3 id="serialization">Serialization</h3>
+
+<p>Printing a bare object identifier renders the instance as a <b>canonical, ordered JSON-like string</b>:</p>
+
+<pre><code class="language-bee">new obj := {name: "Cleopatra", age: 15};
+print obj;  -- {age: 15, name: "Cleopatra"}
+</code></pre>
+
+<p>Serialization is <b>deterministic</b>: member keys are emitted in ascending alphabetical order, so structurally equal objects always render identically. String values are quoted; numeric values are unquoted. An empty object renders as <code>{}</code>. The deterministic ordering makes autonomous <code>@EXPECT</code> verification of printed objects reliable.</p>
+
 
 <h2 id="oop-paradigm">OOP Paradigm</h2>
 

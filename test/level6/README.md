@@ -6,10 +6,10 @@ This level covers advanced system features and specialized compiler behavior.
 
 | CASE  | AI  | STATUS | DESCRIPTION               |
 | ----- | --- | ------ | ------------------------- |
-| T0601 | Yes | YES    | Check "expect" stateme... |
-| T0602 | Yes | YES    | Anonymous try block no... |
-| T0603 | Yes | YES    | Check the trial statement |
-| T0604 | Yes | YES    | test the "resume" keyword |
-| T0605 | Yes | YES    | Test "retry" keyword      |
-| T0606 | No  | YES    | file: Check the abort ... |
-| T0607 | Yes | UNRUN  | Check the naked try wi... |
+| T0601 | Yes | FAIL   | Check "expect" stateme... |
+| T0602 | Yes | FAIL   | Anonymous try block no... |
+| T0603 | Yes | FAIL   | Check the trial statement |
+| T0604 | Yes | FAIL   | test the "resume" keyword |
+| T0605 | Yes | FAIL   | Test "retry" keyword      |
+| T0606 | No  | FAIL   | file: Check the abort ... |
+| T0607 | Yes | FAIL   | Check the naked try wi... |

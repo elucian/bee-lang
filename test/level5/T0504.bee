@@ -17,6 +17,7 @@ rule main:
 
   -- the instance type matches the constructor name
   expect type(test) = "Foo";
+  expect test is Object;
 return;
 
 +------------------------------------------------------------

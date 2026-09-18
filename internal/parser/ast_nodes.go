@@ -332,6 +332,10 @@ func (rs *RuleStatement) Pos() token.Pos { return rs.Token.Pos }
 type ApplyStatement struct {
 	Token token.Token
 	Call  *CallExpression
+	// Target, when set, is a member-dispatch form `apply obj.method` (spec/06
+	// §3): the METHOD is invoked for side effects and its result discarded.
+	// Mutually exclusive with Call (a plain `apply rule(...)` invocation).
+	Target Expression
 }
 
 func (as *ApplyStatement) statementNode() {}

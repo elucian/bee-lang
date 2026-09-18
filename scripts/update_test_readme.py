@@ -15,7 +15,7 @@ import argparse
 
 # Human-level metadata used to bootstrap a missing/empty level README. The
 # description and spec references mirror `test/readme.md` §1. Keys are the
-# numeric level (0..8).
+# numeric level (0..8) plus the postponed Level 20 concurrency level.
 LEVEL_INFO = {
     0: ("Compiler Self-Bootstrap & Smoke", None),
     1: ("Lexical and Type Foundation", ["spec/01-lexical-structure.md",
@@ -25,11 +25,11 @@ LEVEL_INFO = {
     3: ("Rules and Functions", ["spec/03-rules.md", "spec/07-functions.md"]),
     4: ("Collections and Pipelines", ["spec/10-collections.md",
                                       "spec/11-processing.md"]),
-    5: ("Objects and Concurrency", ["spec/06-objects.md",
-                                    "spec/12-concurrency.md"]),
+    5: ("Objects", ["spec/06-objects.md"]),
     6: ("Advanced Features", None),
     7: ("System Integration", ["spec/14-library.md"]),
     8: ("Experimental", None),
+    20: ("Concurrency", ["spec/12-concurrency.md"]),
 }
 
 # Canonical column order (uppercased) that every level table must match.
@@ -203,12 +203,12 @@ def build_table(level_dir, existing_lines):
         case = os.path.splitext(f)[0]
         data = rows.get(case, {})
         path = os.path.join(level_dir, f)
-        _, scan_ai, _ = file_metadata(path)
+        _, scan_ai, scan_status = file_metadata(path)
         desc = data.get("DESCRIPTION")
         if desc is None or desc == "TBD":
             desc, _, _ = file_metadata(path)
         ai = data.get("AI", scan_ai)
-        status = data.get("STATUS", "UNRUN")
+        status = data.get("STATUS", scan_status)
         table.append(row_line(case, ai, status, desc))
     return table
 

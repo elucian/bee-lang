@@ -28,7 +28,7 @@ This level covers statement structures, control flow mechanisms, and modules as 
 | T0219 | No  | PASS   | Match all evaluates ev... |
 | T0220 | No  | PASS   | Match selects a range-... |
 | T0221 | No  | PASS   | Match falls back to th... |
-| T0222 | No  | PASS   | Start scope runs its p... |
+| T0222 | No  | FAIL   | Start scope runs its p... |
 | T0223 | No  | PASS   | With scope qualifier m... |
 | T0224 | No  | PASS   | Match one with multipl... |
 | T0225 | No  | PASS   | Ternary conditional ex... |

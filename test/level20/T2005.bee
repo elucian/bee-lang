@@ -1,5 +1,5 @@
 +--------------------------------------------------
--- @DESC: producer-consumer parallel pattern (C5)
+-- @DESC: producer-consumer parallel pattern (C24)
 --------------------------------------------------+
 rule producer(n ∈ N) => (r ∈ N):
   for i ∈ (1..n) do

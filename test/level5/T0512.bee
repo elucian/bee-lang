@@ -1,24 +1,16 @@
-+--------------------------------------------
--- @DESC: async begin and wait barrier (C1)
---------------------------------------------+
-rule test(n ∈ Z) => (r ∈ Z):
-  let r := n * 2;
-return;
++------------------------------------------------
+-- @DESC: print object members via dot access (M2)
+------------------------------------------------+
+new obj := {name: "Cleopatra", age: 15};
 
 rule main:
-  -- spawn 4 concurrent workers
-  for ∀ i ∈ (1..4) do
-    begin test(i);
-  done;
-
-  -- mandatory barrier: block until all workers finish
-  wait;
+  print obj.name, obj.age;
 return;
 
-+-------------------------------------------------------
-spec/12-concurrency.md §2: `begin task(...)` spawns an
-isolated worker thread; `wait;` is a mandatory
-synchronization barrier before scope exit.
--------------------------------------------------------+
--- @AI: No - assertion-only (self-verifying)
--- @DISABLED: `begin`/`wait` are lexed but not executed by the evaluator.
++------------------------------------------------
+tutorial/objects.html "Member Access": dot
+notation reads the stored string and numeric
+members of an anonymous object.
+------------------------------------------------+
+-- @AI: Yes
+-- @EXPECT: Cleopatra 15

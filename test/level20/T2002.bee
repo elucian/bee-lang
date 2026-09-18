@@ -1,0 +1,34 @@
++--------------------------------------------------------
+-- @DESC: map-reduce with thread-safe reduction +> (C21)
+--------------------------------------------------------+
+rule sum_range(a, b ∈ Z) => (r ∈ Z):
+  for i ∈ (a..b) do
+    let r += i;
+  done;
+return;
+
+rule main:
+  new results ∈ [Z](3);
+
+  -- dispatch disjoint batches into the reduction queue
+  begin sum_range(1, 25)  +> results;
+  begin sum_range(26, 50) +> results;
+  begin sum_range(51, 75) +> results;
+
+  wait; -- flush reduction queue into results
+
+  new total ∈ Z := 0;
+  for p ∈ results do
+    let total += p;
+  done;
+
+  expect total = 2850;
+return;
+
++----------------------------------------------------------
+spec/12-concurrency.md §3: dispatch worker outputs into a
+shared collection via `+>`, synchronize with `wait`, then
+reduce (expects 2850).
+----------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)
+-- @DISABLED: `+>` reduction channel, `begin` and `wait` are not implemented.

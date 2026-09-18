@@ -9,4 +9,4 @@ Boot-level tests that validate the Bee compiler can lex, parse, evaluate, and pr
 | T0003 | Yes | PASS   | Multiple arguments        |
 | T0004 | Yes | PASS   | Test print with custom... |
 | T0005 | No  | PASS   | Negative test — compil... |
-| smoke | Yes | UNRUN  | Smoke test validation     |
+| smoke | Yes | PASS   | Smoke test validation     |

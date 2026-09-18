@@ -11,7 +11,7 @@
 | 7 | 07-functions.md | level3 | Functions |
 | 8 | 10-collections.md | level4 | Collections, data |
 | 9 | 11-processing.md | level4 | Pipelines |
-| 10 | 12-concurrency.md | level5 | Concurrency |
+| 10 | 12-concurrency.md | level20 | Concurrency (postponed) |
 | 11 | 13-graphics.md | N/A | Graphics (planned) |
 | 12 | 14-library.md | N/A | Library (planned) |
 | N/A | 00-memory-model.md | N/A | Memory Model |
@@ -22,5 +22,6 @@
 - **level2**: Statements, Control Flow, Structure
 - **level3**: Rules, Functions
 - **level4**: Collections, Pipelines
-- **level5**: Objects, Concurrency
+- **level5**: Objects
 - **level6-level8**: Advanced/Experimental
+- **level20**: Concurrency (postponed)
