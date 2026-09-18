@@ -1,14 +1,15 @@
 -- @ENABLED: Reset by user
--- @DESC:file: trial_success.bee
--- A trial that succeeds demo
+-- @DESC:file: Check the abort and final
+-- @AI: No - Independent test, self checking
 rule main:
-  trial:
-  try:
-    print "first";
-  try:
-    print "second";
+  try
+    print "start";
+    abort;
+    print "wrong";
+    expect False;
+  error
+    resume;
   final
     print "always";
   done;
 return;
-

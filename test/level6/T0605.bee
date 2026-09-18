@@ -1,9 +1,9 @@
--- @DESC:file: trial_retry.bee
+-- @DESC: Test "retry" keyword
 -- Retrying demo
 rule main:
-  trial:
+  trial t:
     new tries: 0 ∈ Z;
-  try:
+  try
     let tries += 1;
     raise 400, "flaky" if tries < 3;
     print "ok after " + tries;
@@ -11,4 +11,3 @@ rule main:
     retry;
   done;
 return;
-

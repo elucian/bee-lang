@@ -6,8 +6,8 @@ This level covers object-oriented features, file system interactions, and concur
 
 ## Test Coverage
 
-| CASE     | DESCRIPTION                      | STATUS     |
-| -------- | -------------------------------- | ---------- |
+| CASE     | DESCRIPTION                      | AI     | STATUS     |
+| -------- | -------------------------------- | -------|----------- |
 | T0511    | recursive node object structu... | No     | FAIL       |
 | T0510    | array of objects with dot mem... | No     | FAIL       |
 | T0506    | encapsulation of private vs p... | No     | FAIL       |

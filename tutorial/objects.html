@@ -236,8 +236,8 @@ rule main:
     apply test.log;
 
     -- verify attribute values
-    fail if test.a ¬ 1; 
-    fail if test.b ¬ 2; 
+    raise if test.a ¬ 1; 
+    raise if test.b ¬ 2; 
 
     -- what is the object type
     print type(test); -- Foo

@@ -462,7 +462,7 @@ return;
 
 <h3 id="trial">Error Handling</h3>
 
-<p>The <em>trial</em> is the most complex control statement of Bee language. A trial block is used to handle a process that can have multiple fail cases. It has a variable scope, a try blocks and multiple case blocks. Each case can resolve one error or several error types enumerated by comma. A trial is a error protection control statement similar to "try" in other languages with difference that it has it's own data scope and a label.</p>
+<p>The <em>try</em> statement is the error-protection control statement of Bee. It protects one processing region, hands any recoverable error to specific <em>case</em> handlers or a categorical <em>error</em> catch-all, and may run a <em>final</em> cleanup region. Like the <em>cycle</em> statement, a <em>try</em> may optionally open a labelled declaration scope with <em>trial identifier :</em> &mdash; used only when the trial needs its own scope. A trial is an error protection control statement similar to "try" in other languages, with the difference that it can carry its own data scope and a label, and that its variables do not leak outside their block.</p>
 
 <div class="text-center">
   <img src="/projects/bee/img/bee-trial.svg" alt="trial" width="480" class="img-fluid protect rounded shadow border" >
@@ -473,8 +473,9 @@ return;
 <ul>
 <li>Trial and error is a fundamental method used for problem solving,</li>
 <li>It consist of repeated attempts until a solution is found,</li>
-<li>One try block can pass or fail but trial continue to next try,</li>
-<li>Trial can be terminated early by an interruption statement.</li>
+<li>A trial executes a single protected try block; errors it raises are handled by specific case clauses or the categorical error catch-all,</li>
+<li>A trial optionally runs a final block before it ends,</li>
+<li>A trial can be terminated early by an interruption statement.</li>
 </ul>
 
 <p><b>Keywords:</b></p>
@@ -486,65 +487,63 @@ return;
 <tr><th>word</th><th>description</th></tr>
 </thead>
 <tbody>
-<tr><td>trial</td><td>start a process that may fail</td></tr>
-<tr><td>try</td><td>start a protected data processing code block</td></tr>
-<tr><td>case </td><td>catch errors with specific code or code range</td></tr>
-<tr><td>other</td><td>catch all other errors not fixed by a patch</td></tr>
-<tr><td>final</td><td>finalization region, executed before trial end</td></tr>
+<tr><td>trial</td><td>optional labelled "trial identifier :" scope, used only when a scope is needed</td></tr>
+<tr><td>try</td><td>dry keyword: ends the declaration region and opens the protected block</td></tr>
+<tr><td>case</td><td>specific error handler, a guard on $error (zero or more, first match runs)</td></tr>
+<tr><td>error</td><td>categorical catch-all, required when no case clause is present</td></tr>
+<tr><td>final</td><td>optional finalization region, executed before trial end (required when no case and no error)</td></tr>
+<tr><td>done</td><td>closes the trial statement</td></tr>
 </tbody>
 </table>
 
 
 <h4>Pattern:</h4>
 <pre><code class="language-bee">
--- complex trial with many cases of failure
-trial [label][:]
+-- trial with a declaration scope
+trial [identifier]:
     -- initial or default statements
     ....
-    -- preconditions: unrecoverable error
+    -- preconditions: recoverable error
     expect condition else "message";
     ...
 try
-    -- protected block start here
+    -- protected block starts here
     ...
     -- create recoverable error
     raise {code, message} if condition;
     ...
-case $error.code = code do
-    -- handler1
+case $error.code = 101 do
+    -- specific case handler; zero or more, first match runs
     ...
-    resume; -- continue with next statement
-case $error.code &isin; (code1,code2) do
-    -- handler2
+    -- choose a transfer: retry, resume, abort, exit, raise
+    retry; -- repeat only the try region (prologue is not re-run)
+error
+    -- categorical catch-all (required when no case is present)
     ...
-    retry; -- repeat trial from beginning
-miss
-    -- cover all other errors
-    ...
-    raise; -- propagate last error
 final
     -- finalization statement (executed before leaving)
     print "final error:" + $error.code if $error.code &gt; 0;
-done [label];
+done [identifier];
 </code></pre>
 
 
 <h4>Note:</h4>
 <ul>
-<li>It is unusual to create nested trial blocks;</li>
-<li>The trial region ;</li>
-<li>A trial can have optional label and optional scope if : is used,</li>
-<li>Anonymous trial that have no ":" do not have local scope</li>
-<li>A trial can have many case blocks that are  optional;</li>
-<li>A trial can have one miss block and one final block;</li>
+<li>Trial blocks cannot be nested;</li>
+<li>The trial region ends with the "done" keyword;</li>
+<li>The declaration scope is optional: it is opened by "trial identifier :" only when a scope is needed,</li>
+<li>A try without a "trial :" prologue has no local scope beyond its own block;</li>
+<li>A try holds specific case clauses and an optional categorical error catch-all; the error block is required when no case clause is present,</li>
+<li>A final block is required only when the trial has neither a case nor an error block; otherwise it is optional;</li>
+<li>Variables declared inside try are local to try and are NOT visible in case, error or final;</li>
 <li>A trial can be repeated several times if errors are raised;</li>
-<li>A trial can stop execution of a rule with error if error raised;</li>
-<li>Error raised before keyword "try" are not analyzed by cases and propagate immediately</li>
+<li>A trial can stop execution of a rule with error if an error is raised;</li>
+<li>Errors raised before keyword "try" are not analyzed by case or error and propagate immediately.</li>
 </ul>
 
 <h4>Exceptions</h4>
 
-<p>Exceptions are objects of type Error. Can be defined in your program or can be system predefined exceptions. Exceptions are recoverable errors when handled in a "case" block. Exception can propagate from inner rules to outer rules. You can predefine exceptions/errors and issue them with raise. Keyword expect and assert can only create system standard exceptions not customized exceptions.</p>
+<p>Exceptions are objects of type Error. Can be defined in your program or can be system predefined exceptions. Exceptions are recoverable errors when handled by a case or error block. Exception can propagate from inner rules to outer rules. You can predefine exceptions/errors and issue them with raise. Keyword expect and assert can only create system standard exceptions not customized exceptions.</p>
 
 <pre class="language-bee">-- define error
 new exception := {code,"message"} &isin; Error;
@@ -570,18 +569,24 @@ expect condition; -- Unexpected error in line &lt;n&gt;
 
 <h4>trial keyword</h4>
 
-<p>The trial keyword define the block of code required for exception handling. After keyword trial we define a label and we use ":" to start a declaration region. The declaration region can be anonymous if there is no label. If ":" are missing, next keyword must be "try". In this case, local scope is gone. The trial data scope end with keyword "done". 
+<p>The trial keyword opens an optional declaration (scope) region, like the cycle statement. It is always followed by an identifier and a ":" &mdash; the scope begins with "trial identifier :". You use trial only when the trial needs its own scope. If no scope is needed you simply start with "try". A trial that opens no scope cannot declare state shared between try, case, error and final. The trial data scope, when present, ends with keyword "done".
 </p>
 
 <h4>try keyword</h4>
 
-<p>A trial can have several optional jobs. Each jon start with keyword try() that has 2 optional arguments: try(code, message). Every try can pass or fail with a code and a message.</p>
+<p>A trial has exactly one protected <em>try</em> region that performs the main work. The <em>try</em> keyword is dry: it takes no arguments, no label, and no code or message. Like the <em>do</em> keyword, a bare <em>try</em> ends the declaration region opened by <em>trial identifier :</em> and opens the protected block. Error code and message come from the <em>raise</em> (or <em>expect</em>/<em>assert</em>) that fires inside that block, not from <em>try</em> itself.</p><p>The declaration region is optional: when it is absent the statement begins directly with <em>try</em> and opens no local declaration scope. There is no bare <em>trial try</em> form &mdash; <em>trial</em> is always followed by an identifier and a colon. Neither <em>try</em> nor <em>do</em> takes a trailing colon &mdash; <em>try:</em> and <em>do:</em> are invalid.</p>
 
-<p>You can use raise or abort inside a try() block. The raise will mark the try as failed and will record the code and message in the $trial report.</p>
+<p>You can use <em>raise</em> or <em>abort</em> inside a <em>try</em> block. A <em>raise</em> creates a recoverable error with its own code and message; an <em>abort</em> ends the trial without an exception and transfers control to the <em>final</em> block.</p>
 
 <h4>case keyword</h4>
 
-<p>A case create a region of code that can catch an error and decide what to do next. Error can be identified by code or a by a list of codes. For each cases can handle errors using keywords: "abort","retry","resume" or "raise". If a case is not using any of these keywords, the next case is executed. If no case resolve the error, the error auto-propagate to outer scope.</p>
+<p>The <em>case</em> clauses are specific error handlers. Each <em>case expression do</em> is a guard evaluated against the current <em>$error</em>; the first <em>case</em> whose expression is true runs its block, exactly as the clauses of a <em>match</em>. A trial carries zero or more <em>case</em> clauses. Inside a <em>case</em> you inspect <em>$error</em> and choose one of the transfer statements: "abort", "retry", "resume", "exit" or "raise". If you issue none of them, the error is considered handled and the trial proceeds to <em>final</em>; the <em>error</em> catch-all is not reached because a <em>case</em> already matched.</p>
+
+<h4>error keyword</h4>
+
+<p>The <em>error</em> block is the categorical catch-all of a trial. It runs when the <em>try</em> block raised an error and no <em>case</em> clause matched. The <em>error</em> block is <b>required</b> when the trial has no <em>case</em> clause; it is optional once at least one <em>case</em> is present. Inside it you inspect <em>$error</em> and choose one of the transfer statements: "abort", "retry", "resume", "exit" or "raise". If you issue "raise", the error propagates to the outer scope.</p>
+
+<p>Variables declared inside the <em>try</em> block are not visible here: <em>try</em> is a closed block scope when the declaration prologue is absent.</p>
 
 <h4>Transfer Statements</h4>
 
@@ -608,7 +613,7 @@ expect condition; -- Unexpected error in line &lt;n&gt;
 </tr>
 <tr>
 <td>retry</td>
-<td>exception handler, repeat the trial from try keyword not from the beginning</td>
+<td>repeat only the protected try region; the declaration prologue is never re-run</td>
 </tr>
 <tr>
 <td>resume</td>
@@ -617,11 +622,14 @@ expect condition; -- Unexpected error in line &lt;n&gt;
 </tbody>
 </table>
 
-<h4>other region</h4>
-<p>This region is used for any other error that is not handled by <em>case</em> handlers. You can use any selector in this region to find an exceptions by code but you can also just report the error or log the error and stop the trial.</p>
+<h4>pass keyword</h4>
+<p><em>pass</em> is the null statement. It performs no operation and is valid anywhere a statement is expected, such as an empty <em>else</em> branch: <code>pass;</code>. It does not select a step; it simply does nothing.</p>
+
+<h4>error region</h4>
+<p>This region handles any error raised by the <em>try</em> block when no <em>case</em> matches &mdash; or every error when the trial has no <em>case</em> clause. You can inspect the exception by code inside the region, or you can report the error, log it, and stop the trial.</p>
 
 <h4>final region</h4>
-<p>This region is executed just before trial is done, regardless of error status. Even if there is no error to propagate this region is yet executed. This region is mandatory execute even if the trial is aborted but not if the "exit" statement is issued. Exit bypass the final region.</p>
+<p>This region is executed just before trial is done, regardless of error status. Even if there is no error to propagate this region is yet executed. This region is mandatory execute even if the trial is aborted but not if the "exit" statement is issued. Exit bypass the final region. When a trial has neither a <em>case</em> nor an <em>error</em> block, the <em>final</em> block is required &mdash; a pure finalization trial.</p>
 
 <p>In the "final" region there is an opportunity to report all messages recorded in $trial object, including assert, raise, expect exceptions. You can use $trial.messages that is a hash-map created by the system automatically. On exit, the $trial.messages collection is zap automatically and you loose access to messages.</p>
 
@@ -636,11 +644,13 @@ expect condition; -- Unexpected error in line &lt;n&gt;
 
 <h4>Example:</h4>
 <pre><code class="language-bee">-- simple trial block
-trial:
+trial t:
     new x &isin; Q;
     new y &isin; Q;
 try
     let x := 1/0;
+error
+    print "error " + $error.code;
 final
     print "x = " + x;
     print $error.message if $error.code ¬ 0;
@@ -654,42 +664,44 @@ done;
 <p>In this example we use "raise" statement to create an error on purpose:</p>
 
 <pre><code class="language-bee">-- define a custom error
-trial:
+trial e:
   new my_error:{200, "custom error"} &lt;: Error;
 try
   raise my_error; -- issue user error
 case $error.code = 200 do
-  -- we catch the the error and do something
+  -- we catch the error and do something
   print $error.message;
   print $error.line;
-miss
-  raise $error; -- propagate error
+error
+  raise; -- any other error propagates
+final
+  print "trial done";
 done;
 </code></pre>
 
 <h4>Notes:</h4>
 <ul>
-<li>Keywords {abort, raise, retry, resume} can resolve an error;</li>
-<li>In this example the error 200 is not handled and propagate;</li>
-<li>The other region will be executed for all errors that are not handled by cases;</li>
+<li>Keywords {abort, raise, retry, resume, exit} can resolve an error;</li>
+<li>In this example the error 200 is resolved by the case handler;</li>
+<li>If you issue raise inside error, the error propagates to the outer scope.</li>
 </ul>
 
 <h4>retry keyword:</h4>
 
-<p>By using <em> "retry"</em>  you can repeat a trial several times until other ending conditions are encounter. You can issue "retry" from case blocks for specific errors. There is a danger if the error is the same, the trial can repeat infinitely. In this case system maximum loop protection can be in place for compiler protection.</p>
+<p>By using <em>"retry"</em> you repeat only the protected <em>try</em> region; the <em>trial</em> declaration prologue is never re-run. You can issue "retry" from the <em>error</em> handler to repeat the try several times until other ending conditions are encountered. There is a danger if the error is the same, the trial can repeat infinitely. In this case system maximum loop protection can be in place for compiler protection.</p>
 
 
 <p><b>Input example</b></p>
 
 <pre><code class="language-bee">-- example of repeating trial
 -- try maximum 3 times
-trial [name]:
+trial name:
     new count &isin; (1..3);
     new a &isin; (0..9);
 try
     let count += 1;
     write "enter a number:"; read a;
-    if  a &lt; 0 do -- trigger patch
+    if  a &lt; 0 do -- trigger a retry
       raise;
     else if a &lt; 9 do
       write "correct";
@@ -698,16 +710,14 @@ try
     else
       pass; -- does nothing
     done;
-case $out_of_range do
+error
     if count &lt; 3 do
       write "wrong try again:"
-      retry; -- try again the entire trial
+      retry; -- repeat only the try region (declarations not re-run)
     else
       write "wrong 3 times!";
-      fail $out_of_range;
+      raise $error;
     done;
-miss
-    write "mistrial: no case"
 final
     print "trial is resolved";
     print $trial.messages;

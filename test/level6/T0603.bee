@@ -1,18 +1,14 @@
 -- @ENABLED: Reset by user
--- @DESC:file: trial_pass_fail.bee
--- pass, fail and abort demo
+-- @DESC: Check the trial statement
+-- @EXPECT: start\ndone
 rule main:
-  trial:
-  try:
-    print "a";
-    pass;
+  try
+    print "start";
+    abort;
     print "skipped";
-  try:
-    fail 500, "noted";
-  try:
+  error
     print "code is " + $error.code;
   final
     print "done";
   done;
 return;
-

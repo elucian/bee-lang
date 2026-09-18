@@ -1,13 +1,12 @@
 -- @ENABLED: Reset by user
--- @DESC:file: trial_miss.bee
+-- @DESC: Anonymous try block no scope
 -- miss catches the rest demo
 rule main:
-  trial:
-    try:
-        raise 999, "unknown";
-    case $error.code = 1 do
-        print "wrong";
-    miss
+  try
+        raise {999, "unknown error"};
+  case $error.code = 1 do
+        print "wrong case";
+  error
         print "missed " + $error.code;
   done;
 return;

@@ -110,9 +110,9 @@ return;
 
 <table class="table table-bordered table-dark table-hover table-sm shadow">
 <tr><td>begin  </td><td>alias </td><td>and     </td><td>apply </td><td>abort  </td></tr>
-<tr><td>other  </td><td>case  </td><td>continue</td><td>done  </td><td>default</td></tr>
+<tr><td>other  </td><td>next  </td><td>continue</td><td>done  </td><td>default</td></tr>
 <tr><td>if     </td><td>is    </td><td>do      </td><td>else  </td><td>exit   </td></tr>
-<tr><td>fail   </td><td>final </td><td>miss   </td><td>panic </td><td>like   </td></tr>
+<tr><td>zap    </td><td>final </td><td>rest   </td><td>panic </td><td>like   </td></tr>
 <tr><td>load   </td><td>redo  </td><td>job     </td><td>match </td><td>over   </td></tr>
 <tr><td>print  </td><td>pass  </td><td>void    </td><td>rule  </td><td>return </td></tr>
 <tr><td>assert </td><td>retry </td><td>none    </td><td>scrap </td><td>type   </td></tr>
@@ -342,27 +342,31 @@ return;
 </tr>
 <tr>
 <td>other</td>
-<td>Default branch for match statement</td>
-</tr>
-<tr>
-<td>trial</td>
-<td>Start declaration region for a protected block of code</td>
-</tr>
-<tr>
-<td>try</td>
-<td>Begin the executable region in a trial statement</td>
+<td>Default branch for the match statement</td>
 </tr>
 <tr>
 <td>case</td>
-<td>Associated with trial to resolve specific errors</td>
+<td>specific error handler, a guard on $error (zero or more, first match runs)</td>
 </tr>
 <tr>
-<td>miss</td>
-<td>Default trial block, executed when there is no case</td>
+<td>error</td>
+<td>categorical catch-all for a trial, required when no case clause is present</td>
+</tr>
+<tr>
+<td>trial</td>
+<td>optional labelled "trial identifier :" declaration scope, used only when a scope is needed</td>
+</tr>
+<tr>
+<td>try</td>
+<td>dry keyword: opens the protected region of a trial (no trailing colon)</td>
 </tr>
 <tr>
 <td>final</td>
-<td>Associated with trial to finalize the trial block</td>
+<td>optional finalization region for a trial; required when no case and no error</td>
+</tr>
+<tr>
+<td>done</td>
+<td>closes the trial (and other control) statement</td>
 </tr>
 </tbody>
 </table>
@@ -411,15 +415,11 @@ return;
 </tr>
 <tr>
 <td>abort</td>
-<td>stop early a trial block</td>
-</tr>
-<tr>
-<td>fail</td>
-<td>Create error message and continue with next step</td>
+<td>end the trial without an exception and run the final block</td>
 </tr>
 <tr>
 <td>pass</td>
-<td>Skip the rest and continue with next step</td>
+<td>null statement; performs no operation (does nothing)</td>
 </tr>
 <tr>
   <td>expect</td>
@@ -431,11 +431,11 @@ return;
 </tr>
 <tr>
 <td>retry</td>
-<td>Repeat a trial block from the beginning</td>
+<td>Repeat only the protected try region; the declaration prologue is never re-run</td>
 </tr>
 <tr>
 <td>resume</td>
-<td>Mark error as handled and continue trial</td>
+<td>Handled; continue at the statement after the one that failed</td>
 </tr>
 <tr>
   <td class="fixed">done  </td>
@@ -683,16 +683,16 @@ define Error: {code &isin; Z, message &isin; S, line &isin; Z} &lt;: Object;
 new $error &isin; Error;
 </code></pre>
 
-<p>You can define errors with code &gt; 200 and raise error with 3 statements:</p>
+<p>You can define errors with code &gt; 200 and raise error with the <em>raise</em> statement, optionally guarded by a condition:</p>
 <ul>
-<li>fail  :raise error if condition is True</li>
-<li>pass  :raise error if condition is False</li>
+<li>raise :issue an error with a custom code and message</li>
+<li>raise ... if condition :issue the error only when condition is True</li>
 </ul>
 
 <h4>Pattern:</h4>
 <pre><code class="language-bee">new my_error := {200,"message"} &isin; Error;
-fail my_error if condition;
-pass if condition;
+raise my_error if condition;
+pass; -- null statement, does nothing
 </code></pre>
 
 <p>String interpolation "?" can be used to customize the error messages:</p>
@@ -703,7 +703,7 @@ pass if condition;
    read (flag, "enter flag (0/1):");
 
    new my_error: {201,"error:#(s)"} &isin; Error;
-   fail (my_error ? "test") if flag;
+   raise (my_error ? "test") if flag;
 return;
 </code></pre>
 
@@ -714,8 +714,8 @@ return;
 
 <h4>Notes:</h4>
 <ul>
-<li>Keyword <em>fail</em> will modify create an error message;</li>
-<li>Keyword <em>pass</em> is opposite of <em>fail</em> </li>
+<li>Keyword <em>raise</em> issues an error with a custom code and message;</li>
+<li>Keyword <em>pass</em> is the null statement &mdash; it performs no operation;</li>
 <li>Keyword <em>over</em> will liberate the resources and terminate the program;</li>
 <li>Error code &lt; 200 are system reserved error codes;</li>
 <li>Error code &le; -1 are unrecoverable errors created with <em>panic</em>;</li>

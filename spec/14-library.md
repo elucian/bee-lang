@@ -65,7 +65,7 @@ apply IO.File.close(file_handle);
 -- List directory contents into a List of string paths
 new file_list := IO.Folder.list("data/");
 
-for ∀ file_name ∈ file_list do:
+for ∀ file_name ∈ file_list do
   print "Found file: ", file_name;
 done;
 ```
@@ -86,14 +86,20 @@ type SystemError: {code ∈ Z, message ∈ S} <: Object;
 - **`≤ -1`:** Unrecoverable Hard Hardware or Memory Security Panics.
 
 ```bee
-trial:
-  try()
+trial t:
+try
   new handle := IO.File.open("non_existent.txt", "r");
-case $error.code = 404 do:
-  print "File not found: ", $error.message;
-  resume;
-miss:
-  print "Unhandled system error code: ", $error.code;
+other
+  if $error.code = 404 do
+    print "File not found: ", $error.message;
+    resume;
+  else
+    print "Unhandled system error code: ", $error.code;
+    raise;
+  done;
+final
+  close handle if handle; -- release the handle if it was opened
+  print $trial.messages;
 done;
 ```
 

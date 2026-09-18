@@ -359,11 +359,11 @@ type  .Lowercase:('a'..'z')       &lt;: A;
 type  .Latin:    (U+0041..U+FB02) &lt;: U;
 
 rule main:
-  -- following statements should pass
-  pass if '0' &isin; Digit;
-  fail if 'x' &isin; Capital;
-  pass if 'X' &isin; Capital;
-  pass if 'e' &isin; Latin;
+  -- following statements verify the domains
+  assert '0' &isin; Digit;          -- '0' is a digit
+  assert not ('x' &isin; Capital);  -- 'x' is not a capital letter
+  assert 'X' &isin; Capital;        -- 'X' is a capital letter
+  assert 'e' &isin; Latin;          -- 'e' is Latin
 return;
 </code></pre>
 

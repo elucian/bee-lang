@@ -1,0 +1,15 @@
+-- @FROZEN: Reset by user: eliminate statter
+-- @DESC: Check the naked try without trial
+-- @AI: Yes - check output
+-- @EXPECT "start\ncontinue\ndone
+rule main:
+  try
+    print "start";
+    expect False;
+    print "continue";
+  error
+    resume;
+  final
+    print "done";
+  done;
+return;

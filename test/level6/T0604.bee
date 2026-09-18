@@ -1,17 +1,13 @@
 -- @ENABLED: Reset by user
--- @DESC:file: trial_recover.bee
+-- @DESC: test the "resume" keyword
 -- Recovering and carrying on demo
 rule main:
-  trial:
-  try:
-    print "a";
-  try:
+  try
+    print "start";
     raise 300, "boom";
-  try:
-    print "c";
+    print "good";
   case $error.code = 300 do
-    print "handled " + $error.message;
-    resume;
+    print "error handled:" + $error.message;
+    resume; -- will execute next statement
   done;
 return;
-

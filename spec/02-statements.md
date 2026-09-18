@@ -2,14 +2,17 @@
 
 ## 1. Executive Statement Taxonomy
 
-Bee divides statements into six distinct syntactic categories, designed for high-performance one-pass compilation and human readability:
+Bee divides statements into seven distinct syntactic categories, designed for high-performance one-pass compilation and human readability:
 
 1. **Declarative Statements:** Allocate variable names and bind static/inferred types (`set`, `new`).
 2. **Mutation Statements:** Rebind values, clone memory structures, or apply in-place mathematical updates (`let`, `:=`, `::`, compound operators).
 3. **Contract & Verification Statements:** Assert non-fatal warnings and enforce runtime invariants (`assert`, `expect`).
 4. **Control Flow Statements:** Direct branching, pattern matching, local scoping, and iteration loops (`if`, `match`, `start`, `with`, `cycle`, `for`).
-5. **Transactional Trial Statements:** Error handling, staged execution steps, and recovery (`trial`, `try`, `case`, `miss`, `final`).
-5. **Transfer & Termination Statements:** Jump, loop control, and routine completion (`return`, `stop`, `redo`, `next`, `pass`, `yield`, `raise`, `resume`, `retry`).
+5. **Transactional Trial Statements:** Error handling, staged execution steps, specific `case` handlers, a categorical `error` catch-all, and guaranteed `final` finalization (`trial`, `try`, `case`, `error`, `final`).
+6. **Transfer & Termination Statements:** Jump, loop control, and routine completion (`abort`, `exit`, `return`, `stop`, `redo`, `next`, `raise`, `resume`, `retry`).
+7. **Null Statement:** `pass` is the null statement — it performs no operation and is valid anywhere a statement is expected.
+
+> **Reserved keywords:** the trial statement reserves `trial`, `try`, `case`, `error`, `final`, and `done` (see §4); `yield` is reserved for cooperative coroutines (spec/12 §4). They cannot be used as identifiers or jump labels, and a label colliding with any of them is a hard `E0009` error.
 
 > **Decision 15 alignment (2026-09-13):** `next` is the canonical loop-jump keyword (continue semantics). The legacy keyword `repeat` is a **deprecated synonym**: the lexer maps it to the `NEXT` token and emits a non-fatal `E0010 deprecated-keyword: 'repeat' — use 'next'` warning. It will be hardened to `E0009` in the Phase 7.2 deprecation sweep.
 
@@ -374,44 +377,97 @@ done;
 
 ---
 
-## 4. Transactional Error Handling (`trial`)
+## 4. Transactional Error Handling (`try` / `trial`)
 
-The `trial` statement provides staged process execution with step-by-step recovery, pattern-matching handlers, and guaranteed finalization.
+The `try` statement provides staged process execution with a protected region, zero or more specific `case` handlers, an optional categorical `error` catch-all, and an optional `final` finalization region. A `try` governs exactly one protected region. There is no `fail` keyword, and `pass` is the null statement. The `try` keyword is **dry**: it takes no arguments, no label, and carries no error code or message. Like the `do` keyword, a bare `try` opens the protected block. Error code and message are produced by `raise` (or `expect`/`assert`) inside that region, never by `try` itself. Neither `try` nor `do` takes a trailing colon — `try:` and `do:` are invalid.
+
+The `trial` prologue is optional — used only when the trial needs its own scope, exactly as `cycle` is optional. When present, it must take the form `trial identifier :` followed by a declaration `statement_list`. When the prologue is omitted, the statement begins directly with `try`. The bare `trial try` form (no label, no colon) is **eliminated**: `trial` appears only as `trial identifier :` when a scope is required.
+
+### Block structure & scoping
+
+A `try` statement is built from one protected `try` block followed by zero or more `case` handlers, then an optional categorical `error` block, then an optional `final` block, closed by `done;`:
+
+```bee
+try
+  -- protected region
+case <expression> do
+  -- specific handler (zero or more, first match runs)
+error
+  -- categorical handler (catch-all)
+final
+  -- guaranteed finalization
+done;
+```
+
+The terminal clauses must leave the statement well-formed:
+
+- **Minimal validity:** the statement must never be bare — a `try` with no `case` clause must close with an `error` and/or a `final` block.
+- **`error` catch-all:** the `error` block is **required** when no `case` clause is present; it is optional once at least one `case` is present.
+- **Finalization-only form:** a `try` with no `case` and no `error` is a pure finalization block, and there the `final` block is **required**. An error raised in such a `try` still runs `final`, then propagates to the enclosing scope — no handler exists to absorb it.
+- **`final`:** otherwise optional.
+
+Each `case <expression> do` clause is a guard evaluated against the current `$error`; the first `case` whose expression is true runs its block, exactly as the clauses of a `match`. If no `case` matches, the `error` block (when present) handles the error.
+
+Scoping is strict and block-scoped:
+
+- Variables declared inside the `try` block are **local to `try` only**. They are **not** visible in the `case`, `error`, or `final` regions, and — when no `trial` prologue is present — not anywhere outside `try`.
+- When a `trial identifier :` prologue is present, its `statement_list` is an enclosing scope for the whole statement: its variables ARE visible to `try`, `case`, `error`, and `final`, but not beyond `done;`.
+- Every re-entry of `try` via `retry` opens a fresh block scope: `try`-block locals are re-declared on each run.
+
+### Recovery & transfer statements
+
+Inside `try` and the `case`/`error` handlers, the trial uses the transfer statements `retry`, `resume`, `abort`, and `exit`. `abort` and `exit` are grouped with the transfer statements in §5:
+
+- `retry` re-runs only the `try` region — the declaration prologue is **never** re-executed.
+- `resume` continues at the statement after the one that failed.
+- `abort` ends the trial without an exception and still runs `final`.
+- `exit` ends the trial and returns to the caller, bypassing `final`.
+- `raise` (or `expect`/`assert`) inside a handler re-propagates a recoverable error.
+
+`final` runs unconditionally on normal completion and on recovery or `abort`; only `exit` bypasses it.
 
 ![Trial Execution Architecture](img/bee-trial.svg)
 
 ```bee
 trial transaction:
-  -- Stage 1: Setup & Precondition
+  -- Declaration scope: setup & preconditions
   expect balance ≥ amount;
 
-try step1:
-  -- Attempt primary step; skip to next on success
-  pass if process_primary();
-  fail {code: 101, message: "Primary pipeline failed"} if check_failed;
-
-try step2:
-  -- Secondary step
-  pass if process_secondary();
+try
+  -- Protected primary step
+  raise {code: 101, message: "Primary pipeline failed"} if check_failed;
   raise {code: 500, message: "Critical failure"} if fatal_condition;
 
 case $error.code = 101 do
-  -- Recover from code 101 and continue with next try
-  resume;
-
+  resume;   -- continue with the next statement in try
 case $error.code ∈ (200..299) do
-  -- Retry entire trial from the beginning
-  retry;
-
-miss
-  -- Fallback handler for unhandled errors
+  retry;    -- re-run only the try region; the prologue is not re-run
+error
+  -- categorical catch-all: propagate an unhandled error
   raise;
 
 final
-  -- Unconditionally executed cleanup
+  -- cleanup runs unconditionally
   close_resources();
 done transaction;
 ```
+
+A trial that needs no declaration scope omits the prologue entirely:
+
+```bee
+try
+  new attempts ∈ (1..3);
+  raise if attempt_failed;
+case $error.code = 500 do
+  retry;
+error
+  raise;
+final
+  print $trial.messages;
+done;
+```
+
+Because `case`, `error`, and `final` are sibling blocks of `try`, the local `attempts` declared in `try` above is **not** visible inside them: it lives in a scope that is popped when the `try` block exits, before any handler runs.
 
 ---
 
@@ -425,7 +481,8 @@ statement         ::= decl_stmt
                     | contract_stmt
                     | io_stmt
                     | control_stmt
-                    | trial_stmt
+                    | try_stmt
+                    | null_stmt
                     | transfer_stmt ";" ;
 
 (* Declarations & Mutations *)
@@ -520,22 +577,42 @@ cycle_stmt        ::= "cycle" [ label ] [ ":" [ block ] ]
                       block [ "then" block ] "done" [ label ]
                     | "for" [ "∀" ] identifier ( "∈" | "in" ) expression "do" block "done" ;
 
-(* Transactional Error Handling *)
-trial_stmt        ::= "trial" [ label ] ":" block ( "try" [ label ] ":" block )* ( "case" expression "do" block )* [ "miss" block ] [ "final" block ] "done" [ label ] ;
+(* Transactional Error Handling (`try`)
+   The declaration prologue is OPTIONAL and ONLY the labelled form
+   `trial identifier :` + scope statement_list; the bare `trial try`
+   (no label, no colon) is eliminated. `try` is dry — no arguments, no
+   code, no message — and, like `do`, takes no trailing colon (`try:` /
+   `do:` are invalid). `try` opens the protected `block`; zero or more
+   `case expression do block` clauses follow as specific handlers, then
+   an optional categorical `error` block, then an optional `final` block.
+   `case` is a guard evaluated against the current `$error`; the first
+   matching `case` runs. Well-formedness: with no `case` clause an `error`
+   block is required; a `try` with no `case` and no `error` is a pure
+   finalization block whose `final` is required; otherwise `final` and
+   `error` are optional. `retry` re-runs only the `try` region; the
+   declaration prologue is never re-executed. `try`-block locals are NOT
+   visible in `case`, `error` or `final`. *)
+try_stmt          ::= [ "trial" identifier ":" statement_list ] "try" block
+                      ( "case" expression "do" block )*
+                      [ "error" block ] [ "final" block ] "done" ";" ;
 
 (* Transfers & Postfix Guards *)
 (* `next` is the canonical loop-jump keyword (D15, 2026-09-13), reversing
    the D14 retirement. Legacy `repeat` is a deprecated synonym: the lexer
    maps it to the NEXT token with a non-fatal E0010 warning. *)
-transfer_stmt     ::= ( "return" [ expression_list ]
+transfer_stmt     ::= ( "abort"
+                      | "exit"
+                      | "return" [ expression_list ]
                       | "stop" [ label ]
                       | "redo" [ label ]
                       | "next" [ label ]
-                      | "pass"
                       | "raise" [ expression ]
                       | "resume"
-                      | "retry"
-                      | "fail" expression ) [ "if" expression ] ;
+                      | "retry" ) [ "if" expression ] ;
+
+(* Null statement: evaluates to no operation; valid anywhere a
+   statement is expected (pass redefined as the null/NOP statement). *)
+null_stmt         ::= "pass" ;
 ```
 
 ---

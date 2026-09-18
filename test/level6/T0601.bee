@@ -1,8 +1,10 @@
--- @DESC:file: expect_demo.bee
--- expect demo
+-- @DESC: Check "expect" statement to raise error
+-- @EXPECT: "held"
+-- @NEGATIVE: This test will raise an error
 rule main:
   new n := 4;
-  expect n > 0;
+  expect n > 0; -- will pass
   print "held";
+  expect n < 0; -- will fail
+  print "wrong";
 return;
-
