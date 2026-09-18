@@ -748,6 +748,17 @@ func (p *Parser) parseReadStatement(tok token.Token) Statement {
 //
 // `one` / `all` are not registered keywords, so they arrive as IDENT tokens
 // and are matched by literal. An omitted mode defaults to "one" (first match).
+// consumeOptionalTypeMarker discards a trailing `?` optional marker on a typed
+// member in a rule-backed type body (spec/06 §2.2 recursive structures), e.g.
+// `next ∈ @Node?`. The `?` reports that the member may hold the Void value; the
+// bootstrap evaluator tracks references structurally via the `@`-prefixed
+// literal, so the marker is parse-accepted and otherwise ignored.
+func (p *Parser) consumeOptionalTypeMarker() {
+	if p.l.PeekToken().Type == token.QUESTION {
+		p.l.NextToken()
+	}
+}
+
 func (p *Parser) parseMatchStatement(tok token.Token) Statement {
 	stmt := &MatchStatement{Token: tok, Mode: "one"}
 
@@ -2303,6 +2314,16 @@ func (p *Parser) parsePrimary() Expression {
 			return &QuantifierExpression{Token: quantTok, Variable: varTok.Literal, Domain: domain, Condition: cond}
 		}
 
+		// Empty parentheses `()` denote the Void value (spec/05 §1): they carry
+		// no inner expression. Detect them before parsing `left` (which, for an
+		// empty pair, would otherwise fall through to the identifier placeholder).
+		// Bind `()` to an empty ListLiteral so the evaluator stores a zero-member
+		// collection whose reported type is Void rather than a stray integer slot.
+		if p.l.PeekToken().Type == token.RPAREN {
+			p.l.NextToken() // consume ')'
+			return &ListLiteral{Token: tok}
+		}
+
 		left := p.parseExpressionClimb(precLogic)
 
 		// Conditional expression selector (ternary) per spec/02-statements.md
@@ -2431,9 +2452,11 @@ func (p *Parser) parsePrimary() Expression {
 		}
 		setLit := &SetLiteral{Token: tok}
 		setLit.Elements = append(setLit.Elements, first)
+		p.consumeOptionalTypeMarker()
 		for p.l.PeekToken().Type == token.COMMA {
 			p.l.NextToken() // consume ','
 			setLit.Elements = append(setLit.Elements, p.parseExpression())
+			p.consumeOptionalTypeMarker()
 		}
 		if p.l.PeekToken().Type == token.RBRACE {
 			p.l.NextToken() // consume '}'
@@ -2571,35 +2594,41 @@ func (p *Parser) parsePrimary() Expression {
 			}
 			return call
 		}
-		// Object member access (spec/03 §5.4): `c.next` or `c.next()` invokes a
-		// method / reads a field on a bound closure object. Consume the dotted
-		// path and the optional call argument list.
-		if p.l.PeekToken().Type == token.DOT || p.l.PeekToken().Literal == "." {
-			p.l.NextToken() // consume '.'
-			memberTok := p.l.NextToken()
-			member, _ := p.identLiteral(memberTok)
-			me := &MemberExpression{Token: tok, Base: left, Parts: []string{member}}
-			if p.l.PeekToken().Type == token.LPAREN {
-				p.l.NextToken() // consume '('
-				me.IsCall = true
-				if p.l.PeekToken().Type != token.RPAREN {
-					for {
-						if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+		// Object member access (spec/03 §5.4, spec/06 §2.2): `c.next` reads a
+		// field / invokes a method on a bound object. The dotted path may chain
+		// through object-reference fields (`n1.next.next.data`, recursive
+		// structures), so loop over consecutive segments and fold each into a
+		// nested MemberExpression whose Base is the previous link.
+		if p.l.PeekToken().Type == token.DOT || p.l.PeekToken().Type == token.OPTIONAL_CHAIN || p.l.PeekToken().Literal == "." {
+			for p.l.PeekToken().Type == token.DOT || p.l.PeekToken().Type == token.OPTIONAL_CHAIN || p.l.PeekToken().Literal == "." {
+				safe := p.l.PeekToken().Type == token.OPTIONAL_CHAIN
+				p.l.NextToken() // consume '.' or '?.'
+				memberTok := p.l.NextToken()
+				member, _ := p.identLiteral(memberTok)
+				me := &MemberExpression{Token: tok, Base: left, Parts: []string{member}, Safe: safe}
+				if p.l.PeekToken().Type == token.LPAREN {
+					p.l.NextToken() // consume '('
+					me.IsCall = true
+					if p.l.PeekToken().Type != token.RPAREN {
+						for {
+							if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+								break
+							}
+							me.Args = append(me.Args, p.parseExpression())
+							if p.l.PeekToken().Type == token.COMMA {
+								p.l.NextToken() // consume ','
+								continue
+							}
 							break
 						}
-						me.Args = append(me.Args, p.parseExpression())
-						if p.l.PeekToken().Type == token.COMMA {
-							p.l.NextToken() // consume ','
-							continue
-						}
-						break
+					}
+					if p.l.PeekToken().Type == token.RPAREN {
+						p.l.NextToken() // consume ')'
 					}
 				}
-				if p.l.PeekToken().Type == token.RPAREN {
-					p.l.NextToken() // consume ')'
-				}
+				left = me
 			}
-			return me
+			return left
 		}
 		if p.l.PeekToken().Type == token.LBRACKET {
 			// spec/10-collections.md §4: indexing ::= expression "[" index_expr

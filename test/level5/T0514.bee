@@ -1,0 +1,24 @@
++------------------------------------------------
+-- @DESC: empty structures report the Void type
+------------------------------------------------+
+new v := {};
+expect v is Void;
+
+new l := ();
+expect l is Void;
+
+new a := [];
+expect a is Void;
+
+-- adding a member turns an empty object into an Object
+new obj := {};
+new obj.data := 5;
+expect obj is Object;
+return;
+
++------------------------------------------------
+tutorial/types.html "The Void Type & the void
+object": {} / () / [] are empty structures that
+report the Void type; nil stays a sentinel.
+------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

@@ -7,6 +7,7 @@ This level covers object-oriented features as defined in:
 
 | CASE  | AI  | STATUS | DESCRIPTION               |
 | ----- | --- | ------ | ------------------------- |
+| T0514 | No  | PASS   | empty structures repor... |
 | T0513 | Yes | PASS   | serialize whole object... |
 | T0512 | Yes | PASS   | print object members v... |
 | T0501 | No  | PASS   | anonymous object via J... |
@@ -19,4 +20,4 @@ This level covers object-oriented features as defined in:
 | T0508 | No  | PASS   | abstract type and forw... |
 | T0509 | No  | PASS   | trait composition with... |
 | T0510 | No  | PASS   | array of objects with ... |
-| T0511 | No  | SKIP   | recursive node object ... |
+| T0511 | No  | PASS   | recursive node object ... |

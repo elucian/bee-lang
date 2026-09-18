@@ -682,6 +682,7 @@ type MemberExpression struct {
 	Parts  []string     // dotted member path (leading `.member` folds the dot into Parts[0])
 	IsCall bool         // true when followed by `(...)` — invoke as a closure method
 	Args   []Expression // call arguments (only when IsCall)
+	Safe   bool         // true when accessed via `?.` safe navigation (spec/06 §2.2)
 }
 
 func (me *MemberExpression) expressionNode() {}

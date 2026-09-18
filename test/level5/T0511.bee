@@ -3,19 +3,20 @@
 ------------------------------------------------+
 type Node: {
   data ∈ Z,
-  next ∈ Node?
+  next ∈ @Node? -- optional reference to Node
 } <: Object;
 
 rule main:
-  -- build a 3-node chain using anonymous objects
-  new n1 := {data: 1, next: n2};
+  -- bottom-up allocation ensures symbols are bound before assignment
+  new n3 := {data: 3, next: nil};
   new n2 := {data: 2, next: n3};
-  new n3 := {data: 3, next: None};
+  new n1 := {data: 1, next: n2};
 
-  -- walk the chain via dot access
+  -- walk the chain with explicit or safe navigation
   expect n1.data = 1;
-  expect n1.next.data = 2;
-  expect n1.next.next.data = 3;
+  expect n1.next?.data = 2;
+  expect n1.next?.next?.data = 3;
+  expect n1.next?.next?.next = nil;
 return;
 
 +--------------------------------------------------------
@@ -24,4 +25,3 @@ referencing another instance of itself to form a tree /
 linked list.
 --------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
--- @DISABLED: recursive `Node` type and member access not implemented in evaluator

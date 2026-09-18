@@ -110,23 +110,24 @@ const (
 	RANGE_EXCL     = ">..<"
 
 	// Delimiters & Punctuation
-	LPAREN     = "("
-	RPAREN     = ")"
-	LBRACKET   = "["
-	RBRACKET   = "]"
-	LBRACE     = "{"
-	RBRACE     = "}"
-	COMMA      = ","
-	SEMICOLON  = ";"
-	COLON      = ":"
-	DOT        = "."
-	QUESTION   = "?"
-	BANG       = "!"
-	SIGIL_SYS  = "$"
-	HASH       = "#"
-	AT         = "@"
-	AMPERSAND  = "&"
-	UNDERSCORE = "_"
+	LPAREN         = "("
+	RPAREN         = ")"
+	LBRACKET       = "["
+	RBRACKET       = "]"
+	LBRACE         = "{"
+	RBRACE         = "}"
+	COMMA          = ","
+	SEMICOLON      = ";"
+	COLON          = ":"
+	DOT            = "."
+	QUESTION       = "?"
+	OPTIONAL_CHAIN = "?." // safe navigation: yield nil instead of panicking on a nil/absent base
+	BANG           = "!"
+	SIGIL_SYS      = "$"
+	HASH           = "#"
+	AT             = "@"
+	AMPERSAND      = "&"
+	UNDERSCORE     = "_"
 
 	// Keywords
 	RULE  = "RULE"
@@ -193,6 +194,7 @@ const (
 	PUT        = "PUT"
 	POP        = "POP"
 	NOT        = "NOT"
+	NIL        = "NIL" // the nil sentinel: the union-type member denoting the absence of a value
 	AS         = "AS"
 	IN_KEYWORD = "IN"
 	START      = "START"
@@ -265,6 +267,7 @@ var keywords = map[string]Type{
 	"pop":      POP,
 	"raise":    RAISE,
 	"not":      NOT,
+	"nil":      NIL,
 	"as":       AS,
 	"in":       IN_KEYWORD,
 	"start":    START,

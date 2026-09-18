@@ -201,6 +201,33 @@ print obj;  -- {age: 15, name: "Cleopatra"}
 
 <p>Serialization is <b>deterministic</b>: member keys are emitted in ascending alphabetical order, so structurally equal objects always render identically. String values are quoted; numeric values are unquoted. An empty object renders as <code>{}</code>. The deterministic ordering makes autonomous <code>@EXPECT</code> verification of printed objects reliable.</p>
 
+<p>An object with <b>no members</b> is a <b><code>void</code> value</b> and reports the type <b><code>Void</code></b>: <code>{}</code>, <code>()</code>, and <code>[]</code> are all <code>void</code> (spec/06 §1, spec/05 §1.4). As soon as a member is added (attribute overlay), it becomes an ordinary <b><code>Object</code></b>.</p>
+
+
+<h3 id="recursive-structures">Recursive Structures</h3>
+
+<p>An object may hold a reference to <b>another instance of itself</b>, forming a recursive structure such as a linked list or tree. A member that may reference another node - or that may be empty - is declared with an <b>optional type</b> and initialized to the <b>nil</b> sentinel.</p>
+
+<pre><code class="language-bee">-- a node that optionally references the next node
+type Node: {
+  data &isin; Z,
+  next &isin; @Node?   -- optional reference: a Node, or nil
+} &lt; Object;
+
+rule main:
+  -- build a chain bottom-up so symbols are bound first
+  new n3 := {data: 3, next: nil};
+  new n2 := {data: 2, next: n3};
+  new n1 := {data: 1, next: n2};
+
+  expect n1.data = 1;
+  expect n1.next?.data = 2;      -- n1.next is n2
+  expect n1.next?.next?.data = 3;-- n2.next is n3
+  expect n1.next?.next?.next = nil; -- n3.next is nil
+return;
+</code></pre>
+
+<p>The postfix <code>?</code> declares an <b>optional union type</b>: the member holds either a <code>@Node</code> or the <b><code>nil</code></b> sentinel. Reading an optional reference uses <b>safe navigation</b> <code>?.</code>: if the base (or any intermediate link) is <code>nil</code>, the whole chain yields <code>nil</code> instead of raising an error.</p>
 
 <h2 id="oop-paradigm">OOP Paradigm</h2>
 

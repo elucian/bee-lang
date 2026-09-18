@@ -14,7 +14,25 @@ Bee employs a unified **Universal Entity Model**:
   
   new obj := Foo(1, 2);
   print obj.type(); -- Prints "Foo"
+
+  new v := {};      -- empty structure → Void
+  print v.type();   -- Prints "Void"
   ```
+
+**The `Void` object** (`spec/05 §1.4`) is the empty value: an object with no
+properties (`void = {}`). The `{}`, `()`, and `[]` literals — when they hold no
+members — are all `void` values and report the type **`Void`**:
+
+```bee
+new a := {};   expect a is Void;   -- empty object
+new b := ();   expect b is Void;   -- empty list
+new c := [];   expect c is Void;   -- empty array
+```
+
+`Void` is distinct from the `nil` **sentinel** (`spec/05 §1.3`): `nil` is the
+singleton marking an *unset optional member*, whereas `Void` is a *type* that
+can be tested with `is`. An empty anonymous object is a `Void` value; once a
+member is added via attribute overlay (§2.3) it becomes an ordinary `Object`.
 
 ![Method Call Architecture](img/method-call.svg)
 
@@ -46,6 +64,11 @@ return;
 
 ### 2.2 Anonymous JSON & Dictionary Objects
 Objects are internally backed by high-performance key-value hash structures:
+
+An empty `{}` literal is a `Void` value (§1); it is instantiated empty and may
+already report type `Void`. It becomes an ordinary `Object` once a member is
+added (§2.3).
+
 ```bee
 -- Anonymous object instantiation via JSON literal
 new obj := {name: "Cleopatra", age: 15};
@@ -105,8 +128,57 @@ The serialization is **deterministic**: member keys are emitted in ascending
 alphabetical order, so two structurally equal objects always render
 identically. String-valued members are wrapped in double quotes; int-valued
 members are emitted unquoted. The deterministic ordering makes autonomous
-`@EXPECT` output verification of printed objects reliable — the same content
-never renders differently run to run. An empty object renders as `{}`.
+	@EXPECT` output verification of printed objects reliable — the same content
+	never renders differently run to run. An empty object renders as `{}`.
+
+### 2.5 Recursive Structures, Optional References & Safe Navigation
+
+An anonymous (or typed) object may reference **another instance of itself**,
+forming a recursive structure such as a linked list or tree (spec/05 §optional
+union types). A member that may hold such a reference — or the absence of one —
+carries an optional type and is initialized to the **`nil`** sentinel:
+
+```bee
+type Node: {
+  data ∈ Z,
+  next ∈ @Node?   -- optional reference to another Node (or nil)
+} <: Object;
+
+rule main:
+  -- bottom-up allocation binds symbols before assignment
+  new n3 := {data: 3, next: nil};
+  new n2 := {data: 2, next: n3};
+  new n1 := {data: 1, next: n2};
+
+  -- read a data member on a recursive node
+  expect n1.data = 1;              -- plain member access
+
+  -- safe navigation `?.` never panics on nil
+  expect n1.next?.data = 2;        -- n1.next is n2, so .data = 2
+  expect n1.next?.next?.data = 3;  -- n2.next is n3, so .data = 3
+  expect n1.next?.next?.next = nil;-- n3.next is nil
+return;
+```
+
+- **`T?`** declares an *optional union type*: the value is either a `T` or the
+  `nil` sentinel (`T ∪ {nil}`, spec/05 §optional). An optional member left
+  unset holds `nil`.
+- **`nil`** is the singleton sentinel denoting the *absence of a value*. All
+  `nil` writes alias the same sentinel, so `x = nil` is an identity check.
+- **`?.` safe navigation** reads a member only when the base is non-`nil`; when
+  the base (or any intermediate link) is `nil`, the *whole chain* evaluates to
+  `nil` instead of raising `E0605`. Plain `.` dereferencing through `nil` is an
+  error; `?.` is the safe form for optional references.
+
+### 2.6 Optional Chaining Grammar
+
+```ebnf
+member_access ::= expression ( ( "." | "?." ) identifier )* [ "(" [ arg_list ] ")" ] ;
+```
+
+The `?.` token is lexed as a single **`OPTIONAL_CHAIN`** operator. Each `?.`
+link short-circuits to `nil` when its base is `nil`/absent, so `a?.b?.c` is
+`nil` if `a`, `a.b`, or `a.b` is `nil`.
 
 ---
 
@@ -215,7 +287,7 @@ method_def        ::= "rule" "." identifier "(" [ param_list ] ")" [ "=>" "(" re
 
 (* Instantiation & Member Access *)
 instantiation     ::= "new" identifier ":=" ( type_ident "(" [ arg_list ] ")" | "{" [ json_pairs ] "}" ) ;
-member_access     ::= expression "." identifier [ "(" [ arg_list ] ")" ]
+member_access     ::= expression ( ( "." | "?." ) identifier )* [ "(" [ arg_list ] ")" ]
                     | expression "[" expression "]" ;
 super_call        ::= "super" [ "." identifier ] "(" [ arg_list ] ")" ;
 ```

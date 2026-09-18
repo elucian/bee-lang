@@ -310,6 +310,43 @@ new var_name, var_name ... &isin; Type_Identifier;
 <li>User defined sub-types are usually domains of values;</li>
 </ul>
 
+<h2 id="optional-types">Optional Types &amp; the nil sentinel</h2>
+
+<p>An <b>optional type</b> <code>T?</code> is a union that adds the <b>nil</b> sentinel to <code>T</code>: the value is either a <code>T</code> or the absence of a value (<code>nil</code>). It is written as a postfix <code>?</code> on a typed member or reference.</p>
+
+<pre><code class="language-bee">-- an optional reference: a Node, or nil
+type Node: {
+  data &isin; Z,
+  next &isin; @Node?
+} &lt; Object;
+</code></pre>
+
+<p><b><code>nil</code></b> is a singleton sentinel denoting the absence of a value. Every <code>nil</code> write aliases the same sentinel, so <code>x = nil</code> is decided by identity.</p>
+
+<p>Reading an optional reference uses <b>safe navigation</b> <code>?.</code>, which short-circuits to <code>nil</code> rather than raising an error when the base (or any intermediate link) is <code>nil</code> (see spec/05 §1.3 and spec/06 §2.5):</p>
+
+<pre><code class="language-bee">new leaf := {data: 9, next: nil};
+new head := {data: 1, next: leaf};
+
+expect head.next?.data = 9;     -- leaf is not nil, so .data reads
+expect head.next?.next = nil;   -- leaf.next is nil
+</code></pre>
+
+<h2 id="void-type">The Void Type &amp; the void object</h2>
+
+<p>Where <b>nil</b> is the singleton sentinel for the <em>absence of a value</em>, <b>Void</b> is a <em>type</em>: the type of a value that has <b>no members</b>. The canonical <code>void</code> object is an empty object <code>void = {}</code>.</p>
+
+<pre><code class="language-bee">new v := {};   -- empty object literal -&gt; Void
+new l := ();   -- empty list literal -&gt; Void
+new a := [];   -- empty array literal -&gt; Void
+
+expect v is Void;   -- type-membership introspection
+</code></pre>
+
+<p><b>nil is not a type.</b> A nil is the sentinel carried by an <em>optional</em> member (<code>T?</code>) that has been left unset; comparing to it (<code>x = nil</code>) is an identity check, not a type test.</p>
+
+<p><b>Void is a type.</b> An empty <code>{}</code>, <code>()</code>, or <code>[]</code> reports the type <code>Void</code> (spec/05 §1.4, spec/06 §1). Once a member is added to a <code>void</code> value it becomes an ordinary <b>Object</b> (attribute overlay, spec/06 §2.3).</p>
+
 <h2 id="range-type">Range Type</h2>
 
 <p>A <em>range</em> denotes a sub-set of consecutive numeric (or character) values between two limits. Endpoint inclusion is expressed by the range operator (Decision 13). Canonical operators are .. (both inclusive), ..&lt; (exclude upper), &gt;.. (exclude lower), and &gt;..&lt; (exclude both). A postfix step (min..max)(step) produces a stepped domain.</p>

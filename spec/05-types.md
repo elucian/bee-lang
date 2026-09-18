@@ -16,8 +16,64 @@ When a variable is assigned different types across divergent control flow paths 
 $$\tau_{\text{var}} = \tau_1 \cup \tau_2 \cup \dots \cup \tau_k$$
 
 - **Promotion Rule**: If branch A assigns $\mathbb{Z}$ (Integer) and branch B assigns $\mathbb{R}$ (Real), the variable's final type is promoted to $\mathbb{Z} \mid \mathbb{R}$ (`Variant`).
-- **Usage Invariant**: Accessing a Variant-typed variable requires a type guard (`entity.type()` introspection or `match` statement) to resolve the underlying type before executing path-specific operations.
-- **Universal Entity Model:** Every value in Bee is an **`Entity`** exposing the `.type()` method (e.g. `10.type()`, `"hello".type()`).
+	- **Usage Invariant**: Accessing a Variant-typed variable requires a type guard (`entity.type()` introspection or `match` statement) to resolve the underlying type before executing path-specific operations.
+	- **Universal Entity Model:** Every value in Bee is an **`Entity`** exposing the `.type()` method (e.g. `10.type()`, `"hello".type()`).
+
+### 1.3 Optional Types & The `nil` Sentinel
+
+An **optional type** `T?` is a union that adds the **`nil`** sentinel to `T`:
+
+$$T^{?} = T \cup \{\text{nil}\}$$
+
+The `nil` sentinel denotes the *absence of a value* — an optional field left
+empty, or an optional reference with no target. It is a singleton: every `nil`
+write aliases the same sentinel object, so `x = nil` is decided by identity.
+
+The postfix `?` on a typed member declares the member optional:
+
+```bee
+type Node: {
+  next ∈ @Node?   -- an optional reference: a Node, or nil
+} <: Object;
+```
+
+Reading an optional reference is done with **safe navigation** `?.`, which
+short-circuits to `nil` (instead of raising an error) when the base or any
+intermediate link is `nil` (spec/06 §2.5):
+
+```bee
+new leaf := {data: 9, next: nil};
+new head := {data: 1, next: leaf};
+
+expect head.next?.data = 9;      -- leaf, not nil: yields data
+expect head.next?.next = nil;    -- leaf.next is nil: short-circuits
+```
+
+### 1.4 The `Void` Type & The `void` Object
+
+Where `nil` is the *singleton sentinel* for the *absence of a value*, **`Void`**
+is a *type*: the type of a value that has **no members**. The canonical `void`
+object is an empty object:
+
+```bee
+new v := {};          -- empty object literal → Void
+new l := ();          -- empty list literal → Void
+new a := [];          -- empty array literal → Void
+
+expect v is Void;     -- type-membership introspection
+```
+
+Distinctions:
+
+- **`nil` is not a type.** It is the sentinel carried by an *optional* member
+  (`T?`) that has been left unset (see §1.3). Comparing to it (`x = nil`) is an
+  identity check, not a type membership test.
+- **`Void` is a type.** `{}`, `()`, and `[]` are empty structures and report the
+  type `Void` (spec/06 §1). An empty, anonymous object is a `void` value;
+  when a member is added to it (attribute overlay, spec/06 §2.3) it becomes an
+  ordinary `Object`.
+- **The `is` operator** reports `Void` membership: `v is Void` is true exactly
+  when `v` is an empty structure (spec/06 §1).
 
 ---
 
@@ -40,6 +96,10 @@ Single uppercase Latin letters are strictly reserved for primitive mathematical 
 | **`T`** | Time | $\mathbb{N}^4$ | Struct `(h, m, s, ms)` | 8 bytes | `00:00:00` | 24-hour time representation |
 | **`G`** | Angular | $[1^\circ \dots 360^\circ]$ | Fixed 16-bit float | 2 bytes | `0.0°` | Geometric angular degree coordinate |
 | **`L`** | Lambda | $\mathcal{F}: T \to R$ | Function reference (closure pointer) | 8 bytes | `λ` | Higher-order function type — reference to a pure lambda expression. The `λ` glyph denotes the expression; the *type* is `L`. |
+
+**`Void`** is not a single-letter primitive: it is a named type (like `Array`/
+`Map`/`List`) denoting the *empty* value whose structure has no members
+(`{}` / `()` / `[]`). See §1.4.
 
 **Named complex types (not single-letter):** `Array`, `Map`, `List`, and `Graph` are collection types. These are identified by name, not by a reserved single letter.
 

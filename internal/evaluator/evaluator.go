@@ -151,6 +151,11 @@ type Evaluator struct {
 	// records names (re)declared with `new` inside a `do...done` block so a
 	// shadowed outer variable is restored when the scope exits.
 	scopes []*scopeFrame
+	// nilObject is the singleton nil sentinel (spec/05 §optional, spec/06 §2.2):
+	// an empty ObjectValue whose type is "Nil" denoting the absence of a value
+	// in optional (`T?`) and safe-navigation (`?.`) contexts. All nil references
+	// alias it so equality (`x = nil`) can be decided by identity.
+	nilObject *ObjectValue
 }
 
 func (e *Evaluator) SetDebug(debug bool) {
@@ -992,7 +997,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				} else if mapLit, ok := s.Values[i].(*parser.MapLiteral); ok {
 					// Anonymous object vs int-only map (spec/06 §2.2): a literal
 					// with a string member is an object; otherwise it is a map.
-					if mapLitIsObject(mapLit) {
+					if e.mapLitIsObject(mapLit) {
 						e.objectValues[name] = e.mapLiteralToObject(mapLit)
 					} else {
 						m := make(map[string]int)
@@ -1106,7 +1111,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				} else if mapLit, ok := s.Value.(*parser.MapLiteral); ok {
 					// Anonymous object vs int-only map (spec/06 §2.2): a literal
 					// with a string member is an object; otherwise it is a map.
-					if mapLitIsObject(mapLit) {
+					if e.mapLitIsObject(mapLit) {
 						e.objectValues[name] = e.mapLiteralToObject(mapLit)
 					} else {
 						m := make(map[string]int)
@@ -1860,6 +1865,15 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			}
 			return 0, e.allocID()
 		}
+		// Recursive object-reference traversal (spec/06 §2.2): chains like
+		// `n1.next.next.data` follow reference fields to a terminal value.
+		res := e.resolveMemberChain(expr)
+		if res.hasInt {
+			return res.iVal, e.allocID()
+		}
+		if res.hasObj {
+			return 0, e.allocID() // an object reference has no numeric value
+		}
 		// Anonymous object attribute (spec/06 §2.2): `obj.age` in int context
 		// resolves a numeric member; string members degenerate to 0.
 		if ident, isIdent := expr.Base.(*parser.Identifier); isIdent && !expr.IsCall && len(expr.Parts) == 1 {
@@ -2121,6 +2135,17 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			return 0, 0
 		}
 		if lit == "=" || expr.Token.Type == token.EQ || lit == "==" {
+			// Nil equality (spec/05 §optional, spec/06 §2.2): when either operand
+			// is the nil sentinel (bare `nil` or a `?.` chain that short-circuited),
+			// both-sides-nil is true and nil-vs-value is false. Placed before the
+			// object/string branches because nil is neither a bound object nor a
+			// string but must compare by sentinel identity.
+			if e.isNilExpr(expr.Left) || e.isNilExpr(expr.Right) {
+				if e.isNilExpr(expr.Left) && e.isNilExpr(expr.Right) {
+					return 1, 0
+				}
+				return 0, 0
+			}
 			// Object/map structural equality (spec/06 §2.2): when either operand
 			// denotes an object or map value, compare key sets and per-key values
 			// instead of forcing both through the int domain.
@@ -2300,6 +2325,12 @@ type objField struct {
 	isStr bool
 	sVal  string
 	iVal  int
+	// Object-reference support (spec/06 §2.2 recursive structures): either a
+	// resolved reference or a deferred one, stored by name so a forward
+	// reference (`new n1 := {next: @n2}` before `n2` is bound) resolves at read
+	// time. A member holding a reference has neither isStr nor a meaningful iVal.
+	ref     *ObjectValue // already-resolved reference target
+	refName string       // deferred reference: resolve `@name` on access
 }
 
 // ObjectValue is a *mutable* anonymous-object / JSON-literal value (spec/06
@@ -2341,6 +2372,19 @@ func newObjectValue() *ObjectValue {
 	return &ObjectValue{fields: make(map[string]objField), methods: make(map[string]*parser.RuleStatement), privates: make(map[string]objField)}
 }
 
+// nilValue returns the Evaluator's singleton nil sentinel, creating it lazily
+// on first use. Every nil reference (`next: nil`) aliases this one object so
+// comparisons (`x = nil`) and safe-navigation short-circuits can rely on
+// identity (spec/05 §optional, spec/06 §2.2).
+func (e *Evaluator) nilValue() *ObjectValue {
+	if e.nilObject == nil {
+		v := newObjectValue()
+		v.typeName = "Nil"
+		e.nilObject = v
+	}
+	return e.nilObject
+}
+
 // objString serializes an ObjectValue into a canonical, deterministic,
 // JSON-like string with member keys sorted alphabetically (spec/06 §2.4).
 // String-valued members are quoted; int-valued members are unquoted. The
@@ -2369,9 +2413,18 @@ func objString(o *ObjectValue) string {
 
 // typeNameOf returns the Bee type name the object reports via type()/obj.type().
 // Anonymous objects (no explicit constructor type) resolve to the universal
-// root "Object" (formerly "O") (spec/06 §1).
+// root "Object" (formerly "O") (spec/06 §1) unless they are empty, in which
+// case they report "Void" — the type of the value that has no members
+// (spec/06 §1 / spec/05 §1, `void = {}`). A member-bearing anonymous object is
+// "Object"; once a field is added to a Void it becomes an ordinary Object.
 func (o *ObjectValue) typeNameOf() string {
-	if o == nil || o.typeName == "" {
+	if o == nil {
+		return "Object"
+	}
+	if o.typeName == "" {
+		if len(o.fields) == 0 {
+			return "Void"
+		}
 		return "Object"
 	}
 	return o.typeName
@@ -2405,7 +2458,7 @@ func (o *ObjectValue) fieldCount() int {
 // every value through the int domain. An empty literal `{}` is treated as an
 // empty anonymous object (spec/06 §2.3: an object can be instantiated empty and
 // later enhanced with members).
-func mapLitIsObject(ml *parser.MapLiteral) bool {
+func (e *Evaluator) mapLitIsObject(ml *parser.MapLiteral) bool {
 	if len(ml.Pairs) == 0 {
 		return true
 	}
@@ -2413,21 +2466,79 @@ func mapLitIsObject(ml *parser.MapLiteral) bool {
 		if _, isStr := pair.Value.(*parser.StringLiteral); isStr {
 			return true
 		}
+		if pf, isPrefix := pair.Value.(*parser.PrefixExpression); isPrefix && pf.Operator == "@" {
+			return true // explicit object reference selects the object interpretation
+		}
+		if id, isID := pair.Value.(*parser.Identifier); isID && id.Value == "void" {
+			return true // the Void value is an (empty) object
+		}
+		if id, isID := pair.Value.(*parser.Identifier); isID && id.Value == "nil" {
+			return true // an optional field left nil selects the object interpretation
+		}
+		if id, isID := pair.Value.(*parser.Identifier); isID && id.Value != "nil" && id.Value != "void" {
+			if _, bound := e.objectValues[id.Value]; bound {
+				return true // a bare-identifier reference to a bound object selects the object interpretation
+			}
+			if _, bound := e.stringSymbols[id.Value]; bound {
+				return true // a string-bound alias selects the object interpretation
+			}
+		}
 	}
 	return false
 }
 
 // mapLiteralToObject materialises a `{...}` literal into a mutable ObjectValue
 // (spec/06 §2.2), resolving each pair's member key and heterogeneous value.
+// fieldValueOf materialises an object-member write expression into an objField.
+// It recognises string members, int members, explicit object references
+// (`@name`, spec/06 §2.2 recursive structures) and the Void value (`void`).
+func (e *Evaluator) fieldValueOf(v parser.Expression) objField {
+	if id, isID := v.(*parser.Identifier); isID && id.Value == "void" {
+		o := newObjectValue()
+		o.typeName = "Void"
+		return objField{ref: o}
+	}
+	if id, isID := v.(*parser.Identifier); isID && id.Value == "nil" {
+		// The nil sentinel (spec/05 §optional): an optional field left empty.
+		return objField{ref: e.nilValue()}
+	}
+	if id, isID := v.(*parser.Identifier); isID && id.Value != "nil" {
+		// A bare-identifier reference to an already-bound object (`next: n2`):
+		// store a live reference so recursive structures can be walked. A bound
+		// string alias and the special sentinels are handled above/below; an
+		// unbound identifier degrades to the int path (0) for forwards-compat.
+		if obj, ok := e.objectValues[id.Value]; ok {
+			return objField{ref: obj}
+		}
+	}
+	if pf, isPrefix := v.(*parser.PrefixExpression); isPrefix && pf.Operator == "@" {
+		if id, isID := pf.Right.(*parser.Identifier); isID {
+			// Prefer a live reference when the target is already bound; otherwise
+			// store a deferred reference by name so forward references resolve at
+			// read time once the object exists.
+			if existing, has := e.objectValues[id.Value]; has {
+				return objField{ref: existing}
+			}
+			return objField{refName: id.Value}
+		}
+		return objField{iVal: e.evalIntExpression(v)}
+	}
+	if strLit, isStr := v.(*parser.StringLiteral); isStr {
+		return objField{isStr: true, sVal: strLit.Value}
+	}
+	if strIdent, isStr := v.(*parser.Identifier); isStr {
+		if sv, hasStr := e.stringSymbols[strIdent.Value]; hasStr {
+			return objField{isStr: true, sVal: sv}
+		}
+	}
+	return objField{iVal: e.evalIntExpression(v)}
+}
+
 func (e *Evaluator) mapLiteralToObject(ml *parser.MapLiteral) *ObjectValue {
 	o := newObjectValue()
 	for _, pair := range ml.Pairs {
 		key := e.evalExpression(pair.Key)
-		if strLit, isStr := pair.Value.(*parser.StringLiteral); isStr {
-			o.set(key, objField{isStr: true, sVal: strLit.Value})
-		} else {
-			o.set(key, objField{iVal: e.evalIntExpression(pair.Value)})
-		}
+		o.set(key, e.fieldValueOf(pair.Value))
 	}
 	return o
 }
@@ -2439,17 +2550,7 @@ func (e *Evaluator) evalObjectWrite(base string, key string, v parser.Expression
 		// store is authoritative here; an unbound base is a no-op.
 		return false
 	}
-	if strLit, isStr := v.(*parser.StringLiteral); isStr {
-		obj.set(key, objField{isStr: true, sVal: strLit.Value})
-		return true
-	}
-	if strIdent, isStr := v.(*parser.Identifier); isStr {
-		if sv, hasStr := e.stringSymbols[strIdent.Value]; hasStr {
-			obj.set(key, objField{isStr: true, sVal: sv})
-			return true
-		}
-	}
-	obj.set(key, objField{iVal: e.evalIntExpression(v)})
+	obj.set(key, e.fieldValueOf(v))
 	return true
 }
 
@@ -2540,17 +2641,123 @@ func (e *Evaluator) readObjectArrayMember(idxExpr *parser.IndexExpression, parts
 // mirroring evalObjectWrite: a string literal/alias is stored as a string
 // field, anything else as an int field (spec/06 §2.2).
 func (e *Evaluator) setObjectField(obj *ObjectValue, key string, v parser.Expression) {
-	if strLit, isStr := v.(*parser.StringLiteral); isStr {
-		obj.set(key, objField{isStr: true, sVal: strLit.Value})
-		return
+	obj.set(key, e.fieldValueOf(v))
+}
+
+// memberChainResult is the outcome of traversing an object member chain such as
+// `n1.next.next.data`: exactly one of an int, a string, or a reference to another
+// object (an intermediate node in a recursive structure).
+type memberChainResult struct {
+	obj    *ObjectValue
+	hasObj bool
+	iVal   int
+	hasInt bool
+	sVal   string
+	hasStr bool
+	hasNil bool // the chain short-circuited to the nil sentinel (safe navigation `?.`)
+}
+
+// resolveMemberChain follows dotted member access through object reference
+// fields (spec/06 §2.2 recursive structures). Each MemberExpression in a chain
+// carries exactly one part; the base is either an identifier bound to an object
+// or a nested MemberExpression that resolves to an object. A field holding an
+// object reference (`next: @n2`) yields the referenced target so an outer part
+// can continue; a leaf int/string member terminates. Unresolvable chains (a
+// leading-dot cell, a method call, an object-array element) return the zero
+// result so existing dedicated handlers stay authoritative.
+func (e *Evaluator) resolveMemberChain(expr *parser.MemberExpression) memberChainResult {
+	if expr.IsCall || expr.Base == nil || len(expr.Parts) == 0 {
+		return memberChainResult{}
 	}
-	if strIdent, isStr := v.(*parser.Identifier); isStr {
-		if sv, hasStr := e.stringSymbols[strIdent.Value]; hasStr {
-			obj.set(key, objField{isStr: true, sVal: sv})
-			return
+	var baseObj *ObjectValue
+	nilShortCircuit := false
+	switch base := expr.Base.(type) {
+	case *parser.Identifier:
+		if base.Value == "nil" {
+			// The chain reads through nil itself (`nil.member`): with `?.` that is
+			// the short-circuit; with plain `.` it is an unresolvable read.
+			nilShortCircuit = true
+		} else {
+			baseObj, _ = e.objectValues[base.Value]
+		}
+	case *parser.MemberExpression:
+		res := e.resolveMemberChain(base)
+		if res.hasNil {
+			nilShortCircuit = true
+		}
+		if res.hasObj {
+			baseObj = res.obj
 		}
 	}
-	obj.set(key, objField{iVal: e.evalIntExpression(v)})
+	// Safe navigation (`?.`): when the base of *this* segment is nil/absent, the
+	// whole chain yields nil instead of panicking. A plain (unsafe) `.` through
+	// nil is an unresolvable read, handled by returning the zero result.
+	if nilShortCircuit || baseObj == nil {
+		if expr.Safe {
+			return memberChainResult{hasNil: true}
+		}
+		return memberChainResult{}
+	}
+	if e.isNilObject(baseObj) {
+		// The base is itself the nil sentinel: reaching it through a `?.` link
+		// terminates the walk as nil; a plain `.` on nil is unresolvable.
+		if expr.Safe {
+			return memberChainResult{hasNil: true}
+		}
+		return memberChainResult{}
+	}
+	f, found := baseObj.fields[expr.Parts[0]]
+	if !found {
+		if expr.Safe {
+			return memberChainResult{hasNil: true}
+		}
+		return memberChainResult{}
+	}
+	if f.ref != nil {
+		if e.isNilObject(f.ref) {
+			// A `?.` link reaching an empty optional field yields nil; plain `.`
+			// dereferencing nil is unresolvable.
+			if expr.Safe {
+				return memberChainResult{hasNil: true}
+			}
+			return memberChainResult{}
+		}
+		return memberChainResult{obj: f.ref, hasObj: true}
+	}
+	if f.refName != "" {
+		if target, has := e.objectValues[f.refName]; has {
+			return memberChainResult{obj: target, hasObj: true}
+		}
+		if expr.Safe {
+			return memberChainResult{hasNil: true}
+		}
+		return memberChainResult{}
+	}
+	if f.isStr {
+		return memberChainResult{sVal: f.sVal, hasStr: true}
+	}
+	return memberChainResult{iVal: f.iVal, hasInt: true}
+}
+
+// isNilObject reports whether o is *the* nil sentinel (by identity against the
+// Evaluator's singleton). It never returns true for a normal empty object.
+func (e *Evaluator) isNilObject(o *ObjectValue) bool {
+	return o != nil && o == e.nilObject
+}
+
+// isNilExpr reports whether an expression evaluates to (or denotes) the nil
+// sentinel: the bare `nil` identifier, or a safe-navigation member chain whose
+// traversal short-circuited to nil. It drives the equality rule so `x = nil`
+// and `nil.missing?.field = nil` compare without forcing values through ints.
+func (e *Evaluator) isNilExpr(node parser.Expression) bool {
+	switch x := node.(type) {
+	case *parser.Identifier:
+		return x.Value == "nil"
+	case *parser.MemberExpression:
+		res := e.resolveMemberChain(x)
+		return res.hasNil
+	}
+	return false
 }
 
 // tryTypeConstructorBinding resolves `new obj := T(...)` when T is a declared
@@ -3132,6 +3339,10 @@ func (e *Evaluator) isBoundValueName(name string) bool {
 // `is` operator: `x is TypeName` becomes a type-membership test (spec/06 §1).
 func (e *Evaluator) typeNameRef(name string) (string, bool) {
 	switch name {
+	case "Void":
+		return "Void", true
+	case "Nil":
+		return "Nil", true
 	case "Object":
 		return "Object", true
 	case "N", "Z", "Int", "Integer":
@@ -3348,6 +3559,18 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 		// `expr.type()` introspection (spec/06 §1) returns the type-name string.
 		if expr.IsCall && len(expr.Parts) == 1 && expr.Parts[0] == "type" {
 			return e.typeName(expr.Base)
+		}
+		// Recursive object-reference traversal (spec/06 §2.2): chains like
+		// `n1.next.next.data` follow reference fields to a terminal value.
+		res := e.resolveMemberChain(expr)
+		if res.hasInt {
+			return strconv.Itoa(res.iVal)
+		}
+		if res.hasStr {
+			return res.sVal
+		}
+		if res.hasObj {
+			return objString(res.obj)
 		}
 		// Member access on a typed object-array element (spec/10 §3.3):
 		// `catalog[i].name` (string member) or `catalog[i].age` (int member).

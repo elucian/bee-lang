@@ -159,7 +159,15 @@ func (l *Lexer) NextToken() token.Token {
 	case '}':
 		tok = token.Token{Type: token.RBRACE, Literal: "}", Pos: token.Pos(l.line)}
 	case '?':
-		tok = token.Token{Type: token.QUESTION, Literal: "?", Pos: token.Pos(l.line)}
+		// Safe-navigation `?.` (spec/05 §X optional chaining): a `?` immediately
+		// followed by `.` is lexed as one OPTIONAL_CHAIN token. A standalone `?`
+		// (ternary placeholder, optional-type marker) remains QUESTION.
+		if l.PeekChar() == '.' {
+			l.readChar() // consume '.'
+			tok = token.Token{Type: token.OPTIONAL_CHAIN, Literal: "?.", Pos: token.Pos(l.line)}
+		} else {
+			tok = token.Token{Type: token.QUESTION, Literal: "?", Pos: token.Pos(l.line)}
+		}
 	case '$':
 		tok = token.Token{Type: token.SIGIL_SYS, Literal: "$", Pos: token.Pos(l.line)}
 	case '|':
