@@ -112,6 +112,25 @@ type DeclarationStatement struct {
 	// it rather than declaring a new identifier. Dot-notation and index-notation
 	// alias the same storage slot.
 	ObjectWrite *ObjectTarget
+	// ObjectArrayElemType and ObjectArraySize capture a typed object-array
+	// declaration `new a ∈ [Type](n)` (spec/10 §3.3). Each slot stores an
+	// *ObjectValue element of declared type Type; this is distinct from
+	// MatrixDims (≥2D integer tensors). Empty elemType means not an object array.
+	ObjectArrayElemType string
+	ObjectArraySize     int
+	// IndexWrite marks this declaration as a positional write into an existing
+	// object array: `new arr[i] := <object>` (spec/10 object arrays). Base is the
+	// array identifier and Index is the 1-based element position (Decision 1).
+	// It is distinct from ObjectWrite (member overlay on a single object).
+	IndexWrite *IndexTarget
+}
+
+// IndexTarget names the receiver array and its 1-based element index for a
+// positional object-array write `new arr[i] := <object>` (spec/10 object
+// arrays). Index is the 1-based element position (Decision 1).
+type IndexTarget struct {
+	Base  string
+	Index Expression
 }
 
 // ObjectTarget names the receiver object and member key for an attribute-overlay
@@ -134,11 +153,14 @@ func (ds *DeclarationStatement) Pos() token.Pos { return ds.Token.Pos }
 // (key, default-expression) pairs parsed from the JSON-literal body. The
 // declaration registers type T so that invoking `T(...)` in `new obj := T(...)`
 // builds an object: every prop defaults to its declared value unless the
-// call overrides it positionally (in Props order) or by name.
+// call overrides it positionally (in Props order) or by name. SuperType is
+// the declared base class from the optional `<: SuperType` clause (spec/06
+// §4.1 subtype inheritance); empty when the type has no explicit base.
 type TypeDeclaration struct {
-	Token token.Token
-	Name  string
-	Props []TypeProp
+	Token     token.Token
+	Name      string
+	Props     []TypeProp
+	SuperType string
 }
 
 func (td *TypeDeclaration) statementNode() {}
@@ -146,10 +168,29 @@ func (td *TypeDeclaration) Pos() token.Pos { return td.Token.Pos }
 
 // TypeProp is a single `key: default_expr` member in a type declaration's
 // constructor body. Key is the member name; Default is the default value
-// expression used when a constructed instance does not override it.
+// expression used when a constructed instance does not override it. Default is
+// nil for a rule-backed typed-member declaration (`type Foo: { a, b ∈ N }`).
 type TypeProp struct {
 	Key     string
 	Default Expression
+}
+
+// HasDefaultTemplate reports whether td is a default-constructor template
+// (spec/06 §6): every prop carries a default value expression (`type T:
+// { a1: 10, a2: 5 }`). A rule-backed type declaration whose members carry no
+// defaults (`type Foo: { a, b ∈ N }`) is NOT a template — its instances come
+// from the matching `rule Foo(...) => (self ∈ Foo)` constructor, so a call to
+// `T(...)` must fall through to rule dispatch rather than build from defaults.
+func (td *TypeDeclaration) HasDefaultTemplate() bool {
+	if len(td.Props) == 0 {
+		return false
+	}
+	for _, p := range td.Props {
+		if p.Default == nil {
+			return false
+		}
+	}
+	return true
 }
 
 type Identifier struct {

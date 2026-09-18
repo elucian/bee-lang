@@ -330,14 +330,55 @@ func extractMatrixDims(toks []token.Token) []int {
 	return nil
 }
 
-// parseTypeDeclaration consumes a custom-type declaration with a default
-// constructor body (spec/06-objects.md §6 object_type):
+// primitiveScalarTypes are the numeric/string scalar element types that must
+// NOT be interpreted as a typed object array. A single-dim `[Type](n)` whose
+// Type is one of these stays an (int-backed) plain array on the array path;
+// only a declared object/type name below selects the object-array path.
+var primitiveScalarTypes = map[string]bool{
+	"Z": true, "N": true, "B": true, "R": true, "S": true, "O": true, "Object": true,
+}
+
+// extractObjectArrayType parses a captured type specifier for the typed
+// object-array pattern `[Type](n)` (a single integer dimension) and returns the
+// element type name and the fixed length. ok=false when the pattern is absent,
+// multi-dimensional, or its element type is a primitive scalar (which stays on
+// the plain int-array path).
+func extractObjectArrayType(toks []token.Token) (string, int, bool) {
+	for i := 0; i+5 < len(toks); i++ {
+		if toks[i].Type != token.LBRACKET ||
+			toks[i+1].Type != token.IDENT ||
+			toks[i+2].Type != token.RBRACKET ||
+			toks[i+3].Type != token.LPAREN ||
+			toks[i+4].Type != token.INT ||
+			toks[i+5].Type != token.RPAREN {
+			continue
+		}
+		elem := toks[i+1].Literal
+		if primitiveScalarTypes[elem] {
+			continue
+		}
+		n, err := strconv.Atoi(toks[i+4].Literal)
+		if err != nil {
+			return "", 0, false
+		}
+		return elem, n, true
+	}
+	return "", 0, false
+}
+
+// parseTypeDeclaration consumes a custom-type declaration (spec/06-objects.md
+// §6 object_type):
 //
-//	type T: { a1: 10, a2: 5 };
+//	type T: { a1: 10, a2: 5 };              -- default-constructor template
+//	type Foo: { a, b ∈ N } <: Object;       -- typed members + base type
 //
-// The body is a JSON/object literal `{ key: expr, ... }`; each pair becomes a
-// TypeProp (the prop's default value). The declaration registers type T so a
-// later `new obj := T(...)` builds an object from those defaults.
+// Two body shapes are accepted. A `{ key: expr, ... }` JSON/object literal is
+// a default-constructor template: each pair becomes a TypeProp with a default
+// value (and `new obj := T(...)` can build an object from those defaults). A
+// `{ a, b ∈ N }` typed-member list (a SetLiteral at parse time because members
+// are comma-separated without `:`) yields Props with no default — the type is
+// rule-backed; its instances come from the matching `rule T(...) => (self ∈ T)`
+// constructor. An optional `<: super_type` clause records subtype inheritance.
 func (p *Parser) parseTypeDeclaration(tok token.Token) Statement {
 	td := &TypeDeclaration{Token: tok}
 
@@ -363,38 +404,69 @@ func (p *Parser) parseTypeDeclaration(tok token.Token) Statement {
 	bodyExp := p.parseExpression()
 	if bodyExp == nil {
 		p.errors = append(p.errors, fmt.Sprintf(
-			"E0009 SyntaxError:UnrecognizedStatement: line=%d (expected '{ key: value, ... }' constructor body for type %q)",
+			"E0009 SyntaxError:UnrecognizedStatement: line=%d (expected '{ ... }' type body for type %q)",
 			tok.Pos, td.Name,
 		))
 		return td
 	}
 
-	// The constructor body is a MapLiteral of key→default pairs. Any other shape
-	// (e.g. a bare identifier or arithmetic expression) is not a valid object
-	// type body and is rejected so authors see the error in tests.
-	ml, isMap := bodyExp.(*MapLiteral)
-	if !isMap {
+	// Default-constructor template `{ key: value, ... }`.
+	if ml, isMap := bodyExp.(*MapLiteral); isMap {
+		for _, pair := range ml.Pairs {
+			key := ""
+			switch k := pair.Key.(type) {
+			case *StringLiteral:
+				key = k.Value
+			case *Identifier:
+				key = k.Value
+			}
+			td.Props = append(td.Props, TypeProp{Key: key, Default: pair.Value})
+		}
+	} else if sl, isSet := bodyExp.(*SetLiteral); isSet {
+		// Typed member list `{ a, b ∈ N }` — no default constructor template.
+		for _, el := range sl.Elements {
+			td.Props = append(td.Props, TypeProp{Key: propItemKey(el), Default: nil})
+		}
+	} else {
+		// Any other shape is not a valid object type body and is rejected so
+		// authors see the error in tests.
 		p.errors = append(p.errors, fmt.Sprintf(
-			"E0009 SyntaxError:UnrecognizedStatement: line=%d (type %q constructor body must be '{ key: value, ... }')",
+			"E0009 SyntaxError:UnrecognizedStatement: line=%d (type %q body must be '{ key: value, ... }' or '{ a, b ∈ T, ... }')",
 			tok.Pos, td.Name,
 		))
 		return td
 	}
-	for _, pair := range ml.Pairs {
-		key := ""
-		switch k := pair.Key.(type) {
-		case *StringLiteral:
-			key = k.Value
-		case *Identifier:
-			key = k.Value
+
+	// Optional subtype clause `<: super_type` (spec/06 §4.1).
+	if p.l.PeekToken().Type == token.SUBTYPE {
+		p.l.NextToken() // consume '<:'
+		superTok := p.l.NextToken()
+		if super, _ := p.identLiteral(superTok); super != "" {
+			td.SuperType = super
+			// A member type specifier may follow (`<: Super(...)` uses a rule name,
+			// but the plain base name is the common case).
 		}
-		td.Props = append(td.Props, TypeProp{Key: key, Default: pair.Value})
 	}
 
 	if p.l.PeekToken().Type == token.SEMICOLON {
 		p.l.NextToken() // consume ';'
 	}
 	return td
+}
+
+// propItemKey extracts the member name from a typed prop-list element parsed
+// by parsePrimary. A bare identifier yields its own name; a `key ∈ Type`
+// BinaryExpression yields the left identifier's name.
+func propItemKey(el Expression) string {
+	switch e := el.(type) {
+	case *Identifier:
+		return e.Value
+	case *BinaryExpression:
+		if id, ok := e.Left.(*Identifier); ok {
+			return id.Value
+		}
+	}
+	return ""
 }
 
 func (p *Parser) parseRuleEntry(tok token.Token) Statement {
@@ -1378,6 +1450,7 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 	if !strings.HasPrefix(ds.Name, ".") &&
 		(p.l.PeekToken().Type == token.DOT || p.l.PeekToken().Type == token.LBRACKET) {
 		ot := &ObjectTarget{Base: ds.Name}
+		indexWrite := false
 		if p.l.PeekToken().Type == token.DOT {
 			p.l.NextToken() // consume '.'
 			memberTok := p.l.NextToken()
@@ -1386,7 +1459,16 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 		} else {
 			p.l.NextToken() // consume '['
 			keyTok := p.l.NextToken()
-			if keyTok.Type == token.STRING {
+			if keyTok.Type == token.INT {
+				// Positional object-array element write (spec/10 §3.3):
+				// `new arr[i] := <object>`. An integer index is an element position,
+				// distinct from a string/ident key which selects an object member.
+				ds.IndexWrite = &IndexTarget{
+					Base:  ds.Name,
+					Index: &IntegerLiteral{Token: keyTok, Value: keyTok.Literal},
+				}
+				indexWrite = true
+			} else if keyTok.Type == token.STRING {
 				ot.Key = keyTok.Literal
 			} else {
 				k, _ := p.identLiteral(keyTok)
@@ -1396,7 +1478,9 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 				p.l.NextToken()
 			}
 		}
-		ds.ObjectWrite = ot
+		if !indexWrite {
+			ds.ObjectWrite = ot
+		}
 		if p.l.PeekToken().Literal == ":=" || p.l.PeekToken().Type == token.ASSIGN {
 			p.l.NextToken() // consume ':='
 		}
@@ -1438,6 +1522,12 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 		// e.g. new a, b, c ∈ Z [:= ...]
 		typeToks := p.captureTypeSpecifier() // consume type annotation (e.g. Z, [Z](n), List(Z))
 		ds.MatrixDims = extractMatrixDims(typeToks)
+		if elemType, size, isObjArray := extractObjectArrayType(typeToks); isObjArray {
+			// Typed object array (spec/10 §3.3): `new a ∈ [Person](2)`. Each
+			// slot holds an *ObjectValue element of the declared type.
+			ds.ObjectArrayElemType = elemType
+			ds.ObjectArraySize = size
+		}
 		if p.l.PeekToken().Literal == ":=" {
 			p.l.NextToken() // consume :=
 			val := p.parseExpression()
@@ -2408,6 +2498,37 @@ func (p *Parser) parsePrimary() Expression {
 		return &Identifier{Token: tok, Value: tok.Literal}
 	}
 
+	// Supertype constructor call (spec/06 §4.1 super_call): `super(...)` chains
+	// the base-class constructor from a derived constructor body. `super` is a
+	// keyword token, so it normally skips the IDENT call handling; intercept it
+	// here and build a CallExpression with Name "super" so the evaluator can
+	// resolve and run the parent constructor. A bare `super` in a method body
+	// (`super.method()`) is a MemberExpression base handled below.
+	if tok.Type == token.SUPER {
+		if p.l.PeekToken().Type == token.LPAREN {
+			p.l.NextToken() // consume '('
+			call := &CallExpression{Token: tok, Name: "super"}
+			if p.l.PeekToken().Type != token.RPAREN {
+				for {
+					if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+						break
+					}
+					call.Args = append(call.Args, p.parseExpression())
+					if p.l.PeekToken().Type == token.COMMA {
+						p.l.NextToken() // consume ','
+						continue
+					}
+					break
+				}
+			}
+			if p.l.PeekToken().Type == token.RPAREN {
+				p.l.NextToken() // consume ')'
+			}
+			return call
+		}
+		return &Identifier{Token: tok, Value: "super"}
+	}
+
 	var left Expression
 	left = &Identifier{Token: tok, Value: tok.Literal}
 	// The `self` keyword is a bare SELF-token primary, but it participates in
@@ -2533,6 +2654,39 @@ func (p *Parser) parsePrimary() Expression {
 				}
 				left = ie
 			}
+		}
+	}
+	// Member access chained onto an index expression (spec/06 §2.2):
+	// `catalog[i].name` reads a member of the i-th element of an object
+	// array. The index loop above parks on `]`, so a following `.member`
+	// is folded into a MemberExpression whose Base is the IndexExpression.
+	if p.l.PeekToken().Type == token.DOT || p.l.PeekToken().Literal == "." {
+		for p.l.PeekToken().Type == token.DOT || p.l.PeekToken().Literal == "." {
+			p.l.NextToken() // consume '.'
+			memberTok := p.l.NextToken()
+			member, _ := p.identLiteral(memberTok)
+			me := &MemberExpression{Token: memberTok, Base: left, Parts: []string{member}}
+			if p.l.PeekToken().Type == token.LPAREN {
+				p.l.NextToken() // consume '('
+				me.IsCall = true
+				if p.l.PeekToken().Type != token.RPAREN {
+					for {
+						if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
+							break
+						}
+						me.Args = append(me.Args, p.parseExpression())
+						if p.l.PeekToken().Type == token.COMMA {
+							p.l.NextToken() // consume ','
+							continue
+						}
+						break
+					}
+				}
+				if p.l.PeekToken().Type == token.RPAREN {
+					p.l.NextToken() // consume ')'
+				}
+			}
+			left = me
 		}
 	}
 	return left

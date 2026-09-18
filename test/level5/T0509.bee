@@ -23,5 +23,3 @@ spec/06-objects.md §5: reusable behavior composed via `+`
 and `apply Trait`.
 ----------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
--- @DISABLED: trait application/`+ Trait` type composition is not implemented
--- in the evaluator.

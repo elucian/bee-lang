@@ -22,4 +22,3 @@ objects, elements accessed with `catalog[i].member` after
 positional JSON-literal assignment.
 ------------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
--- @DISABLED: typed object array and member access not implemented in evaluator

@@ -80,11 +80,21 @@ type Evaluator struct {
 	// of a string-valued member. This is the foundation of ``type()``/``.type()``
 	// introspection returning "O" (the universal root Object).
 	objectValues map[string]*ObjectValue
+	// objectArrayValues stores typed object arrays (spec/10 §3.3): `new a ∈
+	// [Type](n)` allocates a fixed-length slice of *ObjectValue elements, each
+	// subsequently set by a positional write `new a[i] := <object>`. Int backed
+	// arrays/list stay in arrayValues/listValues.
+	objectArrayValues map[string][]*ObjectValue
 	// currentSelf, when non-nil, marks that the evaluator is currently executing
 	// the body of an object constructor rule (spec/06 §2/§3). Bare `new` locals
 	// declared during that window are captured as private instance members so
 	// methods can read them by name without exporting them publicly.
-	currentSelf  *ObjectValue
+	currentSelf *ObjectValue
+	// currentSuper records the direct supertype of the object constructor being
+	// executed (spec/06 §4.1), resolved from the `<: super_type` clause of the
+	// constructor's type. It lets `let self := super(...)` locate and run the
+	// parent constructor. Empty when the current type has no base.
+	currentSuper string
 	matrixValues map[string]MatrixValue
 	// steppedRanges stores SteppedRangeExpression ASTs by identifier name
 	// so that subsequent `(ident)[i]` indexing can materialise the i-th
@@ -155,23 +165,24 @@ func (e *Evaluator) debugLog(format string, a ...interface{}) {
 
 func New() *Evaluator {
 	return &Evaluator{
-		symbols:        make(map[string]int),
-		stringSymbols:  make(map[string]string),
-		arrayValues:    make(map[string][]int),
-		listValues:     make(map[string][]int),
-		setValues:      make(map[string][]int),
-		mapValues:      make(map[string]map[string]int),
-		objectValues:   make(map[string]*ObjectValue),
-		matrixValues:   make(map[string]MatrixValue),
-		steppedRanges:  make(map[string]*parser.SteppedRangeExpression),
-		identities:     make(map[string]int),
-		nextID:         1,
-		ruleRegistry:   make(map[string]*parser.RuleStatement),
-		typeRegistry:   make(map[string]*parser.TypeDeclaration),
-		boxedCells:     make(map[string]*BoxedCell),
-		closureObjects: make(map[string]*closureObject),
-		lambdaValues:   make(map[string]*parser.LambdaExpression),
-		partialValues:  make(map[string]*partialApplication),
+		symbols:           make(map[string]int),
+		stringSymbols:     make(map[string]string),
+		arrayValues:       make(map[string][]int),
+		listValues:        make(map[string][]int),
+		setValues:         make(map[string][]int),
+		mapValues:         make(map[string]map[string]int),
+		objectValues:      make(map[string]*ObjectValue),
+		objectArrayValues: make(map[string][]*ObjectValue),
+		matrixValues:      make(map[string]MatrixValue),
+		steppedRanges:     make(map[string]*parser.SteppedRangeExpression),
+		identities:        make(map[string]int),
+		nextID:            1,
+		ruleRegistry:      make(map[string]*parser.RuleStatement),
+		typeRegistry:      make(map[string]*parser.TypeDeclaration),
+		boxedCells:        make(map[string]*BoxedCell),
+		closureObjects:    make(map[string]*closureObject),
+		lambdaValues:      make(map[string]*parser.LambdaExpression),
+		partialValues:     make(map[string]*partialApplication),
 	}
 }
 
@@ -301,6 +312,23 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		// spec/03 §3.1: execute the rule for side effects, discarding results.
 		// By-reference @args are written back inside callRule before the
 		// caller's frame is restored.
+		// spec/06 §5 trait application: `apply augment(self)` applies a trait's
+		// behavior onto an existing instance (augmenting it with methods/attrs)
+		// rather than calling a scalar rule. Detect it before falling through to
+		// ordinary side-effect execution.
+		if s.Target == nil && s.Call != nil {
+			if rule, isRule := e.ruleRegistry[s.Call.Name]; isRule && isTraitRule(rule) {
+				for _, arg := range s.Call.Args {
+					if ident, isIdent := arg.(*parser.Identifier); isIdent {
+						if obj, hasObj := e.objectValues[ident.Value]; hasObj {
+							e.runTraitApplication(obj, s.Call)
+							break
+						}
+					}
+				}
+				break
+			}
+		}
 		if s.Target != nil {
 			// spec/06 §3 member dispatch: `apply obj.method` invokes the public
 			// method on the instance for its side effects; the result is discarded.
@@ -394,6 +422,40 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		}
 	case *parser.AssignmentStatement:
 		e.debugLog("EVALUATOR DEBUG: AssignmentStatement start, token lit=%q, type=%v\n", s.Token.Literal, s.Token.Type)
+		// Supertype constructor chaining (spec/06 §4.1): `let self := super(a, b)`
+		// chains the base-class constructor onto the existing instance, and
+		// `let self := {a: p1, b: p2}` re-seeds the instance's fields from a map
+		// literal. Both must be handled BEFORE the integer pre-pass so a super
+		// RHS is not mis-evaluated as a rule invocation (E0301) and a map RHS is
+		// not coerced to the int domain.
+		if len(s.Values) == 1 && len(s.Targets) == 1 {
+			if tgt, isIdent := s.Targets[0].(*parser.Identifier); isIdent && tgt.Value == "self" {
+				if obj, hasObj := e.objectValues["self"]; hasObj {
+					if call, isCall := s.Values[0].(*parser.CallExpression); isCall && call.Name == "super" {
+						e.runSuperConstructor(obj, call)
+						break
+					}
+					if ml, isMap := s.Values[0].(*parser.MapLiteral); isMap {
+						for _, pair := range ml.Pairs {
+							e.setObjectField(obj, e.evalExpression(pair.Key), pair.Value)
+						}
+						break
+					}
+				}
+			}
+			// Object member write (spec/06 §2.3 attribute overlay): a target of the
+			// form `obj.member` (`let self.c := p1 * p2`) set a single field on an
+			// existing object instance. Handled before the int pre-pass so `` b
+			// member writes on constructor-produced objects work by name.
+			if me, isMember := s.Targets[0].(*parser.MemberExpression); isMember && me.IsCall == false {
+				if id, isIdent := me.Base.(*parser.Identifier); isIdent && len(me.Parts) == 1 {
+					if obj, hasObj := e.objectValues[id.Value]; hasObj {
+						e.setObjectField(obj, me.Parts[0], s.Values[0])
+						break
+					}
+				}
+			}
+		}
 		// Pre-evaluate all RHS integer values before mutating any symbol, so a
 		// parallel assignment (`let a, b := b, a`) reads the pre-swap values.
 		// String literals/aliases and stepped ranges live in separate maps and
@@ -763,6 +825,15 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			}
 			return
 		}
+		// Positional object-array element write (spec/10 §3.3): `new a[i] :=
+		// <object>` sets the i-th (1-based) slot of an existing typed object
+		// array to an anonymous object literal.
+		if s.IndexWrite != nil {
+			if s.Value != nil {
+				e.evalObjectArrayIndexWrite(s.IndexWrite.Base, s.IndexWrite.Index, s.Value)
+			}
+			return
+		}
 		names := s.Names
 		if len(names) == 0 && s.Name != "" {
 			names = []string{s.Name}
@@ -785,6 +856,19 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			if len(s.Values) == 0 && s.Value == nil {
 				break
 			}
+		}
+		// Typed object-array declaration (spec/10 §3.3): `new a ∈ [Person](2)`
+		// allocates a fixed-length slice of *ObjectValue elements, each later
+		// populated by a positional write `new a[i] := <object>`.
+		if s.ObjectArrayElemType != "" && s.ObjectArraySize > 0 {
+			for _, name := range names {
+				e.objectArrayValues[name] = make([]*ObjectValue, s.ObjectArraySize)
+				e.ensureIdentity(name)
+			}
+			// A typed object array carries no literal value to bind here; a
+			// trailing value would be an unusual inline initialiser and is
+			// intentionally ignored for now.
+			break
 		}
 		// Multi-result deconstruction (spec/03 §2.3): when a single
 		// CallExpression is assigned to multiple names, invoke once and
@@ -1796,6 +1880,14 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 				}
 			}
 		}
+		// Object-array element member access (spec/10 §3.3): `catalog[i].age`.
+		// Numeric members yield their value; string members degenerate to 0 in
+		// int context (the string path in evalExpression handles string fields).
+		if idxExpr, isIdx := expr.Base.(*parser.IndexExpression); isIdx && !expr.IsCall {
+			if isStr, _, iVal, ok := e.readObjectArrayMember(idxExpr, expr.Parts); ok && !isStr {
+				return iVal, e.allocID()
+			}
+		}
 		// List member access: `.head` returns first element, `.tail` returns
 		// count of remaining elements (spec/10 §3.1 list operations).
 		if ident, isIdent := expr.Base.(*parser.Identifier); isIdent && len(expr.Parts) == 1 {
@@ -2230,6 +2322,12 @@ type ObjectValue struct {
 	// `obj.sum` and `apply obj.sum` dispatch to a callMethod frame. Methods are
 	// per-instance closures over the object's own dictionary.
 	methods map[string]*parser.RuleStatement
+	// supertype is the declared base-class name from the `<: super_type` clause
+	// of this instance's type (spec/06 §4.1) — e.g. a `Bar <: Foo` instance
+	// carries supertype "Foo". Empty when the type has no explicit base. It
+	// records the inheritance link so super-constructor chaining resolves the
+	// parent rule and inherited methods/members can be resolved up the chain.
+	supertype string
 	// privates captures the constructor's private-local variables (spec/06 §3):
 	// bare, non-`self.`-prefixed `new` bindings declared in the constructor body
 	// (e.g. `new sentinel := 99`). They are NOT exported as public members, so
@@ -2355,6 +2453,89 @@ func (e *Evaluator) evalObjectWrite(base string, key string, v parser.Expression
 	return true
 }
 
+// evalObjectArrayIndexWrite implements the positional object-array element
+// write `new a[i] := <object>` (spec/10 §3.3). The base must name an existing
+// typed object array; the i-th (1-based) slot receives the materialised value.
+func (e *Evaluator) evalObjectArrayIndexWrite(base string, index parser.Expression, v parser.Expression) {
+	arr, hasArr := e.objectArrayValues[base]
+	if !hasArr {
+		return
+	}
+	idx := e.evalIndexExpr(index, len(arr))
+	if idx < 1 || idx > len(arr) {
+		fmt.Fprintf(os.Stderr, "[ERROR] E1001 IndexOutOfBounds: index %d out of range 1..%d (typed object array %q)\n", idx, len(arr), base)
+		return
+	}
+	var obj *ObjectValue
+	if ml, isMap := v.(*parser.MapLiteral); isMap {
+		obj = e.mapLiteralToObject(ml)
+	} else if ident, isIdent := v.(*parser.Identifier); isIdent {
+		// Rebind an existing object: `new a[i] := other`. Only a bound anonymous
+		// object can be aliased; otherwise fall back to a numeric/string cell.
+		if existing, ok := e.objectValues[ident.Value]; ok {
+			obj = existing
+		} else {
+			obj = newObjectValue()
+			obj.set("value", objField{iVal: e.evalIntExpression(ident)})
+		}
+	} else if strLit, isStr := v.(*parser.StringLiteral); isStr {
+		obj = newObjectValue()
+		obj.set("value", objField{isStr: true, sVal: strLit.Value})
+	} else {
+		obj = newObjectValue()
+		obj.set("value", objField{iVal: e.evalIntExpression(v)})
+	}
+	arr[idx-1] = obj
+}
+
+// objectArrayElement resolves the ObjectValue stored at the 1-based index of a
+// typed object array expressed as an IndexExpression (`catalog[i]`). ok=false
+// when the base is not an object array, the index is out of bounds, or the slot
+// is still empty.
+func (e *Evaluator) objectArrayElement(idxExpr *parser.IndexExpression) (*ObjectValue, bool) {
+	ident, ok := idxExpr.Left.(*parser.Identifier)
+	if !ok {
+		return nil, false
+	}
+	arr, hasArr := e.objectArrayValues[ident.Value]
+	if !hasArr {
+		return nil, false
+	}
+	idx := e.evalIndexExpr(idxExpr.Index, len(arr))
+	if idx < 1 || idx > len(arr) {
+		return nil, false
+	}
+	obj := arr[idx-1]
+	if obj == nil {
+		return nil, false
+	}
+	return obj, true
+}
+
+// readObjectArrayMember resolves a member read on an object-array element
+// `catalog[i].a[.b]`. In the bootstrap evaluator object members hold only an
+// int or a string value (no nested-object values), so a single-part path is the
+// common case; a trailing numeric/string terminal is returned. ok=false when the
+// element or any member is unbound.
+func (e *Evaluator) readObjectArrayMember(idxExpr *parser.IndexExpression, parts []string) (isStr bool, sVal string, iVal int, ok bool) {
+	obj, hasObj := e.objectArrayElement(idxExpr)
+	if !hasObj || len(parts) == 0 {
+		return false, "", 0, false
+	}
+	part := parts[0]
+	isStr, sVal, iVal, found := obj.fieldValue(part)
+	if !found {
+		// Public method dispatch: `catalog[i].method` (spec/06 §3).
+		if method, hasMethod := obj.methods[part]; hasMethod {
+			if v, okc := e.callMethod(method, obj); okc {
+				return false, strconv.Itoa(v), v, true
+			}
+		}
+		return false, "", 0, false
+	}
+	return isStr, sVal, iVal, true
+}
+
 // setObjectField writes a heterogeneous field value onto an ObjectValue,
 // mirroring evalObjectWrite: a string literal/alias is stored as a string
 // field, anything else as an int field (spec/06 §2.2).
@@ -2382,6 +2563,14 @@ func (e *Evaluator) setObjectField(obj *ObjectValue, key string, v parser.Expres
 func (e *Evaluator) tryTypeConstructorBinding(name string, call *parser.CallExpression) bool {
 	td, ok := e.typeRegistry[call.Name]
 	if !ok {
+		return false
+	}
+	// A rule-backed type declaration (e.g. `type Bar: { a, b ∈ N, c ∈ N }` with
+	// no default values) is NOT a default-constructor template: its instances
+	// come from the matching `rule Bar(...) => (self ∈ Bar)` constructor, so a
+	// call to `Bar(...)` must fall through to rule dispatch rather than build
+	// from empty defaults.
+	if !td.HasDefaultTemplate() {
 		return false
 	}
 	obj := newObjectValue()
@@ -2415,17 +2604,32 @@ func isConstructorRule(rs *parser.RuleStatement) bool {
 }
 
 // runConstructor executes an object constructor rule (spec/06 §2): it creates
-// a fresh ObjectValue whose reported type name is the rule name, binds it as
-// `self` inside a private constructor frame, binds the positional parameters,
-// runs the constructor body (so `new self.a := a` and nested method rules take
-// effect), then restores the caller's value stores and returns the instance.
-// The returned ObjectValue is bound by the caller via bindResultValue.
+// a fresh ObjectValue whose reported type name is the rule name, resolves the
+// instance's supertype from the type registry (spec/06 §4.1), runs the
+// constructor body onto it, then returns the instance for bindResultValue.
 func (e *Evaluator) runConstructor(rs *parser.RuleStatement, call *parser.CallExpression, argVals []int) []interface{} {
 	instance := newObjectValue()
 	instance.typeName = rs.Name
+	if td, ok := e.typeRegistry[rs.Name]; ok {
+		instance.supertype = td.SuperType
+	}
+	e.execConstructorBody(rs, call, argVals, instance)
+	return []interface{}{instance}
+}
 
-	// Save the caller's full value-store frames.
+// execConstructorBody runs a constructor rule's body against a given instance
+// (spec/06 §2/−§4.1). It saves the caller's frame, opens a private constructor
+// frame, binds the instance as `self` and the positional parameters, captures
+// nested public methods onto the instance, executes the body (so `new self.a
+// := a`, `let self := super(...)`, and object writes take effect), then
+// restores the caller's frame. It is shared by runConstructor (fresh instance)
+// and runSuperConstructor (base-class constructor chained onto an existing
+// instance), so inherited attributes and methods are installed flat on the
+// concrete instance.
+func (e *Evaluator) execConstructorBody(rs *parser.RuleStatement, call *parser.CallExpression, argVals []int, instance *ObjectValue) {
+	// Save the caller's full value-store frames (including the super link).
 	savedSelf := e.currentSelf
+	savedSuper := e.currentSuper
 	savedObjects := e.objectValues
 	savedMaps := e.mapValues
 	savedSymbols := e.symbols
@@ -2455,7 +2659,15 @@ func (e *Evaluator) runConstructor(rs *parser.RuleStatement, call *parser.CallEx
 	e.continueTargetDepth = 0
 	e.loopLabelStack = nil
 
-	// Bind the instance to `self` so `new self.a := a` writes attributes.
+	// Make the current type's supertype discoverable for `let self := super(...)`.
+	if td, ok := e.typeRegistry[rs.Name]; ok {
+		e.currentSuper = td.SuperType
+	} else {
+		e.currentSuper = ""
+	}
+
+	// Bind the instance to `self` so `new self.a := a` writes attributes and a
+	// super constructor chained via runSuperConstructor sees the same instance.
 	e.objectValues["self"] = instance
 	// Mark the private-scope window (spec/06 §3): while the constructor body
 	// runs, bare `new local := ...` bindings are captured as private members.
@@ -2472,7 +2684,8 @@ func (e *Evaluator) runConstructor(rs *parser.RuleStatement, call *parser.CallEx
 	// ∈ Type) => (...)` declarations in the constructor body are exported on the
 	// instance. They are not executed for their own side effects (evalStatement
 	// ignores non-`main` rules); instead they are captured here so later
-	// dot-notation `obj.sum` / `apply obj.sum` can dispatch to them.
+	// dot-notation `obj.sum` / `apply obj.sum` can dispatch to them. Running the
+	// base constructor via runSuperConstructor installs inherited methods here.
 	for _, stmt := range rs.Body.Statements {
 		if mst, isRule := stmt.(*parser.RuleStatement); isRule && strings.HasPrefix(mst.Name, ".") && !mst.ForwardDecl && mst.Body != nil {
 			instance.methods[mst.Name[1:]] = mst
@@ -2502,8 +2715,132 @@ func (e *Evaluator) runConstructor(rs *parser.RuleStatement, call *parser.CallEx
 	e.continueTargetDepth = savedTarget
 	e.loopLabelStack = savedLoopStack
 	e.currentSelf = savedSelf
+	e.currentSuper = savedSuper
+}
 
-	return []interface{}{instance}
+// runSuperConstructor resolves and runs the base-class constructor for the
+// current type (spec/06 §4.1 super_call). `let self := super(args...)` chains
+// the parent constructor onto the existing instance: the parent's body runs in
+// a private constructor frame with the same instance bound as `self`, so its
+// attribute writes (`new self.a := a` / `let self := {map}`) and method captures
+// land on the concrete child instance. The parent is looked up as a constructor
+// rule registered under the current type's supertype name.
+func (e *Evaluator) runSuperConstructor(instance *ObjectValue, call *parser.CallExpression) {
+	superType := e.currentSuper
+	parentRule, ok := e.ruleRegistry[superType]
+	if !ok || !isConstructorRule(parentRule) {
+		return
+	}
+	argVals := make([]int, len(call.Args))
+	for i, arg := range call.Args {
+		argVals[i] = e.evalIntExpression(arg)
+	}
+	e.execConstructorBody(parentRule, call, argVals, instance)
+}
+
+// runTraitApplication applies a trait (augment) rule to an existing instance
+// (spec/06 §5 composition & traits): `apply Trait(obj)` runs the trait rule's
+// body in a private frame with the instance bound as `self`, and captures the
+// trait's nested public `rule .method` definitions onto the instance so they
+// become callable via dot-notation. This is the horizontal-reuse counterpart to
+// constructor rules: a trait contributes behavior without owning the object.
+func (e *Evaluator) runTraitApplication(instance *ObjectValue, call *parser.CallExpression) {
+	rule, ok := e.ruleRegistry[call.Name]
+	if !ok || rule.ForwardDecl || rule.Body == nil || instance == nil {
+		return
+	}
+
+	savedSelf := e.currentSelf
+	savedObjects := e.objectValues
+	savedMaps := e.mapValues
+	savedSymbols := e.symbols
+	savedStrings := e.stringSymbols
+	savedArrays := e.arrayValues
+	savedLists := e.listValues
+	savedSets := e.setValues
+	savedMatrix := e.matrixValues
+	savedBoxed := e.boxedCells
+	savedExiting := e.exitingRule
+	savedContinue := e.continueCycle
+	savedTarget := e.continueTargetDepth
+	savedLoopStack := e.loopLabelStack
+
+	e.symbols = make(map[string]int)
+	e.stringSymbols = make(map[string]string)
+	e.arrayValues = make(map[string][]int)
+	e.listValues = make(map[string][]int)
+	e.setValues = make(map[string][]int)
+	e.matrixValues = make(map[string]MatrixValue)
+	e.mapValues = make(map[string]map[string]int)
+	e.objectValues = make(map[string]*ObjectValue)
+	e.boxedCells = make(map[string]*BoxedCell)
+	e.exitingRule = false
+	e.continueCycle = false
+	e.continueTargetDepth = 0
+	e.loopLabelStack = nil
+
+	// Bind the instance as `self` so trait bodies reading `self.attr` resolve
+	// against the receiver, matching callMethod's receiver binding.
+	e.objectValues["self"] = instance
+	e.currentSelf = instance
+
+	// Bind positional trait parameters after `self` by index.
+	for i, param := range rule.Params {
+		if i < len(call.Args) && param != "self" {
+			if ident, isIdent := call.Args[i].(*parser.Identifier); isIdent && ident.Value == "self" {
+				continue
+			}
+			e.symbols[param] = e.evalIntExpression(call.Args[i])
+		}
+	}
+
+	// Capture the trait's nested public methods onto the instance (spec/06 §5):
+	// `rule .double(self ∈ Object) => (...)` inside the augment body becomes a
+	// callable member of every object the trait is applied to.
+	for _, stmt := range rule.Body.Statements {
+		if mst, isRule := stmt.(*parser.RuleStatement); isRule && strings.HasPrefix(mst.Name, ".") && !mst.ForwardDecl && mst.Body != nil {
+			instance.methods[mst.Name[1:]] = mst
+		}
+	}
+
+	// Execute the trait body.
+	for _, stmt := range rule.Body.Statements {
+		if e.exitingRule {
+			break
+		}
+		e.evalStatement(stmt)
+	}
+
+	e.objectValues = savedObjects
+	e.mapValues = savedMaps
+	e.symbols = savedSymbols
+	e.stringSymbols = savedStrings
+	e.arrayValues = savedArrays
+	e.listValues = savedLists
+	e.setValues = savedSets
+	e.matrixValues = savedMatrix
+	e.boxedCells = savedBoxed
+	e.exitingRule = savedExiting
+	e.continueCycle = savedContinue
+	e.continueTargetDepth = savedTarget
+	e.loopLabelStack = savedLoopStack
+	e.currentSelf = savedSelf
+}
+
+// isTraitRule reports whether a rule behaves as a trait/augment (spec/06 §5):
+// a non-constructor rule whose body defines at least one nested public
+// `rule .method` definition. Such rules are applied to an instance with
+// `apply Trait(obj)` rather than executed for a scalar result.
+func isTraitRule(rs *parser.RuleStatement) bool {
+	if rs == nil || rs.ForwardDecl || rs.Body == nil || isConstructorRule(rs) {
+		return false
+	}
+	for _, stmt := range rs.Body.Statements {
+		if mst, isRule := stmt.(*parser.RuleStatement); isRule && strings.HasPrefix(mst.Name, ".") && !mst.ForwardDecl && mst.Body != nil {
+			return true
+		}
+	}
+	return false
 }
 
 // callMethod executes a public object method (spec/06 §3): a nested `rule
@@ -2817,6 +3154,13 @@ func (e *Evaluator) typeNameRef(name string) (string, bool) {
 	if _, ok := e.typeRegistry[name]; ok {
 		return name, true
 	}
+	// A rule that is an object constructor (its single declared result is
+	// bound to `self`, e.g. `rule Foo(a, b ∈ N) => (self ∈ Foo):`) also
+	// designates a type: an instance produced via `Foo(...)` reports
+	// typeName "Foo" (spec/06 §2), so `x is Foo` is a type-membership test.
+	if rs, ok := e.ruleRegistry[name]; ok && isConstructorRule(rs) {
+		return name, true
+	}
 	return "", false
 }
 
@@ -2840,6 +3184,12 @@ func (e *Evaluator) isStringExpr(node parser.Expression) bool {
 			if obj, hasObj := e.objectValues[ident.Value]; hasObj {
 				isStr, _, _, found := obj.fieldValue(expr.Parts[0])
 				return found && isStr
+			}
+		}
+		// `catalog[i].field` where the array element member is a string value.
+		if idxExpr, isIdx := expr.Base.(*parser.IndexExpression); isIdx && len(expr.Parts) == 1 {
+			if isStr, _, _, found := e.readObjectArrayMember(idxExpr, expr.Parts); found && isStr {
+				return true
 			}
 		}
 	case *parser.IndexExpression:
@@ -2998,6 +3348,17 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 		// `expr.type()` introspection (spec/06 §1) returns the type-name string.
 		if expr.IsCall && len(expr.Parts) == 1 && expr.Parts[0] == "type" {
 			return e.typeName(expr.Base)
+		}
+		// Member access on a typed object-array element (spec/10 §3.3):
+		// `catalog[i].name` (string member) or `catalog[i].age` (int member).
+		if idxExpr, isIdx := expr.Base.(*parser.IndexExpression); isIdx && !expr.IsCall {
+			if isStr, sVal, iVal, ok := e.readObjectArrayMember(idxExpr, expr.Parts); ok {
+				if isStr {
+					return sVal
+				}
+				return strconv.Itoa(iVal)
+			}
+			return "0"
 		}
 		if ident, isIdent := expr.Base.(*parser.Identifier); isIdent && len(expr.Parts) == 1 && !expr.IsCall {
 			// Anonymous object attribute (spec/06 §2.2): `obj.field`.

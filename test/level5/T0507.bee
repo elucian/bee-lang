@@ -17,7 +17,7 @@ type Bar: {a, b ∈ N, c ∈ N} <: Foo;
 rule Bar(p1, p2 ∈ N) => (self ∈ Bar):
   -- chain the supertype constructor
   let self := super(p1, p2);
-  new self.c := p1 * p2;
+  let self.c := p1 * p2;
 return;
 
 rule main:
@@ -37,5 +37,3 @@ state initialized via `super(...)`; methods inherited and
 overridden.
 -----------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
--- @DISABLED: `type Foo <: Bar` subtype chain and `super(...)` are not
--- implemented in the evaluator.

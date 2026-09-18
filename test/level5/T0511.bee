@@ -3,14 +3,14 @@
 ------------------------------------------------+
 type Node: {
   data ∈ Z,
-  next ∈ Node
+  next ∈ Node?
 } <: Object;
 
 rule main:
   -- build a 3-node chain using anonymous objects
   new n1 := {data: 1, next: n2};
   new n2 := {data: 2, next: n3};
-  new n3 := {data: 3, next: 0};
+  new n3 := {data: 3, next: None};
 
   -- walk the chain via dot access
   expect n1.data = 1;

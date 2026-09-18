@@ -1,7 +1,7 @@
 +-----------------------------------------------------------
 -- @DESC: object constructor rule with public members (O4)
 -----------------------------------------------------------+
-rule Foo(a, b ∈ N) => (self ∈ Object):
+rule Foo(a, b ∈ N) => (self ∈ Foo):
   -- public properties (self. prefix)
   new self.a := a;
   new self.b := b;
@@ -17,7 +17,7 @@ rule main:
 
   -- the instance type matches the constructor name
   expect type(test) = "Foo";
-  expect test is Object;
+  expect test is Foo;
 return;
 
 +------------------------------------------------------------

@@ -13,15 +13,21 @@ elif [ "$COMMAND" = "clean" ] || [ "$COMMAND" = "clan" ]; then
     echo "Cleaning test outputs and telemetry..."
     python clean.py
 elif [ "$COMMAND" = "test" ]; then
-    # Clean test status before running tests
-    python clean.py
-    
-    if [ -n "$TARGET" ]; then
-        echo "Running test suite for $TARGET..."
-        python test/test.py "$TARGET"
+    if [ -n "$TARGET" ] && [ "${TARGET#level}" = "$TARGET" ]; then
+        # A bare test-case name (e.g. T0504), not a level: route to the single
+        # test runner WITHOUT wiping test/status, test/output or .temp.
+        echo "Running single test $TARGET..."
+        python test/solo.py "$TARGET"
     else
-        echo "Running complete test pipeline..."
-        python test/test.py
+        # A level (levelX) or no target: clean test status before running tests.
+        python clean.py
+        if [ -n "$TARGET" ]; then
+            echo "Running test suite for $TARGET..."
+            python test/test.py "$TARGET"
+        else
+            echo "Running complete test pipeline..."
+            python test/test.py
+        fi
     fi
 elif [ "$COMMAND" = "check" ]; then
     if [ -n "$TARGET" ]; then
