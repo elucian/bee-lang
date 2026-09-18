@@ -1,0 +1,26 @@
+-- @DESC: abstract type and forward method signature (O8)
+-- @AI: No - self-sufficient assertion test
+-- spec/06-objects.md §4.2 / tutorial/objects.html "Abstraction": an abstract
+-- constructor carries forward-only method signatures with no body; a concrete
+-- derived type MUST override every abstract method (else E0601).
+-- ⚠ @DISABLED: abstract forward signatures and `∈ Type <: Base` are not
+-- implemented in the evaluator.
+-- @DISABLED
+rule Shape() => (self ∈ Shape):
+  -- abstract signature, no body
+  rule .area(self ∈ Shape) => (a ∈ N);
+return;
+
+rule Circle(radius ∈ N) => (self ∈ Circle <: Shape):
+  new self.r := radius;
+
+  -- concrete override of the abstract method
+  rule .area(self ∈ Circle) => (a ∈ N):
+    let a := 3 * self.r;
+  return;
+return;
+
+rule main:
+  new c := Circle(4);
+  expect c.area = 12;
+return;

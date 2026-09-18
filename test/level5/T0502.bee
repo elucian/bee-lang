@@ -1,0 +1,18 @@
+-- @DESC: object attribute mutation and equality (O2)
+-- @AI: No - self-sufficient assertion test
+-- spec/06-objects.md §2.2 / §3: object attributes are (key : value) pairs that
+-- can be set after instantiation and checked via structural equality.
+rule main:
+  -- empty object, then enhance
+  new object := {};
+
+  new object.a1 := 1;
+  new object.a2 := 2;
+
+  expect object = {a1: 1, a2: 2};
+
+  -- dynamic key removal (spec/06 §6 member_access index form)
+  zap object["a1"];
+
+  expect object = {a2: 2};
+return;

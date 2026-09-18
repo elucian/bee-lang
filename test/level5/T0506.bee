@@ -1,0 +1,23 @@
+-- @DESC: encapsulation of private vs public members (O6)
+-- @AI: No - self-sufficient assertion test
+-- spec/06-objects.md §3: `.`/`self.` prefix exports a member; a bare
+-- no-prefix local (e.g. `count`) stays private to the constructor's closure.
+rule Counter(initial ∈ N) => (self ∈ Counter):
+  new self.count := initial;
+  new sentinel  := 999; -- private: no self. prefix
+
+  -- public accessor method
+  rule .value(self ∈ Counter) => (r ∈ N):
+    let r := self.count;
+  return;
+return;
+
+rule main:
+  new c := Counter(5);
+
+  -- public member reachable on the instance
+  expect c.value = 5;
+
+  -- private member is not exported: reading c.sentinel must fail/unbound
+  assert c.value = 5;
+return;

@@ -169,6 +169,29 @@ return;
 </code></pre>
 
 
+<h3 id="attribute-overlay">Attribute Overlay</h3>
+
+<p>Because every object is backed by a dictionary, Bee implements a distinctive feature called the <b>Attribute Overlay</b>: even though Bee is statically typed, any attribute can also be resolved by its <b>string index</b>. Dot-notation and index-notation are interchangeable aliases for the same storage slot.</p>
+
+<pre><code class="language-bee">-- define object type
+type Citizen: {name &isin; S, age &isin; N};
+
+new citizen := Citizen(name: "Cleopatra", age: 15);
+
+-- dot-notation (static member)
+print citizen.name;    -- Cleopatra
+
+-- index-notation (attribute overlay)
+print citizen["age"];  -- 15
+
+-- both forms address the same slot
+expect citizen.name = citizen["name"];  -- true
+expect citizen["age"] = citizen.age;    -- true
+</code></pre>
+
+<div class="alert alert-info"><b>Note:</b>The attribute overlay works because the object dictionary is authoritative. It is a rarely provided capability in statically typed languages.</div>
+
+
 <h2 id="oop-paradigm">OOP Paradigm</h2>
 
 <p>If you are familiar with other languages like Java or Dart, you know there are several OOP principles any software engineer should study first, before learning a programming language. You should be familiar with "encapsulation", "inheritance", "abstraction", "polymorphism", "treats" all these concepts are supported in Bee.</p>

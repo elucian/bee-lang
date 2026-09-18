@@ -1,0 +1,18 @@
+-- @DESC: array of objects with dot member access (O10)
+-- @AI: No - self-sufficient assertion test
+-- tutorial/objects.html "Array of Objects": an array of typed objects, elements
+-- accessed with `catalog[i].member` after positional JSON-literal assignment.
+type Person: {name ∈ S, age ∈ N} <: Object;
+
+rule main:
+  -- array of 2 persons (1-based indexing, Decision 1)
+  new catalog ∈ [Person](2);
+
+  -- store JSON literals
+  new catalog[1] := {name: "Cleopatra", age: 15};
+  new catalog[2] := {name: "Martin", age: 17};
+
+  -- member access on array elements
+  expect catalog[1].name = "Cleopatra";
+  expect catalog[2].age  = 17;
+return;

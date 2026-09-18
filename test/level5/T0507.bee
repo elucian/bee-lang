@@ -1,0 +1,35 @@
+-- @DESC: subtype inheritance with super constructor chain (O7)
+-- @AI: No - self-sufficient assertion test
+-- spec/06-objects.md §4.1: derived type `<: SuperType`, base state initialized
+-- via `super(...)`; methods inherited and overridden.
+-- ⚠ @DISABLED: `type Foo <: Bar` subtype chain and `super(...)` are not
+-- implemented in the evaluator.
+-- @DISABLED
+type Foo: {a, b ∈ N} <: Object;
+
+rule Foo(p1, p2 ∈ N) => (self ∈ Foo):
+  let self := {a: p1, b: p2};
+
+  rule .sum(self ∈ Foo) => (r ∈ N):
+    let r := self.a + self.b;
+  return;
+return;
+
+type Bar: {a, b ∈ N, c ∈ N} <: Foo;
+
+rule Bar(p1, p2 ∈ N) => (self ∈ Bar):
+  -- chain the supertype constructor
+  let self := super(p1, p2);
+  new self.c := p1 * p2;
+return;
+
+rule main:
+  new bar := Bar(3, 4);
+
+  -- inherited attributes + extra attribute
+  expect bar.b = 4;
+  expect bar.c = 12;
+
+  -- inherited method
+  expect bar.sum = 7;
+return;

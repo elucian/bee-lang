@@ -462,7 +462,7 @@ return;
 
 <h3 id="trial">Error Handling</h3>
 
-<p>The <em>trial</em> is by far the most complex statement of Bee language. A trial block is used to handle a process that can have multiple steps that can pass or fail. It has a default block, several try blocks and multiple case blocks. Each case can resolve one error or several errors.</p>
+<p>The <em>trial</em> is the most complex control statement of Bee language. A trial block is used to handle a process that can have multiple fail cases. It has a variable scope, a try blocks and multiple case blocks. Each case can resolve one error or several error types enumerated by comma. A trial is a error protection control statement similar to "try" in other languages with difference that it has it's own data scope and a label.</p>
 
 <div class="text-center">
   <img src="/projects/bee/img/bee-trial.svg" alt="trial" width="480" class="img-fluid protect rounded shadow border" >
@@ -487,7 +487,7 @@ return;
 </thead>
 <tbody>
 <tr><td>trial</td><td>start a process that may fail</td></tr>
-<tr><td>try</td><td>start a step in the process</td></tr>
+<tr><td>try</td><td>start a protected data processing code block</td></tr>
 <tr><td>case </td><td>catch errors with specific code or code range</td></tr>
 <tr><td>other</td><td>catch all other errors not fixed by a patch</td></tr>
 <tr><td>final</td><td>finalization region, executed before trial end</td></tr>
@@ -496,39 +496,24 @@ return;
 
 
 <h4>Pattern:</h4>
-<pre><code class="language-bee">#complex trial with many cases
-trial [label]:
+<pre><code class="language-bee">
+-- complex trial with many cases of failure
+trial [label][:]
     -- initial or default statements
     ....
-    -- preconditions: create recoverable error
+    -- preconditions: unrecoverable error
     expect condition else "message";
     ...
-try [code1]: -- description
+try
+    -- protected block start here
     ...
-    -- jump to next try (no error)
-    pass if condition;
-        ...
-    -- record error, and jump to next try
-    fail {code, message} if condition;
-    ...
-    -- create error, and jump to cases
-    raise {code, message} if condition;
-    ...
-try [code2]: -- description
-    ...
-    -- skip the rest (no error) and jump to final
-    pass if condition;
-
-    -- optional create error and jump to final
-    fail {code, message} if condition;
-    ...
-    -- create error and jump to cases
+    -- create recoverable error
     raise {code, message} if condition;
     ...
 case $error.code = code do
     -- handler1
     ...
-    resume; -- continue with next try
+    resume; -- continue with next statement
 case $error.code &isin; (code1,code2) do
     -- handler2
     ...
@@ -547,40 +532,56 @@ done [label];
 <h4>Note:</h4>
 <ul>
 <li>It is unusual to create nested trial blocks;</li>
-<li>A trial can contain many try blocks that are optional;</li>
-<li>A trial can have many case blocks that are also optional;</li>
+<li>The trial region ;</li>
+<li>A trial can have optional label and optional scope if : is used,</li>
+<li>Anonymous trial that have no ":" do not have local scope</li>
+<li>A trial can have many case blocks that are  optional;</li>
 <li>A trial can have one miss block and one final block;</li>
 <li>A trial can be repeated several times if errors are raised;</li>
 <li>A trial can stop execution of a rule with error if error raised;</li>
+<li>Error raised before keyword "try" are not analyzed by cases and propagate immediately</li>
 </ul>
 
 <h4>Exceptions</h4>
 
-<p>Exceptions can be defined in your program using next notation. Exceptions and recoverable errors are using the same type. You can predefine exceptions/errors or issue them with one of: (expect, raise):</p>
+<p>Exceptions are objects of type Error. Can be defined in your program or can be system predefined exceptions. Exceptions are recoverable errors when handled in a "case" block. Exception can propagate from inner rules to outer rules. You can predefine exceptions/errors and issue them with raise. Keyword expect and assert can only create system standard exceptions not customized exceptions.</p>
 
 <pre class="language-bee">-- define error
-new exception := {code,"message"} &isin; X;
+new exception := {code,"message"} &isin; Error;
 </pre>
 
-<p>Recoverable errors can be issued using "raise" keyword.</p>
+<p>Recoverable errors with code and message can be issued using "raise" keyword.</p>
+
 <pre><code class="language-bee">-- "raise" can create a customized error or message
-raise exception   if condition; -- create an error that is predefined
-raise "message"   if condition; -- create instant user error code: 200
-raise {code,"message"} if condition; -- create instant custom error with code
+raise {code,"message"} [if condition]; 
 </code></pre>
 
+<p>Using "expect" you create recoverable exceptions with a specific error code and standard message</p>
 
-<p><b>Note:</b>&nbsp;The standard module will define standard <em>error objects</em> as system constants. Code 100, 101, 102 are user errors, created by raise, expect or fail keywords.</p>
+<pre><code>
+-- next statement create an "unexpected" exception if condition is true
+expect condition; -- Unexpected error in line &lt;n&gt;
+</code></pre>
 
-<h4>try()</h4>
+<p>Using "assert" you create soft exceptions, (warnings) with a specific error code and standard message</p>
+
+
+<p><b>Note:</b>&nbsp;The standard module will define standard <em>Error objects</em> as system constants. Code 100, 101, 102 are user errors, created by raise, expect or assert keywords.</p>
+
+<h4>trial keyword</h4>
+
+<p>The trial keyword define the block of code required for exception handling. After keyword trial we define a label and we use ":" to start a declaration region. The declaration region can be anonymous if there is no label. If ":" are missing, next keyword must be "try". In this case, local scope is gone. The trial data scope end with keyword "done". 
+</p>
+
+<h4>try keyword</h4>
 
 <p>A trial can have several optional jobs. Each jon start with keyword try() that has 2 optional arguments: try(code, message). Every try can pass or fail with a code and a message.</p>
 
 <p>You can use raise or abort inside a try() block. The raise will mark the try as failed and will record the code and message in the $trial report.</p>
 
-<h4>case</h4>
+<h4>case keyword</h4>
 
-<p>This region can catch an error and decide what to do next. Error can be catch by code or a list of codes. For each cases you can handle the errors using keywords: "abort","retry","resume" or "raise". If a case is not using any of these keywords, the next case is executed. If no case resolve the error, this error auto-propagate.</p>
+<p>A case create a region of code that can catch an error and decide what to do next. Error can be identified by code or a by a list of codes. For each cases can handle errors using keywords: "abort","retry","resume" or "raise". If a case is not using any of these keywords, the next case is executed. If no case resolve the error, the error auto-propagate to outer scope.</p>
 
 <h4>Transfer Statements</h4>
 
@@ -595,38 +596,34 @@ raise {code,"message"} if condition; -- create instant custom error with code
 <tbody>
 <tr>
 <td>abort</td>
-<td>stop the trial and transfer execution to final block</td>
+<td>stop the trial without exception and transfer execution to final block</td>
 </tr>
 <tr>
 <td>raise</td>
-<td>interrupt current job and create a recoverable error</td>
+<td>interrupt current trial and create a recoverable error</td>
 </tr>
 <tr>
-<td>fail</td>
-<td>record an error and continue with next step</td>
-</tr>
-<tr>
-<td>pass</td>
-<td>skip current job and continue with next step</td>
+<td>exit</td>
+<td>stop current trial and do not execute the final block, return control to calling rule</td>
 </tr>
 <tr>
 <td>retry</td>
-<td>exception handler, repeat the trial</td>
+<td>exception handler, repeat the trial from try keyword not from the beginning</td>
 </tr>
 <tr>
 <td>resume</td>
-<td>exception handler, jump to next try job</td>
+<td>exception handler, jump to next statement after the one that failed</td>
 </tr>
 </tbody>
 </table>
 
-<h4>other</h4>
+<h4>other region</h4>
 <p>This region is used for any other error that is not handled by <em>case</em> handlers. You can use any selector in this region to find an exceptions by code but you can also just report the error or log the error and stop the trial.</p>
 
-<h4>final</h4>
-<p>This region is executed just before trial is done, regardless of error status. Even if there is no error to propagate this region is still executed. This region is mandatory execute even if the trial is aborted.</p>
+<h4>final region</h4>
+<p>This region is executed just before trial is done, regardless of error status. Even if there is no error to propagate this region is yet executed. This region is mandatory execute even if the trial is aborted but not if the "exit" statement is issued. Exit bypass the final region.</p>
 
-<p>In this region there is an opportunity to report all messages recorded in $trial object. You can use $trial.messages that is a hash-map created by the system automatically.</p>
+<p>In the "final" region there is an opportunity to report all messages recorded in $trial object, including assert, raise, expect exceptions. You can use $trial.messages that is a hash-map created by the system automatically. On exit, the $trial.messages collection is zap automatically and you loose access to messages.</p>
 
 <p>In final block:</p>
 
@@ -642,23 +639,24 @@ raise {code,"message"} if condition; -- create instant custom error with code
 trial:
     new x &isin; Q;
     new y &isin; Q;
-try()
+try
     let x := 1/0;
 final
     print "x = " + x;
     print $error.message if $error.code ¬ 0;
+    print $trial.messages;
 done;
 </code></pre>
 
 
-<h4>raise:</h4>
+<h4>raise example</h4>
 
 <p>In this example we use "raise" statement to create an error on purpose:</p>
 
 <pre><code class="language-bee">-- define a custom error
 trial:
   new my_error:{200, "custom error"} &lt;: Error;
-try()
+try
   raise my_error; -- issue user error
 case $error.code = 200 do
   -- we catch the the error and do something
@@ -672,30 +670,33 @@ done;
 <h4>Notes:</h4>
 <ul>
 <li>Keywords {abort, raise, retry, resume} can resolve an error;</li>
-<li>In this case the error 200 is not handled and propagate;</li>
-<li>The other region will be executed for all errors;</li>
+<li>In this example the error 200 is not handled and propagate;</li>
+<li>The other region will be executed for all errors that are not handled by cases;</li>
 </ul>
 
-<h4>retry:</h4>
+<h4>retry keyword:</h4>
 
-<p>By using <em> "retry"</em>  you can repeat a trial several times until other ending conditions are encounter. You can issue "retry" from case blocks for specific errors.</p>
+<p>By using <em> "retry"</em>  you can repeat a trial several times until other ending conditions are encounter. You can issue "retry" from case blocks for specific errors. There is a danger if the error is the same, the trial can repeat infinitely. In this case system maximum loop protection can be in place for compiler protection.</p>
+
+
+<p><b>Input example</b></p>
 
 <pre><code class="language-bee">-- example of repeating trial
 -- try maximum 3 times
 trial [name]:
     new count &isin; (1..3);
     new a &isin; (0..9);
-try()
+try
     let count += 1;
-    read a;
+    write "enter a number:"; read a;
     if  a &lt; 0 do -- trigger patch
-      fail;
+      raise;
     else if a &lt; 9 do
       write "correct";
     else if  a &gt; 9 do
       write "incorrect";
     else
-      pass;
+      pass; -- does nothing
     done;
 case $out_of_range do
     if count &lt; 3 do

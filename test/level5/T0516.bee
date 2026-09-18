@@ -1,0 +1,41 @@
+-- @DESC: producer-consumer parallel pattern (C5)
+-- @AI: No - self-sufficient assertion test
+-- spec/12-concurrency.md §5 / tutorial/objects.html "Producer consumer":
+-- a producer dispatches work items and consumers resolve tasks; the parent
+-- stays busy via a shared queue while workers reduce into it.
+-- ⚠ @DISABLED: coroutines, `begin`, `+>` and `wait` are not implemented.
+-- @DISABLED
+-- producer: dispatches integers 1..n into the queue
+rule producer(n ∈ N) => (r ∈ N):
+  for i ∈ (1..n) do
+    yield i; -- enqueue one item
+  done;
+  let r := 0; -- signal end of stream
+return;
+
+-- consumer: squares one item
+rule consumer(x ∈ N) => (y ∈ N):
+  let y := x * x;
+return;
+
+rule main:
+  new acc ∈ N := 0;
+  new item ∈ N := 1;
+
+  begin producer(5);
+
+  while item > 0 do
+    yield item << producer; -- pump one item
+    if item > 0 then
+      begin consumer(item) +> collect;
+    end;
+    -- accumulate
+    new sq ∈ N := item * item;
+    let acc += sq;
+  done;
+
+  wait;
+
+  -- expected: 1 + 4 + 9 + 16 + 25 = 55
+  expect acc = 55;
+return;

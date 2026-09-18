@@ -1,0 +1,23 @@
+-- @DESC: trait composition with apply augmentation (O9)
+-- @AI: No - self-sufficient assertion test
+-- spec/06-objects.md §5: reusable behavior composed via `+` and `apply Trait`.
+-- ⚠ @DISABLED: trait application/`+ Trait` type composition is not implemented
+-- in the evaluator.
+-- @DISABLED
+-- trait rule: augments an object with a .log method
+rule augment(self ∈ Object):
+  rule .double(self ∈ Object) => (r ∈ N):
+    let r := 2 * self.n;
+  return;
+return;
+
+-- augmented type: Foo + augment
+rule Foo(n ∈ N) => (self ∈ Foo + augment):
+  new self.n := n;
+  apply augment(self);
+return;
+
+rule main:
+  new bar := Foo(5);
+  expect bar.double = 10;
+return;

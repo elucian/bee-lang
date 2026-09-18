@@ -1,0 +1,21 @@
+-- @DESC: object constructor rule with public members (O4)
+-- @AI: No - self-sufficient assertion test
+-- spec/06-objects.md §2.1 / tutorial/objects.html "Object constructor":
+-- a constructor rule binds its result to `self` and exports `.member`s.
+rule Foo(a, b ∈ N) => (self ∈ Foo):
+  -- public properties (self. prefix)
+  new self.a := a;
+  new self.b := b;
+return;
+
+rule main:
+  -- instantiation dispatches through the constructor
+  new test := Foo(1, 2);
+
+  -- verify exported attributes
+  expect test.a = 1;
+  expect test.b = 2;
+
+  -- the instance type matches the constructor name
+  expect test.type() = "Foo";
+return;

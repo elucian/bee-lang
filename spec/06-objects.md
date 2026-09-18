@@ -58,6 +58,39 @@ print obj["age"];   -- Index-notation: 15
 zap obj["age"];
 ```
 
+### 2.3 Attribute Overlay (String-Indexed Static Members)
+
+Bee is a statically typed language, yet it implements an **Attribute Overlay**:
+every object — including instances of statically-declared `type`s and anonymous
+JSON literals — is backed by a runtime dictionary. The overlay layer enables any
+attribute to be resolved by its **string index**, so dot-notation and
+index-notation are interchangeable aliases over the same storage slot:
+
+$$\text{instance}.\text{name} \equiv \text{instance}["\text{name}"]$$
+
+```bee
+-- statically declared type
+type Citizen: {name ∈ S, age ∈ N};
+
+new citizen := Citizen(name: "Cleopatra", age: 15);
+
+-- dot-notation (typed, static member)
+print citizen.name;     -- "Cleopatra"
+
+-- index-notation (attribute overlay by string key)
+print citizen["age"];   -- 15
+
+-- both forms address the identical slot
+expect citizen.name = citizen["name"];   -- true
+expect citizen["age"] = citizen.age;     -- true
+```
+
+Because the object dictionary backing is authoritative, the overlay works in
+both directions: writing `citizen["age"] := 16` is equivalent to writing
+`citizen.age := 16`, and a missing key raises `E0605 UnknownMemberKey`
+regardless of which notation is used. The overlay is a distinctive Bee feature,
+rarely found in other statically typed languages.
+
 ---
 
 ## 3. Encapsulation & Member Visibility

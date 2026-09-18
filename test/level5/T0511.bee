@@ -1,0 +1,20 @@
+-- @DESC: recursive node object structure (O11)
+-- @AI: No - self-sufficient assertion test
+-- tutorial/objects.html "Recursive Structures": a type referencing another
+-- instance of itself to form a tree / linked list.
+type Node: {
+  data ∈ Z,
+  next ∈ Node
+} <: Object;
+
+rule main:
+  -- build a 3-node chain using anonymous objects
+  new n1 := {data: 1, next: n2};
+  new n2 := {data: 2, next: n3};
+  new n3 := {data: 3, next: 0};
+
+  -- walk the chain via dot access
+  expect n1.data = 1;
+  expect n1.next.data = 2;
+  expect n1.next.next.data = 3;
+return;

@@ -1,5 +1,18 @@
--- @DESC: File I/O operations test
+-- @DESC: anonymous object via JSON literal and member access (O1)
+-- @AI: No - self-sufficient assertion test
+-- spec/06-objects.md §2.2: anonymous object instantiation via JSON literal;
+-- members read with dot-notation `.name` and index-notation `["age"]`.
 rule main:
-  new filename := "test.txt";
-  print filename;
+  -- anonymous object
+  new obj := {name: "Cleopatra", age: 15};
+
+  -- dot-notation member access
+  expect obj.name = "Cleopatra";
+
+  -- index-notation member access
+  expect obj["age"] = 15;
+  expect obj.age = 15;
+
+  -- introspect the universal root type
+  expect type(obj) = O;
 return;

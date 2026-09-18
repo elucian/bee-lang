@@ -1,0 +1,23 @@
+-- @DESC: public method definition and apply invocation (O5)
+-- @AI: Yes - .log uses print, output is asserted via return
+-- spec/06-objects.md §3: methods `.name(self ∈ Type)` exported on the instance
+-- are invoked via `apply instance.method`.
+rule Foo(a, b ∈ N) => (self ∈ Foo):
+  new self.a := a;
+  new self.b := b;
+
+  -- public method
+  rule .sum(self ∈ Foo) => (r ∈ N):
+    let r := self.a + self.b;
+  return;
+return;
+
+rule main:
+  new test := Foo(3, 4);
+
+  -- apply the public method via the returned object
+  apply test.sum;
+
+  -- method result must equal the sum of the attributes
+  expect test.sum = 7;
+return;
