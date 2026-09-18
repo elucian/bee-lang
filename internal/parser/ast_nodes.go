@@ -106,10 +106,51 @@ type DeclarationStatement struct {
 	// a matrix (2D) or an n-D tensor; Nil for non-matrix declarations. A
 	// single integer `[Z](n)` is a fixed-size array, not a tensor.
 	MatrixDims []int
+	// ObjectWrite marks this declaration as an object attribute-overlay write:
+	// `new obj.member := val` or `new obj["key"] := val` (spec/06 §2.3). The base
+	// object must already be bound; this statement adds or updates one member on
+	// it rather than declaring a new identifier. Dot-notation and index-notation
+	// alias the same storage slot.
+	ObjectWrite *ObjectTarget
+}
+
+// ObjectTarget names the receiver object and member key for an attribute-overlay
+// write/removal. Dot-notation (`obj.field`) and index-notation (`obj["key"]`)
+// resolve to the same storage slot (spec/06 §2.3); Key is the raw member string.
+type ObjectTarget struct {
+	Base string // receiver object identifier
+	Key  string // member key (from dot or index notation)
 }
 
 func (ds *DeclarationStatement) statementNode() {}
 func (ds *DeclarationStatement) Pos() token.Pos { return ds.Token.Pos }
+
+// TypeDeclaration implements a custom-type declaration with a default
+// constructor body (spec/06-objects.md §6 object_type):
+//
+//	type T: { a1: 10, a2: 5 };
+//
+// Name is the declared type identifier; Props is the ordered list of
+// (key, default-expression) pairs parsed from the JSON-literal body. The
+// declaration registers type T so that invoking `T(...)` in `new obj := T(...)`
+// builds an object: every prop defaults to its declared value unless the
+// call overrides it positionally (in Props order) or by name.
+type TypeDeclaration struct {
+	Token token.Token
+	Name  string
+	Props []TypeProp
+}
+
+func (td *TypeDeclaration) statementNode() {}
+func (td *TypeDeclaration) Pos() token.Pos { return td.Token.Pos }
+
+// TypeProp is a single `key: default_expr` member in a type declaration's
+// constructor body. Key is the member name; Default is the default value
+// expression used when a constructed instance does not override it.
+type TypeProp struct {
+	Key     string
+	Default Expression
+}
 
 type Identifier struct {
 	Token token.Token
@@ -299,6 +340,10 @@ func (as *ApplyStatement) Pos() token.Pos { return as.Token.Pos }
 type ZapStatement struct {
 	Token token.Token
 	Name  string
+	// Target holds the member-access/index expression for object/map member
+	// removal: `zap object.field`, `zap obj["key"]`, `zap map["key"]`
+	// (spec/06 §2.3). When nil, Name specifies a plain identifier to deallocate.
+	Target Expression
 }
 
 func (zs *ZapStatement) statementNode() {}
@@ -522,6 +567,11 @@ type CallExpression struct {
 	Token token.Token
 	Name  string
 	Args  []Expression
+	// NamedArgs preserves `name: value` arguments in a constructor call like
+	// `T(a2: 0)` so the evaluator can override a specific member (spec/06 §2.3
+	// attribute overlay, instantiation). Keys are the member names; values are
+	// the bound expressions. Positional calls leave it nil.
+	NamedArgs map[string]Expression
 }
 
 func (ce *CallExpression) expressionNode() {}

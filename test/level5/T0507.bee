@@ -1,4 +1,7 @@
--- @DESC: subtype inheritance with super constructor chain (O7)
++-----------------------------------------------------------
+-- @DESC: subtype inheritance with super constructor chain
+--        (O7)
+-----------------------------------------------------------+
 type Foo: {a, b ∈ N} <: Object;
 
 rule Foo(p1, p2 ∈ N) => (self ∈ Foo):
@@ -28,8 +31,11 @@ rule main:
   expect bar.sum = 7;
 return;
 
--- spec/06-objects.md §4.1: derived type `<: SuperType`, base state initialized
--- via `super(...)`; methods inherited and overridden.
++-----------------------------------------------------------
+spec/06-objects.md §4.1: derived type `<: SuperType`, base
+state initialized via `super(...)`; methods inherited and
+overridden.
+-----------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
 -- @DISABLED: `type Foo <: Bar` subtype chain and `super(...)` are not
 -- implemented in the evaluator.

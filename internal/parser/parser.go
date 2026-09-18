@@ -159,6 +159,8 @@ func (p *Parser) ParseProgram() *Program {
 // to ParseProgram where it is recorded as E0009.
 func (p *Parser) parseStatement(tok token.Token) Statement {
 	switch tok.Type {
+	case token.TYPE:
+		return p.parseTypeDeclaration(tok)
 	case token.RULE:
 		return p.parseRuleEntry(tok)
 	case token.NEW, token.SET:
@@ -326,6 +328,73 @@ func extractMatrixDims(toks []token.Token) []int {
 		return nil
 	}
 	return nil
+}
+
+// parseTypeDeclaration consumes a custom-type declaration with a default
+// constructor body (spec/06-objects.md §6 object_type):
+//
+//	type T: { a1: 10, a2: 5 };
+//
+// The body is a JSON/object literal `{ key: expr, ... }`; each pair becomes a
+// TypeProp (the prop's default value). The declaration registers type T so a
+// later `new obj := T(...)` builds an object from those defaults.
+func (p *Parser) parseTypeDeclaration(tok token.Token) Statement {
+	td := &TypeDeclaration{Token: tok}
+
+	nameTok := p.l.NextToken()
+	if nameTok.Type != token.IDENT {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q (expected type identifier after 'type')",
+			nameTok.Pos, nameTok.Type, nameTok.Literal,
+		))
+		return td
+	}
+	td.Name = nameTok.Literal
+
+	colonTok := p.l.NextToken()
+	if colonTok.Type != token.COLON {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:UnrecognizedStatement: line=%d type=%s literal=%q (expected ':' after type name %q)",
+			colonTok.Pos, colonTok.Type, colonTok.Literal, td.Name,
+		))
+		return td
+	}
+
+	bodyExp := p.parseExpression()
+	if bodyExp == nil {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:UnrecognizedStatement: line=%d (expected '{ key: value, ... }' constructor body for type %q)",
+			tok.Pos, td.Name,
+		))
+		return td
+	}
+
+	// The constructor body is a MapLiteral of key→default pairs. Any other shape
+	// (e.g. a bare identifier or arithmetic expression) is not a valid object
+	// type body and is rejected so authors see the error in tests.
+	ml, isMap := bodyExp.(*MapLiteral)
+	if !isMap {
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0009 SyntaxError:UnrecognizedStatement: line=%d (type %q constructor body must be '{ key: value, ... }')",
+			tok.Pos, td.Name,
+		))
+		return td
+	}
+	for _, pair := range ml.Pairs {
+		key := ""
+		switch k := pair.Key.(type) {
+		case *StringLiteral:
+			key = k.Value
+		case *Identifier:
+			key = k.Value
+		}
+		td.Props = append(td.Props, TypeProp{Key: key, Default: pair.Value})
+	}
+
+	if p.l.PeekToken().Type == token.SEMICOLON {
+		p.l.NextToken() // consume ';'
+	}
+	return td
 }
 
 func (p *Parser) parseRuleEntry(tok token.Token) Statement {
@@ -513,11 +582,20 @@ func (p *Parser) parseRuleEntry(tok token.Token) Statement {
 	return stmt
 }
 
-// parseZapStatement handles `zap identifier;` per spec/02-statements.md §2.3.
+// parseZapStatement handles `zap identifier;` per spec/02-statements.md §2.3
+// and object/map member removal `zap obj.field;` / `zap obj["key"];` per
+// spec/06-objects.md §2.3. parsePrimary consumes exactly one target — a plain
+// identifier, a dotted member (`a.b`), or an index expression (`m["k"]`) —
+// and parks on `;`.
 func (p *Parser) parseZapStatement(tok token.Token) Statement {
 	stmt := &ZapStatement{Token: tok}
-	identTok := p.l.NextToken()
-	stmt.Name = identTok.Literal
+	target := p.parsePrimary()
+	switch t := target.(type) {
+	case *Identifier:
+		stmt.Name = t.Value
+	case *MemberExpression, *IndexExpression:
+		stmt.Target = target
+	}
 	if p.l.PeekToken().Type == token.SEMICOLON {
 		p.l.NextToken()
 	}
@@ -1291,6 +1369,45 @@ func (p *Parser) parseDeclaration(tok token.Token) Statement {
 		ds.Name = p.parseMemberName(identTok)
 	}
 	ds.Names = append(ds.Names, ds.Name)
+
+	// Object attribute-overlay write (spec/06 §2.3): `new obj.member := val` or
+	// `new obj["key"] := val`. The base identifier must already name a bound
+	// object; the declaration adds or updates one member on it rather than
+	// declaring a new binding. Dot-notation and index-notation alias the same
+	// storage slot. A leading-dot name (`.field`, boxed-cell) is excluded.
+	if !strings.HasPrefix(ds.Name, ".") &&
+		(p.l.PeekToken().Type == token.DOT || p.l.PeekToken().Type == token.LBRACKET) {
+		ot := &ObjectTarget{Base: ds.Name}
+		if p.l.PeekToken().Type == token.DOT {
+			p.l.NextToken() // consume '.'
+			memberTok := p.l.NextToken()
+			m, _ := p.identLiteral(memberTok)
+			ot.Key = m
+		} else {
+			p.l.NextToken() // consume '['
+			keyTok := p.l.NextToken()
+			if keyTok.Type == token.STRING {
+				ot.Key = keyTok.Literal
+			} else {
+				k, _ := p.identLiteral(keyTok)
+				ot.Key = k
+			}
+			if p.l.PeekToken().Type == token.RBRACKET {
+				p.l.NextToken()
+			}
+		}
+		ds.ObjectWrite = ot
+		if p.l.PeekToken().Literal == ":=" || p.l.PeekToken().Type == token.ASSIGN {
+			p.l.NextToken() // consume ':='
+		}
+		val := p.parseExpression()
+		ds.Value = val
+		ds.Values = append(ds.Values, val)
+		if p.l.PeekToken().Type == token.SEMICOLON {
+			p.l.NextToken()
+		}
+		return ds
+	}
 
 	// Check for comma-separated identifier list (e.g. new a, b, c ∈ Z;)
 	for p.l.PeekToken().Type == token.COMMA {
@@ -2225,6 +2342,33 @@ func (p *Parser) parsePrimary() Expression {
 		return arrLit
 	}
 
+	// Universal type introspection (spec/06-objects.md §1): `type(expr)` is an
+	// intrinsic that yields the entity's type-name string ("O", "Z", "S", …).
+	// `type` is a keyword token, so it normally skips the IDENT call handling;
+	// intercept it here and build a CallExpression when followed by `(`. A bare
+	// `type` (not a call) degrades to an identifier for forward-compat.
+	if tok.Type == token.TYPE {
+		if p.l.PeekToken().Type == token.LPAREN {
+			p.l.NextToken() // consume '('
+			call := &CallExpression{Token: tok, Name: "type"}
+			if p.l.PeekToken().Type != token.RPAREN {
+				for {
+					call.Args = append(call.Args, p.parseExpression())
+					if p.l.PeekToken().Type == token.COMMA {
+						p.l.NextToken() // consume ','
+						continue
+					}
+					break
+				}
+			}
+			if p.l.PeekToken().Type == token.RPAREN {
+				p.l.NextToken() // consume ')'
+			}
+			return call
+		}
+		return &Identifier{Token: tok, Value: tok.Literal}
+	}
+
 	var left Expression
 	left = &Identifier{Token: tok, Value: tok.Literal}
 	if _, isName := p.identLiteral(tok); tok.Type == token.IDENT || isName {
@@ -2238,7 +2382,18 @@ func (p *Parser) parsePrimary() Expression {
 					if p.l.PeekToken().Type == token.RPAREN || p.l.PeekToken().Type == token.EOF {
 						break
 					}
-					call.Args = append(call.Args, p.parseExpression())
+					arg := p.parseExpression()
+					// Named constructor argument (spec/06 §2.3 instantiation):
+					// `T(a2: 0)` overrides one member by name instead of positionally.
+					if id, isID := arg.(*Identifier); isID && p.l.PeekToken().Type == token.COLON {
+						p.l.NextToken() // consume ':'
+						if call.NamedArgs == nil {
+							call.NamedArgs = make(map[string]Expression)
+						}
+						call.NamedArgs[id.Value] = p.parseExpression()
+					} else {
+						call.Args = append(call.Args, arg)
+					}
 					if p.l.PeekToken().Type == token.COMMA {
 						p.l.NextToken() // consume ','
 						continue

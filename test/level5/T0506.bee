@@ -1,4 +1,6 @@
++----------------------------------------------------------
 -- @DESC: encapsulation of private vs public members (O6)
+----------------------------------------------------------+
 rule Counter(initial ∈ N) => (self ∈ Counter):
   new self.count := initial;
   new sentinel  := 999; -- private: no self. prefix
@@ -19,7 +21,10 @@ rule main:
   assert c.value = 5;
 return;
 
--- spec/06-objects.md §3: `.`/`self.` prefix exports a member; a bare
--- no-prefix local (e.g. `count`) stays private to the constructor's closure.
++------------------------------------------------------------
+spec/06-objects.md §3: `.`/`self.` prefix exports a member;
+a bare no-prefix local (e.g. `count`) stays private to the
+constructor's closure.
+------------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
 -- @DISABLED: constructor `self` binding and private-scope rules not implemented

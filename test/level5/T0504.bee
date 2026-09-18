@@ -1,5 +1,7 @@
++-----------------------------------------------------------
 -- @DESC: object constructor rule with public members (O4)
-rule Foo(a, b ∈ N) => (self ∈ Foo):
+-----------------------------------------------------------+
+rule Foo(a, b ∈ N) => (self ∈ Object):
   -- public properties (self. prefix)
   new self.a := a;
   new self.b := b;
@@ -14,10 +16,12 @@ rule main:
   expect test.b = 2;
 
   -- the instance type matches the constructor name
-  expect test.type() = "Foo";
+  expect type(test) = "Foo";
 return;
 
--- spec/06-objects.md §2.1 / tutorial/objects.html "Object constructor":
--- a constructor rule binds its result to `self` and exports `.member`s.
++------------------------------------------------------------
+spec/06-objects.md §2.1 / tutorial/objects.html "Object
+constructor": a constructor rule binds its result to `self`
+and exports `.member`s.
+------------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
--- @DISABLED: constructor `self` binding and `type()` not implemented

@@ -1,5 +1,6 @@
++--------------------------------------------------
 -- @DESC: producer-consumer parallel pattern (C5)
--- producer: dispatches integers 1..n into the queue
+--------------------------------------------------+
 rule producer(n ∈ N) => (r ∈ N):
   for i ∈ (1..n) do
     yield i; -- enqueue one item
@@ -34,8 +35,11 @@ rule main:
   expect acc = 55;
 return;
 
--- spec/12-concurrency.md §5 / tutorial/objects.html "Producer consumer":
--- a producer dispatches work items and consumers resolve tasks; the parent
--- stays busy via a shared queue while workers reduce into it.
++------------------------------------------------------------
+spec/12-concurrency.md §5 / tutorial/objects.html "Producer
+consumer": a producer dispatches work items and consumers
+resolve tasks; the parent stays busy via a shared queue
+while workers reduce into it.
+------------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
 -- @DISABLED: coroutines, `begin`, `+>` and `wait` are not implemented.

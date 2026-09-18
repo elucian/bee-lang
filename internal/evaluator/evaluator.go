@@ -70,9 +70,16 @@ type Evaluator struct {
 	// listValues, setValues, mapValues store collection literals bound to
 	// identifiers (spec/10 §1). All values are stored as []int for the
 	// bootstrap evaluator; sets are deduplicated and sorted.
-	listValues   map[string][]int
-	setValues    map[string][]int
-	mapValues    map[string]map[string]int
+	listValues map[string][]int
+	setValues  map[string][]int
+	mapValues  map[string]map[string]int
+	// objectValues stores anonymous JSON-literal objects (spec/06-objects.md
+	// §2.2) by name, retaining the parsed MapLiteral AST so heterogeneous
+	// members (string + int) can be resolved lazily on member/index access.
+	// An object is distinguished from an int-only map literal by the presence
+	// of a string-valued member. This is the foundation of ``type()``/``.type()``
+	// introspection returning "O" (the universal root Object).
+	objectValues map[string]*ObjectValue
 	matrixValues map[string]MatrixValue
 	// steppedRanges stores SteppedRangeExpression ASTs by identifier name
 	// so that subsequent `(ident)[i]` indexing can materialise the i-th
@@ -97,6 +104,10 @@ type Evaluator struct {
 	// ruleRegistry indexes every *parser.RuleStatement by name so that
 	// CallExpression can resolve rule invocations (spec/03 §3.1).
 	ruleRegistry map[string]*parser.RuleStatement
+	// typeRegistry indexes every *parser.TypeDeclaration by name so that
+	// `new obj := T(...)` resolves T to its default-constructor object template
+	// (spec/06-objects.md §2 / §6 object_type).
+	typeRegistry map[string]*parser.TypeDeclaration
 	// boxedCells holds the *current* rule frame's boxed state cells
 	// (spec/03 §5.4). It is empty at the top level and swapped in/out by
 	// callRule so nested method invocations share the closure object's cells.
@@ -145,11 +156,13 @@ func New() *Evaluator {
 		listValues:     make(map[string][]int),
 		setValues:      make(map[string][]int),
 		mapValues:      make(map[string]map[string]int),
+		objectValues:   make(map[string]*ObjectValue),
 		matrixValues:   make(map[string]MatrixValue),
 		steppedRanges:  make(map[string]*parser.SteppedRangeExpression),
 		identities:     make(map[string]int),
 		nextID:         1,
 		ruleRegistry:   make(map[string]*parser.RuleStatement),
+		typeRegistry:   make(map[string]*parser.TypeDeclaration),
 		boxedCells:     make(map[string]*BoxedCell),
 		closureObjects: make(map[string]*closureObject),
 		lambdaValues:   make(map[string]*parser.LambdaExpression),
@@ -192,10 +205,15 @@ func (e *Evaluator) DumpContext() {
 
 func (e *Evaluator) Eval(program *parser.Program) {
 	// Pass 1: register all rule definitions so CallExpression can resolve
-	// invocations regardless of definition order (spec/03 §5.2).
+	// invocations regardless of definition order (spec/03 §5.2), and all
+	// custom-type declarations so `new obj := T(...)` resolves T to its
+	// default-constructor template (spec/06 §2 / §6).
 	for _, stmt := range program.Statements {
-		if rs, ok := stmt.(*parser.RuleStatement); ok {
-			e.ruleRegistry[rs.Name] = rs
+		switch ts := stmt.(type) {
+		case *parser.RuleStatement:
+			e.ruleRegistry[ts.Name] = ts
+		case *parser.TypeDeclaration:
+			e.typeRegistry[ts.Name] = ts
 		}
 	}
 	// Pass 2: execute top-level statements (rule bodies are only entered
@@ -207,6 +225,10 @@ func (e *Evaluator) Eval(program *parser.Program) {
 
 func (e *Evaluator) evalStatement(node parser.Statement) {
 	switch s := node.(type) {
+	case *parser.TypeDeclaration:
+		// Declarations are registered in Eval pass 1; executing the statement
+		// has no runtime effect.
+		return
 	case *parser.RuleStatement:
 		// Forward declarations carry no body — they bind the rule signature
 		// for self-recursion and mutual recursion. See spec/03-rules.md §5.2.
@@ -317,6 +339,39 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					}
 				}
 			}
+		}
+	case *parser.ZapStatement:
+		// Object/map member removal (spec/06 §2.3): `zap obj.field;` / `zap obj["key"];`
+		// removes one member. Plain `zap ident;` invalidates a whole binding
+		// (spec/02 §2.3); the dotted/index wording resolves the member first.
+		if s.Target != nil {
+			if me, isMember := s.Target.(*parser.MemberExpression); isMember {
+				if id, ok := me.Base.(*parser.Identifier); ok {
+					key := me.Parts[0]
+					if obj, hasObj := e.objectValues[id.Value]; hasObj {
+						obj.remove(key)
+						break
+					}
+					if m, hasMap := e.mapValues[id.Value]; hasMap {
+						delete(m, key)
+						break
+					}
+				}
+			} else if idx, isIndex := s.Target.(*parser.IndexExpression); isIndex {
+				if id, ok := idx.Left.(*parser.Identifier); ok {
+					key := e.evalExpression(idx.Index)
+					if obj, hasObj := e.objectValues[id.Value]; hasObj {
+						obj.remove(key)
+						break
+					}
+					if m, hasMap := e.mapValues[id.Value]; hasMap {
+						delete(m, key)
+						break
+					}
+				}
+			}
+		} else if s.Name != "" {
+			e.clearBinding(s.Name)
 		}
 	case *parser.AssignmentStatement:
 		e.debugLog("EVALUATOR DEBUG: AssignmentStatement start, token lit=%q, type=%v\n", s.Token.Literal, s.Token.Type)
@@ -680,6 +735,15 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			}
 		}
 	case *parser.DeclarationStatement:
+		// Object attribute-overlay write (spec/06 §2.3): `new obj.member := val`
+		// or `new obj["key"] := val`. The base object already bound; this adds or
+		// updates a single member on it rather than declaring a new identifier.
+		if s.ObjectWrite != nil {
+			if s.Value != nil {
+				e.evalObjectWrite(s.ObjectWrite.Base, s.ObjectWrite.Key, s.Value)
+			}
+			return
+		}
 		names := s.Names
 		if len(names) == 0 && s.Name != "" {
 			names = []string{s.Name}
@@ -727,6 +791,12 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			// through the single-result rule-call shortcut below: the main loop
 			// registers it as a curried value (spec/07-functions.md §6).
 			if call, ok := s.Values[0].(*parser.CallExpression); ok && !e.hasPlaceholderArg(call.Args) {
+				// Custom-type default constructor (spec/06 §2): `new obj := T(...)`
+				// where T is a declared type. Build the object from its default
+				// attributes, then bind it; no rule invocation involved.
+				if e.tryTypeConstructorBinding(names[0], call) {
+					break
+				}
 				results := e.callRule(call, nil)
 				if len(results) > 0 {
 					e.bindResultValue(names[0], results[0])
@@ -801,6 +871,15 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					e.listValues[name] = elems
 					e.ensureIdentity(name)
 				} else if setLit, ok := s.Values[i].(*parser.SetLiteral); ok {
+					// An empty `{}` is an empty anonymous object (spec/06 §2.3): it can
+					// be instantiated empty and later enhanced with members via
+					// attribute overlay (`new obj.member := v`). A non-empty set keeps
+					// the mathematical-set semantics (spec/10 §3.4).
+					if len(setLit.Elements) == 0 {
+						e.objectValues[name] = newObjectValue()
+						e.ensureIdentity(name)
+						continue
+					}
 					elems := make([]int, len(setLit.Elements))
 					for j, el := range setLit.Elements {
 						elems[j] = e.evalIntExpression(el)
@@ -808,12 +887,18 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					e.setValues[name] = dedupSortInts(elems)
 					e.ensureIdentity(name)
 				} else if mapLit, ok := s.Values[i].(*parser.MapLiteral); ok {
-					m := make(map[string]int)
-					for _, pair := range mapLit.Pairs {
-						key := e.evalExpression(pair.Key)
-						m[key] = e.evalIntExpression(pair.Value)
+					// Anonymous object vs int-only map (spec/06 §2.2): a literal
+					// with a string member is an object; otherwise it is a map.
+					if mapLitIsObject(mapLit) {
+						e.objectValues[name] = e.mapLiteralToObject(mapLit)
+					} else {
+						m := make(map[string]int)
+						for _, pair := range mapLit.Pairs {
+							key := e.evalExpression(pair.Key)
+							m[key] = e.evalIntExpression(pair.Value)
+						}
+						e.mapValues[name] = m
 					}
-					e.mapValues[name] = m
 					e.ensureIdentity(name)
 				} else if lambdaExpr, ok := s.Values[i].(*parser.LambdaExpression); ok {
 					// First-class lambda value (spec/07 §2.3): bind in the lambda
@@ -900,19 +985,34 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 					e.listValues[name] = elems
 					e.ensureIdentity(name)
 				} else if setLit, ok := s.Value.(*parser.SetLiteral); ok {
-					elems := make([]int, len(setLit.Elements))
-					for j, el := range setLit.Elements {
-						elems[j] = e.evalIntExpression(el)
+					// An empty `{}` is an empty anonymous object (spec/06 §2.3): it can
+					// be instantiated empty and later enhanced with members via
+					// attribute overlay (`new obj.member := v`). A non-empty set keeps
+					// the mathematical-set semantics (spec/10 §3.4).
+					if len(setLit.Elements) == 0 {
+						e.objectValues[name] = newObjectValue()
+						e.ensureIdentity(name)
+					} else {
+						elems := make([]int, len(setLit.Elements))
+						for j, el := range setLit.Elements {
+							elems[j] = e.evalIntExpression(el)
+						}
+						e.setValues[name] = dedupSortInts(elems)
+						e.ensureIdentity(name)
 					}
-					e.setValues[name] = dedupSortInts(elems)
-					e.ensureIdentity(name)
 				} else if mapLit, ok := s.Value.(*parser.MapLiteral); ok {
-					m := make(map[string]int)
-					for _, pair := range mapLit.Pairs {
-						key := e.evalExpression(pair.Key)
-						m[key] = e.evalIntExpression(pair.Value)
+					// Anonymous object vs int-only map (spec/06 §2.2): a literal
+					// with a string member is an object; otherwise it is a map.
+					if mapLitIsObject(mapLit) {
+						e.objectValues[name] = e.mapLiteralToObject(mapLit)
+					} else {
+						m := make(map[string]int)
+						for _, pair := range mapLit.Pairs {
+							key := e.evalExpression(pair.Key)
+							m[key] = e.evalIntExpression(pair.Value)
+						}
+						e.mapValues[name] = m
 					}
-					e.mapValues[name] = m
 					e.ensureIdentity(name)
 				} else if lambdaExpr, ok := s.Value.(*parser.LambdaExpression); ok {
 					e.lambdaValues[name] = lambdaExpr
@@ -1592,6 +1692,13 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 		// Yields the body's result value, not a stored L reference.
 		return e.callImmediatelyInvokedLambda(expr), e.allocID()
 	case *parser.CallExpression:
+		// `type(...)` is an introspection intrinsic, not a rule call: it is
+		// resolved through the string path when compared, and yields 0 in int
+		// context so it never falls through to callRule (which would treat the
+		// name "type" as an unregistered rule).
+		if expr.Name == "type" {
+			return 0, e.allocID()
+		}
 		// Partial-application invocation (spec/07-functions.md §6): a name
 		// bound to a partial application supplies the open placeholders here.
 		if pa, isPa := e.partialValues[expr.Name]; isPa {
@@ -1638,6 +1745,19 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			}
 			return 0, e.allocID()
 		}
+		// Anonymous object attribute (spec/06 §2.2): `obj.age` in int context
+		// resolves a numeric member; string members degenerate to 0.
+		if ident, isIdent := expr.Base.(*parser.Identifier); isIdent && !expr.IsCall && len(expr.Parts) == 1 {
+			if obj, hasObj := e.objectValues[ident.Value]; hasObj {
+				isStr, _, iVal, found := obj.fieldValue(expr.Parts[0])
+				if found && !isStr {
+					return iVal, e.ensureIdentity(ident.Value)
+				}
+				if found {
+					return 0, e.allocID()
+				}
+			}
+		}
 		// List member access: `.head` returns first element, `.tail` returns
 		// count of remaining elements (spec/10 §3.1 list operations).
 		if ident, isIdent := expr.Base.(*parser.Identifier); isIdent && len(expr.Parts) == 1 {
@@ -1673,6 +1793,19 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 				idx := e.evalIndexExpr(expr.Index, e.steppedRangeLength(sre))
 				val := e.steppedRangeValue(sre, idx)
 				return val, e.ensureIdentity(ident.Value)
+			}
+			// Anonymous object attribute overlay (spec/06 §2.3): `obj["age"]`.
+			// Numeric members yield their value; string members degenerate to 0
+			// in int context (the string path handles string fields).
+			if obj, hasObj := e.objectValues[ident.Value]; hasObj {
+				key := e.evalExpression(expr.Index)
+				isStr, _, iVal, found := obj.fieldValue(key)
+				if found && !isStr {
+					return iVal, e.ensureIdentity(ident.Value)
+				}
+				if found {
+					return 0, e.allocID()
+				}
 			}
 			// Map key indexing (spec/10 §3.5): M[k] looks up the value for key k.
 			if m, hasMap := e.mapValues[ident.Value]; hasMap {
@@ -1842,6 +1975,12 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			return 0, 0
 		}
 		if lit == "=" || expr.Token.Type == token.EQ || lit == "==" {
+			// Object/map structural equality (spec/06 §2.2): when either operand
+			// denotes an object or map value, compare key sets and per-key values
+			// instead of forcing both through the int domain.
+			if e.isObjectExpr(expr.Left) || e.isObjectExpr(expr.Right) {
+				return e.structuralObjectEq(expr.Left, expr.Right), 0
+			}
 			// String-aware equality (spec/02 §2.2 / spec/05 §2): when either
 			// operand is a string literal or a string-bound identifier, compare
 			// the actual string values. The int path below would otherwise force
@@ -2008,6 +2147,393 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 // used to steer equality/inequality (spec/02 §2.2, spec/05 §2) and friends to
 // a string-aware comparison rather than through the integer path, where a
 // string operand degrades to 0.
+// objField is one heterogeneous member of an ObjectValue: a string-valued
+// member carries sVal; an int-valued member carries iVal (spec/06 §2.2, where
+// anonymous objects mix string and numeric members).
+type objField struct {
+	isStr bool
+	sVal  string
+	iVal  int
+}
+
+// ObjectValue is a *mutable* anonymous-object / JSON-literal value (spec/06
+// §2.2). Unlike the frozen AST it replaces, an ObjectValue is a heap-backed
+// dictionary that supports dynamic member insertion (`new obj.k := v`),
+// update, and removal (`zap obj.k` / `zap obj["k"]`) after instantiation
+// (spec/06 §2.3 attribute overlay). Dot-notation and index-notation address
+// the same slot, so an object created empty can be enhanced with members and
+// compared structurally to a literal.
+type ObjectValue struct {
+	fields map[string]objField
+	// typeName is the Bee type name reported by type()/obj.type(). Anonymous
+	// JSON objects resolve to "Object" (the renamed universal root, formerly
+	// "O"); instances built by a constructor rule carry the rule's name (e.g.
+	// `Foo(...)` yields "Foo"). Empty means anonymous → "Object" (spec/06 §1).
+	typeName string
+}
+
+func newObjectValue() *ObjectValue {
+	return &ObjectValue{fields: make(map[string]objField)}
+}
+
+// typeNameOf returns the Bee type name the object reports via type()/obj.type().
+// Anonymous objects (no explicit constructor type) resolve to the universal
+// root "Object" (formerly "O") (spec/06 §1).
+func (o *ObjectValue) typeNameOf() string {
+	if o == nil || o.typeName == "" {
+		return "Object"
+	}
+	return o.typeName
+}
+
+// fieldValue resolves a single named member, returning either its string value
+// or its int value. ok is false when the key is absent. Alias of the map slot
+// regardless of how it was addressed (attribute overlay, spec/06 §2.3).
+func (o *ObjectValue) fieldValue(key string) (isString bool, sVal string, iVal int, ok bool) {
+	f, found := o.fields[key]
+	return f.isStr, f.sVal, f.iVal, found
+}
+
+func (o *ObjectValue) set(key string, f objField) {
+	o.fields[key] = f
+}
+
+func (o *ObjectValue) remove(key string) {
+	delete(o.fields, key)
+}
+
+func (o *ObjectValue) fieldCount() int {
+	return len(o.fields)
+}
+
+// mapLitIsObject reports whether a `{...}` literal should bind as an anonymous
+// object (spec/06 §2.2) rather than an int-only map (spec/10 §4). The two are
+// lexically identical; the presence of a string-valued member selects the
+// object/record interpretation so heterogeneous objects (e.g.
+// `{name: "Cleopatra", age: 15}`) keep their string fields instead of forcing
+// every value through the int domain. An empty literal `{}` is treated as an
+// empty anonymous object (spec/06 §2.3: an object can be instantiated empty and
+// later enhanced with members).
+func mapLitIsObject(ml *parser.MapLiteral) bool {
+	if len(ml.Pairs) == 0 {
+		return true
+	}
+	for _, pair := range ml.Pairs {
+		if _, isStr := pair.Value.(*parser.StringLiteral); isStr {
+			return true
+		}
+	}
+	return false
+}
+
+// mapLiteralToObject materialises a `{...}` literal into a mutable ObjectValue
+// (spec/06 §2.2), resolving each pair's member key and heterogeneous value.
+func (e *Evaluator) mapLiteralToObject(ml *parser.MapLiteral) *ObjectValue {
+	o := newObjectValue()
+	for _, pair := range ml.Pairs {
+		key := e.evalExpression(pair.Key)
+		if strLit, isStr := pair.Value.(*parser.StringLiteral); isStr {
+			o.set(key, objField{isStr: true, sVal: strLit.Value})
+		} else {
+			o.set(key, objField{iVal: e.evalIntExpression(pair.Value)})
+		}
+	}
+	return o
+}
+
+func (e *Evaluator) evalObjectWrite(base string, key string, v parser.Expression) bool {
+	obj, hasObj := e.objectValues[base]
+	if !hasObj {
+		// A map-bound identifier can also take overlay writes, but the object
+		// store is authoritative here; an unbound base is a no-op.
+		return false
+	}
+	if strLit, isStr := v.(*parser.StringLiteral); isStr {
+		obj.set(key, objField{isStr: true, sVal: strLit.Value})
+		return true
+	}
+	if strIdent, isStr := v.(*parser.Identifier); isStr {
+		if sv, hasStr := e.stringSymbols[strIdent.Value]; hasStr {
+			obj.set(key, objField{isStr: true, sVal: sv})
+			return true
+		}
+	}
+	obj.set(key, objField{iVal: e.evalIntExpression(v)})
+	return true
+}
+
+// setObjectField writes a heterogeneous field value onto an ObjectValue,
+// mirroring evalObjectWrite: a string literal/alias is stored as a string
+// field, anything else as an int field (spec/06 §2.2).
+func (e *Evaluator) setObjectField(obj *ObjectValue, key string, v parser.Expression) {
+	if strLit, isStr := v.(*parser.StringLiteral); isStr {
+		obj.set(key, objField{isStr: true, sVal: strLit.Value})
+		return
+	}
+	if strIdent, isStr := v.(*parser.Identifier); isStr {
+		if sv, hasStr := e.stringSymbols[strIdent.Value]; hasStr {
+			obj.set(key, objField{isStr: true, sVal: sv})
+			return
+		}
+	}
+	obj.set(key, objField{iVal: e.evalIntExpression(v)})
+}
+
+// tryTypeConstructorBinding resolves `new obj := T(...)` when T is a declared
+// custom type with a default-constructor template (spec/06 §2 / §6): it builds
+// an ObjectValue seeded with the type's default attributes, overwrites any
+// member supplied positionally (in declaration order) or by name (`T(a2: 0)`),
+// binds it under name, and reports whether it handled the call. It returns
+// false when T is not a declared type, so the caller falls through to a rule
+// invocation.
+func (e *Evaluator) tryTypeConstructorBinding(name string, call *parser.CallExpression) bool {
+	td, ok := e.typeRegistry[call.Name]
+	if !ok {
+		return false
+	}
+	obj := newObjectValue()
+	for i, prop := range td.Props {
+		val := prop.Default
+		// Positional arguments override in declaration order: the i-th arg maps
+		// to the i-th declared attribute.
+		if i < len(call.Args) {
+			val = call.Args[i]
+		}
+		e.setObjectField(obj, prop.Key, val)
+	}
+	for key, val := range call.NamedArgs {
+		e.setObjectField(obj, key, val)
+	}
+	e.objectValues[name] = obj
+	e.ensureIdentity(name)
+	delete(e.symbols, name) // an object is not an int binding
+	return true
+}
+
+// isConstructorRule reports whether rs is an object constructor rule
+// (spec/06 §2 / §6 constructor_def): a rule whose single declared result is
+// bound to `self`, e.g. `rule Foo(a, b ∈ N) => (self ∈ Foo):`. The instance
+// type name is the rule's own name.
+func isConstructorRule(rs *parser.RuleStatement) bool {
+	if rs == nil || rs.ForwardDecl || rs.Body == nil {
+		return false
+	}
+	return len(rs.Results) == 1 && rs.Results[0] == "self"
+}
+
+// runConstructor executes an object constructor rule (spec/06 §2): it creates
+// a fresh ObjectValue whose reported type name is the rule name, binds it as
+// `self` inside a private constructor frame, binds the positional parameters,
+// runs the constructor body (so `new self.a := a` and nested method rules take
+// effect), then restores the caller's value stores and returns the instance.
+// The returned ObjectValue is bound by the caller via bindResultValue.
+func (e *Evaluator) runConstructor(rs *parser.RuleStatement, call *parser.CallExpression, argVals []int) []interface{} {
+	instance := newObjectValue()
+	instance.typeName = rs.Name
+
+	// Save the caller's full value-store frames.
+	savedObjects := e.objectValues
+	savedMaps := e.mapValues
+	savedSymbols := e.symbols
+	savedStrings := e.stringSymbols
+	savedArrays := e.arrayValues
+	savedLists := e.listValues
+	savedSets := e.setValues
+	savedMatrix := e.matrixValues
+	savedBoxed := e.boxedCells
+	savedExiting := e.exitingRule
+	savedContinue := e.continueCycle
+	savedTarget := e.continueTargetDepth
+	savedLoopStack := e.loopLabelStack
+
+	// Fresh private frame: only `self` and the parameters are visible.
+	e.symbols = make(map[string]int)
+	e.stringSymbols = make(map[string]string)
+	e.arrayValues = make(map[string][]int)
+	e.listValues = make(map[string][]int)
+	e.setValues = make(map[string][]int)
+	e.matrixValues = make(map[string]MatrixValue)
+	e.mapValues = make(map[string]map[string]int)
+	e.objectValues = make(map[string]*ObjectValue)
+	e.boxedCells = make(map[string]*BoxedCell)
+	e.exitingRule = false
+	e.continueCycle = false
+	e.continueTargetDepth = 0
+	e.loopLabelStack = nil
+
+	// Bind the instance to `self` so `new self.a := a` writes attributes.
+	e.objectValues["self"] = instance
+
+	// Bind positional parameters.
+	for i, param := range rs.Params {
+		if i < len(argVals) {
+			e.symbols[param] = argVals[i]
+		}
+	}
+
+	// Execute the constructor body.
+	for _, stmt := range rs.Body.Statements {
+		if e.exitingRule {
+			break
+		}
+		e.evalStatement(stmt)
+	}
+
+	// Restore the caller's frame.
+	e.objectValues = savedObjects
+	e.mapValues = savedMaps
+	e.symbols = savedSymbols
+	e.stringSymbols = savedStrings
+	e.arrayValues = savedArrays
+	e.listValues = savedLists
+	e.setValues = savedSets
+	e.matrixValues = savedMatrix
+	e.boxedCells = savedBoxed
+	e.exitingRule = savedExiting
+	e.continueCycle = savedContinue
+	e.continueTargetDepth = savedTarget
+	e.loopLabelStack = savedLoopStack
+
+	return []interface{}{instance}
+}
+
+// isObjectExpr reports whether an expression denotes an object/map value (a
+// stored identifier or a literal), used to route equality to structural
+// comparison (spec/06 §2.2) instead of the integer path.
+func (e *Evaluator) isObjectExpr(expr parser.Expression) bool {
+	switch x := expr.(type) {
+	case *parser.Identifier:
+		if _, ok := e.objectValues[x.Value]; ok {
+			return true
+		}
+		_, ok := e.mapValues[x.Value]
+		return ok
+	case *parser.MapLiteral:
+		return true
+	}
+	return false
+}
+
+// objectFieldMap normalises an object/map expression to a key→field map so two
+// such values can be compared structurally (same key set, per-key value
+// equality).
+func (e *Evaluator) objectFieldMap(expr parser.Expression) (map[string]objField, bool) {
+	switch x := expr.(type) {
+	case *parser.Identifier:
+		if obj, ok := e.objectValues[x.Value]; ok {
+			m := make(map[string]objField, obj.fieldCount())
+			for k, f := range obj.fields {
+				m[k] = f
+			}
+			return m, true
+		}
+		if mp, ok := e.mapValues[x.Value]; ok {
+			m := make(map[string]objField, len(mp))
+			for k, v := range mp {
+				m[k] = objField{iVal: v}
+			}
+			return m, true
+		}
+		return nil, false
+	case *parser.MapLiteral:
+		m := make(map[string]objField, len(x.Pairs))
+		for _, pair := range x.Pairs {
+			k := e.evalExpression(pair.Key)
+			if strLit, isStr := pair.Value.(*parser.StringLiteral); isStr {
+				m[k] = objField{isStr: true, sVal: strLit.Value}
+			} else {
+				m[k] = objField{iVal: e.evalIntExpression(pair.Value)}
+			}
+		}
+		return m, true
+	}
+	return nil, false
+}
+
+// structuralObjectEq compares two object/map expressions structurally (spec/06
+// §2.2): identical key sets and per-key equal values. Returns 1 when equal, 0
+// otherwise.
+func (e *Evaluator) structuralObjectEq(a, b parser.Expression) int {
+	fa, okA := e.objectFieldMap(a)
+	fb, okB := e.objectFieldMap(b)
+	if !okA || !okB {
+		return 0
+	}
+	if len(fa) != len(fb) {
+		return 0
+	}
+	for k, va := range fa {
+		vb, ok := fb[k]
+		if !ok {
+			return 0
+		}
+		if va.isStr != vb.isStr {
+			return 0
+		}
+		if va.isStr {
+			if va.sVal != vb.sVal {
+				return 0
+			}
+		} else if va.iVal != vb.iVal {
+			return 0
+		}
+	}
+	return 1
+}
+
+// typeName introspects an expression and returns its Bee type-name string
+// (spec/06 §1 universal entity model). The anonymous object resolves to "O"
+// (the universal root Object); native ints return "Z", strings "S", reals
+// "R", booleans "B", collections "A"/"L"/"E"/"M". Not all branches are
+// reachable from every expression context, but the mapping is total and
+// deterministic for the bootstrap evaluator.
+func (e *Evaluator) typeName(expr parser.Expression) string {
+	switch x := expr.(type) {
+	case *parser.Identifier:
+		if obj, ok := e.objectValues[x.Value]; ok {
+			return obj.typeNameOf()
+		}
+		if _, ok := e.stringSymbols[x.Value]; ok {
+			return "S"
+		}
+		if _, ok := e.arrayValues[x.Value]; ok {
+			return "A"
+		}
+		if _, ok := e.listValues[x.Value]; ok {
+			return "L"
+		}
+		if _, ok := e.setValues[x.Value]; ok {
+			return "E"
+		}
+		if _, ok := e.mapValues[x.Value]; ok {
+			return "M"
+		}
+		if _, ok := e.matrixValues[x.Value]; ok {
+			return "Z"
+		}
+		if _, ok := e.symbols[x.Value]; ok {
+			return "Z"
+		}
+		if x.Value == "True" || x.Value == "true" || x.Value == "False" || x.Value == "false" {
+			return "B"
+		}
+		return "?"
+	case *parser.IntegerLiteral:
+		return "Z"
+	case *parser.StringLiteral:
+		return "S"
+	case *parser.ArrayLiteral:
+		return "A"
+	case *parser.ListLiteral:
+		return "L"
+	case *parser.SetLiteral:
+		return "E"
+	case *parser.MapLiteral:
+		return "M"
+	}
+	return "?"
+}
+
 func (e *Evaluator) isStringExpr(node parser.Expression) bool {
 	switch expr := node.(type) {
 	case *parser.StringLiteral:
@@ -2015,6 +2541,30 @@ func (e *Evaluator) isStringExpr(node parser.Expression) bool {
 	case *parser.Identifier:
 		_, ok := e.stringSymbols[expr.Value]
 		return ok
+	case *parser.CallExpression:
+		// `type(...)` yields a type-name string (spec/06 §1).
+		return expr.Name == "type"
+	case *parser.MemberExpression:
+		// `expr.type()` introspection call yields a type-name string.
+		if expr.IsCall && len(expr.Parts) == 1 && expr.Parts[0] == "type" {
+			return true
+		}
+		// `obj.field` where field is a string-valued object member.
+		if ident, isIdent := expr.Base.(*parser.Identifier); isIdent && len(expr.Parts) == 1 {
+			if obj, hasObj := e.objectValues[ident.Value]; hasObj {
+				isStr, _, _, found := obj.fieldValue(expr.Parts[0])
+				return found && isStr
+			}
+		}
+	case *parser.IndexExpression:
+		// `obj["field"]` where field is a string-valued object member.
+		if ident, isIdent := expr.Left.(*parser.Identifier); isIdent {
+			if obj, hasObj := e.objectValues[ident.Value]; hasObj {
+				key := e.evalExpression(expr.Index)
+				isStr, _, _, found := obj.fieldValue(key)
+				return found && isStr
+			}
+		}
 	}
 	return false
 }
@@ -2027,6 +2577,17 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 		return expr.Value
 	case *parser.IndexExpression:
 		if ident, ok := expr.Left.(*parser.Identifier); ok {
+			// Object attribute overlay (spec/06 §2.3): `obj["field"]`.
+			if obj, hasObj := e.objectValues[ident.Value]; hasObj {
+				key := e.evalExpression(expr.Index)
+				isStr, sVal, iVal, found := obj.fieldValue(key)
+				if found {
+					if isStr {
+						return sVal
+					}
+					return strconv.Itoa(iVal)
+				}
+			}
 			var idx int
 			if arr, ok := e.arrayValues[ident.Value]; ok {
 				idx = e.evalIndexExpr(expr.Index, len(arr))
@@ -2123,6 +2684,12 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 			parts = append(parts, k+": "+strconv.Itoa(vals[k]))
 		}
 		return "{" + strings.Join(parts, ", ") + "}"
+	case *parser.CallExpression:
+		// `type(expr)` introspection (spec/06 §1): return the type-name string.
+		if expr.Name == "type" && len(expr.Args) == 1 {
+			return e.typeName(expr.Args[0])
+		}
+		return strconv.Itoa(e.evalIntExpression(expr))
 	case *parser.BinaryExpression:
 		// String concatenation: when either operand is a string literal or
 		// a string-bound identifier, `+` concatenates in string context.
@@ -2139,7 +2706,21 @@ func (e *Evaluator) evalExpression(node parser.Expression) string {
 		// Member access (spec/03 §5.4): leading-dot boxed field read, or an
 		// object method call `c.next()` whose int result is printed.
 		// Also handles list `.head` / `.tail` (spec/10 §3.1).
+		// `expr.type()` introspection (spec/06 §1) returns the type-name string.
+		if expr.IsCall && len(expr.Parts) == 1 && expr.Parts[0] == "type" {
+			return e.typeName(expr.Base)
+		}
 		if ident, isIdent := expr.Base.(*parser.Identifier); isIdent && len(expr.Parts) == 1 && !expr.IsCall {
+			// Anonymous object attribute (spec/06 §2.2): `obj.field`.
+			if obj, hasObj := e.objectValues[ident.Value]; hasObj {
+				isStr, sVal, iVal, found := obj.fieldValue(expr.Parts[0])
+				if found {
+					if isStr {
+						return sVal
+					}
+					return strconv.Itoa(iVal)
+				}
+			}
 			if lst, ok := e.listValues[ident.Value]; ok {
 				switch expr.Parts[0] {
 				case "head":
@@ -2382,6 +2963,16 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 		} else {
 			argVals[i] = e.evalIntExpression(arg)
 		}
+	}
+
+	// Constructor rule (spec/06 §2): a rule whose single result is bound to
+	// `self` (e.g. `rule Foo(a, b ∈ N) => (self ∈ Foo):`) constructs an object
+	// instance. It runs the body with `self` bound to a fresh ObjectValue, then
+	// returns that instance so the caller can bind it (`new x := Foo(...)`).
+	// This is checked here (after argument evaluation, before any caller frame
+	// is saved) because the constructor manages its own value-store frames.
+	if isConstructorRule(rule) {
+		return e.runConstructor(rule, call, argVals)
 	}
 
 	// Save the caller's frame.
@@ -2710,6 +3301,12 @@ func newClosureObject(rule *parser.RuleStatement) *closureObject {
 func (e *Evaluator) bindResultValue(name string, val interface{}) {
 	if co, isClosure := val.(*closureObject); isClosure {
 		e.closureObjects[name] = co
+		delete(e.symbols, name)
+		e.ensureIdentity(name)
+		return
+	}
+	if ov, isObj := val.(*ObjectValue); isObj {
+		e.objectValues[name] = ov
 		delete(e.symbols, name)
 		e.ensureIdentity(name)
 		return
@@ -3219,6 +3816,8 @@ type scopedBindingSnapshot struct {
 	setVal      []int
 	hasMap      bool
 	mapVal      map[string]int
+	hasObject   bool
+	objectVal   *ObjectValue
 	hasMatrix   bool
 	matrixVal   MatrixValue
 	hasStepped  bool
@@ -3233,7 +3832,7 @@ type scopedBindingSnapshot struct {
 
 func (s *scopedBindingSnapshot) any() bool {
 	return s.hasInt || s.hasString || s.hasArray || s.hasList || s.hasSet ||
-		s.hasMap || s.hasMatrix || s.hasStepped || s.hasLambda || s.hasPartial
+		s.hasMap || s.hasObject || s.hasMatrix || s.hasStepped || s.hasLambda || s.hasPartial
 }
 
 // scopeFrame is one lexical scope. It records which names were (re)declared in
@@ -3314,6 +3913,9 @@ func (e *Evaluator) snapshotBinding(name string) *scopedBindingSnapshot {
 	if v, ok := e.mapValues[name]; ok {
 		sn.hasMap, sn.mapVal = true, v
 	}
+	if v, ok := e.objectValues[name]; ok {
+		sn.hasObject, sn.objectVal = true, v
+	}
 	if v, ok := e.matrixValues[name]; ok {
 		sn.hasMatrix, sn.matrixVal = true, v
 	}
@@ -3341,6 +3943,7 @@ func (e *Evaluator) clearBinding(name string) {
 	delete(e.listValues, name)
 	delete(e.setValues, name)
 	delete(e.mapValues, name)
+	delete(e.objectValues, name)
 	delete(e.matrixValues, name)
 	delete(e.steppedRanges, name)
 	delete(e.lambdaValues, name)
@@ -3368,6 +3971,9 @@ func (e *Evaluator) restoreBinding(name string, sn *scopedBindingSnapshot) {
 	}
 	if sn.hasMap {
 		e.mapValues[name] = sn.mapVal
+	}
+	if sn.hasObject {
+		e.objectValues[name] = sn.objectVal
 	}
 	if sn.hasMatrix {
 		e.matrixValues[name] = sn.matrixVal

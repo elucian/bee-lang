@@ -1,5 +1,6 @@
++--------------------------------------------------------
 -- @DESC: map-reduce with thread-safe reduction +> (C2)
--- sum the integers in a range on one worker thread
+--------------------------------------------------------+
 rule sum_range(a, b ∈ Z) => (r ∈ Z):
   for i ∈ (a..b) do
     let r += i;
@@ -24,7 +25,10 @@ rule main:
   expect total = 2850;
 return;
 
--- spec/12-concurrency.md §3: dispatch worker outputs into a shared collection
--- via `+>`, synchronize with `wait`, then reduce (expects 2850).
++----------------------------------------------------------
+spec/12-concurrency.md §3: dispatch worker outputs into a
+shared collection via `+>`, synchronize with `wait`, then
+reduce (expects 2850).
+----------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
 -- @DISABLED: `+>` reduction channel, `begin` and `wait` are not implemented.

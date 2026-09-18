@@ -1,5 +1,7 @@
--- @DESC: worker exception isolation and barrier re-raise (C6)
--- worker that panics for negative input
++----------------------------------------------------------
+-- @DESC: worker exception isolation and barrier re-raise
+--        (C6)
+----------------------------------------------------------+
 rule risky(n ∈ Z) => (r ∈ Z):
   fail if n < 0;
   let r := n;
@@ -17,8 +19,11 @@ rule main:
   expect true;
 return;
 
--- spec/12-concurrency.md §5 / tutorial/objects.html "Worker exception isolation":
--- a worker panic is captured in its thread-local $trial; wait re-raises as
--- E1204 so a surrounding trial block can handle it.
++----------------------------------------------------------
+spec/12-concurrency.md §5 / tutorial/objects.html "Worker
+exception isolation": a worker panic is captured in its
+thread-local $trial; wait re-raises as E1204 so a
+surrounding trial block can handle it.
+----------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
 -- @DISABLED: `begin`/`wait`/`trial` re-raise are not implemented.

@@ -8,10 +8,10 @@ This level covers object-oriented features, file system interactions, and concur
 
 | CASE  | AI  | STATUS | DESCRIPTION               |
 | ----- | --- | ------ | ------------------------- |
-| T0501 | No  | SKIP   | anonymous object via J... |
-| T0502 | No  | SKIP   | object attribute mutat... |
-| T0503 | No  | SKIP   | custom type with defau... |
-| T0504 | No  | SKIP   | object constructor rul... |
+| T0501 | No  | PASS   | anonymous object via J... |
+| T0502 | No  | PASS   | object attribute mutat... |
+| T0503 | No  | PASS   | custom type with defau... |
+| T0504 | No  | PASS   | object constructor rul... |
 | T0505 | No  | SKIP   | public method definiti... |
 | T0506 | No  | SKIP   | encapsulation of priva... |
 | T0507 | No  | SKIP   | subtype inheritance wi... |

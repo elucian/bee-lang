@@ -1,5 +1,6 @@
++--------------------------------------------
 -- @DESC: async begin and wait barrier (C1)
--- worker rule: returns double its argument
+--------------------------------------------+
 rule test(n ∈ Z) => (r ∈ Z):
   let r := n * 2;
 return;
@@ -14,7 +15,10 @@ rule main:
   wait;
 return;
 
--- spec/12-concurrency.md §2: `begin task(...)` spawns an isolated worker
--- thread; `wait;` is a mandatory synchronization barrier before scope exit.
++-------------------------------------------------------
+spec/12-concurrency.md §2: `begin task(...)` spawns an
+isolated worker thread; `wait;` is a mandatory
+synchronization barrier before scope exit.
+-------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
 -- @DISABLED: `begin`/`wait` are lexed but not executed by the evaluator.

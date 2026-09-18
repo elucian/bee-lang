@@ -1,4 +1,7 @@
--- @DESC: anonymous object via JSON literal and member access (O1)
++---------------------------------------------
+-- @DESC: anonymous object via JSON literal
+--        and member access (O1)
+----------------------------------------------+
 rule main:
   -- anonymous object
   new obj := {name: "Cleopatra", age: 15};
@@ -11,10 +14,13 @@ rule main:
   expect obj.age = 15;
 
   -- introspect the universal root type
-  expect type(obj) = O;
+  expect type(obj) = "Object";
+  expect obj is Object;
 return;
 
--- spec/06-objects.md §2.2: anonymous object instantiation via JSON literal;
--- members read with dot-notation `.name` and index-notation `["age"]`.
++--------------------------------------------------------
+spec/06-objects.md §2.2: anonymous object instantiation
+via JSON literal; members read with dot notation: `.name`
+and index notation `["age"]`.
+---------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
--- @DISABLED: object member access and type() builtin not implemented in evaluator

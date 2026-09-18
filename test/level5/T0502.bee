@@ -1,4 +1,6 @@
++------------------------------------------------------
 -- @DESC: object attribute mutation and equality (O2)
+------------------------------------------------------+
 rule main:
   -- empty object, then enhance
   new object := {};
@@ -14,7 +16,9 @@ rule main:
   expect object = {a2: 2};
 return;
 
--- spec/06-objects.md §2.2 / §3: object attributes are (key : value) pairs that
--- can be set after instantiation and checked via structural equality.
++-------------------------------------------------------------
+spec/06-objects.md §2.2 / §3: object attributes are (key :
+value) pairs that can be set after instantiation and checked
+via structural equality.
+-------------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
--- @DISABLED: object member set-access and `zap` not implemented in evaluator

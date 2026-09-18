@@ -1,4 +1,6 @@
++----------------------------------------------
 -- @DESC: coroutine generator with yield (C3)
+----------------------------------------------+
 rule ticker(n ∈ N) => (v ∈ N):
   for i ∈ (1..n) do
     let v := i;
@@ -16,7 +18,10 @@ rule main:
   wait;
 return;
 
--- spec/12-concurrency.md §4.1: a rule containing `yield` suspends its frame and
--- acts as a stateful generator, emitting one value per resume.
++-------------------------------------------------------
+spec/12-concurrency.md §4.1: a rule containing `yield`
+suspends its frame and acts as a stateful generator,
+emitting one value per resume.
+-------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
 -- @DISABLED: `yield`/coroutine suspension is not implemented.

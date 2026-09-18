@@ -14,14 +14,47 @@ def decode_expect(raw):
     return raw.replace("\\n", "\n").replace("\\t", "\t").strip() if raw else None
 
 
-def uses_print(lines):
-    """True iff the source BODY emits stdout via `print` (comments never count)."""
+def strip_comments(lines):
+    """Yield only real source lines, skipping `--` line comments and the whole
+    content of Bee block comments (boxed ``| ...`` directives/footers).
+
+    A block comment opens with a `+-` rune pair and closes with a `-+` pair
+    (balancing nested pairs, matching internal/lexer/lexer.go skipBlockComment).
+    Returns only the lines an @EXPECT/print detector should actually scan.
+    """
+    depth = 0
     for line in lines:
+        if depth > 0:
+            # Consume box content; count nested openers/closers on this line.
+            rest = line
+            while rest:
+                o = rest.find("+-")
+                c = rest.find("-+")
+                if o >= 0 and (c < 0 or o < c):
+                    depth += 1
+                    rest = rest[o + 2:]
+                elif c >= 0:
+                    depth -= 1
+                    rest = rest[c + 2:]
+                    if depth == 0:
+                        break
+                else:
+                    break
+            continue
         if line.lstrip().startswith("--"):
             continue
-        if PRINT_RE.search(line):
-            return True
-    return False
+        if "+-" in line:
+            depth = 1
+            if "-+" in line:
+                depth = 0
+            continue
+        yield line
+    # Block comment still open at EOF is a lexer error; leave depth as-is.
+
+
+def uses_print(lines):
+    """True iff the source BODY emits stdout via `print` (comments never count)."""
+    return any(PRINT_RE.search(line) for line in strip_comments(lines))
 
 # Ensure Python's stdout/stderr can emit Unicode (e.g. ≠, ≤, ≥, etc.) on
 # Windows consoles (cp1252 by default) and other non-UTF-8 terminals.
@@ -69,9 +102,9 @@ def test():
                         disabled = True
                     if "@NEGATIVE" in line:
                         negative = True
-                    if "-- @DESC:" in line and desc == "TBD":
+                    if "@DESC:" in line and desc == "TBD":
                         desc = line.split("@DESC:")[1].strip()
-                    if "-- @EXPECT:" in line:
+                    if "@EXPECT:" in line:
                         expect = decode_expect(line.split("@EXPECT:")[1].strip())
                     m = re.search(r"@AI:\s*(Yes|No)", line)
                     if m:

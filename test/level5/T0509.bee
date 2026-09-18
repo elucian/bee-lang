@@ -1,5 +1,6 @@
++---------------------------------------------------------
 -- @DESC: trait composition with apply augmentation (O9)
--- trait rule: augments an object with a .double method
+---------------------------------------------------------+
 rule augment(self ∈ Object):
   rule .double(self ∈ Object) => (r ∈ N):
     let r := 2 * self.n;
@@ -17,7 +18,10 @@ rule main:
   expect bar.double = 10;
 return;
 
--- spec/06-objects.md §5: reusable behavior composed via `+` and `apply Trait`.
++----------------------------------------------------------
+spec/06-objects.md §5: reusable behavior composed via `+`
+and `apply Trait`.
+----------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
 -- @DISABLED: trait application/`+ Trait` type composition is not implemented
 -- in the evaluator.
