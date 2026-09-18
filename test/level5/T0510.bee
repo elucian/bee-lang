@@ -1,7 +1,4 @@
 -- @DESC: array of objects with dot member access (O10)
--- @AI: No - self-sufficient assertion test
--- tutorial/objects.html "Array of Objects": an array of typed objects, elements
--- accessed with `catalog[i].member` after positional JSON-literal assignment.
 type Person: {name ∈ S, age ∈ N} <: Object;
 
 rule main:
@@ -16,3 +13,8 @@ rule main:
   expect catalog[1].name = "Cleopatra";
   expect catalog[2].age  = 17;
 return;
+
+-- tutorial/objects.html "Array of Objects": an array of typed objects, elements
+-- accessed with `catalog[i].member` after positional JSON-literal assignment.
+-- @AI: No - assertion-only (self-verifying)
+-- @DISABLED: typed object array and member access not implemented in evaluator

@@ -4,7 +4,7 @@ This level covers system integration and library interactions.
 
 ## Test Coverage
 
-| CASE     | DESCRIPTION                      | STATUS     |
-| -------- | -------------------------------- | ---------- |
-| T0701    | file: main_module.bee            | Yes    | FAIL       |
-| T0702    | file: test_module.bee            | No     | PASS       |
+| CASE  | AI  | STATUS | DESCRIPTION               |
+| ----- | --- | ------ | ------------------------- |
+| T0701 | Yes | YES    | file: main_module.bee     |
+| T0702 | No  | NO     | file: test_module.bee     |

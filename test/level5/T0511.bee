@@ -1,7 +1,4 @@
 -- @DESC: recursive node object structure (O11)
--- @AI: No - self-sufficient assertion test
--- tutorial/objects.html "Recursive Structures": a type referencing another
--- instance of itself to form a tree / linked list.
 type Node: {
   data ∈ Z,
   next ∈ Node
@@ -18,3 +15,8 @@ rule main:
   expect n1.next.data = 2;
   expect n1.next.next.data = 3;
 return;
+
+-- tutorial/objects.html "Recursive Structures": a type referencing another
+-- instance of itself to form a tree / linked list.
+-- @AI: No - assertion-only (self-verifying)
+-- @DISABLED: recursive `Node` type and member access not implemented in evaluator

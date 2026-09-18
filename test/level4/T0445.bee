@@ -1,0 +1,43 @@
+-- @DESC: 3D cube tensor 4×4×4 and 4D tensor 2×2×2×2, row-major cell indexing (spec/10 §3.3)
+-- @AI: No - self-sufficient assertion test
+rule main:
+  -- 3D cube 4×4×4 = 64 cells, row-major order.
+  new cube ∈ [Z](4,4,4);
+
+  -- Fill each 1-based cell (i,j,k) with its flattened position 1..64:
+  --   position = ((i-1)*16 + (j-1)*4 + k)
+  for ∀ i ∈ (1..4) do:
+    for ∀ j ∈ (1..4) do:
+      for ∀ k ∈ (1..4) do:
+        let cube[i,j,k] := ((i-1)*16 + (j-1)*4 + k);
+      done;
+    done;
+  done;
+
+  -- cube corners
+  expect cube[1,1,1] = 1;
+  expect cube[1,4,1] = 13;
+  expect cube[4,1,1] = 49;
+  expect cube[4,4,4] = 64;
+
+  -- a representative interior cell
+  expect cube[2,3,2] = 26;
+  expect cube[3,1,4] = 36;
+
+  -- single-index flatten agrees with full-coordinate row-major layout
+  expect cube[26] = 26;
+  expect cube[64] = 64;
+
+  -- 4D tensor 2×2×2×2 = 16 cells: simplest demonstration of rank 4.
+  new block ∈ [Z](2,2,2,2);
+  let block[1,1,1,1] := 11;
+  let block[1,2,1,2] := 12;
+  let block[2,1,2,1] := 21;
+  let block[2,2,2,2] := 22;
+  expect block[1,1,1,1] = 11;
+  expect block[1,2,1,2] = 12;
+  expect block[2,1,2,1] = 21;
+  expect block[2,2,2,2] = 22;
+  -- unfilled 4D cells stay zero-initialised
+  expect block[1,1,1,2] = 0;
+return;

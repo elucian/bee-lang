@@ -1,5 +1,6 @@
 # test/solo.py - Single test runner without build
 import os
+import re
 import sys
 import subprocess
 
@@ -52,34 +53,75 @@ def run_solo():
     print("--- STDERR ---")
     print(res.stderr)
 
-    # Detect a @NEGATIVE marker (expects a graceful non-zero exit) and extract
-    # the description from the header comment block.
-    negative = False
-    desc = "TBD"
-    try:
-        with open(test_path, "r", encoding="utf-8") as tf:
-            for line in tf:
-                if "@NEGATIVE" in line:
-                    negative = True
-                if "-- @DESC:" in line:
-                    desc = line.split("@DESC:")[1].strip()
-                    break
-    except Exception:
-        pass
-
-    # A negative test "passes" when the compiler exits non-zero (a graceful,
-    # expected failure). A normal test passes on a zero exit code.
-    if negative:
-        status = "PASS" if res.returncode != 0 else "FAIL"
-    else:
-        status = "PASS" if res.returncode == 0 else "FAIL"
-
     code_lines = []
     try:
         with open(test_path, "r", encoding="utf-8") as tf:
             code_lines = tf.readlines()
     except Exception:
         pass
+
+    # Metadata design (test/readme.md §4): the FIRST @DESC tag (line 1) is the
+    # human-readable description; all lifecycle/verification directives
+    # (@AI/@EXPECT/@NEGATIVE/@DISABLED) live in the trailing footer comments.
+    # Scan the WHOLE file (no early `break`) so footer directives are always
+    # honored regardless of position.
+    def decode_expect(raw):
+        return raw.replace("\\n", "\n").replace("\\t", "\t").strip() if raw else None
+
+    negative = False
+    disabled = False
+    expect = None
+    ai_tag = None
+    desc = "TBD"
+    try:
+        with open(test_path, "r", encoding="utf-8") as tf:
+            for line in tf:
+                if "@NEGATIVE" in line:
+                    negative = True
+                if "@DISABLED" in line:
+                    disabled = True
+                if "-- @DESC:" in line and desc == "TBD":
+                    desc = line.split("@DESC:")[1].strip()
+                if "-- @EXPECT:" in line:
+                    expect = decode_expect(line.split("@EXPECT:")[1].strip())
+                m = re.search(r"@AI:\s*(Yes|No)", line)
+                if m:
+                    ai_tag = m.group(1) == "Yes"
+    except Exception:
+        pass
+
+    if disabled:
+        print("SKIP: test disabled (@DISABLED)")
+        sys.exit(0)
+
+    exit_code = res.returncode
+    if negative:
+        # A negative test "passes" when the compiler exits non-zero.
+        status = "PASS" if res.returncode != 0 else "FAIL"
+        exit_code = 0 if res.returncode != 0 else 1
+    else:
+        status = "PASS" if res.returncode == 0 else "FAIL"
+        exit_code = res.returncode
+
+    # Autonomous @EXPECT verification: if the body prints (AI based), captured
+    # stdout must byte-match the declared @EXPECT footer tag, else the case fails.
+    actual = res.stdout.strip()
+    uses_print = any(re.search(r"\bprint\b", ln) for ln in code_lines
+                     if not ln.lstrip().startswith("--"))
+    ai_used = uses_print if ai_tag is None else ai_tag
+    if ai_used:
+        if expect is None or expect == "":
+            status = "FAIL"
+            reason = "missing @EXPECT footer tag on print-based test"
+            exit_code = 1
+            print(f"[AI=Yes] {reason}")
+        elif actual != expect.strip():
+            status = "FAIL"
+            reason = "stdout mismatch vs @EXPECT"
+            exit_code = 1
+            print(f"[AI=Yes] expect={expect!r} actual={actual!r} -> MISMATCH")
+        else:
+            print(f"[AI=Yes] expect={expect!r} actual={actual!r} -> OK")
 
     os.makedirs("test/output", exist_ok=True)
     report_name = f"{os.path.splitext(os.path.basename(test_path))[0]}.md"
@@ -103,13 +145,6 @@ def run_solo():
         f_out.write("```\n\n## Conclusion\nStatus: " + status + "\n")
 
     print(f"Report saved to {report_path}")
-
-    # Exit zero for a passing test (including negative tests that gracefully
-    # failed), non-zero otherwise.
-    if negative:
-        exit_code = 0 if res.returncode != 0 else 1
-    else:
-        exit_code = res.returncode
     sys.exit(exit_code)
 
 if __name__ == "__main__":

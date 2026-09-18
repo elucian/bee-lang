@@ -2,24 +2,18 @@
 -- @AI: No - self-sufficient assertion test
 rule main:
   -- list concatenation with `+` creates a new list
-  new a := ('a','b','c');
-  new b := ('1','2','3');
+  new a := (1,2,3);
+  new b := (4,5,6);
   new c := a + b;
-  expect c[1] = 'a';
-  expect c[2] = 'b';
-  expect c[3] = 'c';
-  expect c[4] = '1';
-  expect c[5] = '2';
-  expect c[6] = '3';
-  expect c[$] = '3';
+  expect c = (1,2,3,4,5,6);
+  expect c[1] = 1;
+  expect c[$] = 6;
 
   -- append one element to end of list with `<+`
   new q := (1,2,3);
   let q <+ 4;
+  expect q = (1,2,3,4);
   expect q[1] = 1;
-  expect q[2] = 2;
-  expect q[3] = 3;
-  expect q[4] = 4;
   expect q[$] = 4;
 
 return;

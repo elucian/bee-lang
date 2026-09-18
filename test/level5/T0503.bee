@@ -1,9 +1,4 @@
 -- @DESC: custom type with default constructor (O3)
--- @AI: No - self-sufficient assertion test
--- spec/06-objects.md §6 object_type; tutorial/objects.html "Custom type":
--- a `type` declaration with default attribute values lets the compiler build
--- a default constructor reused by the type name.
--- ⚠ @DISABLED: default-object-constructor auto-generation is not implemented.
 type T: {a1: 10, a2: 5};
 
 rule main:
@@ -16,3 +11,9 @@ rule main:
   expect obj1 = {a1: 10, a2: 0};
   expect obj2 = {a1: 1, a2: 10};
 return;
+
+-- spec/06-objects.md §6 object_type; tutorial/objects.html "Custom type":
+-- a `type` declaration with default attribute values lets the compiler build
+-- a default constructor reused by the type name.
+-- @AI: No - assertion-only (self-verifying)
+-- @DISABLED: default-object-constructor auto-generation is not implemented

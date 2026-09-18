@@ -36,6 +36,11 @@ Located in `test/` or `scripts/`:
 
 - **`test/status/`**: Stores detailed syntax check reports and execution status summaries.
 - **`test/output/`**: Detailed Markdown execution reports for each individual test run.
+- **`test/scratch/`**: Git-ignored scratch area (see `test/.gitignore` in the repo root).
+  AI agents drop *temporary* probes here to iterate on compiler behaviour without
+  touching the versioned suite. Anything useful is promoted into a real
+  `test/levelX/Txxxx.bee` case; leftover scratch files are discarded, never
+  committed.
 ---
 
 ## 4. Authoring Assert-Driven Test Cases
@@ -60,12 +65,30 @@ an `expect` is false.
 - **Boolean literals** are `1`/`0` (integers), so `expect sub = 1;` checks a
   true-valued result. Comparisons (`=`, `<`, `≤`, `¬`) evaluate to `1`/`0`.
 
-### Header tags (line 1, in order)
+### Directives (line 1 = description only; the rest live in the FOOTER)
 
-| Tag | Meaning |
+To keep the program body stable when directives change, **only the
+`@DESC` description sits at the top of the file (line 1)**; every other
+directive is written in a trailing comment block **at the end of the file,**
+after the final `return;`. The harness and `scripts/update_test_readme.py`
+scan the whole file for the footer tags, so adding a directive later never
+shifts the code lines.
+
+```bee
+-- @DESC: <what the test does>
+rule main:
+  ...
+return;
+
+-- <spec reference lines>
+-- @AI: No - assertion-only (self-verifying)
+-- @DISABLED: <reason>
+```
+
+| Directive | Meaning |
 | :--- | :--- |
-| `-- @DESC:<name> <purpose>` | Required. Human + harness description of the test's purpose (shown in the level `README.md` table). Must describe *what the test does* — never restate the code, since the body is not duplicated in the README. |
-| `-- @AI: Yes - <reason>` | Required note on output-producing tests. Replaces the legacy `-- * AI based test.`. Flags that the case uses `print` and is verified against `@EXPECT` by the runner's AI/printer layer. Omit the tag (or use `@AI: No`) for purely assertion-driven tests. |
+| `-- @DESC:<name> <purpose>` (line 1) | Required. Human + harness description of the test's purpose (shown in the level `README.md` table). Must describe *what the test does* — never restate the code, since the body is not duplicated in the README. |
+| `-- @AI: Yes - <reason>` | Required note on output-producing tests. Flags that the case uses `print` and is verified against `@EXPECT` by the runner's AI/printer layer. Omit the tag (or use `@AI: No`) for purely assertion-driven tests. |
 | `-- @EXPECT: <exact output>` | Required for **AI based** (`print`-using) tests. The runner captures stdout and compares it (byte-exact, surfaced assertion) against this tag. A mismatch — or a missing tag on a `print` test — **fails** the case with no human/agent reading required. |
 | `-- @NEGATIVE` | The test supplies a *negative* program: it **passes** on a non-zero exit and **fails** on exit 0 (e.g. a rejected `a[-1]` index). |
 | `-- @DISABLED: <reason>` | Skipped by the harness. Inserted automatically when a case fails; the reason is the first stderr diagnostic. Powerful, honest positive signal: disabled == feature not yet implemented. |
@@ -95,14 +118,16 @@ The suite must be complete **and** sufficient — nothing redundant, nothing mis
 *Aim: the union of all cases is the smallest set whose failure modes cover the
 entire examined spec surface with no meaningful gap and no meaningful overlap.*
 
-Every level `README.md` status table carries four columns:
+Every level `README.md` status table carries four columns, in this compact
+order (kept tight by `scripts/update_test_readme.py`; the DESCRIPTION column is
+a fixed width and truncated to 25 characters with a trailing `...`):
 
 ```
-| CASE | DESCRIPTION | AI | STATUS |
+| CASE | AI | STATUS | DESCRIPTION |
 ```
 
 - **AI** is `Yes` iff the case's source body emits stdout via `print`, declared with
-  the header tag `-- @AI: Yes`. Otherwise `No`. The runner confirms the tag by
+  the footer tag `-- @AI: Yes`. Otherwise `No`. The runner confirms the tag by
   scanning the source directly (comment lines never count), so a description merely
   mentioning "print" cannot mislabel an assertion-only test.
 - For `AI=Yes` cases the runner prints a machine-readable verdict the AI can act on:

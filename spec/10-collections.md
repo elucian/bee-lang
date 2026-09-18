@@ -81,15 +81,34 @@ let clone[1] := 0;           -- does not affect list
   new A ∈ [Z](5) := [0, 1, 2, 3, 4];
   ```
 
-### 3.3 Matrices `[...](r, c)` & 2D Tensors
+### 3.3 Tensors `[...](d1, d2, ..., dn)`
+
+A **tensor** is an extended matrix with N dimensions (`N ≥ 2`). A matrix is a
+2-dimensional tensor; a 3-value dimension list shapes a 3D cube and a 4-value
+list a 4D block. Elements are stored in row-major order (first dimension varies
+slowest) and are indexed with one 1-based coordinate per dimension. A matrix is
+therefore the special case `N = 2`.
+
 $$\mathbf{M} = \begin{bmatrix} m_{1,1} & m_{1,2} & m_{1,3} \\ m_{2,1} & m_{2,2} & m_{2,3} \end{bmatrix}$$
 
 ![Bee Matrix](img/bee-matrix.svg)
 
+**Declaration & cell access (2D matrix):**
 ```bee
 new M ∈ [Z](2, 3) := [[1, 2, 3], [4, 5, 6]];
 let M[1, 2] := 100; -- Row 1, Column 2 updated to 100
 ```
+
+**3D cube and 4D block (N ≥ 3):**
+```bee
+new cube ∈ [Z](4, 4, 4);     -- 4×4×4 = 64 cells
+let cube[2, 3, 2] := 26;
+
+new block ∈ [Z](2, 2, 2, 2); -- 2×2×2×2 = 16 cells
+let block[2, 2, 2, 2] := 22;
+```
+
+A single-integer form `[Z](n)` is a fixed-size array (see §3.2), not a tensor.
 
 ### 3.4 Set Algebra Operators
 Sets are unordered collections of unique elements supporting native mathematical set algebra:

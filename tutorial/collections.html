@@ -400,6 +400,20 @@ return;
 </code></pre>
 
 
+<h3 id="tensor">Tensor</h3>
+<p>A <b>tensor</b> is an extended matrix with N dimensions. A matrix is a 2-dimensional tensor; a 3-value dim list shapes a 3D cube, a 4-value list a 4D block, and so on. Elements are kept in <em>row-major</em> order and are read or written with one 1-based coordinate per dimension.</p>
+
+<pre><code class="language-bee">-- 3D cube 4&times;4&times;4 = 64 cells
+new cube &isin; [Z](4,4,4);
+let cube[1,1,1] := 1;
+let cube[2,3,2] := 26;
+let cube[4,4,4] := 64;
+
+-- 4D tensor 2&times;2&times;2&times;2 = 16 cells
+new block &isin; [Z](2,2,2,2);
+let block[2,2,2,2] := 22;
+</code></pre>
+
 <h3 id="data-set">Data sets</h3>
 <p>A data set is a sorted collection of unique values. Elements of a data set can be accessed sequential. There is no index associated with elements like we have in Arrays so the access to an element is slow.</p>
 

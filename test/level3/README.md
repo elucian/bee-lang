@@ -6,24 +6,24 @@ This level covers rules, contracts, and function definitions as defined in:
 
 ## Test Coverage
 
-| CASE     | DESCRIPTION                      | AI    | STATUS     |
-| -------- | -------------------------------- | ----- | ---------- |
-| T0301    | Rule anatomy no params — a pa... | No     | PASS       |
-| T0302    | Rule anatomy with params — ru... | No     | PASS       |
-| T0303    | Assert precondition pass — as... | No     | PASS       |
-| T0304    | Assert precondition fail — as... | No     | PASS       |
-| T0305    | Expect postcondition pass — e... | No     | PASS       |
-| T0306    | Expect postcondition fail — e... | No     | PASS       |
-| T0307    | Rule docstrings — triple-dash... | No     | PASS       |
-| T0308    | Scoping parameter shadowing —... | No     | PASS       |
-| T0309    | Scoping variable locality — a... | No     | PASS       |
-| T0310    | Closures state capture — a ge... | No     | PASS       |
-| T0311    | Early return with exit — exit... | No     | PASS       |
-| T0312    | Nested rule calls — one rule ... | No     | PASS       |
-| T0313    | Recursion — factorial compute... | No     | PASS       |
-| T0314    | Multi-result deconstruction —... | No     | PASS       |
-| T0315    | Lambda expression — explicit ... | No     | PASS       |
-| T0316    | Lambda inline — an anonymous ... | No     | PASS       |
-| T0319    | Partial application — the ? p... | No     | PASS       |
-| T0320    | Rule contract — assert and ex... | No     | PASS       |
-| T0321    | Rule contract assert failure ... | No     | PASS       |
+| CASE  | AI  | STATUS | DESCRIPTION               |
+| ----- | --- | ------ | ------------------------- |
+| T0301 | No  | PASS   | Rule anatomy no params... |
+| T0302 | No  | PASS   | Rule anatomy with para... |
+| T0303 | No  | PASS   | Assert precondition pa... |
+| T0304 | No  | PASS   | Assert precondition fa... |
+| T0305 | No  | PASS   | Expect postcondition p... |
+| T0306 | No  | PASS   | Expect postcondition f... |
+| T0307 | No  | PASS   | Rule docstrings — trip... |
+| T0308 | No  | PASS   | Scoping parameter shad... |
+| T0309 | No  | PASS   | Scoping variable local... |
+| T0310 | No  | PASS   | Closures state capture... |
+| T0311 | No  | PASS   | Early return with exit... |
+| T0312 | No  | PASS   | Nested rule calls — on... |
+| T0313 | No  | PASS   | Recursion — factorial ... |
+| T0314 | No  | PASS   | Multi-result deconstru... |
+| T0315 | No  | PASS   | Lambda expression — ex... |
+| T0316 | No  | PASS   | Lambda inline — an ano... |
+| T0319 | No  | PASS   | Partial application — ... |
+| T0320 | No  | PASS   | Rule contract — assert... |
+| T0321 | No  | PASS   | Rule contract assert f... |

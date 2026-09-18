@@ -1,9 +1,4 @@
 -- @DESC: async begin and wait barrier (C1)
--- @AI: No - self-sufficient assertion test
--- spec/12-concurrency.md §2: `begin task(...)` spawns an isolated worker
--- thread; `wait;` is a mandatory synchronization barrier before scope exit.
--- ⚠ @DISABLED: `begin`/`wait` are lexed but not executed by the evaluator.
--- @DISABLED
 -- worker rule: returns double its argument
 rule test(n ∈ Z) => (r ∈ Z):
   let r := n * 2;
@@ -18,3 +13,8 @@ rule main:
   -- mandatory barrier: block until all workers finish
   wait;
 return;
+
+-- spec/12-concurrency.md §2: `begin task(...)` spawns an isolated worker
+-- thread; `wait;` is a mandatory synchronization barrier before scope exit.
+-- @AI: No - assertion-only (self-verifying)
+-- @DISABLED: `begin`/`wait` are lexed but not executed by the evaluator.

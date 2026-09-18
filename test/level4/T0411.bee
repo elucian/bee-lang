@@ -3,16 +3,12 @@
 -- D14: for loop terminates with done;.
 -- 1-based array indexing (Decision 1).
 
--- array with 10 elements
-new a ∈ [Z](1..10);
-
 rule main:
-                                        -- array initialization
-  for i ∈ (1..10) do
-    let a[i] := i;
-  done;
+                                        -- builder array over 1..10 => [1..10]
+  new a := [ i | i ∈ (1..10) ];
+  expect a = [1,2,3,4,5,6,7,8,9,10];
 
-                                        -- array traversal and print
+                                        -- array traversal, asserting each index
   for i ∈ (1..10) do
     expect a[i] = i;
   done;

@@ -1,7 +1,8 @@
--- @DISABLED: map builder (x:x²) evaluates to 0 (unimplemented)
--- @DESC:file: map_builder.bee
--- Map builder demo
+-- @DESC: map builder x:x² over 1..4, matched against hardcoded map (spec/10 §3.5)
+-- @AI: No - self-sufficient assertion test
 rule main:
-  print { (x:x²) | x ∈ (1..4) };
+  new bm := { (x:x²) | x ∈ (1..4) };
+  expect bm = {1:1, 2:4, 3:9, 4:16};
+  expect bm[2] = 4;
+  expect bm[4] = 16;
 return;
-

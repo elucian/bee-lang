@@ -1,10 +1,4 @@
 -- @DESC: coroutine channel extraction yield r << task (C4)
--- @AI: No - self-sufficient assertion test
--- spec/12-concurrency.md §4.2: `yield r << coroutine` extracts the next yielded
--- value from an active coroutine; yields the sequence then a 0 sentinel.
--- ⚠ @DISABLED: the `yield var << coroutine` channel and `yield` are not
--- implemented in the evaluator.
--- @DISABLED
 rule ticker(n ∈ N) => (r ∈ N):
   for i ∈ (1..n) do
     let r := i;
@@ -29,3 +23,9 @@ rule main:
   -- expected: 1 + 2 + 3 + 4 = 10
   expect got = 10;
 return;
+
+-- spec/12-concurrency.md §4.2: `yield r << coroutine` extracts the next yielded
+-- value from an active coroutine; yields the sequence then a 0 sentinel.
+-- @AI: No - assertion-only (self-verifying)
+-- @DISABLED: the `yield var << coroutine` channel and `yield` are not
+-- implemented in the evaluator.

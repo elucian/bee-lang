@@ -101,9 +101,11 @@ type DeclarationStatement struct {
 	// SpreadIndex is the 0-based position in Names of the `*tail` spread
 	// target (spec/11 §5.1), or -1 when no spread is present.
 	SpreadIndex int
-	// MatrixDims holds the (rows, cols) from a typed matrix declaration
-	// `new M ∈ [Z](r, c)` (spec/10 §3.3). Nil for non-matrix declarations.
-	MatrixDims *[2]int
+	// MatrixDims holds the dimension list from a typed tensor declaration
+	// `new M ∈ [Z](d1, d2, ..., dn)` (spec/10 §3.3). A list of length >= 2 is
+	// a matrix (2D) or an n-D tensor; Nil for non-matrix declarations. A
+	// single integer `[Z](n)` is a fixed-size array, not a tensor.
+	MatrixDims []int
 }
 
 func (ds *DeclarationStatement) statementNode() {}
@@ -135,7 +137,6 @@ type PlaceholderExpression struct {
 
 func (pe *PlaceholderExpression) expressionNode() {}
 func (pe *PlaceholderExpression) Pos() token.Pos  { return pe.Token.Pos }
-
 
 type IntegerLiteral struct {
 	Token token.Token

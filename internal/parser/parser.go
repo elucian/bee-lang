@@ -292,23 +292,38 @@ func (p *Parser) captureTypeSpecifier() []token.Token {
 }
 
 // extractMatrixDims parses a captured type specifier token sequence for the
-// matrix pattern `[Type](rows, cols)` and returns the dimensions. Returns
-// nil when the pattern is absent.
-func extractMatrixDims(toks []token.Token) *[2]int {
-	// Pattern: LBRACKET type RBRACKET LPAREN INT COMMA INT RPAREN
-	for i := 0; i+6 < len(toks); i++ {
-		if toks[i].Type == token.LBRACKET &&
-			toks[i+2].Type == token.RBRACKET &&
-			toks[i+3].Type == token.LPAREN &&
-			toks[i+4].Type == token.INT &&
-			toks[i+5].Type == token.COMMA &&
-			toks[i+6].Type == token.INT {
-			rows, err1 := strconv.Atoi(toks[i+4].Literal)
-			cols, err2 := strconv.Atoi(toks[i+6].Literal)
-			if err1 == nil && err2 == nil {
-				return &[2]int{rows, cols}
+// tensor pattern `[Type](d1, d2, ..., dn)` and returns the dimension list.
+// It returns nil when the pattern is absent or holds fewer than two integer
+// dimensions (`[Z](n)` is a fixed-size array, not a tensor). This generalises
+// the matrix spelling `[Z](rows, cols)` (spec/10 §3.3) to N dimensions.
+func extractMatrixDims(toks []token.Token) []int {
+	// Scan for LBRACKET type RBRACKET LPAREN then consume the dimension list.
+	for i := 0; i+4 < len(toks); i++ {
+		if toks[i].Type != token.LBRACKET ||
+			toks[i+2].Type != token.RBRACKET ||
+			toks[i+3].Type != token.LPAREN ||
+			toks[i+4].Type != token.INT {
+			continue
+		}
+		var dims []int
+		j := i + 4
+		for j < len(toks) && toks[j].Type == token.INT {
+			d, err := strconv.Atoi(toks[j].Literal)
+			if err != nil {
+				return nil
+			}
+			dims = append(dims, d)
+			j++
+			if j < len(toks) && toks[j].Type == token.COMMA {
+				j++
 			}
 		}
+		// Matrices/tensors require at least two dimensions; a lone `[Z](n)`
+		// remains a fixed array handled by the array declaration path.
+		if len(dims) >= 2 {
+			return dims
+		}
+		return nil
 	}
 	return nil
 }

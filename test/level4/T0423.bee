@@ -1,9 +1,14 @@
--- @DISABLED: set union/intersection evaluate to 0 (unimplemented, spec/10 §3.4)
--- @DESC:file: set_algebra_unicode.bee
--- Set algebra with Unicode operators demo
+-- @DESC: set algebra with Unicode operators ∪ ∩ ⊂ (spec/10 §3.4)
+-- @AI: No - self-sufficient assertion test
 rule main:
-  print {1,2} ∪ {2,3};
-  print {1,2,3} ∩ {2,3};
-  print {1,2} ⊂ {1,2,3};
-return;
+  new i := {1,2,3} ∩ {2,3};
+  expect i = {2,3};
+  expect 2 ∈ i;
 
+  new u := {1,2} ∪ {2,3};
+  expect u = {1,2,3};
+  expect 3 ∈ u;
+
+  new sub := {1,2} ⊂ {1,2,3};
+  expect sub = 1;
+return;

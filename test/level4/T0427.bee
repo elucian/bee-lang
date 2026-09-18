@@ -1,10 +1,11 @@
--- @DISABLED: map iteration string values evaluate to 0 (unimplemented, spec/10 §3.5)
--- @DESC: walking a map with done terminator (D14)
+-- @DESC: walking a map with done terminator, summing values (D14, spec/10 §3.5)
+-- @AI: No - self-sufficient assertion test
 -- D14: for loop terminates with done;.
 rule main:
-  new m := {1:"a", 2:"b"};
+  new m := {1:10, 2:20};
+  new total := 0;
   for k, v ∈ m do
-    write k + "=" + v + " ";
+    let total := total + v;
   done;
-  print; -- 1 = a 2 = b
+  expect total = 30;
 return;

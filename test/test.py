@@ -1,9 +1,27 @@
 import os
+import re
 import subprocess
 import sys
 import json
 import datetime
 import argparse
+
+PRINT_RE = re.compile(r"\bprint\b")
+
+
+def decode_expect(raw):
+    """Decode `\n`/`\t` escapes in an @EXPECT footer tag."""
+    return raw.replace("\\n", "\n").replace("\\t", "\t").strip() if raw else None
+
+
+def uses_print(lines):
+    """True iff the source BODY emits stdout via `print` (comments never count)."""
+    for line in lines:
+        if line.lstrip().startswith("--"):
+            continue
+        if PRINT_RE.search(line):
+            return True
+    return False
 
 # Ensure Python's stdout/stderr can emit Unicode (e.g. ≠, ≤, ≥, etc.) on
 # Windows consoles (cp1252 by default) and other non-UTF-8 terminals.
@@ -38,43 +56,59 @@ def test():
                 path = os.path.join(lvl_dir, f)
                 disabled = False
                 negative = False
+                expect = None
+                ai_tag = None
                 desc = "TBD"
                 with open(path, "r", encoding="utf-8") as tf:
                     lines = tf.readlines()
-                # Scan every line for lifecycle tags. @DISABLED and @NEGATIVE may
-                # appear below the @DESC line, so they must be found independently
-                # of the @DESC break below (a `break` at line 1 would hide them).
-                if any("@DISABLED" in line for line in lines):
-                    disabled = True
-                if any("@NEGATIVE" in line for line in lines):
-                    negative = True
+                # Footer-directive design (test/readme.md §4): scan the whole
+                # file for lifecycle tags so footer @AI/@EXPECT/@NEGATIVE/@DISABLED are
+                # always honored; @DESC is taken from its first (line 1) occurrence.
                 for line in lines:
-                    if "-- @DESC:" in line:
+                    if "@DISABLED" in line:
+                        disabled = True
+                    if "@NEGATIVE" in line:
+                        negative = True
+                    if "-- @DESC:" in line and desc == "TBD":
                         desc = line.split("@DESC:")[1].strip()
-                        break
+                    if "-- @EXPECT:" in line:
+                        expect = decode_expect(line.split("@EXPECT:")[1].strip())
+                    m = re.search(r"@AI:\s*(Yes|No)", line)
+                    if m:
+                        ai_tag = m.group(1) == "Yes"
                 if disabled:
                     continue
                 test_name = os.path.splitext(f)[0]
-                
+
                 res = subprocess.run(["./bin/bee.exe", "-e", path], capture_output=True, text=True)
-                
+
                 print(f"--- STDOUT ({path}) ---")
                 print(res.stdout)
                 print(f"--- STDERR ({path}) ---")
                 print(res.stderr)
-                
-                if negative:
+
+                ai_used = uses_print(lines) if ai_tag is None else ai_tag
+                if ai_used:
+                    actual = res.stdout.strip()
+                    if expect is None or expect == "":
+                        status = "FAIL"
+                        reason = "missing @EXPECT footer tag on print-based test"
+                    elif actual != expect.strip():
+                        status = "FAIL"
+                        reason = "stdout mismatch vs @EXPECT"
+                    else:
+                        status = "PASS"
+                        reason = ""
+                elif negative:
                     status = "PASS" if res.returncode != 0 else "FAIL"
                 else:
                     status = "PASS" if res.returncode == 0 else "FAIL"
-                subprocess.run(["python", "scripts/update_test_readme.py", test_name, status, desc])
+                ai_col = "Yes" if ai_used else "No"
+                subprocess.run(["python", "scripts/update_test_readme.py",
+                                test_name, status, desc, ai_col])
 
                 # Process report
-                code_lines = []
-                try:
-                    with open(path, "r", encoding="utf-8") as tf:
-                        code_lines = tf.readlines()
-                except: pass
+                code_lines = lines
                 
                 output_dir = "test/output"
                 os.makedirs(output_dir, exist_ok=True)

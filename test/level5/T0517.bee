@@ -1,10 +1,4 @@
 -- @DESC: worker exception isolation and barrier re-raise (C6)
--- @AI: No - self-sufficient assertion test
--- spec/12-concurrency.md §5 / tutorial/objects.html "Worker exception isolation":
--- a worker panic is captured in its thread-local $trial; wait re-raises as
--- E1204 so a surrounding trial block can handle it.
--- ⚠ @DISABLED: `begin`/`wait`/`trial` re-raise are not implemented.
--- @DISABLED
 -- worker that panics for negative input
 rule risky(n ∈ Z) => (r ∈ Z):
   fail if n < 0;
@@ -22,3 +16,9 @@ rule main:
 
   expect true;
 return;
+
+-- spec/12-concurrency.md §5 / tutorial/objects.html "Worker exception isolation":
+-- a worker panic is captured in its thread-local $trial; wait re-raises as
+-- E1204 so a surrounding trial block can handle it.
+-- @AI: No - assertion-only (self-verifying)
+-- @DISABLED: `begin`/`wait`/`trial` re-raise are not implemented.

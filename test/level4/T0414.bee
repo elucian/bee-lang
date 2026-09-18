@@ -9,7 +9,7 @@ rule main:
   expect c = [1,2,3];
 -- test concatenation for lists, no garbage
   new l := (1,2); -- list of two elements
-  new m := (3,);  -- list with one element
+  new m := (3,_); -- list with one element
   new cm := l + m;
   expect cm[1] = 1;
   expect cm[2] = 2;

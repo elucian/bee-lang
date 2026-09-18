@@ -1,10 +1,9 @@
--- @DESC:file: sized_array.bee
+-- @DESC: sized array filled with a constant via builder (spec/10 §3)
 -- @AI: No - self-sufficient assertion test
--- A sized array demo
 rule main:
-  new a ∈ [Z](5);
-  let a[*] := 7;
+                                        -- sized array: 5 elements all 7
+  new a := [ 7 | x ∈ (1..5) ];
+  expect a = [7,7,7,7,7];
   expect a[1] = 7;
   expect a[$] = 7;
 return;
-

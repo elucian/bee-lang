@@ -64,10 +64,15 @@ def esc(s):
 def parse_header(path):
     """Return (desc, expect, negative, disabled, ai_tag) from a .bee file.
 
+    Design (test/readme.md §4): line 1 carries only `-- @DESC:`; every
+    lifecycle/verification directive (@AI/@EXPECT/@NEGATIVE/@DISABLED) lives
+    in the trailing FOOTER comments. The whole file is scanned so tags are
+    honored regardless of exact position.
+
     ai_tag is tri-state:
-      True  -> header declares `-- @AI: Yes` (output must be machine-checked)
-      False -> header declares `-- @AI: No` (self-sufficient, authoritative)
-      None  -> header has no @AI tag (fall back to uses_print auto-detect)
+      True  -> footer declares `-- @AI: Yes` (output must be machine-checked)
+      False -> footer declares `-- @AI: No` (self-sufficient, authoritative)
+      None  -> no @AI tag (fall back to uses_print auto-detect)
     """
     desc, expect, negative, disabled, ai_tag = "TBD", None, False, False, None
     try:
@@ -77,7 +82,8 @@ def parse_header(path):
                     disabled = True
                 if "@NEGATIVE" in line:
                     negative = True
-                if "-- @DESC:" in line:
+                if "-- @DESC:" in line and desc == "TBD":
+                    # First @DESC (line 1) wins; later occurrences are ignored.
                     desc = line.split("@DESC:")[1].strip()
                 if "-- @EXPECT:" in line:
                     expect = decode_expect(line.split("@EXPECT:")[1].strip())

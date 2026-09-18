@@ -32,12 +32,35 @@ type closureObject struct {
 	Nested map[string]*parser.RuleStatement // member rules keyed by folded name (`.next`)
 }
 
-// MatrixValue stores a 2D matrix in row-major order (spec/10 §3.3).
-// Elements are 1-based indexed: M[r,c] → Data[(r-1)*Cols + (c-1)].
+// MatrixValue stores an N-dimensional tensor in row-major order
+// (spec/10 §3.3). Elements are 1-based indexed along each dimension:
+// M[i1, i2, ..., in] → Data[matrixOffset(Dims, {i1, ..., in})]. A 2D tensor
+// is a matrix; higher-dimension tensors (3D cubes, 4D+ blocks) use the same
+// flattened, stride-based representation.
 type MatrixValue struct {
 	Data []int
-	Rows int
-	Cols int
+	Dims []int // per-dimension lengths, from most-significant to least
+}
+
+// matrixTotalSize returns the flattened element count of a tensor shaped by
+// dims, i.e. the product of all dimension lengths.
+func matrixTotalSize(dims []int) int {
+	size := 1
+	for _, d := range dims {
+		size *= d
+	}
+	return size
+}
+
+// matrixOffset computes the 0-based linear offset for row-major storage of
+// coordinates coords (1-based values, same length as dims). offset follows
+// the iterative Horner form: (((i1-1)*d2 + (i2-1))*d3 + (i3-1))*… + (in-1).
+func matrixOffset(dims, coords []int) int {
+	offset := 0
+	for i := range dims {
+		offset = offset*dims[i] + (coords[i] - 1)
+	}
+	return offset
 }
 
 type Evaluator struct {
@@ -327,7 +350,8 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				}
 				// Matrix broadcast/slice mutation (spec/10 §3.3 + spec/11 §5.2):
 				// `let M[*] := v` fills all elements; `let M[r,*] := v` fills row r;
-				// `let M[*,c] := v` fills column c; `let M[r,c] := v` sets one cell.
+				// `let M[*,c] := v` fills column c; `let M[r,c] := v` sets one cell;
+				// an N-d tensor `let T[i1, ..., in] := v` sets one cell along n dims.
 				if mat, hasMat := e.matrixValues[ident.Value]; hasMat {
 					if i < len(pendingInts) {
 						val := pendingInts[i]
@@ -336,6 +360,39 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 								return id.Value == "*"
 							}
 							return false
+						}
+						dims := len(mat.Dims)
+						// N-d full-coordinate single-cell write. Arity (one index per
+						// dimension) must match the tensor rank and none of the
+						// coordinates may be a wildcard. 2D falls through to the
+						// specialised row/column logic below for unchanged behaviour.
+						if dims >= 3 && len(idxExpr.ExtraIndices)+1 == dims {
+							allCoord := true
+							coords := make([]parser.Expression, 0, dims)
+							coords = append(coords, idxExpr.Index)
+							coords = append(coords, idxExpr.ExtraIndices...)
+							for _, c := range coords {
+								if isWildcard(c) {
+									allCoord = false
+									break
+								}
+							}
+							if allCoord {
+								inBounds := true
+								offs := make([]int, dims)
+								for k, ce := range coords {
+									v := e.evalIntExpression(ce)
+									offs[k] = v
+									if v < 1 || v > mat.Dims[k] {
+										inBounds = false
+									}
+								}
+								if inBounds {
+									mat.Data[matrixOffset(mat.Dims, offs)] = val
+								}
+								e.matrixValues[ident.Value] = mat
+								continue
+							}
 						}
 						if len(idxExpr.ExtraIndices) == 1 {
 							rowW := isWildcard(idxExpr.Index)
@@ -348,21 +405,21 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 							} else if rowW {
 								// M[*,c] — fill column c
 								col := e.evalIntExpression(idxExpr.ExtraIndices[0])
-								for r := 1; r <= mat.Rows; r++ {
-									mat.Data[(r-1)*mat.Cols+(col-1)] = val
+								for r := 1; r <= mat.Dims[0]; r++ {
+									mat.Data[(r-1)*mat.Dims[1]+(col-1)] = val
 								}
 							} else if colW {
 								// M[r,*] — fill row r
 								row := e.evalIntExpression(idxExpr.Index)
-								for c := 1; c <= mat.Cols; c++ {
-									mat.Data[(row-1)*mat.Cols+(c-1)] = val
+								for c := 1; c <= mat.Dims[1]; c++ {
+									mat.Data[(row-1)*mat.Dims[1]+(c-1)] = val
 								}
 							} else {
 								// M[r,c] — single cell
 								row := e.evalIntExpression(idxExpr.Index)
 								col := e.evalIntExpression(idxExpr.ExtraIndices[0])
-								if row >= 1 && row <= mat.Rows && col >= 1 && col <= mat.Cols {
-									mat.Data[(row-1)*mat.Cols+(col-1)] = val
+								if row >= 1 && row <= mat.Dims[0] && col >= 1 && col <= mat.Dims[1] {
+									mat.Data[(row-1)*mat.Dims[1]+(col-1)] = val
 								}
 							}
 						} else if isWildcard(idxExpr.Index) {
@@ -627,15 +684,16 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		if len(names) == 0 && s.Name != "" {
 			names = []string{s.Name}
 		}
-		// Typed matrix declaration (spec/10 §3.3): `new M ∈ [Z](r, c)`
-		// zero-initialises an r×c matrix in row-major order.
+		// Typed tensor declaration (spec/10 §3.3): `new M ∈ [Z](d1, d2, ..., dn)`
+		// zero-initialises an n-dimensional tensor in row-major order. A 2D dim
+		// list is a matrix; 3D+ is a tensor.
 		if s.MatrixDims != nil {
-			rows, cols := s.MatrixDims[0], s.MatrixDims[1]
+			dims := make([]int, len(s.MatrixDims))
+			copy(dims, s.MatrixDims)
 			for _, name := range names {
 				e.matrixValues[name] = MatrixValue{
-					Data: make([]int, rows*cols),
-					Rows: rows,
-					Cols: cols,
+					Data: make([]int, matrixTotalSize(dims)),
+					Dims: dims,
 				}
 				e.ensureIdentity(name)
 			}
@@ -1621,17 +1679,27 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 				key := e.evalExpression(expr.Index)
 				return m[key], e.ensureIdentity(ident.Value)
 			}
-			// Matrix 2D indexing (spec/10 §3.3): M[r, c] with 1-based indices.
+			// Tensor indexing (spec/10 §3.3): M[i1, ..., in] with 1-based indices
+			// along each dimension. A 2D tensor is a matrix; 3D+ is a tensor.
 			if mat, hasMat := e.matrixValues[ident.Value]; hasMat {
-				if len(expr.ExtraIndices) == 1 {
-					row := e.evalIntExpression(expr.Index)
-					col := e.evalIntExpression(expr.ExtraIndices[0])
-					if row >= 1 && row <= mat.Rows && col >= 1 && col <= mat.Cols {
-						return mat.Data[(row-1)*mat.Cols+(col-1)], e.ensureIdentity(ident.Value)
+				if len(expr.ExtraIndices)+1 == len(mat.Dims) {
+					coords := make([]int, 0, len(mat.Dims))
+					coords = append(coords, e.evalIntExpression(expr.Index))
+					for _, ei := range expr.ExtraIndices {
+						coords = append(coords, e.evalIntExpression(ei))
+					}
+					inBounds := true
+					for i, c := range coords {
+						if c < 1 || c > mat.Dims[i] {
+							inBounds = false
+						}
+					}
+					if inBounds {
+						return mat.Data[matrixOffset(mat.Dims, coords)], e.ensureIdentity(ident.Value)
 					}
 					return 0, e.allocID()
 				}
-				// Single-index matrix access: flatten to 1-based linear index.
+				// Single-index tensor access: flatten to 1-based linear index.
 				idx := e.evalIndexExpr(expr.Index, len(mat.Data))
 				if idx >= 1 && idx <= len(mat.Data) {
 					return mat.Data[idx-1], e.ensureIdentity(ident.Value)

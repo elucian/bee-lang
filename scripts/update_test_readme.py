@@ -2,9 +2,16 @@ import os
 import re
 import argparse
 
-# Level README status tables carry four columns: CASE | DESCRIPTION | AI | STATUS.
+# Level README status tables carry four columns, in this order:
+#   | CASE | AI | STATUS | DESCRIPTION |
 # The AI column is Yes for print/output-producing (AI based) tests and No for
 # purely assertion-driven tests. (See test/readme.md §4 and test/ai.py.)
+#
+# Layout is deliberately compact: only CASE/AI/STATUS are content-sized and the
+# DESCRIPTION column is a FIXED width (DESC_WIDTH) and truncated to it with a
+# trailing "...". If an existing README still uses the legacy column order
+# (CASE | DESCRIPTION | AI | STATUS) the script DETECTS the mismatch on the
+# next run and RECREATES the whole table in the canonical order.
 
 # Human-level metadata used to bootstrap a missing/empty level README. The
 # description and spec references mirror `test/readme.md` §1. Keys are the
@@ -24,6 +31,17 @@ LEVEL_INFO = {
     7: ("System Integration", ["spec/14-library.md"]),
     8: ("Experimental", None),
 }
+
+# Canonical column order (uppercased) that every level table must match.
+EXPECTED_COLUMNS = ["CASE", "AI", "STATUS", "DESCRIPTION"]
+
+# Compact, fixed column widths. CASE/AI/STATUS fit their real content; the
+# DESCRIPTION column is the only one that is padded to a fixed width and then
+# truncated to it.
+W_CASE = 5     # 'T0401'
+W_AI = 3       # 'Yes' / 'No'
+W_STAT = 6     # 'PASS' / 'FAIL' / 'SKIP' / 'UNRUN'
+W_DESC = 25    # fixed width; longer descriptions are truncated with '...'
 
 PRINT_RE = re.compile(r"\bprint\b")
 
@@ -61,52 +79,157 @@ def uses_print(path):
     return False
 
 
-def scan_level(level_dir):
-    """Scan a level dir and return per-test metadata.
+def file_metadata(path):
+    """Return (description, ai, status) for a single .bee file.
 
-    Returns a list of tuples:
-      (test_name, description, ai("Yes"/"No"), status)
     `status` is derived honestly without executing anything:
       - SKIP if the header carries @DISABLED (feature not implemented yet)
       - UNRUN otherwise (not yet executed through the harness)
     `ai` reflects explicit @AI: Yes/No and otherwise body `print` usage.
     """
+    desc, disabled, ai_tag = "see @DESC header", False, None
+    try:
+        with open(path, "r", encoding="utf-8") as tf:
+            for line in tf:
+                if "@DISABLED" in line:
+                    disabled = True
+                if "-- @DESC:" in line:
+                    desc = line.split("@DESC:")[1].strip()
+                m = re.search(r"@AI:\s*(Yes|No)", line)
+                if m:
+                    ai_tag = m.group(1) == "Yes"
+    except Exception:
+        pass
+    if ai_tag is None:
+        ai = "Yes" if uses_print(path) else "No"
+    else:
+        ai = "Yes" if ai_tag else "No"
+    status = "SKIP" if disabled else "UNRUN"
+    return desc, ai, status
+
+
+def scan_level(level_dir):
+    """Scan a level dir and return per-test (test_name, desc, ai, status)."""
     rows = []
     if not os.path.isdir(level_dir):
         return rows
     for f in sorted(os.listdir(level_dir)):
         if not f.endswith(".bee"):
             continue
-        path = os.path.join(level_dir, f)
         test_name = os.path.splitext(f)[0]
-        desc, disabled, ai_tag = "see @DESC header", False, None
-        try:
-            with open(path, "r", encoding="utf-8") as tf:
-                for line in tf:
-                    if "@DISABLED" in line:
-                        disabled = True
-                    if "-- @DESC:" in line:
-                        desc = line.split("@DESC:")[1].strip()
-                    m = re.search(r"@AI:\s*(Yes|No)", line)
-                    if m:
-                        ai_tag = m.group(1) == "Yes"
-        except Exception:
-            pass
-        if ai_tag is None:
-            ai = "Yes" if uses_print(path) else "No"
-        else:
-            ai = "Yes" if ai_tag else "No"
-        status = "SKIP" if disabled else "UNRUN"
+        desc, ai, status = file_metadata(os.path.join(level_dir, f))
         rows.append((test_name, desc, ai, status))
     return rows
 
 
-def bootstrap_level_readme(level_num, readme_path):
-    """Write a fresh, fully-populated level README from a scan of its .bee files.
+def truncate_desc(desc):
+    """Truncate a description to the fixed column width, trailing '...'."""
+    if not desc or desc == "TBD":
+        return "see @DESC header"
+    if len(desc) > W_DESC:
+        return desc[:W_DESC - 3] + "..."
+    return desc
 
-    Used when the README is missing or effectively empty. Existing populated
-    READMEs are left untouched (the per-test row update path handles them).
+
+def table_header():
+    return (f"| {'CASE':<{W_CASE}} | {'AI':<{W_AI}} | {'STATUS':<{W_STAT}} "
+            f"| {'DESCRIPTION':<{W_DESC}} |\n")
+
+
+def table_separator():
+    return (f"| {'-'*W_CASE} | {'-'*W_AI} | {'-'*W_STAT} "
+            f"| {'-'*W_DESC} |\n")
+
+
+def row_line(case, ai, status, desc):
+    return (f"| {case:<{W_CASE}} | {ai:<{W_AI}} | {status:<{W_STAT}} "
+            f"| {truncate_desc(desc):<{W_DESC}} |\n")
+
+
+def header_parts(line):
+    return [p.strip() for p in line.split("|") if p.strip()]
+
+
+def is_separator_row(parts):
+    return all(p == "-" * len(p) for p in parts)
+
+
+def table_matches_format(lines):
+    """True iff the README's status table header uses the canonical column order."""
+    for line in lines:
+        if line.strip().startswith("|"):
+            parts = [p.upper() for p in header_parts(line) if p]
+            if parts and parts[0] == "CASE":
+                return parts == EXPECTED_COLUMNS
+    return False
+
+
+def parse_rows(lines):
+    """Parse an existing status table into {case: {COLUMN_NAME: value, ...}}.
+
+    Column values are mapped through the table's own header, so rows in the
+    legacy order (CASE | DESCRIPTION | AI | STATUS) are read correctly too.
     """
+    rows = {}
+    header = None
+    for line in lines:
+        if not line.strip().startswith("|"):
+            continue
+        parts = header_parts(line)
+        if not parts:
+            continue
+        if header is None and parts[0] == "CASE":
+            header = parts
+            continue
+        if header is None or is_separator_row(parts):
+            continue
+        case = parts[0]
+        data = {}
+        for name, value in zip(header, parts):
+            data[name] = value
+        rows[case] = data
+    return rows
+
+
+def build_table(level_dir, existing_lines):
+    """Build the canonical table from existing rows, filling gaps from the .bee files."""
+    rows = parse_rows(existing_lines)
+    table = [table_header(), table_separator()]
+    if not os.path.isdir(level_dir):
+        return table
+    for f in sorted(os.listdir(level_dir)):
+        if not f.endswith(".bee"):
+            continue
+        case = os.path.splitext(f)[0]
+        data = rows.get(case, {})
+        path = os.path.join(level_dir, f)
+        _, scan_ai, _ = file_metadata(path)
+        desc = data.get("DESCRIPTION")
+        if desc is None or desc == "TBD":
+            desc, _, _ = file_metadata(path)
+        ai = data.get("AI", scan_ai)
+        status = data.get("STATUS", "UNRUN")
+        table.append(row_line(case, ai, status, desc))
+    return table
+
+
+def splice_table(lines, new_table):
+    """Replace the contiguous table block in `lines` with `new_table`."""
+    start = end = None
+    for i, line in enumerate(lines):
+        if line.strip().startswith("|"):
+            if start is None:
+                start = i
+            end = i
+        elif start is not None:
+            break
+    if start is None:
+        return lines + new_table
+    return lines[:start] + new_table + lines[end + 1:]
+
+
+def bootstrap_level_readme(level_num, readme_path):
+    """Write a fresh, fully-populated level README from a scan of its .bee files."""
     level_dir = f"test/level{level_num}"
     title = level_title(level_num)
     blurb = LEVEL_INFO.get(level_num, ("", None))[0]
@@ -121,13 +244,7 @@ def bootstrap_level_readme(level_num, readme_path):
     else:
         lines.append(f"This level covers {blurb.lower()}.\n\n")
     lines.append("## Test Coverage\n")
-    lines.append("| CASE     | DESCRIPTION                      | AI    | STATUS     |\n")
-    lines.append("| -------- | -------------------------------- | ----- | ---------- |\n")
-
-    for test_name, desc, ai, status in scan_level(level_dir):
-        if len(desc) > 32:
-            desc = desc[:29] + "..."
-        lines.append(f"| {test_name:<8} | {desc:<32} | {ai:<6} | {status:<10} |\n")
+    lines += build_table(level_dir, [])
 
     os.makedirs(level_dir, exist_ok=True)
     with open(readme_path, "w", encoding="utf-8") as f:
@@ -145,38 +262,32 @@ def update_test_status(test_name, status, description, ai="No"):
         print(f"Skipped {test_name}: no {readme_path}")
         return
 
+    with open(readme_path, "r", encoding="utf-8") as f:
+        content = f.read()
+
     # Bootstrap a missing/empty README so `run.sh test`/`solo`/`ai` always leave
     # the level's README populated (header + full table), never empty.
-    content = ""
-    try:
-        with open(readme_path, "r", encoding="utf-8") as f:
-            content = f.read()
-    except Exception:
-        content = ""
     if not content.strip():
         bootstrap_level_readme(level_num, readme_path)
+        with open(readme_path, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+    else:
+        lines = content.splitlines(keepends=True)
 
-    with open(readme_path, "r", encoding="utf-8") as f:
-        lines = f.readlines()
+    # Self-healing table: if the existing table has the wrong column order,
+    # recreate the ENTIRE table in the canonical order while preserving each
+    # test's current status, then fall through to the per-row update below.
+    if not table_matches_format(lines):
+        print(f"{readme_path}: table columns out of date, recreating table")
+        lines = splice_table(lines, build_table(level_dir, lines))
 
-    # Column widths (mirrored by the table header/separator rows).
-    w_case = 8
-    w_desc = 32
-    w_ai = 6
-    w_stat = 10
-
-    if len(description) > w_desc:
-        description = description[:w_desc - 3] + "..."
-    if not description or description == "TBD":
-        description = "see @DESC header"
     ai = "Yes" if ai.lower() in ("yes", "1", "true") else "No"
-    new_row = (f"| {test_name:<{w_case}} | {description:<{w_desc}} "
-               f"| {ai:<{w_ai}} | {status:<{w_stat}} |\n")
+    new_row = row_line(test_name, ai, status, description)
 
     found = False
     for i, line in enumerate(lines):
-        if line.strip().startswith('|'):
-            parts = [p.strip() for p in line.split('|') if p.strip()]
+        if line.strip().startswith("|"):
+            parts = [p.strip() for p in line.split("|") if p.strip()]
             if parts and parts[0] == test_name:
                 lines[i] = new_row
                 found = True
@@ -189,7 +300,7 @@ def update_test_status(test_name, status, description, ai="No"):
                 lines.insert(i + 1, new_row)
                 break
 
-    with open(readme_path, 'w', encoding='utf-8') as f:
+    with open(readme_path, "w", encoding="utf-8") as f:
         f.writelines(lines)
     print(f"Updated {test_name} in {readme_path} (status={status}, AI={ai})")
 
