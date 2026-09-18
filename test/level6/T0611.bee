@@ -1,0 +1,17 @@
++------------------------------------------------------------
+-- @DESC: grow a list with <+ inside a for loop (E6)
+------------------------------------------------------------+
+rule main:
+  new sq := ();
+  for i ∈ (1..5) do
+    let sq <+ i * i;
+  done;
+  expect sq = (1,4,9,16,25);
+  expect sq[3] = 9;
+return;
++------------------------------------------------------------
+spec/10 §3.2 + spec/02 §3.4: a `for` loop seeds a fresh empty
+list and `<+` appends each iteration's computed value, proving
+loop-local mutation persists on the enclosing collection.
+------------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

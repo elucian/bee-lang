@@ -513,9 +513,36 @@ type CycleStatement struct {
 func (cs *CycleStatement) statementNode() {}
 func (cs *CycleStatement) Pos() token.Pos { return cs.Token.Pos }
 
+// TrialCase is a single `case <expression> do <block>` handler clause of a
+// `try` statement. The Guard is evaluated against the current `$error`; the
+// first clause whose guard is true runs its Body (spec/02-statements.md §4).
+type TrialCase struct {
+	Token token.Token
+	Guard Expression
+	Body  *BlockStatement
+}
+
+// TrialStatement implements the transactional error-handling statement per
+// spec/02-statements.md §4 and §5 EBNF:
+//
+//	try_stmt ::= [ "trial" identifier ":" statement_list ] "try" block
+//	              ( "case" expression "do" block )*
+//	              [ "error" block ] [ "final" block ] "done" ";" ;
+//
+// The optional labelled `trial identifier :` prologue is an enclosing scope
+// for the whole statement. TryBody is the protected region run first; Cases
+// are the zero-or-more specific handlers; ErrorBlock is the optional cardinal
+// catch-all; FinalBlock is the optional unconditional finalisation region.
 type TrialStatement struct {
-	Token   token.Token
-	Keyword string
+	Token      token.Token
+	Keyword    string          // "trial" or "try"
+	Label      *Identifier     // optional `trial identifier :` label
+	Prologue   *BlockStatement // optional `trial identifier :` declaration scope
+	TryBody    *BlockStatement // the protected `try` block
+	Cases      []TrialCase     // zero or more `case <expr> do` handlers
+	ErrorBlock *BlockStatement // optional `error` catch-all block
+	FinalBlock *BlockStatement // optional `final` finalisation block
+	DoneLabel  *Identifier     // optional label on `done`
 }
 
 func (ts *TrialStatement) statementNode() {}

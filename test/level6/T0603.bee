@@ -1,14 +1,24 @@
--- @ENABLED: Reset by user
--- @DESC: Check the trial statement
--- @EXPECT: start\ndone
++------------------------------------------------------------
+-- @DESC: trial prologue scope and final cleanup (E6)
+------------------------------------------------------------+
 rule main:
+  new finalized := 0;
+  trial tx:
+    new budget := 100;     -- prologue: enclosing scope for the trial
   try
-    print "start";
-    abort;
-    print "skipped";
-  error
-    print "code is " + $error.code;
+    raise {code: 501, message: "kaboom"};
+  case $error.code = 501 do
+    expect $error.message = "kaboom";  -- handler reads the error object
+    expect budget = 100;               -- prologue locals visible here
   final
-    print "done";
+    let finalized := 1;    -- unconditional finalisation
   done;
+  expect finalized = 1;
 return;
++------------------------------------------------------------
+spec/02-statements.md §4: the optional `trial label :` prologue
+is an enclosing scope visible to try/case/error/final; `final`
+runs unconditionally after recovery; `case` guards match the
+current `$error`.
+------------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

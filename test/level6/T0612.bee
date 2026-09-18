@@ -1,0 +1,18 @@
++------------------------------------------------------------
+-- @DESC: collection of lambda callbacks invoked (E6)
+------------------------------------------------------------+
+rule main:
+  new inc := λ(x ∈ Z) => (x + 1) ∈ Z;
+  new dbl := λ(x ∈ Z) => (x * 2) ∈ Z;
+  new ops := {'inc': inc, 'dbl': dbl};
+  expect ops['inc'](5) = 6;
+  expect ops['dbl'](5) = 10;
+return;
++------------------------------------------------------------
+spec/07-functions.md §2 + spec/10 map literals: the tutorial's
+dictionary-of-expressions pattern stores first-class lambdas in
+a map and invokes one through index-then-call. DISCOVERY probe
+— proves whether stored L values are callable by collection
+index; leaving the trait unimplemented fails the test honestly.
+------------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

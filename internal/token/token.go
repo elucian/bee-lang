@@ -158,6 +158,7 @@ const (
 	EXIT       = "EXIT"
 	FAIL       = "FAIL"
 	FINAL      = "FINAL"
+	ERROR      = "ERROR"
 	MISS       = "MISS"
 	PANIC      = "PANIC"
 	LIKE       = "LIKE"
@@ -231,6 +232,7 @@ var keywords = map[string]Type{
 	"exit":     EXIT,
 	"fail":     FAIL,
 	"final":    FINAL,
+	"error":    ERROR,
 	"miss":     MISS,
 	"panic":    PANIC,
 	"like":     LIKE,

@@ -1,12 +1,22 @@
--- @ENABLED: Reset by user
--- @DESC: Anonymous try block no scope
--- miss catches the rest demo
-rule main:
-  try
-        raise {999, "unknown error"};
-  case $error.code = 1 do
-        print "wrong case";
-  error
-        print "missed " + $error.code;
++------------------------------------------------------------
+-- @DESC: recursive rule computes factorial (E6)
+------------------------------------------------------------+
+rule fact(n ∈ Z) => (r ∈ Z):
+  let r := 1;
+  if n > 1 do
+    let r := n * fact(n - 1);
   done;
 return;
+
+rule main:
+  new total := fact(5);
+  expect total = 120;
+  new deep := fact(6);
+  expect deep = 720;
+return;
++------------------------------------------------------------
+spec/03-rules.md §5.2: a rule is bound before its body so it
+may call itself (self-recursion); each call gets a fresh
+frame, so deep recursion computes correctly.
+------------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

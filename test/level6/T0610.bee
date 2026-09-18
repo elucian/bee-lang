@@ -1,16 +1,14 @@
 +------------------------------------------------------------
--- @DESC: dangling try without done is rejected (E6)
+-- @DESC: malformed lambda without arrow rejected (E6)
 ------------------------------------------------------------+
 rule main:
-  try
-    raise {code: 700, message: "orphan"};
-  error
-    print "dangling";
+  new bad := λ(x);
 return;
 +------------------------------------------------------------
-Negative case: a `try`/`trial` statement whose protected region
-is closed by EOF instead of `done;` is an unterminated block —
-the parser must reject it (E0203), so the compiler exits non-zero.
+Negative case: a `λ` header must be `λ(params) => (body)`.
+Here the parameter list closes immediately — the parser never
+sees the `=>`/body, so it must report E0009 and exit non-zero
+(spec/07-functions.md §2.1 lambda_expr grammar).
 ------------------------------------------------------------+
 -- @AI: No - negative syntax case (passes on non-zero exit)
 -- @NEGATIVE

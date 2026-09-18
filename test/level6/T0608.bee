@@ -1,0 +1,24 @@
++------------------------------------------------------------
+-- @DESC: recursive rule computes fibonacci (E6)
+------------------------------------------------------------+
+rule fib(n ∈ Z) => (r ∈ Z):
+  if n < 2 do
+    let r := n;
+  else
+    let r := fib(n - 1) + fib(n - 2);
+  done;
+return;
+
+rule main:
+  new f6 := fib(6);
+  expect f6 = 8;
+  new f10 := fib(10);
+  expect f10 = 55;
+return;
++------------------------------------------------------------
+spec/03-rules.md §5.2: a rule is bound before its body so it
+may call itself (self-recursion). Unlike T0602 factorial,
+fibonacci exercises two base cases and a two-way recursive
+step, proving the evaluator keeps each call frame isolated.
+------------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

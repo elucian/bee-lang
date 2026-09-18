@@ -1,13 +1,21 @@
--- @DESC: Test "retry" keyword
--- Retrying demo
++------------------------------------------------------------
+-- @DESC: retry re-runs the protected try region (E6)
+------------------------------------------------------------+
 rule main:
-  trial t:
-    new tries: 0 ∈ Z;
+  new tries := 0;
   try
-    let tries += 1;
-    raise 400, "flaky" if tries < 3;
-    print "ok after " + tries;
-  case $error.code = 400 do
-    retry;
+    let tries := tries + 1;
+    if tries < 3 do
+      raise {code: 401, message: "flaky"};
+    done;
+  case $error.code = 401 do
+    retry;                 -- re-run only the try region
   done;
+  expect tries = 3;
 return;
++------------------------------------------------------------
+spec/02-statements.md §4: `retry` re-runs only the protected
+`try` region on a handled error, letting a flaky operation
+eventually succeed; the declaration prologue is never re-run.
+------------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

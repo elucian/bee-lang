@@ -1,13 +1,20 @@
--- @ENABLED: Reset by user
--- @DESC: test the "resume" keyword
--- Recovering and carrying on demo
++------------------------------------------------------------
+-- @DESC: resume continues after failing statement (E6)
+------------------------------------------------------------+
 rule main:
+  new step := 0;
   try
-    print "start";
-    raise 300, "boom";
-    print "good";
-  case $error.code = 300 do
-    print "error handled:" + $error.message;
-    resume; -- will execute next statement
+    let step := 1;
+    raise {code: 500, message: "boom"};
+    let step := 2;         -- normally skipped; reached via `resume`
+  case $error.code = 500 do
+    resume;                -- continue at the statement after `raise`
   done;
+  expect step = 2;
 return;
++------------------------------------------------------------
+spec/02-statements.md §4: `resume` continues execution at the
+statement after the one that failed, so the remainder of the
+protected region runs to completion after a handled error.
+------------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

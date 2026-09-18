@@ -1,0 +1,17 @@
++------------------------------------------------------------
+-- @DESC: recursive lambda via self-reference (E6)
+------------------------------------------------------------+
+rule main:
+  new fact := λ(n ∈ Z) => (n * fact(n - 1)) ∈ Z;
+  new fac1 := fact(5);
+  expect fac1 = 120;
+return;
++------------------------------------------------------------
+spec/07-functions.md §3 purity invariants: a lambda body runs in
+a fresh frame holding only its parameters, and E0704 rejects any
+reference to an outer variable. Self-reference (`fact`) is an
+outer variable, so CURRENTLY this is a hard failure. DISCOVERY
+probe for reference-style recursive lambdas — if undecided, the
+negative result is the honest signal the suite should record.
+------------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

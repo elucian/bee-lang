@@ -1,0 +1,16 @@
++------------------------------------------------------------
+-- @DESC: dangling for without done is rejected (E6)
+------------------------------------------------------------+
+rule main:
+  new sum := 0;
+  for i ∈ (1..5) do
+    let sum := sum + i;
+  -- cycle body is never closed with `done;`
++------------------------------------------------------------
+Negative case: a `for` cycle whose body is closed by EOF
+instead of `done;` is an unterminated block — the parser must
+reject it (E0203), so the compiler exits non-zero. Analogue of
+T0607 but for cycles (spec/02-statements.md §3.4, D14).
+------------------------------------------------------------+
+-- @AI: No - negative syntax case (passes on non-zero exit)
+-- @NEGATIVE

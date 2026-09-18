@@ -191,7 +191,7 @@ func (p *Parser) parseStatement(tok token.Token) Statement {
 		return p.parseScopeStatement(tok)
 	case token.CYCLE, token.FOR, token.WHILE:
 		return p.parseCycleStatement(tok)
-	case token.TRIAL, token.TRY, token.CASE, token.MISS, token.FINAL:
+	case token.TRIAL, token.TRY, token.CASE, token.ERROR, token.MISS, token.FINAL:
 		return p.parseTrialStatement(tok)
 	case token.RETURN, token.STOP, token.REDO, token.REPEAT, token.NEXT, token.PASS,
 		token.RAISE, token.RESUME, token.RETRY, token.FAIL, token.OVER,
@@ -1282,22 +1282,129 @@ func (p *Parser) parseCycleBody(tok token.Token) *BlockStatement {
 	return body
 }
 
-// parseTrialStatement handles `trial`, `try`, `case`, `miss`, `final` per
-// spec/02-statements.md §4 Transactional Error Handling.
+// parseTrialStatement handles `trial`, `try`, `case`, `error` (`miss` legacy),
+// and `final` per spec/02-statements.md §4 Transactional Error Handling and the
+// §5 EBNF:
+//
+//	try_stmt ::= [ "trial" identifier ":" statement_list ] "try" block
+//	              ( "case" expression "do" block )*
+//	              [ "error" block ] [ "final" block ] "done" ";" ;
+//
+// The leading token (TRIAL or TRY) has already been consumed by parseStatement;
+// a subsequent `error`/`case`/`final` encountered as a stray top-level token is
+// handled defensively. Each block is a statement_list terminated by the next
+// sibling clause keyword or `done`.
 func (p *Parser) parseTrialStatement(tok token.Token) Statement {
 	stmt := &TrialStatement{Token: tok, Keyword: tok.Literal}
-	for {
-		peek := p.l.PeekToken()
-		if peek.Type == token.SEMICOLON {
-			p.l.NextToken()
-			break
+
+	// Optional prologue: `trial identifier : statement_list`.
+	if tok.Type == token.TRIAL {
+		if peek := p.l.PeekToken(); peek.Type == token.IDENT {
+			labTok := p.l.NextToken()
+			stmt.Label = &Identifier{Token: labTok, Value: labTok.Literal}
+			if p.l.PeekToken().Type == token.COLON {
+				p.l.NextToken() // consume ':'
+			}
 		}
-		if peek.Type == token.EOF || peek.Type == token.DONE {
-			break
+		// The prologue is a declaration/statement scope terminated by `try`.
+		stmt.Prologue = p.parseBlockUntil(map[token.Type]bool{token.TRY: true})
+		if p.l.PeekToken().Type == token.TRY {
+			p.l.NextToken() // consume `try`
 		}
+	}
+
+	// Protected `try` region — terminated by a case/error/final/done sibling.
+	stmt.TryBody = p.parseBlockUntil(trialBodyTerms)
+
+	// Zero-or-more `case <expression> do <block>` specific handlers.
+	for p.l.PeekToken().Type == token.CASE {
+		caseTok := p.l.NextToken()
+		guard := p.parseExpression()
+		if p.l.PeekToken().Type == token.DO || p.l.PeekToken().Literal == "do" {
+			p.l.NextToken() // consume `do`
+		}
+		body := p.parseBlockUntil(trialBodyTerms)
+		stmt.Cases = append(stmt.Cases, TrialCase{Token: caseTok, Guard: guard, Body: body})
+	}
+
+	// Optional categorical `error` catch-all (legacy `miss` accepted).
+	if pk := p.l.PeekToken(); pk.Type == token.ERROR || pk.Type == token.MISS {
+		p.l.NextToken()
+		stmt.ErrorBlock = p.parseBlockUntil(trialErrorTerms)
+	}
+
+	// Optional `final` finalisation block.
+	if pk := p.l.PeekToken(); pk.Type == token.FINAL {
+		p.l.NextToken()
+		stmt.FinalBlock = p.parseBlockUntil(trialFinalTerms)
+	}
+
+	// Required `done` terminator (with optional closing label) then `;`.
+	sawDone := false
+	if pk := p.l.PeekToken(); pk.Type == token.DONE || pk.Literal == "done" {
+		sawDone = true
+		p.l.NextToken()
+		if tk := p.l.PeekToken(); tk.Type == token.IDENT && tk.Literal != ";" {
+			labTok := p.l.NextToken()
+			stmt.DoneLabel = &Identifier{Token: labTok, Value: labTok.Literal}
+		}
+	}
+	if !sawDone {
+		// spec/02 §5: every try/trial terminates with `done`; a protected region
+		// closed only by EOF is an unterminated block (E0203), so the harness's
+		// @NEGATIVE syntax cases observe a genuine failure.
+		p.errors = append(p.errors, fmt.Sprintf(
+			"E0203 UnterminatedBlock:MissingDone: line=%d (try/trial missing `done` terminator)",
+			tok.Pos,
+		))
+	}
+	if p.l.PeekToken().Type == token.SEMICOLON {
 		p.l.NextToken()
 	}
 	return stmt
+}
+
+// trialBodyTerms terminates the `try` region and each `case` handler. The block
+// ends when the next sibling clause keyword (`case`, `error`/`miss`, `final`) or
+// the statement terminator (`done`) is peeked.
+var trialBodyTerms = map[token.Type]bool{
+	token.CASE:  true,
+	token.ERROR: true,
+	token.MISS:  true,
+	token.FINAL: true,
+	token.DONE:  true,
+}
+
+// trialErrorTerms terminates the `error` block: only `final` or `done` may follow.
+var trialErrorTerms = map[token.Type]bool{
+	token.FINAL: true,
+	token.DONE:  true,
+}
+
+// trialFinalTerms terminates the `final` block: only `done` may follow.
+var trialFinalTerms = map[token.Type]bool{
+	token.DONE: true,
+}
+
+// parseBlockUntil reads a statement_list block terminated by a peeked token of
+// any type in termSet (or EOF). Each statement consumes its own trailing `;`.
+func (p *Parser) parseBlockUntil(termSet map[token.Type]bool) *BlockStatement {
+	blk := &BlockStatement{Token: p.l.PeekToken()}
+	for {
+		peek := p.l.PeekToken()
+		if peek.Type == token.EOF || termSet[peek.Type] {
+			break
+		}
+		nt := p.l.NextToken()
+		if nt.Type == token.EOF {
+			break
+		}
+		stmt := p.parseStatement(nt)
+		if stmt != nil {
+			blk.Statements = append(blk.Statements, stmt)
+		}
+	}
+	return blk
 }
 
 // parseTransferStatement handles `return`, `stop`, `redo`, `repeat` (D14),

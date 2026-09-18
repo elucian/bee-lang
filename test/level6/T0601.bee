@@ -1,10 +1,20 @@
--- @DESC: Check "expect" statement to raise error
--- @EXPECT: "held"
--- @NEGATIVE: This test will raise an error
++---------------------------------------------------------
+-- @DESC: expect failure caught by error handler (E6)
+---------------------------------------------------------+
 rule main:
-  new n := 4;
-  expect n > 0; -- will pass
-  print "held";
-  expect n < 0; -- will fail
-  print "wrong";
+  new handled := 0;
+  try
+    expect False;          -- raises recoverable E0303 inside a trial
+    let handled := 1;      -- skipped when the expect fails
+  error
+    let handled := 2;      -- categorical catch-all absorbs it
+  done;
+  expect handled = 2;
 return;
++---------------------------------------------------------
+spec/02-statements.md §4: a failed `expect` (E0303
+ExpectationFailed) inside a `try` is a recoverable error
+that the `error` catch-all absorbs; the protected region
+short-circuits and the handler runs.
+---------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

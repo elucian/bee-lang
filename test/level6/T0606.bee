@@ -1,15 +1,21 @@
--- @ENABLED: Reset by user
--- @DESC:file: Check the abort and final
--- @AI: No - Independent test, self checking
++------------------------------------------------------------
+-- @DESC: abort ends trial but still runs final (E6)
+------------------------------------------------------------+
 rule main:
+  new skipped := 0;
+  new finalized := 0;
   try
-    print "start";
-    abort;
-    print "wrong";
-    expect False;
-  error
-    resume;
+    abort;                 -- end the trial with no exception
+    let skipped := 1;      -- never reached
   final
-    print "always";
+    let finalized := 1;    -- `final` still runs after `abort`
   done;
+  expect skipped = 0;
+  expect finalized = 1;
 return;
++------------------------------------------------------------
+spec/02-statements.md §4: `abort` ends the trial without an
+exception and still runs `final`; statements after `abort` in
+the protected region never execute.
+------------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

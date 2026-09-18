@@ -1,0 +1,19 @@
++------------------------------------------------------------
+-- @DESC: parenthesised ternary expression selector (E6)
+------------------------------------------------------------+
+rule main:
+  new score := 12;
+  new ok := (100 if score > 10 else 5);
+  expect ok = 100;
+  new nok := (100 if score < 10 else 5);
+  expect nok = 5;
+  new msg := ("big" if score ≥ 10 else "small");
+  expect msg = "big";
+return;
++------------------------------------------------------------
+spec/02-statements.md §3.2: the parenthesised conditional
+selector `( expr_true if condition else expr_false )` evaluates
+the condition and yields only the chosen branch; the untaken
+branch is never evaluated. Covers numeric and string operands.
+------------------------------------------------------------+
+-- @AI: No - assertion-only (self-verifying)

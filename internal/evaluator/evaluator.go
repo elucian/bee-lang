@@ -147,6 +147,20 @@ type Evaluator struct {
 	// index), enabling arithmetic anchors like `a[$-1]` (spec/10 §3.2).
 	dollarLen int
 	hasDollar bool
+	// Exception / trial state (spec/02 §4 Transactional Error Handling).
+	// tryDepth counts enclosing `try` statements so a failed `expect` (E0303) or
+	// an unguarded `raise` can be caught by the nearest enclosing trial; zero
+	// means uncaught, which is a hard runtime error (non-zero exit). The transfer
+	// signals (retry/resume/abort) are issued inside a protected region or a
+	// handler and are consumed by evalTrialStatement. pendingError / errorObj
+	// deliberately propagate across rule-call boundaries so an unhandled error in
+	// a nested rule is re-raisable to the caller's enclosing try.
+	tryDepth     int
+	pendingError bool
+	retrySignal  bool
+	resumeSignal bool
+	abortSignal  bool
+	errorObj     *ObjectValue
 	// scopes is the lexical block-scope stack (spec/02 §blocks). Each frame
 	// records names (re)declared with `new` inside a `do...done` block so a
 	// shadowed outer variable is restored when the scope exits.
@@ -268,7 +282,7 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		e.exitingRule = false
 		e.continueCycle = false
 		for _, stmt := range s.Body.Statements {
-			if e.exitingRule {
+			if e.exitingRule || e.pendingError {
 				break
 			}
 			e.evalStatement(stmt)
@@ -282,6 +296,9 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		// bindings inside shadow outer names and are restored on exit.
 		e.enterScope()
 		for _, stmt := range s.Statements {
+			if e.exitingRule || e.pendingError {
+				break
+			}
 			e.evalStatement(stmt)
 		}
 		e.leaveScope()
@@ -304,12 +321,17 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 	case *parser.ExpectStatement:
 		val := e.evalIntExpression(s.Condition)
 		if val == 0 {
-			e.DumpContext()
 			// spec/03-rules.md §4/§7: a failed expect raises E0303
-			// ExpectationFailed, a fatal runtime error (failure exit status)
-			// — never a Go panic (config/AGENTS.md §2: no panic in error flows).
-			fmt.Fprintf(os.Stderr, "[ERROR] E0303 ExpectationFailed: expect failed at line %d\n", int(s.Token.Pos))
-			os.Exit(1)
+			// ExpectationFailed. Inside an enclosing `try` it is a *recoverable*
+			// error that the nearest trial can catch (spec/02 §4); uncaught it is
+			// a fatal runtime error (non-zero exit) — never a Go panic (config §2).
+			if e.tryDepth > 0 {
+				e.raiseError("$error", 303, "E0303 ExpectationFailed")
+			} else {
+				e.DumpContext()
+				fmt.Fprintf(os.Stderr, "[ERROR] E0303 ExpectationFailed: expect failed at line %d\n", int(s.Token.Pos))
+				os.Exit(1)
+			}
 		} else {
 			e.debugLog("DEBUG: Expectation passed in line %d\n", int(s.Token.Pos))
 		}
@@ -1202,10 +1224,40 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 			take = e.evalIntExpression(s.Condition) != 0
 		}
 		if take {
+			// Trial transfer directives (spec/02 §4). `raise` raises (or, with no
+			// payload, re-propagates) a recoverable error; `resume` continues the
+			// try region after the failing statement; `retry` re-runs the try region;
+			// `abort` ends the trial without an exception (still running `final`).
+			// Used outside a trial, `resume`/`retry` are no-ops and `abort` falls
+			// through to its canonical early-exit behaviour.
+			switch s.Keyword {
+			case "raise":
+				if s.Value == nil {
+					// Bare `raise` re-propagates the current `$error` (also marks it
+					// pending if none is set, so an unguarded re-raise surfaces).
+					e.pendingError = true
+				} else {
+					e.raiseValueExpression(s.Value)
+				}
+			case "resume":
+				e.resumeSignal = true
+			case "retry":
+				e.retrySignal = true
+			case "abort":
+				if e.tryDepth > 0 {
+					e.abortSignal = true
+					e.pendingError = false
+				} else {
+					e.exitingRule = true
+				}
+			case "exit":
+				// `exit` ends the trial and returns to the caller, bypassing `final`.
+				e.exitingRule = true
+			}
 			// Early-exit transfers set the exitingRule flag so the canonical
 			// §16.2 semantics apply — the enclosing rule's body short-circuits
 			// immediately.
-			if s.Keyword == "over" || s.Keyword == "stop" || s.Keyword == "exit" || s.Keyword == "abort" || s.Keyword == "panic" {
+			if s.Keyword == "over" || s.Keyword == "stop" || s.Keyword == "panic" {
 				e.exitingRule = true
 			}
 			// D15: `next` is the canonical loop-jump (continue) transfer. It sets
@@ -1238,6 +1290,8 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 		e.evalMatchStatement(s)
 	case *parser.ScopeStatement:
 		e.evalScopeStatement(s)
+	case *parser.TrialStatement:
+		e.evalTrialStatement(s)
 	}
 }
 
@@ -1756,6 +1810,212 @@ func (e *Evaluator) evalScopeStatement(s *parser.ScopeStatement) {
 	}
 	if s.Body != nil {
 		e.evalStatement(s.Body)
+	}
+}
+
+// raiseError records a recoverable error into the named `$`-prefixed error
+// object (default `$error`) and marks it pending so the nearest enclosing `try`
+// can catch it. Inside a trial the failed `expect` (E0303) and `raise` both
+// funnel here; an uncaught pending error is surfaced as a hard runtime error at
+// the outermost trial boundary (spec/02 §4).
+func (e *Evaluator) raiseError(name string, code int, message string) {
+	obj, ok := e.objectValues[name]
+	if !ok {
+		obj = newObjectValue()
+		e.objectValues[name] = obj
+	}
+	obj.set("code", objField{iVal: code})
+	obj.set("message", objField{isStr: true, sVal: message})
+	e.errorObj = obj
+	e.pendingError = true
+}
+
+// raiseValueExpression interprets the payload of a `raise <expr>` statement.
+// The canonical payload is an object/map literal `{code: <int>, message: <str>}`
+// (spec/02 §4 example); its named members seed the `$error` object. A non-map
+// payload is ignored (raise with no usable payload still marks an error).
+func (e *Evaluator) raiseValueExpression(expr parser.Expression) {
+	code := 0
+	message := ""
+	found := false
+	if ml, ok := expr.(*parser.MapLiteral); ok {
+		for _, pair := range ml.Pairs {
+			key := e.evalExpression(pair.Key)
+			switch key {
+			case "code":
+				code = e.evalIntExpression(pair.Value)
+				found = true
+			case "message":
+				message = e.evalExpression(pair.Value)
+			}
+		}
+	}
+	e.raiseError("$error", code, message)
+	_ = found
+}
+
+// evalTrialStatement evaluates a `try` / `trial` transactional error-handling
+// statement (spec/02 §4). It runs the protected try region; on a raised error
+// it runs the first matching `case <guard>` or the `error` catch-all, honours the
+// retry/resume/abort transfer directives, and finally runs the `final` block.
+// An error that no handler absorbs is re-propagated to the enclosing scope.
+func (e *Evaluator) evalTrialStatement(s *parser.TrialStatement) {
+	// Optional `trial label :` prologue — an enclosing scope for the statement.
+	if s.Prologue != nil {
+		e.enterScope()
+		for _, stmt := range s.Prologue.Statements {
+			if e.exitingRule || e.pendingError {
+				break
+			}
+			e.evalStatement(stmt)
+		}
+	}
+	e.tryDepth++
+	runFinal := true // `exit` sets this false (bypasses `final`)
+	repropagate := false
+
+retryLoop:
+	for {
+		e.pendingError = false
+		i := 0
+		failIdx := -1
+
+	tryRegion:
+		for {
+			e.enterScope() // try-block locals are fresh each (re-)entry
+			for ; i < len(s.TryBody.Statements); i++ {
+				if e.exitingRule {
+					runFinal = false
+					break
+				}
+				e.evalStatement(s.TryBody.Statements[i])
+				if e.pendingError {
+					failIdx = i
+					break
+				}
+				if e.retrySignal || e.abortSignal {
+					break
+				}
+				if e.resumeSignal {
+					// stray resume outside a handler (no pending error): ignore
+					e.resumeSignal = false
+				}
+			}
+			e.leaveScope()
+
+			// The try region ran to its natural end (no error, no directive).
+			if i >= len(s.TryBody.Statements) && !e.pendingError &&
+				!e.retrySignal && !e.abortSignal {
+				repropagate = false
+				break tryRegion
+			}
+			if e.exitingRule {
+				runFinal = false
+				break tryRegion
+			}
+			if e.abortSignal {
+				e.abortSignal = false
+				break tryRegion
+			}
+			if e.retrySignal {
+				e.retrySignal = false
+				continue retryLoop
+			}
+			if !e.pendingError {
+				break tryRegion
+			}
+
+			// An error is pending: run the matching case / error handler.
+			matched := false
+			for _, tc := range s.Cases {
+				if e.evalIntExpression(tc.Guard) != 0 {
+					e.enterScope()
+					for _, hstmt := range tc.Body.Statements {
+						if e.exitingRule {
+							break
+						}
+						e.evalStatement(hstmt)
+						if e.retrySignal || e.abortSignal {
+							break
+						}
+					}
+					e.leaveScope()
+					matched = true
+					break
+				}
+			}
+			if !matched && s.ErrorBlock != nil {
+				e.enterScope()
+				for _, hstmt := range s.ErrorBlock.Statements {
+					if e.exitingRule {
+						break
+					}
+					e.evalStatement(hstmt)
+					if e.retrySignal || e.abortSignal {
+						break
+					}
+				}
+				e.leaveScope()
+				matched = true
+			}
+
+			if e.retrySignal {
+				e.retrySignal = false
+				continue retryLoop
+			}
+			if e.exitingRule {
+				runFinal = false
+				break tryRegion
+			}
+			if e.abortSignal {
+				e.abortSignal = false
+				e.pendingError = false
+				break tryRegion
+			}
+			if e.resumeSignal {
+				e.resumeSignal = false
+				e.pendingError = false
+				i = failIdx + 1 // continue after the failing statement
+				continue tryRegion
+			}
+			// Handler absorbed the error normally, or none matched.
+			e.pendingError = false
+			repropagate = !matched
+			break tryRegion
+		}
+		break
+	}
+
+	e.tryDepth--
+	if runFinal && s.FinalBlock != nil {
+		e.enterScope()
+		for _, stmt := range s.FinalBlock.Statements {
+			if e.exitingRule {
+				break
+			}
+			e.evalStatement(stmt)
+		}
+		e.leaveScope()
+	}
+	if s.Prologue != nil {
+		e.leaveScope()
+	}
+	if repropagate {
+		e.pendingError = true
+	} else if e.tryDepth == 0 && e.pendingError {
+		// Uncaught error at the outermost scope — surface as a hard failure.
+		e.DumpContext()
+		code, msg := 0, ""
+		if e.errorObj != nil {
+			if isStr, _, iVal, ok := e.errorObj.fieldValue("code"); ok && !isStr {
+				code = iVal
+			}
+			if isStr, sVal, _, ok := e.errorObj.fieldValue("message"); ok && isStr {
+				msg = sVal
+			}
+		}
+		fmt.Fprintf(os.Stderr, "[ERROR] uncaught error code=%d message=%q\n", code, msg)
+		os.Exit(1)
 	}
 }
 
@@ -3875,6 +4135,15 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	savedTarget := e.continueTargetDepth
 	savedLoopStack := e.loopLabelStack
 	savedBoxed := e.boxedCells
+	// Transfer signals are call-frame-local: a `retry`/`resume`/`abort` issued
+	// inside a nested rule is consumed by that rule's own trial or dropped, and
+	// must not leak into the caller's frame. pendingError/errorObj are NOT
+	// saved: an unhandled error in a nested rule must propagate to the caller's
+	// enclosing try (spec/02 §4 recovery & re-propagation).
+	savedRetry := e.retrySignal
+	savedResume := e.resumeSignal
+	savedAbort := e.abortSignal
+	e.retrySignal, e.resumeSignal, e.abortSignal = false, false, false
 
 	// Fresh frame: bind parameters.
 	e.symbols = make(map[string]int)
@@ -3979,6 +4248,7 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	e.loopLabelStack = savedLoopStack
 	e.boxedCells = savedBoxed
 	e.currentSelf = savedSelf
+	e.retrySignal, e.resumeSignal, e.abortSignal = savedRetry, savedResume, savedAbort
 
 	return results
 }

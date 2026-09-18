@@ -169,7 +169,18 @@ func (l *Lexer) NextToken() token.Token {
 			tok = token.Token{Type: token.QUESTION, Literal: "?", Pos: token.Pos(l.line)}
 		}
 	case '$':
-		tok = token.Token{Type: token.SIGIL_SYS, Literal: "$", Pos: token.Pos(l.line)}
+		// A `$` immediately followed by an identifier start is a system/special
+		// identifier (e.g. `$error`, `$trial`) and is lexed as ONE identifier
+		// token carrying the `$`-prefixed literal. Otherwise `$` is the standalone
+		// end-anchor sigil (Decision 1: `a[$]`, `a[$-n]`) — in those contexts the
+		// sigil is never followed by an identifier letter, so maximal-munch is safe.
+		if isLetter(l.PeekChar()) {
+			l.readChar() // consume '$'
+			lit := "$" + l.readIdentifier()
+			tok = token.Token{Type: token.IDENT, Literal: lit, Pos: token.Pos(l.line)}
+		} else {
+			tok = token.Token{Type: token.SIGIL_SYS, Literal: "$", Pos: token.Pos(l.line)}
+		}
 	case '|':
 		tok = token.Token{Type: token.BAR, Literal: "|", Pos: token.Pos(l.line)}
 	case '#':
