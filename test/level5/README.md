@@ -14,7 +14,7 @@ This level covers object-oriented features as defined in:
 | T0503 | No  | PASS   | custom type with defau... |
 | T0504 | No  | PASS   | object constructor rul... |
 | T0505 | No  | PASS   | public method definiti... |
-| T0506 | No  | SKIP   | encapsulation of priva... |
+| T0506 | No  | PASS   | object encapsulation &... |
 | T0507 | No  | SKIP   | subtype inheritance wi... |
 | T0508 | No  | SKIP   | abstract type and forw... |
 | T0509 | No  | SKIP   | trait composition with... |

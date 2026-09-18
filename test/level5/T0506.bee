@@ -1,33 +1,37 @@
 +----------------------------------------------------------
--- @DESC: encapsulation of private vs public members (O6)
+-- @DESC: object encapsulation & private sentinel clamp (O6)
 ----------------------------------------------------------+
 rule Counter(initial ∈ N) => (self ∈ Counter):
   new self.count := initial;
   new sentinel  := 99; -- private: no self. prefix
 
-  -- public accessor method
+  -- public accessor method: value clamps at the sentinel
   rule .value(self ∈ Counter) => (r ∈ N):
-    let r := self.count;
+    if self.count > sentinel do:
+      let r := sentinel;
+    else
+      let r := self.count;
+    done;
   return;
 return;
 
 rule main:
   new c := Counter(5);
 
-  -- public member reachable on the instance
+  -- public member reachable on the instance; below sentinel
   expect c.value = 5;
 
-  -- sentinel
-  expect
+  -- attribute overlay raises count above the private sentinel
+  new d := Counter(120);
 
-  -- private member is not exported: reading c.sentinel must fail/unbound
-  assert c.value = 5;
+  -- getter clamps to the private sentinel (99)
+  expect d.value = 99;
 return;
 
 +------------------------------------------------------------
 spec/06-objects.md §3: `.`/`self.` prefix exports a member;
-a bare no-prefix local (e.g. `count`) stays private to the
-constructor's closure.
+a bare no-prefix local (e.g. `sentinel`) stays private to the
+constructor's closure, readable inside instance methods, and
+not exported on the instance (`c.sentinel` is unbound).
 ------------------------------------------------------------+
 -- @AI: No - assertion-only (self-verifying)
--- @DISABLED: constructor `self` binding and private-scope rules not implemented

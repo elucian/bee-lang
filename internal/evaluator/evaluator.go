@@ -1091,6 +1091,18 @@ func (e *Evaluator) evalStatement(node parser.Statement) {
 				e.symbols[name] = 0
 				e.ensureIdentity(name)
 			}
+			// Private encapsulation (spec/06 §3): during an object constructor body
+			// (currentSelf set), a bare `new local := ...` binding is a private
+			// instance member. Capture it so methods can read it by bare name without
+			// exporting it publicly. Dotted `.field` boxed cells and `self.x` writes
+			// are excluded (the former start with '.', the latter return early above).
+			if e.currentSelf != nil && !strings.HasPrefix(name, ".") {
+				if v, ok := e.symbols[name]; ok {
+					e.currentSelf.privates[name] = objField{iVal: v}
+				} else if sv, ok := e.stringSymbols[name]; ok {
+					e.currentSelf.privates[name] = objField{isStr: true, sVal: sv}
+				}
+			}
 		}
 	case *parser.TransferStatement:
 		// D14 extends the jump grammar with an optional `if <cond>` guard; a
@@ -2413,6 +2425,7 @@ func (e *Evaluator) runConstructor(rs *parser.RuleStatement, call *parser.CallEx
 	instance.typeName = rs.Name
 
 	// Save the caller's full value-store frames.
+	savedSelf := e.currentSelf
 	savedObjects := e.objectValues
 	savedMaps := e.mapValues
 	savedSymbols := e.symbols
@@ -2444,6 +2457,9 @@ func (e *Evaluator) runConstructor(rs *parser.RuleStatement, call *parser.CallEx
 
 	// Bind the instance to `self` so `new self.a := a` writes attributes.
 	e.objectValues["self"] = instance
+	// Mark the private-scope window (spec/06 §3): while the constructor body
+	// runs, bare `new local := ...` bindings are captured as private members.
+	e.currentSelf = instance
 
 	// Bind positional parameters.
 	for i, param := range rs.Params {
@@ -2485,6 +2501,7 @@ func (e *Evaluator) runConstructor(rs *parser.RuleStatement, call *parser.CallEx
 	e.continueCycle = savedContinue
 	e.continueTargetDepth = savedTarget
 	e.loopLabelStack = savedLoopStack
+	e.currentSelf = savedSelf
 
 	return []interface{}{instance}
 }
@@ -2500,6 +2517,7 @@ func (e *Evaluator) callMethod(rs *parser.RuleStatement, instance *ObjectValue) 
 		return 0, false
 	}
 
+	savedSelf := e.currentSelf
 	savedObjects := e.objectValues
 	savedMaps := e.mapValues
 	savedSymbols := e.symbols
@@ -2532,6 +2550,19 @@ func (e *Evaluator) callMethod(rs *parser.RuleStatement, instance *ObjectValue) 
 	// Bind the receiver instance as `self` so `self.a` member reads and writes
 	// resolve against the object. Parameter-less methods need no other binding.
 	e.objectValues["self"] = instance
+	// A method body is NOT a private-scope window: bare `new` locals declared
+	// here are ordinary method-locals, never captured onto the instance.
+	e.currentSelf = nil
+	// Inject the instance's private members (spec/06 §3) so the body can read
+	// them by bare name without a public export. Injected before result init so
+	// a declared result always wins on a name collision with a private.
+	for pname, p := range instance.privates {
+		if p.isStr {
+			e.stringSymbols[pname] = p.sVal
+		} else {
+			e.symbols[pname] = p.iVal
+		}
+	}
 
 	// Initialise declared results to zero (spec/03 §2.3 default init). The
 	// `self` formal param is satisfied by the receiver, so it is skipped.
@@ -2574,6 +2605,7 @@ func (e *Evaluator) callMethod(rs *parser.RuleStatement, instance *ObjectValue) 
 	e.continueCycle = savedContinue
 	e.continueTargetDepth = savedTarget
 	e.loopLabelStack = savedLoopStack
+	e.currentSelf = savedSelf
 
 	return result, true
 }
@@ -3241,6 +3273,7 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	}
 
 	// Save the caller's frame.
+	savedSelf := e.currentSelf
 	savedSymbols := make(map[string]int, len(e.symbols))
 	for k, v := range e.symbols {
 		savedSymbols[k] = v
@@ -3270,6 +3303,7 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	// the callee starts with an empty loop stack so caller labels stay out of
 	// scope (spec/02-statements.md §3.4).
 	e.loopLabelStack = nil
+	e.currentSelf = nil
 	// Install the closure's boxed cells so member access resolves to the
 	// shared, persistent state (a fresh generator starts with its own new
 	// cells; a method call reuses the object's existing cells).
@@ -3360,6 +3394,7 @@ func (e *Evaluator) callRule(call *parser.CallExpression, bound *closureObject) 
 	e.continueTargetDepth = savedTarget
 	e.loopLabelStack = savedLoopStack
 	e.boxedCells = savedBoxed
+	e.currentSelf = savedSelf
 
 	return results
 }
