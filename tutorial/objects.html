@@ -42,7 +42,7 @@
 
 
 <h1 id="bee-objects">Bee Objects</h1>
-<div class="alert alert-secondary shadow-sm">Bee implements object oriented programming using custom defined data types and special rules called constructors. Bee enable al 4 object oriented principles: Encapsulation, Inheritance, Abstraction and Polymorphic.</div>
+<div class="alert alert-secondary shadow-sm">Bee implements object oriented programming using custom defined data types and special rules called constructors. Bee enables all 4 object-oriented principles: Encapsulation, Inheritance, Abstraction and Polymorphism.</div>
 
 <h3 id="root-object">Root Object</h3>
 
@@ -92,8 +92,8 @@ new object.a2 := 2;
 expect object = {a1:1, a2:2};
 
 -- remove attributes
-del object["a1"];
-del object["a2"];
+zap object["a1"];
+zap object["a2"];
 
 -- check the object
 expect object = {};
@@ -273,8 +273,8 @@ rule main:
     apply test.log;
 
     -- verify attribute values
-    raise if test.a ¬ 1; 
-    raise if test.b ¬ 2; 
+    expect test.a = 1; 
+    expect test.b = 2; 
 
     -- what is the object type
     print type(test); -- Foo
@@ -340,7 +340,7 @@ return;
 
 <h4>Output</h4>
 
-<pre class=/"language-out">
+<pre class="language-out">
 a = 3
 b = 4
 c = 7
