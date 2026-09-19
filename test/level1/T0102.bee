@@ -1,4 +1,3 @@
--- @ENABLED: Reset by user
 -- @DESC: Relational and comparison operators
 rule main:
   new a, b, r1, r2, r3 ∈ Z;
@@ -11,3 +10,7 @@ rule main:
   let r3 := b > a;
   expect r3 = 1;
 return;
+
+-- spec/01 §3.3: relational comparison (< >) and pointer non-identity is not (Decision 2 + Decision 12); 1/0 results asserted with =.
+-- @ENABLED: Reset by user
+-- @AI: No - assertion-only (self-verifying)

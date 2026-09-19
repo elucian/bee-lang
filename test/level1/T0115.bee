@@ -1,6 +1,4 @@
 -- @DESC: Exercises several print output forms (blank, str, int, tuple, multi-arg, floats).
--- @AI: Yes - multiple print-output forms verified byte-exact.
--- @EXPECT: \nHello, Bee!\n42\nNumber: 100\nMultiple arguments 365 passed\n42 43 44\n3.14
 rule main:
   print;
   print "Hello, Bee!";
@@ -10,3 +8,7 @@ rule main:
   print 42, 43, 44;
   print 3.14;
 return;
+
+-- spec/02 §1.6 + Decision 6: print is a rule_call io_stmt — blank, string, integer, tuple, multi-arg and float forms asserted byte-exact.
+-- @AI: Yes - multiple print-output forms verified byte-exact.
+-- @EXPECT: \nHello, Bee!\n42\nNumber: 100\nMultiple arguments 365 passed\n42 43 44\n3.14

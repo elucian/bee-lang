@@ -1,8 +1,12 @@
 -- @DESC: Compound assignment updates an integer cell in place.
--- @FROZEN: Generated from /spec/. Immutable ground truth for the arithmetic mutate_op; AI agents keep it unchanged.
 rule main:
   new a ∈ Z;
   let a := 10;
   let a += 5;
   expect a = 15;
 return;
+
+-- spec/01 §3.4 + spec/02 §2.2: compound assignment += updates an integer cell in place.
+-- @FROZEN: Generated from /spec/. Immutable ground truth for the arithmetic mutate_op; AI agents keep it unchanged.
+
+-- @AI: No - assertion-only (self-verifying)

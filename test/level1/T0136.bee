@@ -18,3 +18,6 @@ rule main:
   expect c = 3;
   expect d = 4;
 return;
+
+-- spec/05 §3.3 (Decision 13): stepped right-exclusive range (1..<5)(1) — [1, 5) discretised to 1 2 3 4.
+-- @AI: No - assertion-only (self-verifying)

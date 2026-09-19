@@ -6,3 +6,6 @@ rule main:
   expect a = 1;
   expect b = 2;
 return;
+
+-- spec/02 §2.1 (Decision 11): parenthesised parallel colon-initialisation new (a, b) : (1, 2) ∈ Z — arity N=M checked statically, shared trailing type qualifier.
+-- @AI: No - assertion-only (self-verifying)

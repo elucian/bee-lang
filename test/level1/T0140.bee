@@ -12,3 +12,6 @@ rule main:
   let a := -(2 + 2);
   expect a = -4;
 return;
+
+-- spec/01 §3.4: leading minus as unary prefix operator — negative literals, identifier negation, parenthesised composition by normal precedence.
+-- @AI: No - assertion-only (self-verifying)

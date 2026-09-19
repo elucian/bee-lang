@@ -1,5 +1,4 @@
 -- @DESC: String compound concatenation: `+=` rebinds to concat (spec/02 §2.2)
--- @NOTE: String `+=` rebinds to concatenation; superseded value reclaimed by Tier-3 GC (spec/00 §2.3).
 rule main:
   new s ∈ Str;
   let s := "foo";
@@ -9,3 +8,6 @@ rule main:
   expect s = "foobar!";
   expect s ¬ "foobar";
 return;
+
+-- spec/02 §2.2: string compound concatenation — += on Str rebinds to the freshly allocated concat; the superseded value is reclaimed by the Tier-3 generational GC (spec/00 §2.3).
+-- @AI: No - assertion-only (self-verifying)

@@ -13,3 +13,6 @@ rule main:
   let r2 := a ¬ b;
   expect r2 = 1;
 return;
+
+-- spec/01 §3.3: value equality = and canonical inequality ¬ (Decision 2 + Decision 12); spec/02 §2.2: let rebinding preserves cell identity.
+-- @AI: No - assertion-only (self-verifying)

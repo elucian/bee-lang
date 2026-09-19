@@ -4,3 +4,6 @@ rule main:
   let a := 10;
   expect a in (1..10);
 return;
+
+-- spec/05 §3.2: closed range (1..10) endpoint table; membership probe with the in keyword yields 1/0.
+-- @AI: No - assertion-only (self-verifying)

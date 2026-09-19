@@ -1,8 +1,5 @@
--- @DESC:file: hello_world.bee
+-- @DESC: file hello_world.bee
 -- hello world demo
--- @AI: Yes - `write` emits no newline while `print` terminates the line;
---   stdout must be exactly "Hello World\ndone".
--- @EXPECT: Hello World\ndone
 rule main:
   write "Hello";
   write " ";
@@ -10,3 +7,7 @@ rule main:
   print;
   print "done";
 return;
+
+-- spec/02 Decision 6: write emits without a newline; a bare print terminates the line (io_stmt rule_call wrapper).
+-- @AI: Yes - write emits no newline while print terminates the line; stdout must be exactly "Hello World\ndone".
+-- @EXPECT: Hello World\ndone

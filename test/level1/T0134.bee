@@ -12,3 +12,6 @@ rule main:
   expect first = 1;   -- [1] -> 1
   expect third = 3;   -- [3] -> 3
 return;
+
+-- spec/05 §3.3: postfix step application (1..5)(1) discretises the closed range into a 5-element sequence; 1-based [i] indexing.
+-- @AI: No - assertion-only (self-verifying)

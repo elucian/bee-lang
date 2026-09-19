@@ -4,3 +4,6 @@ rule main:
   let a := 42;
   expect a = 42;
 return;
+
+-- spec/02 §2.1: new declares a mutable variable with explicit type qualifier ∈ Z (gradual typing).
+-- @AI: No - assertion-only (self-verifying)

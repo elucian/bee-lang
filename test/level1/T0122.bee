@@ -6,3 +6,6 @@ rule main:
   expect a = 2;
   expect b = 1;
 return;
+
+-- spec/02 §2.1 parallel typed declaration + §2.2 parallel let mutation: let a, b := b, a swaps two cells in one step.
+-- @AI: No - assertion-only (self-verifying)

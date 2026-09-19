@@ -1,12 +1,13 @@
--- @ENABLED: Reset by user
--- @DESC:file: ending_early.bee
+-- @DESC: file ending_early.bee
 -- Ending early demo
--- @AI: Yes - `over` terminates before the trailing print and forced
---   expectation; stdout must be exactly "before".
--- @EXPECT: before
 rule main:
   print "before";
   over;
   print "never"; -- if this print fail
   expect False;  -- force failure
 return;
+
+-- spec/02 §1.6: transfer and termination statements — over ends rule execution early; the trailing print and forced expectation never run.
+-- @AI: Yes - over terminates before the trailing print and forced expectation; stdout must be exactly "before".
+-- @EXPECT: before
+-- @ENABLED: Reset by user

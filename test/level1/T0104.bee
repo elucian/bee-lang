@@ -7,3 +7,6 @@ rule main:
   expect res = 8;
   expect base ^ exp = 8;
 return;
+
+-- spec/01 §3.4: exponentiation operator ^ — integer power 2³ = 8 asserted directly and via a cell.
+-- @AI: No - assertion-only (self-verifying)

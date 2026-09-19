@@ -7,3 +7,6 @@ rule main:
   expect not (1 in (1>..10));
   expect not (10 in (1..<10));
 return;
+
+-- spec/05 §3.2 (Decision 13): the legacy !! form lexes to the canonical exclusive operator with a non-fatal E0010 deprecation.
+-- @AI: No - assertion-only (self-verifying)

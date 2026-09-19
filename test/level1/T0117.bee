@@ -4,3 +4,6 @@ rule main:
   expect LIMIT = 10;
   expect LIMIT - 10 = 0;
 return;
+
+-- spec/02 §2.1: set declares a named constant (LIMIT ∈ Z); the binding is immutable and verified by expect.
+-- @AI: No - assertion-only (self-verifying)

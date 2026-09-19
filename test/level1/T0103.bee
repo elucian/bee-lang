@@ -9,3 +9,6 @@ rule main:
   expect !q;
   expect !(p ∧ q);
 return;
+
+-- spec/01 §3.6: logical operator synonymy (Decision 7) — ∧ ∨ ⊕ and ! with 1/0 integer truth values.
+-- @AI: No - assertion-only (self-verifying)

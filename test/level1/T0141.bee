@@ -4,7 +4,7 @@
 -- tolerance to t with an inclusive boundary. The 0/1 result is captured in r
 -- and asserted with `=` so the case stays assert-only (no print/@EXPECT).
 rule main:
-  new a ∈ Z; new b ∈ Z; new r ∈ Z;
+  new a ∈ Z; new b ∈ Z; new r ∈ N;
   let a := 10;
   let b := 10;
   let r := a ≈ b;
@@ -19,3 +19,6 @@ rule main:
   let r := a ≈ b ± 3;
   expect r = 0;
 return;
+
+-- spec/05 §4.2: approximate equality a ≈ b — default tolerance $max_precision (1e-5) and explicit ± t override with inclusive boundary; 0/1 result asserted with =.
+-- @AI: No - assertion-only (self-verifying)

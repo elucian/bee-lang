@@ -1,4 +1,4 @@
--- @DESC:file: initial_values.bee
+-- @DESC: file initial_values.bee
 -- Initial values demo
 rule main:
   -- initialization with individual values
@@ -10,3 +10,6 @@ rule main:
   new x,y,z ∈ Z: 2;
   expect x + y + z = 6;
 return;
+
+-- spec/02 §2.1: colon-initialisation with individual values (new a: 1, b: 2 ∈ Z) and the series form (new x, y, z ∈ Z: 2) binding one value to every cell.
+-- @AI: No - assertion-only (self-verifying)

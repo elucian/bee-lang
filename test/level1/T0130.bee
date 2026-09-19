@@ -11,3 +11,6 @@ rule main:
   expect a is a;   -- identity (is)
   expect a = b;    -- equality with b
 return;
+
+-- spec/01 §3.3 (Decision 2 + Decision 12): value equality =, canonical inequality ¬, and identity is / is not — distinctions asserted on equal-valued cells.
+-- @AI: No - assertion-only (self-verifying)

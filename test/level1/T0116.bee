@@ -13,3 +13,6 @@ return;
 -- after the return we have comments
 -- the after comment can be cool
 ------=-----------------------------
+
+-- spec/01 §2.1 comment markers: -- single-line, +- -+ boxed block (also after return), /+ +/ expression comments with nesting.
+-- @AI: No - assertion-only (self-verifying)

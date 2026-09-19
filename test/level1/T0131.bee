@@ -9,3 +9,6 @@ rule main:
   expect a in (1..<6);      -- 5 ∈ [1, 6)
   expect not (10 in (1..<10));  -- 10 NOT in [1, 10) — right-exclusive
 return;
+
+-- spec/05 §3.2 + spec/02 §2.1 (Decision 13): right-exclusive ..< — half-open [a, b) endpoint semantics probed via membership.
+-- @AI: No - assertion-only (self-verifying)

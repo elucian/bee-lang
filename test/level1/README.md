@@ -20,11 +20,11 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | T0116 | No  | PASS   | Line and block comment... |
 | T0117 | No  | PASS   | Constant declaration w... |
 | T0118 | No  | PASS   | Variable declaration w... |
-| T0119 | Yes | PASS   | file: ending_early.bee    |
-| T0120 | Yes | PASS   | file: hello_world.bee     |
-| T0121 | No  | PASS   | file: initial_values.bee  |
+| T0119 | Yes | PASS   | file ending_early.bee     |
+| T0120 | Yes | PASS   | file hello_world.bee      |
+| T0121 | No  | PASS   | file initial_values.bee   |
 | T0122 | No  | PASS   | file: parallel_assignm... |
-| T0123 | Yes | PASS   | file: print_write.bee     |
+| T0123 | Yes | PASS   | file print_write.bee      |
 | T0124 | No  | PASS   | String compound concat... |
 | T0125 | No  | PASS   | Chained compound mutat... |
 | T0128 | Yes | PASS   | The print statement wr... |

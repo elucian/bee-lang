@@ -1,5 +1,4 @@
 -- @DESC: Square root, cube root, and radical operators
--- This test is failing on ³√ 2³ = 2;
 rule main:
   new x ∈ Z;
   let x := 27;
@@ -12,3 +11,6 @@ rule main:
   expect ⁴√625 = 5;
   expect ³√1000 = 10;
 return;
+
+-- spec/01 §3.4: radical operators — prefix ²√ ³√ ⁴√ n-th roots, postfix superscript power ³, and the composed form ³√ 2³.
+-- @AI: No - assertion-only (self-verifying)
