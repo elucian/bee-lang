@@ -1,0 +1,21 @@
+-- @DESC: Approximate equality (spec/05 §4.2)
+-- `a ≈ b` reports 1 when |a − b| ≤ ε, with ε defaulting to $max_precision
+-- (1e-5, so exact-equality for integer operands); `a ≈ b ± t` overrides the
+-- tolerance to t with an inclusive boundary. The 0/1 result is captured in r
+-- and asserted with `=` so the case stays assert-only (no print/@EXPECT).
+rule main:
+  new a ∈ Z; new b ∈ Z; new r ∈ Z;
+  let a := 10;
+  let b := 10;
+  let r := a ≈ b;
+  expect r = 1;
+  let b := 11;
+  let r := a ≈ b;
+  expect r = 0;
+  let b := 13;
+  let r := a ≈ b ± 3;
+  expect r = 1;
+  let b := 14;
+  let r := a ≈ b ± 3;
+  expect r = 0;
+return;

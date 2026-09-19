@@ -2438,6 +2438,33 @@ func (e *Evaluator) evalIntExpressionWithID(node parser.Expression) (int, int) {
 			rightVal, _ := e.evalIntExpressionWithID(expr.Right)
 			return evalComparison(lit, leftVal, rightVal, expr.Token.Type, lit), 0
 		}
+		// Approximate equality (spec/05 §4.2): a ≈ b reports 1 when
+		// |a − b| ≤ ε, with ε defaulting to  (1e-5; exact for
+		// integer operands). The explicit modifier `a ≈ b ± t` overrides ε:
+		// ± (precAdd) binds tighter than ≈ (precCompare), so the tolerance
+		// parses as a ± BinaryExpression on ≈'s right — interpreted here as
+		// the tolerance, not as arithmetic. The boundary is inclusive (≤).
+		if lit == "≈" || expr.Token.Type == token.APPROX_EQ {
+			// ≈ is a numeric-domain operator: strings, objects, and the nil
+			// sentinel do not participate and report 0 rather than degrading
+			// to 0 ≈ 0 through the int path.
+			if e.isStringExpr(expr.Left) || e.isStringExpr(expr.Right) ||
+				e.isObjectExpr(expr.Left) || e.isObjectExpr(expr.Right) ||
+				e.isNilExpr(expr.Left) || e.isNilExpr(expr.Right) {
+				return 0, 0
+			}
+			tol := approxDefaultEps
+			rightNode := expr.Right
+			if pm, isPM := expr.Right.(*parser.BinaryExpression); isPM &&
+				(pm.Token.Type == token.PLUS_MINUS || pm.Token.Literal == "±") {
+				tolVal, _ := e.evalIntExpressionWithID(pm.Right)
+				tol = float64(tolVal)
+				rightNode = pm.Left
+			}
+			leftVal, _ := e.evalIntExpressionWithID(expr.Left)
+			rightVal, _ := e.evalIntExpressionWithID(rightNode)
+			return evalApproxEqual(leftVal, rightVal, tol), 0
+		}
 		if lit == "in" || lit == "∈" || expr.Token.Type == token.IN_OP || expr.Token.Type == token.IN_KEYWORD {
 			leftVal, _ := e.evalIntExpressionWithID(expr.Left)
 			if binRight, ok := expr.Right.(*parser.BinaryExpression); ok && isRangeSeparatorToken(binRight.Token) {

@@ -40,3 +40,4 @@ This level covers the fundamental lexical structure, tokenization, and type infe
 | T0138 | No  | PASS   | Decision 13: postfix-s... |
 | T0139 | No  | PASS   | Decision 11: parenthes... |
 | T0140 | No  | PASS   | Unary minus and negati... |
+| T0141 | No  | PASS   | Approximate equality (... |

@@ -267,6 +267,10 @@ func (l *Lexer) NextToken() token.Token {
 		tok = token.Token{Type: token.DIV, Literal: "÷", Pos: token.Pos(l.line)}
 	case '≈':
 		tok = token.Token{Type: token.APPROX_EQ, Literal: "≈", Pos: token.Pos(l.line)}
+	case '±':
+		// Tolerance modifier (spec/05 §4.2): `a ≈ b ± t` overrides the
+		// approximate-equality epsilon.
+		tok = token.Token{Type: token.PLUS_MINUS, Literal: "±", Pos: token.Pos(l.line)}
 	case '≡':
 		tok = token.Token{Type: token.EQUIV, Literal: "≡", Pos: token.Pos(l.line)}
 	case '≠':

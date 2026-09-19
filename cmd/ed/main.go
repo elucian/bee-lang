@@ -21,7 +21,9 @@ USAGE:
         Validate HTML/Markdown tag balance (void, self-closing, comments, code).
     bee-ed sed <pattern> <replacement> <glob...> [--dry-run]
         Regex find-and-replace across a file tree (RE2, parallel worker pool).
-    bee-ed apply --help | edit --help | append --help | balance --help | sed --help
+    bee-ed search <pattern> <glob...> [--count] [--name-only]
+        Parallel regex search across a file tree (RE2, grep-style output).
+    bee-ed apply --help | edit --help | append --help | balance --help | sed --help | search --help
 
 FLAGS:
   --dry-run   Show what would change without writing.
@@ -48,6 +50,8 @@ func main() {
 		err = runBalance(rest)
 	case "sed":
 		err = runSed(rest)
+	case "search":
+		err = runSearch(rest)
 	case "--help", "-h", "help":
 		fmt.Fprint(os.Stdout, usage)
 		return
